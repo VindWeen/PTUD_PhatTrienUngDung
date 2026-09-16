@@ -1,0 +1,979 @@
+/* ====================================================
+   LHU DMS - AUTHENTICATION STYLES (MATCHING USER HTML)
+   ==================================================== */
+
+.ptud-auth .auth-wrapper {
+  height: 100vh;
+  background-color: #eef2f7; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: 'Poppins', sans-serif;
+}
+
+.ptud-auth .auth-theme-switch {
+  --toggle-size: 11px;
+  position: fixed;
+  top: 22px;
+  right: 26px;
+  z-index: 50;
+}
+
+/* --- Khung viền lớn tỷ lệ chuẩn 16:9 --- */
+.ptud-auth .login-card {
+  width: 1024px;
+  height: 576px;
+  background-color: #164877;
+  border-radius: 16px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+}
+
+/* --- Container chứa 2 ảnh nền SVG để trượt --- 
+   Đặt dịch sang trái -20px và mở rộng chiều rộng để triệt tiêu lỗi hở viền sub-pixel
+*/
+.ptud-auth .bg-svg-container {
+  position: absolute;
+  top: 0;
+  left: -20px;
+  width: 2100px; /* 1050px * 2 */
+  height: 100%;
+  display: flex;
+  z-index: 1;
+  pointer-events: none;
+  transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ptud-auth .bg-svg-container.login {
+  transform: translateX(0);
+}
+
+.ptud-auth .bg-svg-container.register {
+  transform: translateX(-1050px); /* Dịch chuyển đúng chiều rộng 1 tấm nền */
+}
+
+.ptud-auth .bg-svg-item {
+  flex: 0 0 1050px; /* Thừa ra 26px so với card (1024px) để che phủ biên ngoài */
+  width: 1050px;
+  height: 100%;
+  display: block;
+}
+
+.ptud-auth .bg-svg-item .blue-layer {
+  transition: transform 0.85s cubic-bezier(0.45, 0, 0.2, 1), opacity 0.6s ease;
+}
+
+.ptud-auth .bg-svg-item .white-layer {
+  transform-origin: 85% 50%;
+  transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ptud-auth .bg-svg-item:nth-child(2) .white-layer {
+  transform-origin: 15% 50%;
+}
+
+/* --- Khung chứa Form Đăng Nhập & Đăng Ký --- */
+.ptud-auth .form-container {
+  position: absolute;
+  top: 50%;
+  left: 80px;
+  width: 340px;
+  z-index: 10;
+  text-align: center;
+  transition: opacity 0.35s ease, transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Login: Form trượt sang phải */
+.ptud-auth .form-container.login {
+  transform: translate(524px, -50%); /* 1024px - 340px - 80px = 604px, 604px - 80px = 524px */
+}
+
+/* Register: Form ở bên trái */
+.ptud-auth .form-container.register {
+  transform: translate(0, -50%);
+}
+
+.ptud-auth .form-container h1 {
+  font-family: 'Impact', 'Barlow Condensed', sans-serif;
+  font-size: 58px;
+  color: #10528e;
+  margin: 0 0 24px;
+  letter-spacing: 1.5px;
+  font-weight: normal;
+  line-height: 1;
+  text-shadow: 0 4px 14px rgba(16, 82, 142, .12);
+}
+
+/* --- Ô Nhập Liệu (Inputs) nét mảnh chuẩn đét --- */
+.ptud-auth .input-box {
+  position: relative;
+  min-height: 50px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  padding: 0 16px;
+  background: #f8fafc;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, .05);
+  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+
+.ptud-auth .input-box:focus-within {
+  background: #fff;
+  border-color: #2875b7;
+  box-shadow: 0 0 0 4px rgba(16, 82, 142, .11), 0 5px 14px rgba(15, 23, 42, .08);
+}
+
+.ptud-auth .input-box i {
+  color: #4b6f91;
+  font-size: 16px;
+  width: 20px;
+  flex: 0 0 20px;
+  text-align: center;
+}
+
+.ptud-auth .input-box input {
+  border: none;
+  outline: none;
+  width: 100%;
+  min-width: 0;
+  padding: 13px 0;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  color: #172033;
+}
+
+.ptud-auth .input-box input::placeholder {
+  color: #8491a3;
+}
+
+.ptud-auth .input-box:has(.password-toggle) input {
+  padding-right: 42px;
+}
+
+.ptud-auth .input-box input:-webkit-autofill,
+.ptud-auth .input-box input:-webkit-autofill:hover,
+.ptud-auth .input-box input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #172033;
+  box-shadow: 0 0 0 1000px #f8fafc inset;
+  transition: background-color 9999s ease-out;
+}
+
+.ptud-auth .password-toggle {
+  position: absolute;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  min-height: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  color: #64748b;
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: color .2s ease, background .2s ease;
+}
+
+.ptud-auth .password-toggle svg {
+  width: 19px;
+  height: 19px;
+  stroke-width: 2;
+}
+
+.ptud-auth .password-toggle:hover {
+  color: #10528e;
+  background: rgba(16, 82, 142, .08);
+}
+
+.ptud-auth .password-toggle:focus-visible {
+  outline: 2px solid #2875b7;
+  outline-offset: 1px;
+}
+
+.ptud-auth .password-toggle:disabled {
+  cursor: not-allowed;
+  opacity: .5;
+}
+
+/* --- Các Nút Bấm (Buttons) --- */
+.ptud-auth .btn {
+  width: 100%;
+  min-height: 50px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #ffffff;
+  box-shadow: 0 7px 16px rgba(15, 23, 42, .12);
+  transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+
+.ptud-auth .btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, .16);
+}
+
+.ptud-auth .btn:active {
+  transform: translateY(0);
+}
+
+.ptud-auth .btn:disabled {
+  cursor: not-allowed;
+  opacity: .65;
+  transform: none;
+}
+
+.ptud-auth .btn-signin {
+  background: linear-gradient(135deg, #0e4c83, #1769ad);
+  margin-top: 4px;
+}
+
+.ptud-auth .btn-signup {
+  background: linear-gradient(135deg, #f6a93e, #ffc467);
+  color: #51310a;
+}
+
+.ptud-auth .forgot-password-link {
+  border: 0;
+  background: transparent;
+  color: #10528e;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 8px;
+  padding: 4px 8px;
+}
+
+.ptud-auth .remember-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  color: #4b5563;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ptud-auth .remember-row input {
+  width: 17px;
+  height: 17px;
+  accent-color: #164877;
+  cursor: pointer;
+}
+
+:root.dark .ptud-auth .remember-row {
+  color: #d1d5db;
+}
+
+.ptud-auth .forgot-password-link:hover {
+  text-decoration: underline;
+}
+
+/* --- Thanh phân tách Chữ "Or" --- */
+.ptud-auth .or-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 16px 0;
+  color: #7b8797;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ptud-auth .or-divider::before,
+.ptud-auth .or-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.ptud-auth .or-divider span {
+  padding: 0 15px;
+}
+
+/* --- Logo & Branding on the Blue Side --- */
+.ptud-auth .brand-logo-container {
+  position: absolute;
+  top: 45%;
+  left: 0;
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ptud-auth .brand-logo-container.login {
+  transform: translate(-35px, -50%);
+}
+
+.ptud-auth .brand-logo-container.register {
+  transform: translate(547px, -50%); /* 512px (half) + 35px offset = 547px */
+}
+
+.ptud-auth .brand-logo-img {
+  width: 400px;
+  height: auto;
+  filter: brightness(0) invert(1);
+}
+
+/* Alert styles */
+.ptud-auth .alert-box {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+.ptud-auth .alert-error {
+  background-color: #fee2e2;
+  border: 1px solid #ef4444;
+  color: #b91c1c;
+}
+.ptud-auth .alert-success {
+  background-color: #dcfce7;
+  border: 1px solid #22c55e;
+  color: #15803d;
+}
+
+:root.dark .ptud-auth .auth-wrapper {
+  background: #212121;
+}
+
+:root.dark .ptud-auth .login-card {
+  background-color: #212121;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.6);
+}
+
+:root.dark .ptud-auth .bg-svg-item g[fill="#ffffff"] {
+  fill: #2a2a2a;
+}
+
+:root.dark .ptud-auth .form-container h1 {
+  color: #dbeafe;
+}
+
+:root.dark .ptud-auth .input-box {
+  background: #2d2d2d;
+  border-color: #505050;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .2);
+}
+
+:root.dark .ptud-auth .input-box:focus-within {
+  background: #323232;
+  border-color: #82b9e9;
+  box-shadow: 0 0 0 4px rgba(125, 180, 255, .14);
+}
+
+:root.dark .ptud-auth .input-box i {
+  color: #cbd5e1;
+}
+
+:root.dark .ptud-auth .password-toggle {
+  color: #cbd5e1;
+}
+
+:root.dark .ptud-auth .password-toggle:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, .08);
+}
+
+:root.dark .ptud-auth .input-box input {
+  background: transparent;
+  color: #f8fafc;
+}
+
+:root.dark .ptud-auth .input-box input::placeholder,
+:root.dark .ptud-auth .or-divider {
+  color: #94a3b8;
+}
+
+:root.dark .ptud-auth .input-box input:-webkit-autofill,
+:root.dark .ptud-auth .input-box input:-webkit-autofill:hover,
+:root.dark .ptud-auth .input-box input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f8fafc;
+  box-shadow: 0 0 0 1000px #2d2d2d inset;
+}
+
+:root.dark .ptud-auth .or-divider::before,
+:root.dark .ptud-auth .or-divider::after {
+  border-color: #475569;
+}
+
+:root.dark .ptud-auth .btn-signin {
+  background: linear-gradient(135deg, #eaf2ff, #cbdff5);
+  color: #172033;
+}
+
+:root.dark .ptud-auth .btn-signup {
+  background: linear-gradient(135deg, #f4aa45, #ffc66f);
+  color: #402706;
+  border: 0;
+}
+
+:root.dark .ptud-auth .forgot-password-link {
+  color: #f5f5f5;
+}
+
+/* ====================================================
+   LẤY HỨNG KHỞI TỪ MẪU LOADING HTML CỦA KHÁCH HÀNG
+   ==================================================== */
+
+.ptud-auth .loading-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* --- Bộ Loader Cuốn Sách --- */
+.ptud-auth .loader {
+  --background: linear-gradient(135deg, #23C4F8, #275EFE);
+  --shadow: rgba(39, 94, 254, 0.28);
+  --text: #ffffff;
+  --page: rgba(255, 255, 255, 0.36);
+  --page-fold: rgba(255, 255, 255, 0.52);
+  --duration: 3s;
+  width: 200px;
+  height: 140px;
+  position: relative;
+}
+
+/* Hộp màu xanh bung tỏa */
+.ptud-auth .loader div.book-body {
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  position: relative;
+  z-index: 1;
+  perspective: 600px;
+  box-shadow: 0 4px 20px var(--shadow);
+  background-image: var(--background);
+  transform-origin: center center;
+  transition: transform 0.85s cubic-bezier(0.45, 0, 0.2, 1), border-radius 0.5s ease, background-color 0.5s ease;
+}
+
+.ptud-auth .loader span { 
+  position: absolute; 
+  top: 115%; 
+  left: 50%; 
+  transform: translateX(-50%); 
+  color: #10528e; 
+  font-weight: 600; 
+  font-size: 16px;
+  transition: opacity 0.2s; 
+  letter-spacing: 0.5px;
+}
+:root.dark .ptud-auth .loader span {
+  color: #f5f5f5;
+}
+
+.ptud-auth .loader div ul { margin: 0; padding: 0; list-style: none; position: relative; }
+.ptud-auth .loader div ul li { 
+  --r: 180deg; --o: 0; --c: var(--page); 
+  position: absolute; top: 10px; left: 10px; 
+  transform-origin: 100% 50%; color: var(--c); 
+  opacity: var(--o); transform: rotateY(var(--r)); 
+  animation: var(--duration) ease infinite; 
+}
+.ptud-auth .loader div ul li svg { width: 90px; height: 120px; display: block; }
+.ptud-auth .loader div ul li:first-child { --r: 0deg; --o: 1; }
+.ptud-auth .loader div ul li:last-child { --o: 1; }
+.ptud-auth .loader div ul li:nth-child(2) { --c: var(--page-fold); animation-name: page-2; }
+.ptud-auth .loader div ul li:nth-child(3) { --c: var(--page-fold); animation-name: page-3; }
+.ptud-auth .loader div ul li:nth-child(4) { --c: var(--page-fold); animation-name: page-4; }
+.ptud-auth .loader div ul li:nth-child(5) { --c: var(--page-fold); animation-name: page-5; }
+
+@keyframes page-2 { 0% { transform: rotateY(180deg); opacity: 0; } 20% { opacity: 1; } 35%, 100% { opacity: 0; } 50%, 100% { transform: rotateY(0deg); } }
+@keyframes page-3 { 15% { transform: rotateY(180deg); opacity: 0; } 35% { opacity: 1; } 50%, 100% { opacity: 0; } 65%, 100% { transform: rotateY(0deg); } }
+@keyframes page-4 { 30% { transform: rotateY(180deg); opacity: 0; } 50% { opacity: 1; } 65%, 100% { opacity: 0; } 80%, 100% { transform: rotateY(0deg); } }
+@keyframes page-5 { 45% { transform: rotateY(180deg); opacity: 0; } 65% { opacity: 1; } 80%, 100% { opacity: 0; } 95%, 100% { transform: rotateY(0deg); } }
+
+/* ================= 🚀 TRẠNG THÁI HIỆU ỨNG (STAGES) ================= */
+
+/* [STAGE 1]: Bấm đăng nhập -> Ẩn form, trượt mây, hiện loader sách */
+.ptud-auth .auth-wrapper.stage-loading .form-container {
+  opacity: 0 !important;
+  transform: translate(524px, -50%) scale(0.9) !important;
+  pointer-events: none;
+}
+.ptud-auth .auth-wrapper.stage-loading.register .form-container {
+  transform: translate(0, -50%) scale(0.9) !important;
+}
+
+.ptud-auth .auth-wrapper.stage-loading .blue-layer { transform: translateX(-200px) scale(0.8); opacity: 0; }
+.ptud-auth .auth-wrapper.stage-loading .white-layer { transform: scale(6); }
+.ptud-auth .auth-wrapper.stage-loading.register .blue-layer { transform: translateX(200px) scale(0.8); opacity: 0; }
+.ptud-auth .auth-wrapper.stage-loading .brand-logo-container {
+  opacity: 0;
+  transform: translate(-35px, -50%) scale(0.85);
+}
+.ptud-auth .auth-wrapper.stage-loading.register .brand-logo-container {
+  transform: translate(547px, -50%) scale(0.85);
+}
+
+.ptud-auth .auth-wrapper.stage-loading .loading-overlay {
+  opacity: 1;
+  pointer-events: auto;
+  transition-delay: 0.5s;
+}
+
+.ptud-auth .auth-wrapper.stage-expand .loading-overlay {
+  opacity: 1;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+.ptud-auth .auth-wrapper.stage-expand .form-container,
+.ptud-auth .auth-wrapper.stage-expand .brand-logo-container {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+/* [STAGE 2]: Thành công -> Phóng to sách tràn viền, chuyển thành màu nền trang chủ */
+.ptud-auth .auth-wrapper.stage-expand .loader div.book-body {
+  transform: scale(60) !important;
+  border-radius: 0px; 
+  box-shadow: none;
+  background-image: var(--background) !important;
+}
+
+/* Ẩn các trang sách lật và nhãn chữ ngay khi phóng to */
+.ptud-auth .auth-wrapper.stage-expand .loader div.book-body ul,
+.ptud-auth .auth-wrapper.stage-expand .loader span {
+  opacity: 0 !important;
+  transition: opacity 0.15s ease !important;
+}
+
+@media (max-width: 1100px) {
+  .ptud-auth .auth-wrapper {
+    min-height: 100svh;
+    height: auto;
+    align-items: stretch;
+    justify-content: stretch;
+    overflow-y: auto;
+    background: #ffffff;
+  }
+
+  .ptud-auth .auth-theme-switch {
+    top: 14px;
+    right: 14px;
+    z-index: 70;
+  }
+
+  .ptud-auth .login-card {
+    width: 100%;
+    min-height: 100svh;
+    height: auto;
+    border-radius: 0;
+    box-shadow: none;
+    display: block;
+    background: #ffffff;
+  }
+
+  .ptud-auth .login-card::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 290px;
+    background: linear-gradient(180deg, #0f5d98 0%, #176ea9 100%);
+    z-index: 0;
+  }
+
+  .ptud-auth .login-card::after {
+    content: '';
+    position: absolute;
+    top: 230px;
+    left: -8%;
+    width: 116%;
+    height: 110px;
+    background:
+      radial-gradient(circle at 12% 82%, #fff 0 62px, transparent 64px),
+      radial-gradient(circle at 32% 90%, #fff 0 48px, transparent 50px),
+      radial-gradient(circle at 56% 92%, #fff 0 82px, transparent 84px),
+      radial-gradient(circle at 84% 94%, #fff 0 52px, transparent 54px),
+      linear-gradient(#fff, #fff);
+    background-position: 0 0, 0 0, 0 0, 0 0, 0 72px;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    z-index: 1;
+    transition: top .72s cubic-bezier(.45, 0, .2, 1), height .72s cubic-bezier(.45, 0, .2, 1), border-radius .72s cubic-bezier(.45, 0, .2, 1);
+  }
+
+  .ptud-auth .bg-svg-container {
+    display: none;
+  }
+
+  .ptud-auth .brand-logo-container {
+    top: 104px;
+    left: 0;
+    width: 100%;
+    z-index: 2;
+    transform: translateY(-50%) !important;
+  }
+
+  .ptud-auth .brand-logo-container.login,
+  .ptud-auth .brand-logo-container.register {
+    transform: translateY(-50%) !important;
+  }
+
+  .ptud-auth .brand-logo-img {
+    width: min(245px, 68vw);
+    filter: brightness(0) invert(1);
+  }
+
+  .ptud-auth .form-container {
+    top: 300px;
+    left: 50%;
+    width: min(340px, calc(100vw - 40px));
+    z-index: 3;
+    transform: translateX(-50%);
+    padding-bottom: 34px;
+  }
+
+  .ptud-auth .auth-wrapper.login .form-container {
+    animation: auth-slide-in-right .42s cubic-bezier(.4, 0, .2, 1) both;
+  }
+
+  .ptud-auth .auth-wrapper.register .form-container {
+    animation: auth-slide-in-left .42s cubic-bezier(.4, 0, .2, 1) both;
+  }
+
+  .ptud-auth .form-container h1 {
+    font-size: clamp(44px, 14vw, 54px);
+    margin-bottom: 12px;
+    color: #12629c;
+    text-shadow: 0 4px 0 rgba(22, 72, 119, .12);
+  }
+
+  .ptud-auth .input-box {
+    margin-bottom: 9px;
+    padding: 9px 18px;
+    border-width: 1.5px;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, .06);
+  }
+
+  .ptud-auth .btn {
+    padding: 11px;
+    font-size: 16px;
+  }
+
+  .ptud-auth .or-divider {
+    margin: 8px 0;
+  }
+
+  .ptud-auth .remember-row {
+    margin: -2px 0 8px;
+  }
+
+  .ptud-auth .forgot-password-link {
+    margin-top: 4px;
+    padding: 2px 8px;
+  }
+
+  .ptud-auth .auth-wrapper.stage-loading .login-card::before {
+    opacity: 0;
+    transition: opacity .35s ease;
+  }
+
+  .ptud-auth .auth-wrapper.stage-loading .login-card::after {
+    top: -18px;
+    height: calc(100svh + 36px);
+    border-radius: 0;
+  }
+
+  .ptud-auth .auth-wrapper.stage-loading .form-container,
+  .ptud-auth .auth-wrapper.stage-loading.register .form-container {
+    transform: translateX(-50%) scale(.94) !important;
+  }
+
+  .ptud-auth .auth-wrapper.stage-loading .brand-logo-container,
+  .ptud-auth .auth-wrapper.stage-loading.register .brand-logo-container {
+    transform: translateY(-50%) scale(.94) !important;
+  }
+
+  .ptud-auth .auth-wrapper.stage-loading .loading-overlay {
+    transition-delay: .72s;
+  }
+
+  :root.dark .ptud-auth .auth-wrapper,
+  :root.dark .ptud-auth .login-card {
+    background: #212121;
+  }
+
+  :root.dark .ptud-auth .login-card::after {
+    background:
+      radial-gradient(circle at 12% 82%, #212121 0 62px, transparent 64px),
+      radial-gradient(circle at 32% 90%, #212121 0 48px, transparent 50px),
+      radial-gradient(circle at 56% 92%, #212121 0 82px, transparent 84px),
+      radial-gradient(circle at 84% 94%, #212121 0 52px, transparent 54px),
+      linear-gradient(#212121, #212121);
+    background-position: 0 0, 0 0, 0 0, 0 0, 0 72px;
+    background-repeat: no-repeat;
+  }
+}
+
+@media (max-width: 380px) {
+  .ptud-auth .login-card::before {
+    height: 262px;
+  }
+
+  .ptud-auth .login-card::after {
+    top: 205px;
+  }
+
+  .ptud-auth .brand-logo-container {
+    top: 88px;
+  }
+
+  .ptud-auth .form-container {
+    top: 282px;
+  }
+
+  .ptud-auth .form-container h1 {
+    font-size: 42px;
+  }
+
+  .ptud-auth .input-box {
+    padding: 8px 16px;
+  }
+}
+
+@keyframes auth-slide-in-right {
+  from {
+    opacity: .2;
+    transform: translateX(calc(-50% + 70px));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes auth-slide-in-left {
+  from {
+    opacity: .2;
+    transform: translateX(calc(-50% - 70px));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+}
+
+.ptud-auth .theme-switch {
+  --toggle-size: 10px;
+  --container-width: 5.625em;
+  --container-height: 2.5em;
+  --container-radius: 6.25em;
+  --container-light-bg: #3d7eae;
+  --container-night-bg: #1d1f2c;
+  --circle-container-diameter: 3.375em;
+  --sun-moon-diameter: 2.125em;
+  --sun-bg: #ecca2f;
+  --moon-bg: #c4c9d1;
+  --spot-color: #959db1;
+  --circle-container-offset: calc((var(--circle-container-diameter) - var(--container-height)) / 2 * -1);
+  --stars-color: #fff;
+  --clouds-color: #f3fdff;
+  --back-clouds-color: #aacadf;
+  --transition: .5s cubic-bezier(0, -.02, .4, 1.25);
+  --circle-transition: .3s cubic-bezier(0, -.02, .35, 1.17);
+  display: inline-block;
+  line-height: 1
+}
+
+.ptud-auth .theme-switch,
+.ptud-auth .theme-switch *,
+.ptud-auth .theme-switch *:before,
+.ptud-auth .theme-switch *:after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-size: var(--toggle-size)
+}
+
+.ptud-auth .theme-switch__container {
+  width: var(--container-width);
+  height: var(--container-height);
+  background-color: var(--container-light-bg);
+  border-radius: var(--container-radius);
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 -.062em .062em rgba(0, 0, 0, .25), 0 .062em .125em rgba(255, 255, 255, .94);
+  transition: var(--transition);
+  position: relative
+}
+
+.ptud-auth .theme-switch__container:before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  box-shadow: 0 .05em .187em rgba(0, 0, 0, .25) inset, 0 .05em .187em rgba(0, 0, 0, .25) inset;
+  border-radius: var(--container-radius)
+}
+
+.ptud-auth .theme-switch__checkbox {
+  display: none
+}
+
+.ptud-auth .theme-switch__circle-container {
+  width: var(--circle-container-diameter);
+  height: var(--circle-container-diameter);
+  background-color: rgba(255, 255, 255, .1);
+  position: absolute;
+  left: var(--circle-container-offset);
+  top: var(--circle-container-offset);
+  border-radius: var(--container-radius);
+  box-shadow: inset 0 0 0 3.375em rgba(255, 255, 255, .1), inset 0 0 0 3.375em rgba(255, 255, 255, .1), 0 0 0 .625em rgba(255, 255, 255, .1), 0 0 0 1.25em rgba(255, 255, 255, .1);
+  display: flex;
+  transition: var(--circle-transition);
+  pointer-events: none
+}
+
+.ptud-auth .theme-switch__sun-moon-container {
+  pointer-events: auto;
+  position: relative;
+  z-index: 2;
+  width: var(--sun-moon-diameter);
+  height: var(--sun-moon-diameter);
+  margin: auto;
+  border-radius: var(--container-radius);
+  background-color: var(--sun-bg);
+  box-shadow: .062em .062em .062em 0 rgba(254, 255, 239, .61) inset, 0 -.062em .062em 0 #a1872a inset;
+  filter: drop-shadow(.062em .125em .125em rgba(0, 0, 0, .25)) drop-shadow(0 .062em .125em rgba(0, 0, 0, .25));
+  overflow: hidden;
+  transition: var(--transition)
+}
+
+.ptud-auth .theme-switch__moon {
+  transform: translateX(100%);
+  width: 100%;
+  height: 100%;
+  background-color: var(--moon-bg);
+  border-radius: inherit;
+  box-shadow: .062em .062em .062em 0 rgba(254, 255, 239, .61) inset, 0 -.062em .062em 0 #969696 inset;
+  transition: var(--transition);
+  position: relative
+}
+
+.ptud-auth .theme-switch__spot {
+  position: absolute;
+  top: .75em;
+  left: .312em;
+  width: .75em;
+  height: .75em;
+  border-radius: var(--container-radius);
+  background-color: var(--spot-color);
+  box-shadow: 0 .0312em .062em rgba(0, 0, 0, .25) inset
+}
+
+.ptud-auth .theme-switch__spot:nth-of-type(2) {
+  width: .375em;
+  height: .375em;
+  top: .937em;
+  left: 1.375em
+}
+
+.ptud-auth .theme-switch__spot:nth-last-of-type(3) {
+  width: .25em;
+  height: .25em;
+  top: .312em;
+  left: .812em
+}
+
+.ptud-auth .theme-switch__clouds {
+  width: 1.25em;
+  height: 1.25em;
+  background-color: var(--clouds-color);
+  border-radius: var(--container-radius);
+  position: absolute;
+  bottom: -.625em;
+  left: .312em;
+  box-shadow: .937em .312em var(--clouds-color), -.312em -.312em var(--back-clouds-color), 1.437em .375em var(--clouds-color), .5em -.125em var(--back-clouds-color), 2.187em 0 var(--clouds-color), 1.25em -.062em var(--back-clouds-color), 2.937em .312em var(--clouds-color), 2em -.312em var(--back-clouds-color), 3.625em -.062em var(--clouds-color), 2.625em 0 var(--back-clouds-color), 4.5em -.312em var(--clouds-color), 3.375em -.437em var(--back-clouds-color), 4.625em -1.75em 0 .437em var(--clouds-color), 4em -.625em var(--back-clouds-color), 4.125em -2.125em 0 .437em var(--back-clouds-color);
+  transition: var(--transition)
+}
+
+.ptud-auth .theme-switch__stars-container {
+  position: absolute;
+  color: var(--stars-color);
+  top: -100%;
+  left: .312em;
+  width: 2.75em;
+  height: auto;
+  transition: var(--transition)
+}
+
+.ptud-auth .theme-switch__checkbox:checked+.theme-switch__container {
+  background-color: var(--container-night-bg)
+}
+
+.ptud-auth .theme-switch__checkbox:checked+.theme-switch__container .theme-switch__circle-container {
+  left: calc(100% - var(--circle-container-offset) - var(--circle-container-diameter))
+}
+
+.ptud-auth .theme-switch__checkbox:checked+.theme-switch__container .theme-switch__circle-container:hover {
+  left: calc(100% - var(--circle-container-offset) - var(--circle-container-diameter) - .187em)
+}
+
+.ptud-auth .theme-switch__circle-container:hover {
+  left: calc(var(--circle-container-offset) + .187em)
+}
+
+.ptud-auth .theme-switch__checkbox:checked+.theme-switch__container .theme-switch__moon {
+  transform: translate(0)
+}
+
+.ptud-auth .theme-switch__checkbox:checked+.theme-switch__container .theme-switch__clouds {
+  bottom: -4.062em
+}
+
+.ptud-auth .theme-switch__checkbox:checked+.theme-switch__container .theme-switch__stars-container {
+  top: 50%;
+  transform: translateY(-50%)
+}
+
+
+
+/* Điều chỉnh cho bản PTUD: chỉ áp dụng trong trang auth. */
+.ptud-auth .demo-notice { font-size: 11px; line-height: 1.5; color: #64748b; margin: -10px 0 16px; }
+.dark .ptud-auth .demo-notice { color: #cbd5e1; }
+.ptud-auth .input-box > svg { flex-shrink: 0; color: #4b6f91; }
+.dark .ptud-auth .input-box > svg { color: #cbd5e1; }
+.ptud-auth .theme-switch__checkbox { display: block; position: absolute; width: 1px; height: 1px; opacity: 0; }
+.ptud-auth .theme-switch__checkbox:focus-visible + .theme-switch__container { outline: 3px solid #f59e0b; outline-offset: 5px; }
+.ptud-auth .auth-wrapper { min-height: 650px; }
+@media (max-width: 1100px) {
+  .ptud-auth .auth-wrapper { min-height: 100svh; overflow-x: hidden; }
+  .ptud-auth .form-container { position: relative; top: auto; margin-top: 300px; }
+}
+@media (max-width: 380px) {
+  .ptud-auth .form-container { top: auto; margin-top: 282px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ptud-auth *, .ptud-auth *::before, .ptud-auth *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; transition-delay: 0s !important; }
+}
