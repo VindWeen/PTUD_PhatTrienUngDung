@@ -15,11 +15,12 @@ BEGIN
         UpdatedAt DATETIME2(3) NOT NULL CONSTRAINT DF_Lecturers_UpdatedAt DEFAULT (SYSUTCDATETIME()),
         RowVersion ROWVERSION NOT NULL,
         CONSTRAINT PK_Lecturers PRIMARY KEY CLUSTERED (LecturerId),
-        CONSTRAINT UQ_Lecturers_UserId UNIQUE NONCLUSTERED (UserId) WHERE UserId IS NOT NULL,
         CONSTRAINT UQ_Lecturers_EmployeeCode UNIQUE NONCLUSTERED (EmployeeCode),
         CONSTRAINT UQ_Lecturers_Email UNIQUE NONCLUSTERED (Email),
         CONSTRAINT FK_Lecturers_Users FOREIGN KEY (UserId) REFERENCES dbo.Users(UserId) ON DELETE SET NULL
     );
+
+    CREATE UNIQUE NONCLUSTERED INDEX UQ_Lecturers_UserId ON dbo.Lecturers (UserId) WHERE UserId IS NOT NULL;
 END;
 
 IF OBJECT_ID('dbo.LecturerAssignments', 'U') IS NULL

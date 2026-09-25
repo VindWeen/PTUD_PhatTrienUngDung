@@ -28,19 +28,31 @@ export default function AuthPage() {
     setMode(next); setError(null); setSuccess(null);
     setEmail(''); setPassword(''); setFullName(''); setShowPassword(false);
   };
-  const handleLogin = event => {
+  const handleLogin = async (event) => {
     event.preventDefault();
     if (transitionStage !== 'idle') return;
     setError(null);
     setTransitionStage('loading');
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    timers.current.push(setTimeout(() => {
+
+    try {
+      await signIn({ username: email, password, rememberMe: remember });
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       setTransitionStage('expanding');
-      timers.current.push(setTimeout(() => {
-        signIn(remember);
-        navigate('/', { replace: true });
-      }, reduced ? 0 : 850));
-    }, reduced ? 100 : 3000));
+      timers.current.push(
+        setTimeout(() => {
+          navigate('/', { replace: true });
+        }, reduced ? 0 : 500)
+      );
+    } catch (err) {
+      setTransitionStage('idle');
+      setError(err.message || 'Tài khoản hoặc mật khẩu không chính xác');
+    }
+  };
+
+  const fillQuickAccount = (quickUser, quickPass = 'demo1234') => {
+    setEmail(quickUser);
+    setPassword(quickPass);
+    setError(null);
   };
   const handleRegister = event => {
     event.preventDefault();
@@ -251,6 +263,38 @@ export default function AuthPage() {
                 >
                   Quên mật khẩu?
                 </button>
+              )}
+
+              {isLogin && (
+                <div className="quick-accounts-section my-3 text-left">
+                  <div className="text-[11px] font-semibold text-slate-500 mb-1.5 flex items-center justify-between">
+                    <span>Tài khoản thử nghiệm:</span>
+                    <span className="text-[10px] text-brand-600 font-mono">pass: demo1234</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => fillQuickAccount('an.nv')}
+                      className="px-2 py-1 text-[11px] rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-700 border border-slate-200 transition-colors"
+                    >
+                      Giảng viên (an.nv)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fillQuickAccount('bich.tt')}
+                      className="px-2 py-1 text-[11px] rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-700 border border-slate-200 transition-colors"
+                    >
+                      Quản lý FIT (bich.tt)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fillQuickAccount('duc.pm')}
+                      className="px-2 py-1 text-[11px] rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-700 border border-slate-200 transition-colors"
+                    >
+                      Admin (duc.pm)
+                    </button>
+                  </div>
+                </div>
               )}
             </form>
           )}

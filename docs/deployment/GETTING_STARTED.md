@@ -167,14 +167,47 @@ Truy cập giao diện tại: **`http://localhost:5173`**
 
 ---
 
-## 3. CHẠY BỘ KIỂM THỬ TỰ ĐỘNG (AUTOMATED TESTS)
+## 3. TÀI KHOẢN TRẢI NGHIỆM & KIỂM THỬ (SEED ACCOUNTS)
 
-Để đảm bảo toàn bộ cấu hình, lớp lỗi, cơ chế chống SQL Injection và các endpoint hoạt động chính xác:
+Cơ sở dữ liệu đã nạp sẵn 4 tài khoản chuẩn hóa theo sơ đồ tổ chức LHU (Mật khẩu mặc định: `demo1234`):
+
+| Username | Email | Họ và tên | Chức danh / Vai trò | Phạm vi quản lý (Scope) |
+| :--- | :--- | :--- | :--- | :--- |
+| `an.nv` | `an.nv@lhu.edu.vn` | PGS.TS. Nguyễn Văn An | Giảng viên (`LECTURER`) | Thuộc Bộ môn KTPM (Không có scope quản lý) |
+| `bich.tt` | `bich.tt@lhu.edu.vn` | TS. Trần Thị Bích | Quản lý Khoa (`MANAGER`, `LECTURER`) | **Khoa CNTT** kèm toàn bộ Bộ môn con (CTE `IncludeDescendants = 1`) |
+| `cuong.lh` | `cuong.lh@lhu.edu.vn` | ThS. Lê Hoàng Cường | Đại diện đơn vị (`UNIT_REP`, `LECTURER`) | **Bộ môn KTPM** (Chỉ đơn vị trực tiếp) |
+| `duc.pm` | `duc.pm@lhu.edu.vn` | KS. Phạm Minh Đức | Quản trị viên (`ADMIN`) | Quản trị kỹ thuật (**ADMIN != MANAGER**, không tự động có quyền thẩm định hồ sơ) |
+
+---
+
+## 4. XÁC THỰC BẢO MẬT & PHÂN QUYỀN (W1-Q3)
+
+1. **Chiến lược Token:**
+   - **Access Token:** Ký JWT ngắn hạn (2 giờ), client lưu trữ trong **bộ nhớ (In-memory)**, gửi qua Header `Authorization: Bearer <token>`.
+   - **Refresh Token:** Chuỗi ngẫu nhiên an toàn 64-byte hex, lưu trữ trong **Cookie HttpOnly (`SameSite=Lax; Secure`)**, cơ sở dữ liệu chỉ lưu mã băm **SHA-256** (`TokenHash`).
+   - **Xoay vòng Token (Rotation):** Mỗi lần gọi `/api/v1/auth/refresh`, token cũ lập tức bị thu hồi (`RevokedAt`) và thay thế bằng token mới. Nếu phát hiện token cũ bị gửi lại (Replay attack), hệ thống lập tức thu hồi toàn bộ token của tài khoản đó.
+2. **Kiểm tra Quyền & Phạm vi động (RBAC & CTE Scope):**
+   - Đọc quyền trực tiếp từ bảng `UserRoles` và `UserUnitScopes` đang có hiệu lực (`ValidFrom <= NOW AND (ValidTo IS NULL OR ValidTo >= NOW)`), đảm bảo việc thu hồi hoặc phân công lại có hiệu lực tức thì.
+   - Khi cán bộ quản lý cấp Khoa có `IncludeDescendants = 1`, truy vấn đệ quy CTE tự động cho phép thẩm định hồ sơ của các Bộ môn trực thuộc.
+   - **Quy tắc ADMIN != MANAGER:** Admin không thể duyệt hoặc thẩm định hồ sơ nếu không được phân công phạm vi quản lý rõ ràng.
+   - **Quy tắc liêm chính:** Chặn triệt để cán bộ tự duyệt hồ sơ do chính mình là chủ thể (`SELF_APPROVAL_PROHIBITED`).
+
+---
+
+## 5. CHẠY BỘ KIỂM THỬ TỰ ĐỘNG (AUTOMATED TESTS)
+
+Để chạy kiểm thử toàn diện toàn bộ 31 test cases bao gồm Config, Error Classes, DB Param Binding, Migrations, Probes, Auth Login/Refresh/Logout/ChangePassword, Role Checks, Scope CTE, Admin restriction, và Anti-self approval:
 ```bash
-# Chạy kiểm thử Backend và Migration Runner
+# 1. Chạy toàn bộ kiểm thử Backend & Auth
 cd backend
 npm test
 
-# Chạy kiểm tra hợp đồng API và Fixtures (W1-Q1)
+# 2. Chạy kiểm tra hợp đồng API và Fixtures (W1-Q1)
 node ../scripts/validate_contracts.mjs
+
+# 3. Kiểm tra mã nguồn Frontend
+cd ../frontend
+npm run lint
+npm run build
 ```
+

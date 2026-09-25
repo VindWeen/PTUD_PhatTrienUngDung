@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   FileText,
   FileSpreadsheet,
@@ -16,13 +17,26 @@ import {
   Plus,
   CheckCircle2,
   Clock,
+  LockKeyhole,
+  KeyRound,
+  X,
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
+import { useAuth } from '../hooks/useDemoAuth';
 
 export default function ProfilePortfolio() {
   const { isDark, toggleTheme } = useTheme();
+  const { changePassword } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('nckh');
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(null);
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   const tabs = [
     { id: 'nckh', label: 'Nghiên cứu khoa học' },
@@ -39,6 +53,40 @@ export default function ProfilePortfolio() {
     alert('Xuất Excel sẽ được bổ sung ở giai đoạn tiếp theo.');
   };
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(null);
+
+    if (newPassword.length < 8) {
+      setPasswordError('Mật khẩu mới phải có tối thiểu 8 ký tự.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Mật khẩu xác nhận không khớp với mật khẩu mới.');
+      return;
+    }
+
+    if (oldPassword === newPassword) {
+      setPasswordError('Mật khẩu mới không được trùng với mật khẩu hiện tại.');
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      await changePassword({ oldPassword, newPassword });
+      setPasswordSuccess('Đổi mật khẩu thành công! Các phiên đăng nhập cũ đã được thu hồi. Đang chuyển về trang đăng nhập...');
+      setTimeout(() => {
+        navigate('/login', { replace: true });
+      }, 1500);
+    } catch (err) {
+      setPasswordError(err.message || 'Không thể đổi mật khẩu. Vui lòng kiểm tra lại mật khẩu hiện tại.');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-7 animate-fadeIn">
       {/* 1. Header Row */}
@@ -53,6 +101,22 @@ export default function ProfilePortfolio() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Đổi mật khẩu */}
+          <button
+            onClick={() => {
+              setShowPasswordModal(true);
+              setPasswordError(null);
+              setPasswordSuccess(null);
+              setOldPassword('');
+              setNewPassword('');
+              setConfirmPassword('');
+            }}
+            className="px-4 py-2.5 rounded-2xl bg-white dark:bg-soft-darkCard border border-brand-200 dark:border-brand-900/50 text-brand-600 dark:text-brand-400 font-semibold text-xs flex items-center gap-2 shadow-soft-sm hover:bg-brand-50 dark:hover:bg-brand-950/30 transition-all active:scale-95"
+          >
+            <LockKeyhole className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+            <span>Đổi mật khẩu</span>
+          </button>
+
           {/* Export PDF */}
           <button
             onClick={handleExportPDF}
@@ -395,6 +459,112 @@ export default function ProfilePortfolio() {
                 Xác nhận tải lên
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Change Password Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="soft-card max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-brand-50 dark:bg-brand-950/50 flex items-center justify-center text-brand-600 dark:text-brand-400">
+                  <KeyRound className="w-4 h-4" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Đổi mật khẩu tài khoản
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowPasswordModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Đổi mật khẩu sẽ tự động thu hồi tất cả các phiên làm việc và refresh token trên các thiết bị khác.
+            </p>
+
+            {passwordError && (
+              <div className="p-3 text-xs rounded-xl bg-rose-50 border border-rose-200 text-rose-700 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-300">
+                {passwordError}
+              </div>
+            )}
+
+            {passwordSuccess && (
+              <div className="p-3 text-xs rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 dark:bg-emerald-950/40 dark:border-emerald-900 dark:text-emerald-300">
+                {passwordSuccess}
+              </div>
+            )}
+
+            {!passwordSuccess && (
+              <form onSubmit={handleChangePassword} className="space-y-3.5">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Mật khẩu hiện tại
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    placeholder="Nhập mật khẩu hiện tại"
+                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Mật khẩu mới (tối thiểu 8 ký tự)
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Nhập mật khẩu mới từ 8 ký tự"
+                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Xác nhận mật khẩu mới
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Nhập lại mật khẩu mới"
+                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordModal(false)}
+                    disabled={passwordLoading}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={passwordLoading}
+                    className="soft-btn-primary text-xs"
+                  >
+                    {passwordLoading ? 'Đang cập nhật...' : 'Xác nhận đổi mật khẩu'}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

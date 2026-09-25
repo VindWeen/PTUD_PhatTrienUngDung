@@ -8,6 +8,7 @@ import correlationId from './middlewares/correlationId.js';
 import errorHandler from './middlewares/errorHandler.js';
 import notFoundHandler from './middlewares/notFoundHandler.js';
 import healthRoutes from './modules/health/healthRoutes.js';
+import authRoutes from './modules/auth/authRoutes.js';
 
 const app = express();
 
@@ -34,6 +35,9 @@ const apiPrefix = config.API_PREFIX || '/api/v1';
 
 // Health Check Routes
 app.use(`${apiPrefix}/health`, healthRoutes);
+
+// Auth Routes
+app.use(`${apiPrefix}/auth`, authRoutes);
 
 // Root Welcome Route
 app.get('/', (req, res) => {

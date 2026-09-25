@@ -1,5 +1,5 @@
 import sql from 'mssql';
-import { getPool } from '../config/database.js';
+import { connectDB, getPool } from '../config/database.js';
 
 /**
  * Tự động xác định kiểu dữ liệu MSSQL dựa trên giá trị JS
@@ -40,7 +40,11 @@ export function bindParams(request, params = {}) {
  * @param {sql.Request|null} customRequest - Dùng khi đang ở trong một Transaction
  */
 export async function query(sqlText, params = {}, customRequest = null) {
-  const request = customRequest || getPool().request();
+  let request = customRequest;
+  if (!request) {
+    const pool = await connectDB();
+    request = pool.request();
+  }
   bindParams(request, params);
   const result = await request.query(sqlText);
   return {
@@ -56,7 +60,7 @@ export async function query(sqlText, params = {}, customRequest = null) {
  * @param {number} isolationLevel - Mức cô lập giao dịch (mặc định READ_COMMITTED)
  */
 export async function withTransaction(callback, isolationLevel = sql.ISOLATION_LEVEL.READ_COMMITTED) {
-  const pool = getPool();
+  const pool = await connectDB();
   const tx = new sql.Transaction(pool);
 
   await tx.begin(isolationLevel);
