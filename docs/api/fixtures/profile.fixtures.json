@@ -1,0 +1,107 @@
+{
+  "personalProfile": {
+    "statusCode": 200,
+    "payload": {
+      "success": true,
+      "data": {
+        "lecturerId": 101,
+        "userId": 1,
+        "employeeCode": "GV00234",
+        "fullName": "Nguyễn Văn An",
+        "email": "an.nv@lhu.edu.vn",
+        "phone": "0912345678",
+        "title": "Phó Giáo sư",
+        "degree": "Tiến sĩ",
+        "avatarUrl": null,
+        "updatedAt": "2024-04-10T08:30:00Z",
+        "rowVersion": "AAAAAAAAB9E=",
+        "workHistory": [
+          {
+            "period": "2020 – Hiện tại",
+            "position": "Phó Giáo sư, Tiến sĩ",
+            "department": "Khoa Công nghệ Thông tin, Đại học Lạc Hồng",
+            "unitId": 2,
+            "unitName": "Bộ môn Kỹ thuật Phần mềm",
+            "isPrimary": true
+          },
+          {
+            "period": "2015 – 2020",
+            "position": "Giảng viên chính",
+            "department": "Bộ môn Kỹ thuật Phần mềm",
+            "unitId": 2,
+            "unitName": "Bộ môn Kỹ thuật Phần mềm",
+            "isPrimary": true
+          }
+        ],
+        "titlesAndHonors": [
+          {
+            "awardRecordId": 501,
+            "awardTypeName": "Chiến sĩ thi đua cơ sở",
+            "recognitionYear": 2023,
+            "level": "Cấp Trường - Đạt loại Xuất sắc",
+            "decisionNumber": "123/QĐ-ĐHLH",
+            "decisionDate": "2023-12-20",
+            "status": "RECORDED"
+          },
+          {
+            "awardRecordId": 502,
+            "awardTypeName": "Chiến sĩ thi đua cơ sở",
+            "recognitionYear": 2022,
+            "level": "Cấp Trường - Đạt loại Xuất sắc",
+            "decisionNumber": "098/QĐ-ĐHLH",
+            "decisionDate": "2022-12-22",
+            "status": "RECORDED"
+          }
+        ],
+        "stats": {
+          "totalAchievements": 18,
+          "verifiedAchievements": 12,
+          "pendingAchievements": 3,
+          "needCorrectionAchievements": 1,
+          "rejectedAchievements": 0,
+          "revokedAchievements": 0,
+          "draftAchievements": 2,
+          "recordedAwards": 3
+        }
+      }
+    }
+  },
+  "unitProfile": {
+    "statusCode": 200,
+    "payload": {
+      "success": true,
+      "data": {
+        "unitId": 2,
+        "code": "FIT_SE",
+        "name": "Bộ môn Kỹ thuật Phần mềm",
+        "type": "DEPARTMENT",
+        "parentUnit": {
+          "unitId": 1,
+          "code": "FIT_LHU",
+          "name": "Khoa Công nghệ Thông tin"
+        },
+        "description": "Đào tạo kỹ sư phần mềm, nghiên cứu ứng dụng AI, IoT và Hệ thống thông tin phân tán",
+        "isActive": true,
+        "rowVersion": "AAAAAAAACAA=",
+        "representative": {
+          "userId": 3,
+          "displayName": "ThS. Lê Hoàng Cường",
+          "email": "cuong.lh@lhu.edu.vn",
+          "appointedFrom": "2025-01-01T00:00:00Z",
+          "appointedTo": null
+        },
+        "lecturersCount": 14,
+        "stats": {
+          "totalAchievements": 108,
+          "verifiedAchievements": 86,
+          "pendingAchievements": 9,
+          "needCorrectionAchievements": 3,
+          "rejectedAchievements": 1,
+          "revokedAchievements": 1,
+          "draftAchievements": 8,
+          "recordedAwards": 18
+        }
+      }
+    }
+  }
+}

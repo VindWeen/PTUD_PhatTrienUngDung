@@ -1,0 +1,286 @@
+{
+  "achievementsList": {
+    "statusCode": 200,
+    "payload": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "achievementId": 1001,
+            "subjectType": "LECTURER",
+            "lecturerId": 101,
+            "organizationUnitId": null,
+            "subjectName": "PGS.TS. Nguyễn Văn An",
+            "contextUnitId": 2,
+            "contextUnitName": "Bộ môn Kỹ thuật Phần mềm",
+            "achievementTypeId": 1,
+            "achievementTypeCode": "RESEARCH_JOURNAL_Q1",
+            "achievementTypeName": "Bài báo quốc tế ISI/Scopus Q1",
+            "title": "Ứng dụng Deep Learning trong chẩn đoán y tế từ xa",
+            "description": "Nghiên cứu mô hình CNN và Transformer tối ưu cho phân tích ảnh X-quang phổi tại trạm y tế cơ sở",
+            "contributionRole": "Tác giả chính (First Author)",
+            "startDate": "2023-03-01",
+            "endDate": "2024-02-15",
+            "recognitionYear": 2024,
+            "academicYearId": 2,
+            "academicYearCode": "2023-2024",
+            "status": "VERIFIED",
+            "evidenceCount": 2,
+            "latestRevisionNo": 1,
+            "rowVersion": "AAAAAAAADFE=",
+            "createdAt": "2024-02-20T09:00:00Z",
+            "updatedAt": "2024-03-05T14:20:00Z"
+          },
+          {
+            "achievementId": 1002,
+            "subjectType": "LECTURER",
+            "lecturerId": 101,
+            "organizationUnitId": null,
+            "subjectName": "PGS.TS. Nguyễn Văn An",
+            "contextUnitId": 2,
+            "contextUnitName": "Bộ môn Kỹ thuật Phần mềm",
+            "achievementTypeId": 2,
+            "achievementTypeCode": "RESEARCH_PATENT",
+            "achievementTypeName": "Bằng độc quyền sáng chế / Giải pháp hữu ích",
+            "title": "Hệ thống IoT giám sát môi trường nuôi trồng thủy sản",
+            "description": "Giải pháp cảm biến đa thông số tích hợp pin năng lượng mặt trời và truyền thông LoRaWAN",
+            "contributionRole": "Chủ nhiệm đề tài",
+            "startDate": "2022-06-01",
+            "endDate": "2023-11-30",
+            "recognitionYear": 2023,
+            "academicYearId": 1,
+            "academicYearCode": "2022-2023",
+            "status": "VERIFIED",
+            "evidenceCount": 3,
+            "latestRevisionNo": 2,
+            "rowVersion": "AAAAAAAADGI=",
+            "createdAt": "2023-12-01T10:15:00Z",
+            "updatedAt": "2023-12-18T16:00:00Z"
+          },
+          {
+            "achievementId": 1003,
+            "subjectType": "LECTURER",
+            "lecturerId": 101,
+            "organizationUnitId": null,
+            "subjectName": "PGS.TS. Nguyễn Văn An",
+            "contextUnitId": 2,
+            "contextUnitName": "Bộ môn Kỹ thuật Phần mềm",
+            "achievementTypeId": 1,
+            "achievementTypeCode": "RESEARCH_JOURNAL_Q1",
+            "achievementTypeName": "Bài báo quốc tế ISI/Scopus Q1",
+            "title": "Tối ưu hóa lập lịch container trong điện toán biên công nghiệp",
+            "description": "Thuật toán di truyền cải tiến triển khai trên Kubernetes edge",
+            "contributionRole": "Tác giả liên hệ (Corresponding Author)",
+            "startDate": "2024-01-10",
+            "endDate": "2024-08-20",
+            "recognitionYear": 2024,
+            "academicYearId": 2,
+            "academicYearCode": "2023-2024",
+            "status": "SUBMITTED",
+            "evidenceCount": 1,
+            "latestRevisionNo": 1,
+            "rowVersion": "AAAAAAAADH4=",
+            "createdAt": "2024-08-22T08:00:00Z",
+            "updatedAt": "2024-08-25T11:30:00Z"
+          },
+          {
+            "achievementId": 2001,
+            "subjectType": "UNIT",
+            "lecturerId": null,
+            "organizationUnitId": 2,
+            "subjectName": "Bộ môn Kỹ thuật Phần mềm",
+            "contextUnitId": 2,
+            "contextUnitName": "Bộ môn Kỹ thuật Phần mềm",
+            "achievementTypeId": 3,
+            "achievementTypeCode": "TEACHING_CURRICULUM",
+            "achievementTypeName": "Biên soạn giáo trình / Tài liệu giảng dạy",
+            "title": "Bộ giáo trình chuẩn hóa Kiến trúc Phần mềm và Microservices",
+            "description": "Tập thể cán bộ bộ môn cùng tham gia biên soạn phục vụ chương trình đào tạo chuẩn kiểm định ABET",
+            "contributionRole": "Tập thể đơn vị",
+            "startDate": "2023-01-01",
+            "endDate": "2023-12-15",
+            "recognitionYear": 2023,
+            "academicYearId": 2,
+            "academicYearCode": "2023-2024",
+            "status": "VERIFIED",
+            "evidenceCount": 2,
+            "latestRevisionNo": 1,
+            "rowVersion": "AAAAAAAADK8=",
+            "createdAt": "2023-12-20T14:00:00Z",
+            "updatedAt": "2024-01-10T10:00:00Z"
+          }
+        ],
+        "pagination": {
+          "total": 4,
+          "page": 1,
+          "pageSize": 10,
+          "totalPages": 1
+        }
+      }
+    }
+  },
+  "achievementDetailVerified": {
+    "statusCode": 200,
+    "payload": {
+      "success": true,
+      "data": {
+        "achievementId": 1001,
+        "subjectType": "LECTURER",
+        "lecturerId": 101,
+        "organizationUnitId": null,
+        "lecturer": {
+          "lecturerId": 101,
+          "fullName": "PGS.TS. Nguyễn Văn An",
+          "employeeCode": "GV00234",
+          "email": "an.nv@lhu.edu.vn"
+        },
+        "contextUnit": {
+          "unitId": 2,
+          "code": "FIT_SE",
+          "name": "Bộ môn Kỹ thuật Phần mềm",
+          "facultyName": "Khoa Công nghệ Thông tin"
+        },
+        "achievementType": {
+          "achievementTypeId": 1,
+          "code": "RESEARCH_JOURNAL_Q1",
+          "name": "Bài báo quốc tế ISI/Scopus Q1"
+        },
+        "title": "Ứng dụng Deep Learning trong chẩn đoán y tế từ xa",
+        "description": "Nghiên cứu mô hình CNN và Transformer tối ưu cho phân tích ảnh X-quang phổi tại trạm y tế cơ sở",
+        "contributionRole": "Tác giả chính (First Author)",
+        "startDate": "2023-03-01",
+        "endDate": "2024-02-15",
+        "recognitionYear": 2024,
+        "academicYearId": 2,
+        "status": "VERIFIED",
+        "createdBy": 1,
+        "submittedBy": 1,
+        "replacesAchievementId": null,
+        "rowVersion": "AAAAAAAADFE=",
+        "createdAt": "2024-02-20T09:00:00Z",
+        "updatedAt": "2024-03-05T14:20:00Z",
+        "evidences": [
+          {
+            "evidenceId": 301,
+            "title": "Bản in bài báo đã xuất bản trên IEEE Access (PDF)",
+            "description": "Volume 12, số ra tháng 2/2024, DOI: 10.1109/ACCESS.2024.1234567",
+            "files": [
+              {
+                "evidenceFileId": 401,
+                "versionNo": 1,
+                "originalFileName": "IEEE_Access_Paper_Final.pdf",
+                "storageKey": "evidences/2024/ach_1001_ev_301_v1.pdf",
+                "mimeType": "application/pdf",
+                "fileExtension": ".pdf",
+                "fileSize": 3450620,
+                "sha256Hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "uploadedAt": "2024-02-20T09:15:00Z",
+                "downloadUrl": "/api/v1/evidence-files/401/download"
+              }
+            ]
+          },
+          {
+            "evidenceId": 302,
+            "title": "Chứng nhận tra cứu Scopus/SCImago Q1",
+            "description": "Ảnh chụp màn hình phân hạng Q1 của tạp chí IEEE Access",
+            "files": [
+              {
+                "evidenceFileId": 402,
+                "versionNo": 1,
+                "originalFileName": "Scimago_Q1_Ranking.png",
+                "storageKey": "evidences/2024/ach_1001_ev_302_v1.png",
+                "mimeType": "image/png",
+                "fileExtension": ".png",
+                "fileSize": 1289400,
+                "sha256Hash": "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
+                "uploadedAt": "2024-02-20T09:20:00Z",
+                "downloadUrl": "/api/v1/evidence-files/402/download"
+              }
+            ]
+          }
+        ],
+        "submissions": [
+          {
+            "submissionId": 501,
+            "revisionNo": 1,
+            "submittedBy": {
+              "userId": 1,
+              "displayName": "PGS.TS. Nguyễn Văn An"
+            },
+            "submittedAt": "2024-02-20T09:30:00Z",
+            "frozenFilesCount": 2
+          }
+        ]
+      }
+    }
+  },
+  "achievementDetailNeedCorrection": {
+    "statusCode": 200,
+    "payload": {
+      "success": true,
+      "data": {
+        "achievementId": 1004,
+        "subjectType": "LECTURER",
+        "lecturerId": 101,
+        "organizationUnitId": null,
+        "title": "Phát triển nền tảng học máy cho dự báo phụ tải điện khu công nghiệp",
+        "contextUnitId": 2,
+        "achievementTypeId": 1,
+        "status": "NEED_CORRECTION",
+        "recognitionYear": 2024,
+        "rowVersion": "AAAAAAAADJw=",
+        "latestCorrectionReason": "Minh chứng bài báo chưa đính kèm trang có thông tin DOI và xếp hạng Scopus năm 2024. Đề nghị tác giả bổ sung file minh chứng trước ngày 30/09/2026.",
+        "evidences": [
+          {
+            "evidenceId": 305,
+            "title": "Bản thảo bài báo",
+            "files": [
+              {
+                "evidenceFileId": 408,
+                "versionNo": 1,
+                "originalFileName": "BanThao_BaiBao.pdf",
+                "fileSize": 2100000,
+                "downloadUrl": "/api/v1/evidence-files/408/download"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "achievementHistoryList": {
+    "statusCode": 200,
+    "payload": {
+      "success": true,
+      "data": {
+        "achievementId": 1001,
+        "histories": [
+          {
+            "historyId": 1,
+            "fromStatus": "DRAFT",
+            "toStatus": "SUBMITTED",
+            "actor": {
+              "userId": 1,
+              "displayName": "PGS.TS. Nguyễn Văn An",
+              "role": "LECTURER"
+            },
+            "reason": null,
+            "createdAt": "2024-02-20T09:30:00Z"
+          },
+          {
+            "historyId": 2,
+            "fromStatus": "SUBMITTED",
+            "toStatus": "VERIFIED",
+            "actor": {
+              "userId": 2,
+              "displayName": "TS. Trần Thị Bích",
+              "role": "MANAGER"
+            },
+            "reason": "Hồ sơ đầy đủ minh chứng hợp lệ theo quy chế NCKH LHU.",
+            "createdAt": "2024-03-05T14:20:00Z"
+          }
+        ]
+      }
+    }
+  }
+}

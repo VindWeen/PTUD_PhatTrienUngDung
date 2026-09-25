@@ -1,0 +1,131 @@
+{
+  "error400ValidationError": {
+    "statusCode": 400,
+    "payload": {
+      "success": false,
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "Dữ liệu yêu cầu không hợp lệ. Vui lòng kiểm tra lại các trường thông tin.",
+        "fieldErrors": {
+          "title": "Tiêu đề thành tích không được để trống và phải có độ dài tối thiểu 5 ký tự.",
+          "recognitionYear": "Năm ghi nhận phải là số nguyên dương từ 1990 đến năm hiện tại.",
+          "subject": "Hồ sơ phải thuộc về đúng một cá nhân giảng viên hoặc một đơn vị (Ràng buộc chủ thể XOR vi phạm).",
+          "endDate": "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu."
+        },
+        "timestamp": "2026-09-25T14:30:00.123Z",
+        "correlationId": "req-val-001"
+      }
+    }
+  },
+  "error401Unauthorized": {
+    "statusCode": 401,
+    "payload": {
+      "success": false,
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Phiên đăng nhập đã hết hạn hoặc mã xác thực không hợp lệ. Vui lòng đăng nhập lại.",
+        "details": [],
+        "timestamp": "2026-09-25T14:30:00.124Z",
+        "correlationId": "req-auth-002"
+      }
+    }
+  },
+  "error403SelfApprovalProhibited": {
+    "statusCode": 403,
+    "payload": {
+      "success": false,
+      "error": {
+        "code": "SELF_APPROVAL_PROHIBITED",
+        "message": "Quy tắc liêm chính học thuật: Cán bộ quản lý không được phép tự thẩm định, xác nhận, từ chối hoặc yêu cầu bổ sung hồ sơ thành tích do chính mình tạo, nộp hoặc là chủ thể.",
+        "details": [
+          {
+            "rule": "ANTI_SELF_APPROVAL",
+            "achievementId": 1001,
+            "subjectUserId": 2,
+            "currentUserId": 2,
+            "reason": "Chủ thể của thành tích này trùng với tài khoản người dùng hiện tại đang đăng nhập."
+          }
+        ],
+        "timestamp": "2026-09-25T14:30:00.125Z",
+        "correlationId": "req-sec-003"
+      }
+    }
+  },
+  "error403OutOfScope": {
+    "statusCode": 403,
+    "payload": {
+      "success": false,
+      "error": {
+        "code": "OUT_OF_SCOPE",
+        "message": "Bạn không có thẩm quyền quản lý đối với đơn vị phụ trách của hồ sơ này.",
+        "details": [
+          {
+            "targetContextUnitId": 5,
+            "targetUnitName": "Khoa Ngoại ngữ",
+            "userAssignedUnits": [
+              {
+                "unitId": 1,
+                "unitName": "Khoa Công nghệ Thông tin",
+                "includeDescendants": true
+              }
+            ]
+          }
+        ],
+        "timestamp": "2026-09-25T14:30:00.126Z",
+        "correlationId": "req-sec-004"
+      }
+    }
+  },
+  "error404NotFound": {
+    "statusCode": 404,
+    "payload": {
+      "success": false,
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Không tìm thấy hồ sơ thành tích yêu cầu hoặc tài nguyên đã bị xóa.",
+        "details": [],
+        "timestamp": "2026-09-25T14:30:00.127Z",
+        "correlationId": "req-res-005"
+      }
+    }
+  },
+  "error409ConcurrencyConflict": {
+    "statusCode": 409,
+    "payload": {
+      "success": false,
+      "error": {
+        "code": "CONCURRENCY_CONFLICT",
+        "message": "Dữ liệu hồ sơ đã được cập nhật bởi một người dùng khác hoặc một phiên thao tác khác trong lúc bạn đang xử lý. Vui lòng làm mới dữ liệu để xem trạng thái mới nhất.",
+        "details": [
+          {
+            "clientRowVersion": "AAAAAAAADFE=",
+            "currentRowVersion": "AAAAAAAADGI=",
+            "currentStatus": "VERIFIED"
+          }
+        ],
+        "timestamp": "2026-09-25T14:30:00.128Z",
+        "correlationId": "req-con-006"
+      }
+    }
+  },
+  "error409InvalidStateTransition": {
+    "statusCode": 409,
+    "payload": {
+      "success": false,
+      "error": {
+        "code": "INVALID_STATE_TRANSITION",
+        "message": "Không thể thực hiện hành động này vì trạng thái hiện tại của hồ sơ không cho phép.",
+        "details": [
+          {
+            "currentStatus": "VERIFIED",
+            "attemptedAction": "VERIFY",
+            "allowedActions": ["REVOKE"],
+            "reason": "Hồ sơ đã được xác nhận (VERIFIED), dữ liệu đã được đóng băng. Chỉ có thể thu hồi (REVOKE) khi phát hiện sai phạm."
+          }
+        ],
+        "timestamp": "2026-09-25T14:30:00.129Z",
+        "correlationId": "req-state-007"
+      }
+    }
+  }
+}
