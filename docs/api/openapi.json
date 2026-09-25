@@ -1,0 +1,1202 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Hệ thống Quản lý Hồ sơ Thành tích Số & Hỗ trợ Xét duyệt Khen thưởng LHU",
+    "version": "1.0.0",
+    "description": "Đặc tả API RESTful v1 cho giai đoạn W1-Q1: Chốt nghiệp vụ, Schema và API lõi. Phục vụ tích hợp giao diện frontend và hợp đồng dữ liệu giữa Tạ Trần Vinh Quang (Backend/Database) và bạn Phước (Frontend).",
+    "contact": {
+      "name": "Tạ Trần Vinh Quang",
+      "email": "quang.ttv@lhu.edu.vn"
+    }
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "Máy chủ API nội bộ LHU"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "summary": "Đăng nhập hệ thống",
+        "description": "Xác thực danh tính bằng email/username và mật khẩu, trả về Access Token và cấu hình cookie Refresh Token.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                  "username": { "type": "string", "example": "an.nv@lhu.edu.vn" },
+                  "password": { "type": "string", "format": "password", "example": "demo1234" },
+                  "rememberMe": { "type": "boolean", "default": false }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Đăng nhập thành công",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LoginResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/400BadRequest" },
+          "401": { "$ref": "#/components/responses/401Unauthorized" }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "summary": "Làm mới Access Token",
+        "description": "Nhận Refresh Token từ HttpOnly cookie, kiểm tra thu hồi và cấp Access Token mới.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Làm mới token thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "accessToken": { "type": "string" },
+                        "tokenType": { "type": "string", "example": "Bearer" },
+                        "expiresIn": { "type": "integer", "example": 7200 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/401Unauthorized" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Đăng xuất",
+        "description": "Thu hồi phiên refresh token hiện tại và xóa cookie xác thực.",
+        "responses": {
+          "200": {
+            "description": "Đăng xuất thành công",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StandardSuccessResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/change-password": {
+      "post": {
+        "summary": "Đổi mật khẩu người dùng",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["oldPassword", "newPassword"],
+                "properties": {
+                  "oldPassword": { "type": "string", "format": "password" },
+                  "newPassword": { "type": "string", "format": "password", "minLength": 8 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Đổi mật khẩu thành công",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StandardSuccessResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/400BadRequest" },
+          "401": { "$ref": "#/components/responses/401Unauthorized" }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Lấy thông tin tài khoản hiện tại",
+        "description": "Trả về thông tin người dùng đang đăng nhập, các vai trò năng lực, thông tin hồ sơ giảng viên và phạm vi quản lý đang hiệu lực.",
+        "responses": {
+          "200": {
+            "description": "Thông tin phiên làm việc",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UserProfileResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/401Unauthorized" }
+        }
+      }
+    },
+    "/me/profile": {
+      "get": {
+        "summary": "Lấy hồ sơ cá nhân của tôi (Portfolio)",
+        "description": "Trả về đầy đủ dữ liệu hiển thị trang Hồ sơ Năng lực (ProfilePortfolio): lý lịch, quá trình công tác, danh hiệu và thống kê thành tích.",
+        "responses": {
+          "200": {
+            "description": "Chi tiết hồ sơ cá nhân",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PersonalPortfolioResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/401Unauthorized" }
+        }
+      },
+      "patch": {
+        "summary": "Cập nhật thông tin hồ sơ cá nhân",
+        "description": "Cập nhật số điện thoại, chức danh, học vị. Bắt buộc kiểm tra rowVersion.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["rowVersion"],
+                "properties": {
+                  "phone": { "type": "string" },
+                  "title": { "type": "string" },
+                  "degree": { "type": "string" },
+                  "rowVersion": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cập nhật thành công",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StandardSuccessResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/400BadRequest" },
+          "409": { "$ref": "#/components/responses/409Conflict" }
+        }
+      }
+    },
+    "/lecturers/{id}": {
+      "get": {
+        "summary": "Lấy thông tin hồ sơ giảng viên theo ID",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Hồ sơ giảng viên",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PersonalPortfolioResponse" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/404NotFound" }
+        }
+      }
+    },
+    "/units/{id}/profile": {
+      "get": {
+        "summary": "Lấy hồ sơ tập thể đơn vị",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Hồ sơ tập thể đơn vị",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UnitProfileResponse" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/404NotFound" }
+        }
+      }
+    },
+    "/achievements": {
+      "get": {
+        "summary": "Tra cứu danh sách hồ sơ thành tích",
+        "description": "Lấy danh sách thành tích có phân trang, bộ lọc năm, đơn vị, loại thành tích và trạng thái.",
+        "parameters": [
+          { "name": "subjectType", "in": "query", "schema": { "type": "string", "enum": ["LECTURER", "UNIT"] } },
+          { "name": "lecturerId", "in": "query", "schema": { "type": "integer" } },
+          { "name": "unitId", "in": "query", "schema": { "type": "integer" } },
+          { "name": "recognitionYear", "in": "query", "schema": { "type": "integer" } },
+          { "name": "academicYearId", "in": "query", "schema": { "type": "integer" } },
+          { "name": "achievementTypeId", "in": "query", "schema": { "type": "integer" } },
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["DRAFT", "SUBMITTED", "NEED_CORRECTION", "VERIFIED", "REJECTED", "CANCELLED", "REVOKED"] } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "pageSize", "in": "query", "schema": { "type": "integer", "default": 10 } },
+          { "name": "sortBy", "in": "query", "schema": { "type": "string", "enum": ["createdAt", "updatedAt", "recognitionYear", "title"], "default": "updatedAt" } },
+          { "name": "sortOrder", "in": "query", "schema": { "type": "string", "enum": ["asc", "desc"], "default": "desc" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Danh sách thành tích",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AchievementsListResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Tạo bản nháp thành tích mới (DRAFT)",
+        "description": "Khởi tạo hồ sơ thành tích. Bắt buộc tuân thủ quy tắc chủ thể XOR (hoặc LecturerId hoặc OrganizationUnitId). Hệ thống tự gán ContextUnitId tại thời điểm tạo.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateAchievementRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tạo bản nháp thành công",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AchievementDetailResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/400BadRequest" },
+          "403": { "$ref": "#/components/responses/403Forbidden" }
+        }
+      }
+    },
+    "/achievements/{id}": {
+      "get": {
+        "summary": "Xem chi tiết hồ sơ thành tích",
+        "description": "Lấy chi tiết hồ sơ thành tích, bao gồm danh mục minh chứng, phiên bản file và các lần gửi (revisions).",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chi tiết thành tích",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AchievementDetailResponse" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/404NotFound" }
+        }
+      },
+      "patch": {
+        "summary": "Chỉnh sửa bản nháp thành tích",
+        "description": "Chỉ được sửa khi hồ sơ ở trạng thái DRAFT hoặc NEED_CORRECTION. Bắt buộc kiểm tra rowVersion.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateAchievementRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cập nhật thành công",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AchievementDetailResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/400BadRequest" },
+          "409": { "$ref": "#/components/responses/409Conflict" }
+        }
+      },
+      "delete": {
+        "summary": "Xóa bản nháp thành tích",
+        "description": "Chỉ cho phép xóa bản nháp DRAFT chưa từng nộp gửi duyệt. Hồ sơ đã gửi không thể xóa vật lý.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Xóa bản nháp thành công",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StandardSuccessResponse" }
+              }
+            }
+          },
+          "409": { "$ref": "#/components/responses/409Conflict" }
+        }
+      }
+    },
+    "/achievements/{id}/submit": {
+      "post": {
+        "summary": "Gửi duyệt hồ sơ thành tích (Nộp lần đầu hoặc Gửi lại)",
+        "description": "Chuyển trạng thái từ DRAFT hoặc NEED_CORRECTION sang SUBMITTED. Bắt buộc có ít nhất 1 minh chứng có file. Hệ thống tạo RevisionNo mới, chụp SnapshotData và đóng băng tệp tin.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["rowVersion"],
+                "properties": {
+                  "rowVersion": { "type": "string" },
+                  "note": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Gửi duyệt thành công",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AchievementDetailResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/400BadRequest" },
+          "409": { "$ref": "#/components/responses/409Conflict" }
+        }
+      }
+    },
+    "/achievements/{id}/cancel": {
+      "post": {
+        "summary": "Hủy hồ sơ thành tích",
+        "description": "Rút lại hồ sơ ở trạng thái DRAFT, SUBMITTED hoặc NEED_CORRECTION. Bắt buộc lý do nếu đã từng gửi.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["rowVersion"],
+                "properties": {
+                  "rowVersion": { "type": "string" },
+                  "reason": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Hủy hồ sơ thành công",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StandardSuccessResponse" }
+              }
+            }
+          },
+          "409": { "$ref": "#/components/responses/409Conflict" }
+        }
+      }
+    },
+    "/achievements/{id}/history": {
+      "get": {
+        "summary": "Xem lịch sử chuyển trạng thái của hồ sơ",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Danh sách lịch sử",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AchievementHistoryResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/achievements/{id}/evidences": {
+      "post": {
+        "summary": "Thêm danh mục minh chứng cho thành tích",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": { "type": "string", "example": "Bản in bài báo đã xuất bản (PDF)" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Thêm minh chứng thành công",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CreateEvidenceResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/400BadRequest" }
+        }
+      }
+    },
+    "/evidences/{id}/versions": {
+      "post": {
+        "summary": "Tải lên tệp minh chứng phiên bản mới (Bất biến)",
+        "description": "Tải lên tập tin vật lý (tối đa 10MB, định dạng PDF, JPG, PNG, DOCX). Hệ thống tăng VersionNo và lưu file vào kho riêng bảo mật.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tải lên thành công",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UploadFileResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/400BadRequest" },
+          "413": { "description": "Tập tin vượt quá giới hạn 10MB" }
+        }
+      }
+    },
+    "/evidence-files/{id}/download": {
+      "get": {
+        "summary": "Tải về tệp minh chứng có kiểm tra quyền",
+        "description": "Chỉ chủ hồ sơ hoặc Manager/RecordsOfficer có scope đơn vị mới được phép tải tệp tin.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Nội dung tệp nhị phân",
+            "content": {
+              "application/octet-stream": { "schema": { "type": "string", "format": "binary" } }
+            }
+          },
+          "403": { "$ref": "#/components/responses/403Forbidden" },
+          "404": { "$ref": "#/components/responses/404NotFound" }
+        }
+      }
+    },
+    "/approvals/pending": {
+      "get": {
+        "summary": "Lấy danh sách hồ sơ chờ thẩm định (Hàng chờ của Manager)",
+        "description": "Lấy các hồ sơ SUBMITTED có ContextUnitId thuộc phạm vi UserUnitScopes của Manager. Tự động loại trừ các hồ sơ của chính Manager (CHỐNG TỰ DUYỆT).",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "pageSize", "in": "query", "schema": { "type": "integer", "default": 10 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Danh sách hàng chờ",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AchievementsListResponse" }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/403Forbidden" }
+        }
+      }
+    },
+    "/achievements/{id}/verify": {
+      "post": {
+        "summary": "Xác nhận hồ sơ thành tích (VERIFIED)",
+        "description": "Thẩm định và xác nhận hồ sơ. Kiểm tra quyền Scope, CHỐNG TỰ DUYỆT, kiểm tra RowVersion. Khóa dữ liệu bất biến.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["rowVersion"],
+                "properties": {
+                  "rowVersion": { "type": "string" },
+                  "note": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Xác nhận thành công",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AchievementDetailResponse" }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/403Forbidden" },
+          "409": { "$ref": "#/components/responses/409Conflict" }
+        }
+      }
+    },
+    "/achievements/{id}/request-correction": {
+      "post": {
+        "summary": "Yêu cầu bổ sung hồ sơ thành tích (NEED_CORRECTION)",
+        "description": "Yêu cầu chủ hồ sơ bổ sung minh chứng hoặc sửa thông tin. BẮT BUỘC có lý do. Kiểm tra CHỐNG TỰ DUYỆT.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["rowVersion", "reason"],
+                "properties": {
+                  "rowVersion": { "type": "string" },
+                  "reason": { "type": "string", "minLength": 10 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Yêu cầu bổ sung thành công",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AchievementDetailResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/400BadRequest" },
+          "403": { "$ref": "#/components/responses/403Forbidden" },
+          "409": { "$ref": "#/components/responses/409Conflict" }
+        }
+      }
+    },
+    "/achievements/{id}/reject": {
+      "post": {
+        "summary": "Từ chối hồ sơ thành tích (REJECTED)",
+        "description": "Từ chối công nhận hồ sơ thành tích. BẮT BUỘC có lý do. Trạng thái kết thúc, không được nộp lại trực tiếp.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["rowVersion", "reason"],
+                "properties": {
+                  "rowVersion": { "type": "string" },
+                  "reason": { "type": "string", "minLength": 10 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Từ chối thành công",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AchievementDetailResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/400BadRequest" },
+          "403": { "$ref": "#/components/responses/403Forbidden" },
+          "409": { "$ref": "#/components/responses/409Conflict" }
+        }
+      }
+    },
+    "/achievements/{id}/revoke": {
+      "post": {
+        "summary": "Thu hồi xác nhận thành tích (REVOKED)",
+        "description": "Thu hồi hồ sơ đã VERIFIED khi phát hiện sai phạm hoặc hủy kết quả. BẮT BUỘC có lý do.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["rowVersion", "reason"],
+                "properties": {
+                  "rowVersion": { "type": "string" },
+                  "reason": { "type": "string", "minLength": 10 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Thu hồi thành tích thành công",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AchievementDetailResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/400BadRequest" },
+          "403": { "$ref": "#/components/responses/403Forbidden" },
+          "409": { "$ref": "#/components/responses/409Conflict" }
+        }
+      }
+    },
+    "/award-records": {
+      "get": {
+        "summary": "Danh sách kết quả khen thưởng có quyết định",
+        "parameters": [
+          { "name": "subjectType", "in": "query", "schema": { "type": "string", "enum": ["LECTURER", "UNIT"] } },
+          { "name": "recognitionYear", "in": "query", "schema": { "type": "integer" } },
+          { "name": "awardTypeId", "in": "query", "schema": { "type": "integer" } },
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["DRAFT", "RECORDED", "REVOKED"] } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "pageSize", "in": "query", "schema": { "type": "integer", "default": 10 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Danh sách khen thưởng",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AwardRecordsListResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Tạo bản ghi khen thưởng mới (DRAFT)",
+        "description": "RecordsOfficer nhập khen thưởng cho cá nhân hoặc tập thể dựa trên Quyết định đã có. Tuân thủ XOR chủ thể.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateAwardRecordRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tạo bản ghi khen thưởng thành công",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AwardRecordDetailResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/400BadRequest" },
+          "403": { "$ref": "#/components/responses/403Forbidden" }
+        }
+      }
+    },
+    "/award-records/{id}/record": {
+      "post": {
+        "summary": "Ghi nhận khen thưởng chính thức (RECORDED)",
+        "description": "Chuyển trạng thái từ DRAFT sang RECORDED. Kiểm tra chống trùng lặp qua Filtered Unique Index.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["rowVersion"],
+                "properties": { "rowVersion": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ghi nhận thành công",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AwardRecordDetailResponse" }
+              }
+            }
+          },
+          "409": { "$ref": "#/components/responses/409Conflict" }
+        }
+      }
+    },
+    "/award-records/{id}/revoke": {
+      "post": {
+        "summary": "Thu hồi kết quả khen thưởng (REVOKED)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["rowVersion", "reason"],
+                "properties": {
+                  "rowVersion": { "type": "string" },
+                  "reason": { "type": "string", "minLength": 10 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Thu hồi khen thưởng thành công",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StandardSuccessResponse" }
+              }
+            }
+          },
+          "409": { "$ref": "#/components/responses/409Conflict" }
+        }
+      }
+    },
+    "/award-decisions": {
+      "post": {
+        "summary": "Nhập quyết định khen thưởng",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["decisionNumber", "decisionDate", "issuer", "title"],
+                "properties": {
+                  "decisionNumber": { "type": "string", "example": "123/QĐ-ĐHLH" },
+                  "decisionDate": { "type": "string", "format": "date", "example": "2023-12-20" },
+                  "issuer": { "type": "string", "example": "Hiệu trưởng Trường Đại học Lạc Hồng" },
+                  "title": { "type": "string", "example": "Về việc công nhận danh hiệu CSTĐ cơ sở năm học 2022-2023" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tạo quyết định thành công",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StandardSuccessResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/achievements": {
+      "get": {
+        "summary": "Báo cáo thống kê thành tích",
+        "description": "Thống kê tổng hợp số lượng thành tích theo năm, đơn vị (dựa trên ContextUnitId) và trạng thái.",
+        "parameters": [
+          { "name": "recognitionYear", "in": "query", "schema": { "type": "integer" } },
+          { "name": "unitId", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Số liệu thống kê thành tích",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AchievementReportResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/export": {
+      "get": {
+        "summary": "Xuất dữ liệu báo cáo ra file CSV",
+        "description": "Xuất danh sách thành tích hoặc khen thưởng theo bộ lọc ra tệp CSV. Dữ liệu văn bản được làm sạch chống tấn công CSV Injection.",
+        "parameters": [
+          { "name": "type", "in": "query", "required": true, "schema": { "type": "string", "enum": ["achievements", "awards"] } },
+          { "name": "recognitionYear", "in": "query", "schema": { "type": "integer" } },
+          { "name": "unitId", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tệp CSV",
+            "content": {
+              "text/csv": { "schema": { "type": "string", "format": "binary" } }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "responses": {
+      "400BadRequest": {
+        "description": "Dữ liệu yêu cầu không hợp lệ hoặc vi phạm kiểm tra nghiệp vụ",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/StandardErrorResponse" }
+          }
+        }
+      },
+      "401Unauthorized": {
+        "description": "Chưa xác thực hoặc token không hợp lệ",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/StandardErrorResponse" }
+          }
+        }
+      },
+      "403Forbidden": {
+        "description": "Bị từ chối truy cập (Thiếu quyền, ngoài phạm vi Scope hoặc Vi phạm quy tắc Tự duyệt)",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/StandardErrorResponse" }
+          }
+        }
+      },
+      "404NotFound": {
+        "description": "Không tìm thấy tài nguyên yêu cầu",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/StandardErrorResponse" }
+          }
+        }
+      },
+      "409Conflict": {
+        "description": "Xung đột đồng thời (RowVersion thay đổi) hoặc chuyển trạng thái không hợp lệ",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/StandardErrorResponse" }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "StandardSuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "example": "Thao tác thành công" },
+          "data": { "type": "object", "nullable": true }
+        }
+      },
+      "StandardErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string", "example": "VALIDATION_ERROR" },
+              "message": { "type": "string", "example": "Dữ liệu yêu cầu không hợp lệ" },
+              "fieldErrors": { "type": "object", "additionalProperties": { "type": "string" } },
+              "details": { "type": "array", "items": { "type": "object" } },
+              "timestamp": { "type": "string", "format": "date-time" },
+              "correlationId": { "type": "string", "example": "req-123456" }
+            }
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "accessToken": { "type": "string" },
+              "tokenType": { "type": "string", "example": "Bearer" },
+              "expiresIn": { "type": "integer", "example": 7200 },
+              "user": { "$ref": "#/components/schemas/UserProfileResponse" }
+            }
+          }
+        }
+      },
+      "UserProfileResponse": {
+        "type": "object",
+        "properties": {
+          "userId": { "type": "integer" },
+          "username": { "type": "string" },
+          "email": { "type": "string" },
+          "displayName": { "type": "string" },
+          "roles": { "type": "array", "items": { "type": "string" } },
+          "scopes": { "type": "array", "items": { "type": "object" } }
+        }
+      },
+      "PersonalPortfolioResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "lecturerId": { "type": "integer" },
+              "fullName": { "type": "string" },
+              "employeeCode": { "type": "string" },
+              "email": { "type": "string" },
+              "phone": { "type": "string" },
+              "title": { "type": "string" },
+              "degree": { "type": "string" },
+              "rowVersion": { "type": "string" },
+              "workHistory": { "type": "array", "items": { "type": "object" } },
+              "titlesAndHonors": { "type": "array", "items": { "type": "object" } },
+              "stats": { "type": "object" }
+            }
+          }
+        }
+      },
+      "UnitProfileResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "unitId": { "type": "integer" },
+              "code": { "type": "string" },
+              "name": { "type": "string" },
+              "type": { "type": "string" },
+              "description": { "type": "string" },
+              "rowVersion": { "type": "string" },
+              "stats": { "type": "object" }
+            }
+          }
+        }
+      },
+      "CreateAchievementRequest": {
+        "type": "object",
+        "required": ["achievementTypeId", "title", "recognitionYear"],
+        "properties": {
+          "subjectType": { "type": "string", "enum": ["LECTURER", "UNIT"], "default": "LECTURER" },
+          "organizationUnitId": { "type": "integer", "nullable": true, "description": "Bắt buộc khi subjectType = UNIT; phải là NULL khi subjectType = LECTURER" },
+          "achievementTypeId": { "type": "integer" },
+          "title": { "type": "string", "minLength": 5, "maxLength": 255 },
+          "description": { "type": "string" },
+          "contributionRole": { "type": "string" },
+          "startDate": { "type": "string", "format": "date" },
+          "endDate": { "type": "string", "format": "date" },
+          "recognitionYear": { "type": "integer", "example": 2024 },
+          "academicYearId": { "type": "integer", "nullable": true }
+        }
+      },
+      "UpdateAchievementRequest": {
+        "type": "object",
+        "required": ["rowVersion"],
+        "properties": {
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "contributionRole": { "type": "string" },
+          "startDate": { "type": "string", "format": "date" },
+          "endDate": { "type": "string", "format": "date" },
+          "recognitionYear": { "type": "integer" },
+          "academicYearId": { "type": "integer", "nullable": true },
+          "rowVersion": { "type": "string" }
+        }
+      },
+      "AchievementsListResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": { "type": "array", "items": { "type": "object" } },
+              "pagination": {
+                "type": "object",
+                "properties": {
+                  "total": { "type": "integer" },
+                  "page": { "type": "integer" },
+                  "pageSize": { "type": "integer" },
+                  "totalPages": { "type": "integer" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "AchievementDetailResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "achievementId": { "type": "integer" },
+              "subjectType": { "type": "string" },
+              "lecturerId": { "type": "integer", "nullable": true },
+              "organizationUnitId": { "type": "integer", "nullable": true },
+              "contextUnitId": { "type": "integer" },
+              "title": { "type": "string" },
+              "description": { "type": "string" },
+              "status": { "type": "string" },
+              "recognitionYear": { "type": "integer" },
+              "rowVersion": { "type": "string" },
+              "evidences": { "type": "array", "items": { "type": "object" } }
+            }
+          }
+        }
+      },
+      "AchievementHistoryResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "achievementId": { "type": "integer" },
+              "histories": { "type": "array", "items": { "type": "object" } }
+            }
+          }
+        }
+      },
+      "CreateEvidenceResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "evidenceId": { "type": "integer" },
+              "achievementId": { "type": "integer" },
+              "title": { "type": "string" }
+            }
+          }
+        }
+      },
+      "UploadFileResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "evidenceFileId": { "type": "integer" },
+              "versionNo": { "type": "integer" },
+              "originalFileName": { "type": "string" },
+              "fileSize": { "type": "integer" },
+              "sha256Hash": { "type": "string" },
+              "downloadUrl": { "type": "string" }
+            }
+          }
+        }
+      },
+      "AwardRecordsListResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": { "type": "array", "items": { "type": "object" } },
+              "pagination": { "type": "object" }
+            }
+          }
+        }
+      },
+      "CreateAwardRecordRequest": {
+        "type": "object",
+        "required": ["awardTypeId", "decisionId", "recognitionYear"],
+        "properties": {
+          "subjectType": { "type": "string", "enum": ["LECTURER", "UNIT"], "default": "LECTURER" },
+          "lecturerId": { "type": "integer", "nullable": true },
+          "organizationUnitId": { "type": "integer", "nullable": true },
+          "awardTypeId": { "type": "integer" },
+          "decisionId": { "type": "integer" },
+          "recognitionYear": { "type": "integer" },
+          "periodStart": { "type": "string", "format": "date" },
+          "periodEnd": { "type": "string", "format": "date" },
+          "linkedAchievementIds": { "type": "array", "items": { "type": "integer" } }
+        }
+      },
+      "AwardRecordDetailResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "awardRecordId": { "type": "integer" },
+              "status": { "type": "string" },
+              "rowVersion": { "type": "string" }
+            }
+          }
+        }
+      },
+      "AchievementReportResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": { "type": "object" }
+        }
+      }
+    }
+  }
+}

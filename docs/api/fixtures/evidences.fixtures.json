@@ -1,0 +1,50 @@
+{
+  "createEvidenceSuccess": {
+    "statusCode": 201,
+    "payload": {
+      "success": true,
+      "message": "Thêm danh mục minh chứng thành công",
+      "data": {
+        "evidenceId": 303,
+        "achievementId": 1003,
+        "title": "Hợp đồng nghiên cứu khoa học và biên bản nghiệm thu cấp trường",
+        "description": "Hợp đồng số 45/HĐ-KHCN ký ngày 15/01/2024",
+        "isRemoved": false,
+        "createdBy": 1,
+        "createdAt": "2024-08-22T08:10:00Z",
+        "files": []
+      }
+    }
+  },
+  "uploadFileVersionSuccess": {
+    "statusCode": 201,
+    "payload": {
+      "success": true,
+      "message": "Tải lên tệp minh chứng thành công",
+      "data": {
+        "evidenceFileId": 405,
+        "evidenceId": 303,
+        "versionNo": 1,
+        "originalFileName": "Hop_dong_NCKH_daky.pdf",
+        "storageKey": "evidences/2024/ach_1003_ev_303_v1_7c9f8a12.pdf",
+        "mimeType": "application/pdf",
+        "fileExtension": ".pdf",
+        "fileSize": 3355443,
+        "sha256Hash": "a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0",
+        "uploadedBy": 1,
+        "uploadedAt": "2024-08-22T08:15:00Z",
+        "downloadUrl": "/api/v1/evidence-files/405/download"
+      }
+    }
+  },
+  "downloadEvidenceFileMetadata": {
+    "statusCode": 200,
+    "headers": {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": "attachment; filename=\"Hop_dong_NCKH_daky.pdf\"",
+      "Content-Length": "3355443",
+      "ETag": "\"a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0\""
+    },
+    "note": "File được stream trực tiếp từ Private Storage sau khi backend xác thực quyền sở hữu hoặc Manager có scope quản lý tương ứng."
+  }
+}

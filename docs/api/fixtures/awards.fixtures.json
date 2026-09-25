@@ -1,0 +1,127 @@
+{
+  "awardRecordsList": {
+    "statusCode": 200,
+    "payload": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "awardRecordId": 501,
+            "subjectType": "LECTURER",
+            "lecturerId": 101,
+            "organizationUnitId": null,
+            "subjectName": "PGS.TS. Nguyễn Văn An",
+            "contextUnitId": 2,
+            "contextUnitName": "Bộ môn Kỹ thuật Phần mềm",
+            "awardTypeId": 1,
+            "awardTypeCode": "CSTĐ_CS",
+            "awardTypeName": "Chiến sĩ thi đua cơ sở",
+            "awardCategory": "TITLE",
+            "awardLevel": "UNIVERSITY",
+            "decision": {
+              "decisionId": 701,
+              "decisionNumber": "123/QĐ-ĐHLH",
+              "decisionDate": "2023-12-20",
+              "issuer": "Hiệu trưởng Trường Đại học Lạc Hồng"
+            },
+            "recognitionYear": 2023,
+            "periodStart": "2023-01-01",
+            "periodEnd": "2023-12-31",
+            "status": "RECORDED",
+            "recordedBy": 4,
+            "recordedByName": "Cán bộ Thi đua - Khen thưởng",
+            "recordedAt": "2023-12-25T10:00:00Z",
+            "rowVersion": "AAAAAAAADTA="
+          },
+          {
+            "awardRecordId": 502,
+            "subjectType": "LECTURER",
+            "lecturerId": 101,
+            "organizationUnitId": null,
+            "subjectName": "PGS.TS. Nguyễn Văn An",
+            "contextUnitId": 2,
+            "contextUnitName": "Bộ môn Kỹ thuật Phần mềm",
+            "awardTypeId": 1,
+            "awardTypeCode": "CSTĐ_CS",
+            "awardTypeName": "Chiến sĩ thi đua cơ sở",
+            "awardCategory": "TITLE",
+            "awardLevel": "UNIVERSITY",
+            "decision": {
+              "decisionId": 702,
+              "decisionNumber": "098/QĐ-ĐHLH",
+              "decisionDate": "2022-12-22",
+              "issuer": "Hiệu trưởng Trường Đại học Lạc Hồng"
+            },
+            "recognitionYear": 2022,
+            "periodStart": "2022-01-01",
+            "periodEnd": "2022-12-31",
+            "status": "RECORDED",
+            "recordedBy": 4,
+            "recordedByName": "Cán bộ Thi đua - Khen thưởng",
+            "recordedAt": "2022-12-26T09:30:00Z",
+            "rowVersion": "AAAAAAAADTw="
+          },
+          {
+            "awardRecordId": 503,
+            "subjectType": "UNIT",
+            "lecturerId": null,
+            "organizationUnitId": 2,
+            "subjectName": "Bộ môn Kỹ thuật Phần mềm",
+            "contextUnitId": 2,
+            "contextUnitName": "Bộ môn Kỹ thuật Phần mềm",
+            "awardTypeId": 3,
+            "awardTypeCode": "TAP_THE_LĐXS",
+            "awardTypeName": "Tập thể Lao động Xuất sắc",
+            "awardCategory": "TITLE",
+            "awardLevel": "MINISTRY",
+            "decision": {
+              "decisionId": 703,
+              "decisionNumber": "456/QĐ-BGDĐT",
+              "decisionDate": "2023-11-15",
+              "issuer": "Bộ Giáo dục và Đào tạo"
+            },
+            "recognitionYear": 2023,
+            "periodStart": "2022-09-01",
+            "periodEnd": "2023-08-31",
+            "status": "RECORDED",
+            "recordedBy": 4,
+            "recordedByName": "Cán bộ Thi đua - Khen thưởng",
+            "recordedAt": "2023-11-20T14:15:00Z",
+            "rowVersion": "AAAAAAAADUI="
+          }
+        ],
+        "pagination": {
+          "total": 3,
+          "page": 1,
+          "pageSize": 10,
+          "totalPages": 1
+        }
+      }
+    }
+  },
+  "awardDecisionDetail": {
+    "statusCode": 200,
+    "payload": {
+      "success": true,
+      "data": {
+        "decisionId": 701,
+        "decisionNumber": "123/QĐ-ĐHLH",
+        "decisionDate": "2023-12-20",
+        "issuer": "Hiệu trưởng Trường Đại học Lạc Hồng",
+        "title": "Về việc công nhận danh hiệu Chiến sĩ thi đua cơ sở năm học 2022-2023",
+        "description": "Khen thưởng các cá nhân có thành tích xuất sắc tiêu biểu trong công tác giảng dạy và NCKH",
+        "files": [
+          {
+            "decisionFileId": 801,
+            "versionNo": 1,
+            "originalFileName": "QuyetDinh_123_QD_DHLH.pdf",
+            "fileSize": 1845200,
+            "mimeType": "application/pdf",
+            "uploadedAt": "2023-12-21T08:30:00Z",
+            "downloadUrl": "/api/v1/decision-files/801/download"
+          }
+        ]
+      }
+    }
+  }
+}
