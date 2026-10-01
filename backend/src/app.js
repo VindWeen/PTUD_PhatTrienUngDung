@@ -9,6 +9,8 @@ import errorHandler from './middlewares/errorHandler.js';
 import notFoundHandler from './middlewares/notFoundHandler.js';
 import healthRoutes from './modules/health/healthRoutes.js';
 import authRoutes from './modules/auth/authRoutes.js';
+import profileRoutes from './modules/profiles/profileRoutes.js';
+import organizationRoutes from './modules/organizations/organizationRoutes.js';
 
 const app = express();
 
@@ -38,6 +40,8 @@ app.use(`${apiPrefix}/health`, healthRoutes);
 
 // Auth Routes
 app.use(`${apiPrefix}/auth`, authRoutes);
+app.use(apiPrefix, profileRoutes);
+app.use(apiPrefix, organizationRoutes);
 
 // Root Welcome Route
 app.get('/', (req, res) => {

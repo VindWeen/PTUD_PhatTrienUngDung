@@ -1,12 +1,13 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { GraduationCap, Home, User, Cpu, LogOut } from 'lucide-react';
+import { GraduationCap, Home, User, Cpu, LogOut, Building2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
   { to: '/me/dashboard', icon: Home, label: 'Trang chủ', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
   { to: '/me/profile', icon: User, label: 'Hồ sơ năng lực', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER'] },
   { to: '/me/ai-forecast', icon: Cpu, label: 'Phân tích & Dự báo AI', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER'] },
+  { to: '/organizations', icon: Building2, label: 'Tổ chức', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
 ];
 
 export default function Sidebar() {

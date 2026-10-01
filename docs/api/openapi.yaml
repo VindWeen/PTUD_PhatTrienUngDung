@@ -7,12 +7,10 @@ info:
     name: Tạ Trần Vinh Quang
     email: "quang.ttv@lhu.edu.vn"
 servers:
-  - 
-    url: /api/v1
+  - url: /api/v1
     description: Máy chủ API nội bộ LHU
 security:
-  - 
-    bearerAuth: []
+  - bearerAuth: []
 paths:
   /auth/login:
     post:
@@ -184,8 +182,7 @@ paths:
     get:
       summary: Lấy thông tin hồ sơ giảng viên theo ID
       parameters:
-        - 
-          name: id
+        - name: id
           in: path
           required: true
           schema:
@@ -199,12 +196,58 @@ paths:
                 $ref: "#/components/schemas/PersonalPortfolioResponse"
         404:
           $ref: "#/components/responses/404NotFound"
+    patch:
+      summary: Sửa các trường hồ sơ được phép của chính chủ
+      description: Backend đối chiếu userId trong access token với chủ hồ sơ; ADMIN không được dùng endpoint này để sửa hồ sơ người khác.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - version
+              properties:
+                phone:
+                  type: string
+                  nullable: true
+                  maxLength: 20
+                title:
+                  type: string
+                  nullable: true
+                  maxLength: 50
+                degree:
+                  type: string
+                  nullable: true
+                  maxLength: 50
+                version:
+                  type: integer
+                  minimum: 1
+      responses:
+        200:
+          description: Hồ sơ sau cập nhật
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonalPortfolioResponse"
+        403:
+          $ref: "#/components/responses/403Forbidden"
+        404:
+          $ref: "#/components/responses/404NotFound"
+        409:
+          $ref: "#/components/responses/409Conflict"
   "/units/{id}/profile":
     get:
       summary: Lấy hồ sơ tập thể đơn vị
       parameters:
-        - 
-          name: id
+        - name: id
           in: path
           required: true
           schema:
@@ -218,46 +261,158 @@ paths:
                 $ref: "#/components/schemas/UnitProfileResponse"
         404:
           $ref: "#/components/responses/404NotFound"
+  /organizations:
+    get:
+      summary: Danh sách cơ cấu tổ chức
+      responses:
+        200:
+          description: Danh sách đơn vị
+    post:
+      summary: Tạo đơn vị (ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrganizationWriteRequest"
+      responses:
+        201:
+          description: Đã tạo đơn vị
+        403:
+          $ref: "#/components/responses/403Forbidden"
+        409:
+          $ref: "#/components/responses/409Conflict"
+  "/organizations/{id}":
+    patch:
+      summary: Cập nhật đơn vị và chặn chu trình (ADMIN)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrganizationUpdateRequest"
+      responses:
+        200:
+          description: Đã cập nhật
+        403:
+          $ref: "#/components/responses/403Forbidden"
+        409:
+          $ref: "#/components/responses/409Conflict"
+    delete:
+      summary: Xóa đơn vị rỗng (ADMIN)
+      description: "Từ chối nếu có đơn vị con, lịch sử công tác, thành tích, khen thưởng, scope hoặc lịch sử đại diện."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Đã xóa
+        403:
+          $ref: "#/components/responses/403Forbidden"
+        409:
+          $ref: "#/components/responses/409Conflict"
+  "/organizations/{id}/representative":
+    post:
+      summary: Phân công đại diện đơn vị theo thời gian (ADMIN)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - validFrom
+              properties:
+                userId:
+                  type: integer
+                validFrom:
+                  type: string
+                  format: date-time
+      responses:
+        201:
+          description: Đã phân công
+        403:
+          $ref: "#/components/responses/403Forbidden"
+  "/lecturers/{id}/assignments":
+    post:
+      summary: "Chuyển đơn vị chính, giữ nguyên ContextUnitId lịch sử (ADMIN)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - unitId
+                - effectiveAt
+              properties:
+                unitId:
+                  type: integer
+                effectiveAt:
+                  type: string
+                  format: date-time
+      responses:
+        201:
+          description: Đã tạo mốc lịch sử công tác mới
+        403:
+          $ref: "#/components/responses/403Forbidden"
+        409:
+          $ref: "#/components/responses/409Conflict"
   /achievements:
     get:
       summary: Tra cứu danh sách hồ sơ thành tích
       description: "Lấy danh sách thành tích có phân trang, bộ lọc năm, đơn vị, loại thành tích và trạng thái."
       parameters:
-        - 
-          name: subjectType
+        - name: subjectType
           in: query
           schema:
             type: string
             enum:
               - LECTURER
               - UNIT
-        - 
-          name: lecturerId
+        - name: lecturerId
           in: query
           schema:
             type: integer
-        - 
-          name: unitId
+        - name: unitId
           in: query
           schema:
             type: integer
-        - 
-          name: recognitionYear
+        - name: recognitionYear
           in: query
           schema:
             type: integer
-        - 
-          name: academicYearId
+        - name: academicYearId
           in: query
           schema:
             type: integer
-        - 
-          name: achievementTypeId
+        - name: achievementTypeId
           in: query
           schema:
             type: integer
-        - 
-          name: status
+        - name: status
           in: query
           schema:
             type: string
@@ -269,20 +424,17 @@ paths:
               - REJECTED
               - CANCELLED
               - REVOKED
-        - 
-          name: page
+        - name: page
           in: query
           schema:
             type: integer
             default: 1
-        - 
-          name: pageSize
+        - name: pageSize
           in: query
           schema:
             type: integer
             default: 10
-        - 
-          name: sortBy
+        - name: sortBy
           in: query
           schema:
             type: string
@@ -292,8 +444,7 @@ paths:
               - recognitionYear
               - title
             default: updatedAt
-        - 
-          name: sortOrder
+        - name: sortOrder
           in: query
           schema:
             type: string
@@ -333,8 +484,7 @@ paths:
       summary: Xem chi tiết hồ sơ thành tích
       description: "Lấy chi tiết hồ sơ thành tích, bao gồm danh mục minh chứng, phiên bản file và các lần gửi (revisions)."
       parameters:
-        - 
-          name: id
+        - name: id
           in: path
           required: true
           schema:
@@ -352,8 +502,7 @@ paths:
       summary: Chỉnh sửa bản nháp thành tích
       description: Chỉ được sửa khi hồ sơ ở trạng thái DRAFT hoặc NEED_CORRECTION. Bắt buộc kiểm tra version.
       parameters:
-        - 
-          name: id
+        - name: id
           in: path
           required: true
           schema:
@@ -379,8 +528,7 @@ paths:
       summary: Xóa bản nháp thành tích
       description: Chỉ cho phép xóa bản nháp DRAFT chưa từng nộp gửi duyệt. Hồ sơ đã gửi không thể xóa vật lý.
       parameters:
-        - 
-          name: id
+        - name: id
           in: path
           required: true
           schema:
@@ -399,8 +547,7 @@ paths:
       summary: Gửi duyệt hồ sơ thành tích (Nộp lần đầu hoặc Gửi lại)
       description: "Chuyển trạng thái từ DRAFT hoặc NEED_CORRECTION sang SUBMITTED. Bắt buộc có ít nhất 1 minh chứng có file. Hệ thống tạo RevisionNo mới, chụp SnapshotData và đóng băng tệp tin."
       parameters:
-        - 
-          name: id
+        - name: id
           in: path
           required: true
           schema:
@@ -436,8 +583,7 @@ paths:
       summary: Hủy hồ sơ thành tích
       description: "Rút lại hồ sơ ở trạng thái DRAFT, SUBMITTED hoặc NEED_CORRECTION. Bắt buộc lý do nếu đã từng gửi."
       parameters:
-        - 
-          name: id
+        - name: id
           in: path
           required: true
           schema:
@@ -470,8 +616,7 @@ paths:
     get:
       summary: Xem lịch sử chuyển trạng thái của hồ sơ
       parameters:
-        - 
-          name: id
+        - name: id
           in: path
           required: true
           schema:
@@ -487,8 +632,7 @@ paths:
     post:
       summary: Thêm danh mục minh chứng cho thành tích
       parameters:
-        - 
-          name: id
+        - name: id
           in: path
           required: true
           schema:
@@ -521,8 +665,7 @@ paths:
       summary: Tải lên tệp minh chứng phiên bản mới (Bất biến)
       description: "Tải lên tập tin vật lý (tối đa 10MB, định dạng PDF, JPG, PNG, DOCX). Hệ thống tăng VersionNo và lưu file vào kho riêng bảo mật."
       parameters:
-        - 
-          name: id
+        - name: id
           in: path
           required: true
           schema:
@@ -555,8 +698,7 @@ paths:
       summary: Tải về tệp minh chứng có kiểm tra quyền
       description: Chỉ chủ hồ sơ hoặc Manager/RecordsOfficer có scope đơn vị mới được phép tải tệp tin.
       parameters:
-        - 
-          name: id
+        - name: id
           in: path
           required: true
           schema:
@@ -578,14 +720,12 @@ paths:
       summary: Lấy danh sách hồ sơ chờ thẩm định (Hàng chờ của Manager)
       description: Lấy các hồ sơ SUBMITTED có ContextUnitId thuộc phạm vi UserUnitScopes của Manager. Tự động loại trừ các hồ sơ của chính Manager (CHỐNG TỰ DUYỆT).
       parameters:
-        - 
-          name: page
+        - name: page
           in: query
           schema:
             type: integer
             default: 1
-        - 
-          name: pageSize
+        - name: pageSize
           in: query
           schema:
             type: integer
@@ -604,8 +744,7 @@ paths:
       summary: Xác nhận hồ sơ thành tích (VERIFIED)
       description: "Thẩm định và xác nhận hồ sơ. Kiểm tra quyền Scope, CHỐNG TỰ DUYỆT, kiểm tra version. Khóa dữ liệu bất biến."
       parameters:
-        - 
-          name: id
+        - name: id
           in: path
           required: true
           schema:
@@ -641,8 +780,7 @@ paths:
       summary: Yêu cầu bổ sung hồ sơ thành tích (NEED_CORRECTION)
       description: Yêu cầu chủ hồ sơ bổ sung minh chứng hoặc sửa thông tin. BẮT BUỘC có lý do. Kiểm tra CHỐNG TỰ DUYỆT.
       parameters:
-        - 
-          name: id
+        - name: id
           in: path
           required: true
           schema:
@@ -682,8 +820,7 @@ paths:
       summary: Từ chối hồ sơ thành tích (REJECTED)
       description: "Từ chối công nhận hồ sơ thành tích. BẮT BUỘC có lý do. Trạng thái kết thúc, không được nộp lại trực tiếp."
       parameters:
-        - 
-          name: id
+        - name: id
           in: path
           required: true
           schema:
@@ -723,8 +860,7 @@ paths:
       summary: Thu hồi xác nhận thành tích (REVOKED)
       description: Thu hồi hồ sơ đã VERIFIED khi phát hiện sai phạm hoặc hủy kết quả. BẮT BUỘC có lý do.
       parameters:
-        - 
-          name: id
+        - name: id
           in: path
           required: true
           schema:
@@ -763,26 +899,22 @@ paths:
     get:
       summary: Danh sách kết quả khen thưởng có quyết định
       parameters:
-        - 
-          name: subjectType
+        - name: subjectType
           in: query
           schema:
             type: string
             enum:
               - LECTURER
               - UNIT
-        - 
-          name: recognitionYear
+        - name: recognitionYear
           in: query
           schema:
             type: integer
-        - 
-          name: awardTypeId
+        - name: awardTypeId
           in: query
           schema:
             type: integer
-        - 
-          name: status
+        - name: status
           in: query
           schema:
             type: string
@@ -790,14 +922,12 @@ paths:
               - DRAFT
               - RECORDED
               - REVOKED
-        - 
-          name: page
+        - name: page
           in: query
           schema:
             type: integer
             default: 1
-        - 
-          name: pageSize
+        - name: pageSize
           in: query
           schema:
             type: integer
@@ -834,8 +964,7 @@ paths:
       summary: Ghi nhận khen thưởng chính thức (RECORDED)
       description: Chuyển trạng thái từ DRAFT sang RECORDED. Kiểm tra chống trùng lặp qua Filtered Unique Index.
       parameters:
-        - 
-          name: id
+        - name: id
           in: path
           required: true
           schema:
@@ -866,8 +995,7 @@ paths:
     post:
       summary: Thu hồi kết quả khen thưởng (REVOKED)
       parameters:
-        - 
-          name: id
+        - name: id
           in: path
           required: true
           schema:
@@ -940,13 +1068,11 @@ paths:
       summary: Báo cáo thống kê thành tích
       description: "Thống kê tổng hợp số lượng thành tích theo năm, đơn vị (dựa trên ContextUnitId) và trạng thái."
       parameters:
-        - 
-          name: recognitionYear
+        - name: recognitionYear
           in: query
           schema:
             type: integer
-        - 
-          name: unitId
+        - name: unitId
           in: query
           schema:
             type: integer
@@ -962,8 +1088,7 @@ paths:
       summary: Xuất dữ liệu báo cáo ra file CSV
       description: Xuất danh sách thành tích hoặc khen thưởng theo bộ lọc ra tệp CSV. Dữ liệu văn bản được làm sạch chống tấn công CSV Injection.
       parameters:
-        - 
-          name: type
+        - name: type
           in: query
           required: true
           schema:
@@ -971,13 +1096,11 @@ paths:
             enum:
               - achievements
               - awards
-        - 
-          name: recognitionYear
+        - name: recognitionYear
           in: query
           schema:
             type: integer
-        - 
-          name: unitId
+        - name: unitId
           in: query
           schema:
             type: integer
@@ -1027,6 +1150,49 @@ components:
           schema:
             $ref: "#/components/schemas/StandardErrorResponse"
   schemas:
+    OrganizationWriteRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - name
+        - type
+      properties:
+        code:
+          type: string
+          maxLength: 50
+        name:
+          type: string
+          maxLength: 255
+        type:
+          type: string
+          enum:
+            - FACULTY
+            - DEPARTMENT
+            - DIVISION
+            - OFFICE
+            - CENTER
+            - UNIVERSITY
+        parentId:
+          type: integer
+          nullable: true
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+    OrganizationUpdateRequest:
+      allOf:
+        - $ref: "#/components/schemas/OrganizationWriteRequest"
+        - type: object
+          required:
+            - isActive
+            - version
+          properties:
+            isActive:
+              type: boolean
+            version:
+              type: integer
+              minimum: 1
     StandardSuccessResponse:
       type: object
       properties:

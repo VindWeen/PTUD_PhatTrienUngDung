@@ -40,6 +40,11 @@ export function errorHandler(err, req, res, next) {
       code = 'DUPLICATE_RECORD';
       message = 'Bản ghi bị trùng lặp dữ liệu với một bản ghi đã tồn tại trong hệ thống.';
       details = [{ constraint: err.constraint, message: err.detail || err.message }];
+    } else if (err.code === '23P01') {
+      statusCode = 409;
+      code = 'OVERLAPPING_HISTORY';
+      message = 'Khoảng thời gian công tác hoặc đại diện bị chồng lấn với lịch sử hiện có.';
+      details = [{ sqlState: err.code, constraint: err.constraint, message: err.detail || err.message }];
     } else if (['23503', '23514', '23502'].includes(err.code)) {
       statusCode = 400;
       code = 'CONSTRAINT_VIOLATION';

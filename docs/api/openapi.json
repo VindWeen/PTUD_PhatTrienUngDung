@@ -219,6 +219,31 @@
           },
           "404": { "$ref": "#/components/responses/404NotFound" }
         }
+      },
+      "patch": {
+        "summary": "Sửa các trường hồ sơ được phép của chính chủ",
+        "description": "Backend đối chiếu userId trong access token với chủ hồ sơ; ADMIN không được dùng endpoint này để sửa hồ sơ người khác.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": {
+            "type": "object", "additionalProperties": false, "required": ["version"],
+            "properties": {
+              "phone": { "type": "string", "nullable": true, "maxLength": 20 },
+              "title": { "type": "string", "nullable": true, "maxLength": 50 },
+              "degree": { "type": "string", "nullable": true, "maxLength": 50 },
+              "version": { "type": "integer", "minimum": 1 }
+            }
+          } } }
+        },
+        "responses": {
+          "200": { "description": "Hồ sơ sau cập nhật", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PersonalPortfolioResponse" } } } },
+          "403": { "$ref": "#/components/responses/403Forbidden" },
+          "404": { "$ref": "#/components/responses/404NotFound" },
+          "409": { "$ref": "#/components/responses/409Conflict" }
+        }
       }
     },
     "/units/{id}/profile": {
@@ -238,6 +263,47 @@
           },
           "404": { "$ref": "#/components/responses/404NotFound" }
         }
+      }
+    },
+    "/organizations": {
+      "get": {
+        "summary": "Danh sách cơ cấu tổ chức",
+        "responses": { "200": { "description": "Danh sách đơn vị" } }
+      },
+      "post": {
+        "summary": "Tạo đơn vị (ADMIN)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OrganizationWriteRequest" } } } },
+        "responses": { "201": { "description": "Đã tạo đơn vị" }, "403": { "$ref": "#/components/responses/403Forbidden" }, "409": { "$ref": "#/components/responses/409Conflict" } }
+      }
+    },
+    "/organizations/{id}": {
+      "patch": {
+        "summary": "Cập nhật đơn vị và chặn chu trình (ADMIN)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OrganizationUpdateRequest" } } } },
+        "responses": { "200": { "description": "Đã cập nhật" }, "403": { "$ref": "#/components/responses/403Forbidden" }, "409": { "$ref": "#/components/responses/409Conflict" } }
+      },
+      "delete": {
+        "summary": "Xóa đơn vị rỗng (ADMIN)",
+        "description": "Từ chối nếu có đơn vị con, lịch sử công tác, thành tích, khen thưởng, scope hoặc lịch sử đại diện.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Đã xóa" }, "403": { "$ref": "#/components/responses/403Forbidden" }, "409": { "$ref": "#/components/responses/409Conflict" } }
+      }
+    },
+    "/organizations/{id}/representative": {
+      "post": {
+        "summary": "Phân công đại diện đơn vị theo thời gian (ADMIN)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["userId", "validFrom"], "properties": { "userId": { "type": "integer" }, "validFrom": { "type": "string", "format": "date-time" } } } } } },
+        "responses": { "201": { "description": "Đã phân công" }, "403": { "$ref": "#/components/responses/403Forbidden" } }
+      }
+    },
+    "/lecturers/{id}/assignments": {
+      "post": {
+        "summary": "Chuyển đơn vị chính, giữ nguyên ContextUnitId lịch sử (ADMIN)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["unitId", "effectiveAt"], "properties": { "unitId": { "type": "integer" }, "effectiveAt": { "type": "string", "format": "date-time" } } } } } },
+        "responses": { "201": { "description": "Đã tạo mốc lịch sử công tác mới" }, "403": { "$ref": "#/components/responses/403Forbidden" }, "409": { "$ref": "#/components/responses/409Conflict" } }
       }
     },
     "/achievements": {
@@ -940,6 +1006,27 @@
       }
     },
     "schemas": {
+      "OrganizationWriteRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "name", "type"],
+        "properties": {
+          "code": { "type": "string", "maxLength": 50 },
+          "name": { "type": "string", "maxLength": 255 },
+          "type": { "type": "string", "enum": ["FACULTY", "DEPARTMENT", "DIVISION", "OFFICE", "CENTER", "UNIVERSITY"] },
+          "parentId": { "type": "integer", "nullable": true },
+          "description": { "type": "string", "nullable": true, "maxLength": 2000 }
+        }
+      },
+      "OrganizationUpdateRequest": {
+        "allOf": [
+          { "$ref": "#/components/schemas/OrganizationWriteRequest" },
+          { "type": "object", "required": ["isActive", "version"], "properties": {
+            "isActive": { "type": "boolean" },
+            "version": { "type": "integer", "minimum": 1 }
+          } }
+        ]
+      },
       "StandardSuccessResponse": {
         "type": "object",
         "properties": {

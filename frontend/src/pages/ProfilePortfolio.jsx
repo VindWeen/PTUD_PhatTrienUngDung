@@ -42,12 +42,17 @@ export default function ProfilePortfolio() {
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState(null);
+  const [profileDraft, setProfileDraft] = useState({ phone: '', title: '', degree: '' });
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSaveMessage, setProfileSaveMessage] = useState('');
 
   const loadProfile = useCallback(async () => {
     setProfileLoading(true);
     setProfileError(null);
     try {
-      setProfile(await portfolioApi.getPersonalProfile());
+      const data = await portfolioApi.getPersonalProfile();
+      setProfile(data);
+      setProfileDraft({ phone: data.phone || '', title: data.title || '', degree: data.degree || '' });
     } catch (error) {
       setProfile(null);
       setProfileError(error);
@@ -57,6 +62,17 @@ export default function ProfilePortfolio() {
   }, []);
 
   useEffect(() => { loadProfile(); }, [loadProfile]);
+
+  const handleProfileSave = async (event) => {
+    event.preventDefault();
+    setProfileSaving(true); setProfileError(null); setProfileSaveMessage('');
+    try {
+      const updated = await portfolioApi.updatePersonalProfile({ ...profileDraft, version: profile.version });
+      setProfile(updated);
+      setProfileDraft({ phone: updated.phone || '', title: updated.title || '', degree: updated.degree || '' });
+      setProfileSaveMessage('Đã cập nhật hồ sơ cá nhân.');
+    } catch (error) { setProfileError(error); } finally { setProfileSaving(false); }
+  };
 
   const tabs = [
     { id: 'nckh', label: 'Nghiên cứu khoa học' },
@@ -120,7 +136,7 @@ export default function ProfilePortfolio() {
             Hồ sơ Năng lực & Thành tích
           </h1>
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
-            Cập nhật lần cuối: 10/04/2024
+            Cập nhật lần cuối: {profile.updatedAt ? new Date(profile.updatedAt).toLocaleDateString('vi-VN') : 'Chưa xác định'}
           </p>
         </div>
 
@@ -170,6 +186,18 @@ export default function ProfilePortfolio() {
         </div>
       </header>
 
+      <form onSubmit={handleProfileSave} className="soft-card p-5 sm:p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div><h2 className="font-bold text-slate-900 dark:text-white">Thông tin hồ sơ cá nhân</h2><p className="text-xs text-slate-500">Mã {profile.employeeCode} · {profile.fullName} · {profile.email}</p></div>
+          <button type="submit" disabled={profileSaving} className="soft-btn-primary text-xs">{profileSaving ? 'Đang lưu...' : 'Lưu thay đổi'}</button>
+        </div>
+        {profileSaveMessage && <p className="text-xs text-emerald-600">{profileSaveMessage}</p>}
+        {profileError && <p role="alert" className="text-xs text-rose-600">{profileError.message || 'Không thể cập nhật hồ sơ.'}</p>}
+        <div className="grid sm:grid-cols-3 gap-4">
+          {[['phone', 'Số điện thoại'], ['title', 'Chức danh'], ['degree', 'Học vị']].map(([field, label]) => <label key={field} className="text-xs font-semibold text-slate-600 dark:text-slate-300">{label}<input value={profileDraft[field]} onChange={(e) => setProfileDraft((value) => ({ ...value, [field]: e.target.value }))} maxLength={field === 'phone' ? 20 : 50} className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" /></label>)}
+        </div>
+      </form>
+
       {/* 2. Main Two Columns Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-7">
         {/* LEFT COLUMN (4 cols): Quá trình công tác + Danh hiệu */}
@@ -183,37 +211,14 @@ export default function ProfilePortfolio() {
               </h2>
             </div>
 
-            {/* Timeline */}
             <div className="relative pl-6 space-y-7 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-700">
-              {/* Timeline Item 1 */}
-              <div className="relative">
-                {/* Dot */}
-                <div className="absolute -left-[27px] top-1 w-3.5 h-3.5 rounded-full bg-slate-800 dark:bg-slate-200 ring-4 ring-white dark:ring-soft-darkCard" />
-                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  2020 – Hiện tại
-                </div>
-                <div className="text-sm font-bold text-slate-900 dark:text-white mt-1">
-                  Phó Giáo sư, Tiến sĩ
-                </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                  Khoa Khoa học Máy tính, Đại học Quốc gia
-                </div>
-              </div>
-
-              {/* Timeline Item 2 */}
-              <div className="relative">
-                {/* Dot */}
-                <div className="absolute -left-[27px] top-1 w-3.5 h-3.5 rounded-full bg-slate-300 dark:bg-slate-500 ring-4 ring-white dark:ring-soft-darkCard" />
-                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  2015 – 2020
-                </div>
-                <div className="text-sm font-bold text-slate-900 dark:text-white mt-1">
-                  Giảng viên chính
-                </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                  Bộ môn Kỹ thuật Phần mềm
-                </div>
-              </div>
+              {(profile.workHistory || []).map((item, index) => <div className="relative" key={item.assignmentId}>
+                <div className={`absolute -left-[27px] top-1 w-3.5 h-3.5 rounded-full ${index === 0 ? 'bg-slate-800 dark:bg-slate-200' : 'bg-slate-300 dark:bg-slate-500'} ring-4 ring-white dark:ring-soft-darkCard`} />
+                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{item.period}</div>
+                <div className="text-sm font-bold text-slate-900 dark:text-white mt-1">{item.position}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{item.department || item.unitName}</div>
+              </div>)}
+              {!profile.workHistory?.length && <p className="text-xs text-slate-500">Chưa có lịch sử công tác.</p>}
             </div>
           </div>
 
@@ -225,6 +230,12 @@ export default function ProfilePortfolio() {
             </div>
 
             <div className="space-y-3.5">
+              {(profile.titlesAndHonors || []).map((award) => <div key={award.awardRecordId} className="p-4 rounded-2xl bg-[#fdf9e8] dark:bg-[#2b271b] border border-amber-200/50 dark:border-amber-900/40 flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-white dark:bg-amber-950/60 text-amber-500 flex items-center justify-center"><Medal className="w-6 h-6" /></div>
+                <div><div className="text-xs sm:text-sm font-bold">{award.awardTypeName} ({award.recognitionYear})</div><div className="text-[11px] text-amber-700 dark:text-amber-300/80">{award.level} · {award.decisionNumber}</div></div>
+              </div>)}
+              {!profile.titlesAndHonors?.length && <p className="text-xs text-slate-500">Chưa có danh hiệu được ghi nhận.</p>}
+              <div className="hidden">
               {/* Item 1: CSTĐ 2023 */}
               <div className="p-4 rounded-2xl bg-[#fdf9e8] dark:bg-[#2b271b] border border-amber-200/50 dark:border-amber-900/40 flex items-center gap-3.5 transition-transform hover:-translate-y-0.5">
                 <div className="w-11 h-11 rounded-2xl bg-white dark:bg-amber-950/60 text-amber-500 flex items-center justify-center shadow-sm shrink-0">
@@ -268,6 +279,7 @@ export default function ProfilePortfolio() {
                     Dự kiến hoàn thành hồ sơ Q4/2024
                   </div>
                 </div>
+              </div>
               </div>
             </div>
           </div>

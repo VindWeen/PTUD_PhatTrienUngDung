@@ -7,6 +7,7 @@ import AuthPage from '../pages/AuthPage';
 import Dashboard from '../pages/Dashboard';
 import NotFound from '../pages/NotFound';
 import ProfilePortfolio from '../pages/ProfilePortfolio';
+import Organizations from '../pages/Organizations';
 import { LoadingState } from '../components/common/AsyncState';
 
 const APP_ROLES = ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'];
@@ -35,6 +36,7 @@ export default function AppRoutes() {
           <Route path="me/dashboard" element={<RequireRole roles={APP_ROLES}><Dashboard /></RequireRole>} />
           <Route path="me/profile" element={<RequireRole roles={PROFILE_ROLES}><ProfilePortfolio /></RequireRole>} />
           <Route path="me/ai-forecast" element={<RequireRole roles={PROFILE_ROLES}><AIForecast /></RequireRole>} />
+          <Route path="organizations" element={<RequireRole roles={APP_ROLES}><Organizations /></RequireRole>} />
           <Route path="dashboard" element={<Navigate to="/me/dashboard" replace />} />
           <Route path="profile" element={<Navigate to="/me/profile" replace />} />
           <Route path="ai-forecast" element={<Navigate to="/me/ai-forecast" replace />} />

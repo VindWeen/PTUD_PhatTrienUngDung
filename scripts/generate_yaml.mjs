@@ -21,7 +21,7 @@ function toYaml(obj, indent = 0) {
     return obj.map(item => {
       if (typeof item === 'object' && item !== null) {
         const itemYaml = toYaml(item, indent + 1);
-        const lines = itemYaml.split('\n');
+        const lines = itemYaml.replace(/^\n/, '').split('\n');
         return '\n' + pad + '- ' + lines[0].trimStart() + (lines.length > 1 ? '\n' + lines.slice(1).join('\n') : '');
       }
       return '\n' + pad + '- ' + toYaml(item, indent + 1);

@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 console.log('================================================================');
-console.log('KIỂM TRA TĨNH HỢP ĐỒNG KỸ THUẬT W1-Q1 / W1-P2 (SUPABASE)');
+console.log('KIỂM TRA TĨNH HỢP ĐỒNG KỸ THUẬT W1-Q1 / W1-P2 / W1-P3 (SUPABASE)');
 console.log('Phạm vi: tệp OpenAPI, fixture, migration, seed và tài liệu trong repository');
 console.log('================================================================\n');
 
@@ -35,6 +35,9 @@ try {
   assert(spec.paths['/achievements/{id}/verify'], 'Có endpoint /achievements/{id}/verify');
   assert(spec.paths['/achievements/{id}/submit'], 'Có endpoint /achievements/{id}/submit');
   assert(spec.paths['/award-records'], 'Có endpoint /award-records');
+  assert(spec.paths['/organizations']?.get && spec.paths['/organizations']?.post, 'W1-P3 có API danh sách/tạo tổ chức');
+  assert(spec.paths['/organizations/{id}']?.patch && spec.paths['/organizations/{id}']?.delete, 'W1-P3 có API sửa/xóa tổ chức');
+  assert(spec.paths['/lecturers/{id}/assignments']?.post, 'W1-P3 có API chuyển đơn vị công tác');
 } catch (err) {
   assert(false, `Lỗi đọc openapi.json: ${err.message}`);
 }
@@ -154,14 +157,29 @@ try {
   assert(false, `Lỗi kiểm tra W1-P2: ${err.message}`);
 }
 
-// 8. Kiểm tra các tài liệu yêu cầu & bàn giao
+// 8. Kiểm tra bảo toàn lịch sử W1-P3
+try {
+  const migration = fs.readFileSync('supabase/migrations/20261001000010_w1_p3_organization_integrity.sql', 'utf8');
+  assert(migration.includes('prevent_organization_cycle'), 'W1-P3 có trigger DB chặn chu trình tổ chức');
+  assert(migration.includes('lecturer_assignments_unit_id_fkey') && migration.includes('ON DELETE RESTRICT'), 'W1-P3 giữ lịch sử đơn vị bằng khóa ngoại RESTRICT');
+  const repository = fs.readFileSync('backend/src/modules/organizations/organizationRepository.js', 'utf8');
+  const transfer = repository.slice(repository.indexOf('export async function transferLecturer'));
+  assert(!/UPDATE\s+app\.achievements/i.test(transfer), 'Luồng điều chuyển không cập nhật bảng achievements');
+  assert(!/SET\s+context_unit_id/i.test(transfer), 'Luồng điều chuyển không viết lại ContextUnitId');
+  assert(fs.existsSync('supabase/tests/w1_p3_organization_history_test.sql'), 'Có kiểm thử DB lịch sử đơn vị W1-P3');
+} catch (err) {
+  assert(false, `Lỗi kiểm tra W1-P3: ${err.message}`);
+}
+
+// 9. Kiểm tra các tài liệu yêu cầu & bàn giao
 const docFiles = [
   'docs/requirements/BUSINESS_RULES.md',
   'docs/requirements/PERMISSIONS_MATRIX.md',
   'docs/database/ERD.md',
   'docs/database/DATA_DICTIONARY.md',
   'docs/api/BIEN_BAN_CHOT_API_W1_Q1.md',
-  'docs/database/W1_P2_PROFILES_CATALOGS.md'
+  'docs/database/W1_P2_PROFILES_CATALOGS.md',
+  'docs/api/PROFILE_ORGANIZATION_W1_P3.md'
 ];
 
 for (const doc of docFiles) {

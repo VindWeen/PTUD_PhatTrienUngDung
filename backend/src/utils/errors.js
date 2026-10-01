@@ -77,6 +77,15 @@ export class ConcurrencyConflictError extends AppError {
 }
 
 /**
+ * 409 - Xung đột nghiệp vụ không thuộc workflow/version.
+ */
+export class ConflictError extends AppError {
+  constructor(message = 'Thao tác xung đột với dữ liệu hiện tại', code = 'CONFLICT', details = []) {
+    super(message, 409, code, details);
+  }
+}
+
+/**
  * 409 - Chuyển trạng thái workflow không hợp lệ
  */
 export class InvalidStateTransitionError extends AppError {
