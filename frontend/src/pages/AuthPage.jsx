@@ -177,7 +177,11 @@ export default function AuthPage() {
         {/* --- Form Container --- */}
         <div className={`form-container ${isLogin ? 'login' : 'register'}`}>
           <h1>{isLogin ? 'LOGIN' : 'REGISTER'}</h1>
-          <p className="demo-notice">Bản trải nghiệm · Không dùng mật khẩu thật.<br />Nhập email hợp lệ và mật khẩu bất kỳ từ 6 ký tự để vào demo.</p>
+          <p className="demo-notice">
+            {isLogin 
+              ? 'Hệ thống Quản lý Hồ sơ Thành tích Số LHU · Đăng nhập bằng Tên đăng nhập hoặc Email.'
+              : 'Bản trải nghiệm · Nhập thông tin để đăng ký tài khoản mới.'}
+          </p>
 
           {error && <div role="alert" className="alert-box alert-error">{error}</div>}
           {success && <div role="status" className="alert-box alert-success">{success}<button type="button" className="forgot-password-link" onClick={() => switchMode('login')}>Quay lại đăng nhập</button></div>}
@@ -199,12 +203,14 @@ export default function AuthPage() {
                 </div>
               )}
 
-              {/* Email field */}
+              {/* Email / Username field */}
               <div className="input-box">
                 <Mail size={18} aria-hidden="true" />
                 <input 
-                  type="email" 
-                  placeholder="Email" aria-label="Email" autoComplete="email" 
+                  type={isLogin ? "text" : "email"} 
+                  placeholder={isLogin ? "Tên đăng nhập hoặc Email" : "Email"} 
+                  aria-label={isLogin ? "Tên đăng nhập hoặc Email" : "Email"} 
+                  autoComplete={isLogin ? "username" : "email"} 
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
@@ -292,6 +298,13 @@ export default function AuthPage() {
                       className="px-2 py-1 text-[11px] rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-700 border border-slate-200 transition-colors"
                     >
                       Admin (duc.pm)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fillQuickAccount('cuong.lh')}
+                      className="px-2 py-1 text-[11px] rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-700 border border-slate-200 transition-colors"
+                    >
+                      ĐBCL (cuong.lh)
                     </button>
                   </div>
                 </div>
