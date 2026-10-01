@@ -27,9 +27,14 @@ export function getDbPoolConfig() {
   };
 
   if (connectionString) {
+    // Loại bỏ query param sslmode để tránh pg-connection-string ghi đè tùy chọn ssl: { rejectUnauthorized: false }
+    const cleanConnectionString = connectionString
+      .replace(/[?&]sslmode=[^&]*/gi, '')
+      .replace(/\?$/, '');
+
     return {
       ...baseConfig,
-      connectionString,
+      connectionString: cleanConnectionString,
       ssl: useSsl ? { rejectUnauthorized: false } : false,
     };
   }
