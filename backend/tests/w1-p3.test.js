@@ -1,9 +1,14 @@
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createProfileService } from '../src/modules/profiles/profileService.js';
 import { createOrganizationService } from '../src/modules/organizations/organizationService.js';
+import { closeDB } from '../src/config/database.js';
+
+after(async () => {
+  await closeDB();
+});
 
 test('chặn sửa hồ sơ của người khác kể cả khi gọi thẳng service', async () => {
   const service = createProfileService({

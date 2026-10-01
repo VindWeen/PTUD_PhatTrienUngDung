@@ -24,6 +24,7 @@ import {
   ValidationError,
   NotFoundError,
 } from '../../utils/errors.js';
+import { recordAuditLog } from '../audit/auditService.js';
 
 /**
  * Đăng nhập người dùng bằng Username/Email và Password
@@ -84,6 +85,22 @@ export async function login({ username, password, rememberMe = false, ip = null,
     username: user.Username,
     email: user.Email,
     roles: roleCodes,
+  });
+
+  // Ghi nhận nhật ký kiểm toán đăng nhập an toàn (che bí mật)
+  recordAuditLog({
+    userId: user.UserId,
+    action: 'AUTH_LOGIN',
+    entityName: 'users',
+    entityId: user.UserId,
+    newValues: {
+      username: user.Username,
+      roles: roleCodes,
+    },
+    ipAddress: ip,
+    userAgent,
+  }).catch((err) => {
+    console.error('Audit login error:', err.message);
   });
 
   return {
@@ -181,7 +198,16 @@ export async function refreshToken(rawRefreshToken, { ip = null, userAgent = nul
 export async function logout(rawRefreshToken) {
   if (rawRefreshToken) {
     const tokenHash = hashToken(rawRefreshToken);
+    const existing = await findRefreshTokenByHash(tokenHash);
     await revokeRefreshTokenByHash(tokenHash);
+    if (existing?.UserId) {
+      recordAuditLog({
+        userId: existing.UserId,
+        action: 'AUTH_LOGOUT',
+        entityName: 'users',
+        entityId: existing.UserId,
+      }).catch((err) => console.error('Audit logout error:', err.message));
+    }
   }
   return { success: true, message: 'Đăng xuất thành công' };
 }
@@ -222,6 +248,15 @@ export async function changePassword(userId, oldPassword, newPassword) {
 
   // Thu hồi tất cả Refresh Token của người dùng này để buộc đăng nhập lại trên mọi thiết bị
   await revokeAllUserTokens(userId);
+
+  // Ghi nhận nhật ký kiểm toán đổi mật khẩu (tuyệt đối không ghi mật khẩu)
+  await recordAuditLog({
+    userId,
+    action: 'AUTH_CHANGE_PASSWORD',
+    entityName: 'users',
+    entityId: userId,
+    newValues: { status: 'PASSWORD_CHANGED' },
+  });
 
   return {
     success: true,

@@ -11,9 +11,9 @@ const ok = (res, data, status = 200) => res.status(status).json({ success: true,
 
 export async function list(req, res, next) { try { ok(res, await service.listUnits()); } catch (e) { next(e); } }
 export async function profile(req, res, next) { try { ok(res, await service.getUnitProfile(Number(req.params.id))); } catch (e) { next(e); } }
-export async function create(req, res, next) { try { ok(res, await service.createUnit(createSchema.parse(req.body)), 201); } catch (e) { next(e); } }
-export async function update(req, res, next) { try { ok(res, await service.updateUnit(Number(req.params.id), updateSchema.parse(req.body))); } catch (e) { next(e); } }
-export async function remove(req, res, next) { try { await service.removeUnit(Number(req.params.id)); ok(res, undefined); } catch (e) { next(e); } }
+export async function create(req, res, next) { try { ok(res, await service.createUnit(createSchema.parse(req.body), req.user?.userId), 201); } catch (e) { next(e); } }
+export async function update(req, res, next) { try { ok(res, await service.updateUnit(Number(req.params.id), updateSchema.parse(req.body), req.user?.userId)); } catch (e) { next(e); } }
+export async function remove(req, res, next) { try { await service.removeUnit(Number(req.params.id), req.user?.userId); ok(res, undefined); } catch (e) { next(e); } }
 export async function appoint(req, res, next) { try { ok(res, await service.appointRepresentative({ unitId: Number(req.params.id), ...representativeSchema.parse(req.body) }, req.user.userId), 201); } catch (e) { next(e); } }
 export async function transfer(req, res, next) { try { ok(res, await service.transferLecturer({ lecturerId: Number(req.params.id), ...transferSchema.parse(req.body) }, req.user.userId), 201); } catch (e) { next(e); } }
 export default { list, profile, create, update, remove, appoint, transfer };

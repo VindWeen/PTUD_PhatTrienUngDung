@@ -11,7 +11,9 @@
     "migrate:status": "node ../database/scripts/migrate.js status",
     "seed": "node ../database/scripts/seed.js",
     "test": "node tests/runner.js",
-    "test:w1-p3": "node --test tests/w1-p3.test.js"
+    "test:w1-p3": "node --test tests/w1-p3.test.js",
+    "test:audit": "node --test tests/audit.test.js",
+    "demo:w1-q4": "node ../scripts/demo_w1_q4.mjs"
   },
   "keywords": [
     "express",

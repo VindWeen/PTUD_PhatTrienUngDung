@@ -288,6 +288,20 @@ export default function AuthPage() {
                     >
                       Quản lý FIT (bich.tt)
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => fillQuickAccount('duc.pm')}
+                      className="px-2 py-1 text-[11px] rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-700 border border-slate-200 transition-colors"
+                    >
+                      Admin (duc.pm)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fillQuickAccount('cuong.lh')}
+                      className="px-2 py-1 text-[11px] rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-700 border border-slate-200 transition-colors"
+                    >
+                      ĐBCL (cuong.lh)
+                    </button>
                   </div>
                 </div>
               )}

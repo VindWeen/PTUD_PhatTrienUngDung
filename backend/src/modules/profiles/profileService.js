@@ -1,5 +1,6 @@
 import profileRepository from './profileRepository.js';
 import { ConcurrencyConflictError, ForbiddenError, NotFoundError } from '../../utils/errors.js';
+import { recordAuditLog } from '../audit/auditService.js';
 
 const formatPeriod = (row) => {
   const start = new Date(row.validFrom).getUTCFullYear();
@@ -47,6 +48,14 @@ export function createProfileService(repository = profileRepository) {
     }
     const updated = await repository.updateLecturer(lecturerId, payload.version, payload);
     if (!updated) throw new ConcurrencyConflictError();
+    await recordAuditLog({
+      userId: requesterUserId,
+      action: 'PROFILE_UPDATE',
+      entityName: 'lecturers',
+      entityId: lecturerId,
+      oldValues: { title: lecturer.title, degree: lecturer.degree, phone: lecturer.phone, version: lecturer.version },
+      newValues: { title: updated.title, degree: updated.degree, phone: updated.phone, version: updated.version },
+    });
     return buildProfile(updated);
   }
 
