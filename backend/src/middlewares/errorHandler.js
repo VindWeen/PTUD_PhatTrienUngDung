@@ -33,21 +33,18 @@ export function errorHandler(err, req, res, next) {
       fieldErrors[field] = e.message;
     });
   } 
-  // 3. Lỗi từ Microsoft SQL Server Driver
-  else if (err && err.number) {
-    // 2601 / 2627: Unique constraint hoặc Filtered unique index violation
-    if (err.number === 2601 || err.number === 2627) {
+  // 3. Lỗi chuẩn SQLSTATE từ PostgreSQL (driver pg)
+  else if (err?.code) {
+    if (err.code === '23505') {
       statusCode = 409;
       code = 'DUPLICATE_RECORD';
       message = 'Bản ghi bị trùng lặp dữ liệu với một bản ghi đã tồn tại trong hệ thống.';
-      details = [{ sqlErrorNumber: err.number, message: err.message }];
-    } 
-    // 547: Check constraint hoặc Foreign Key violation
-    else if (err.number === 547) {
+      details = [{ constraint: err.constraint, message: err.detail || err.message }];
+    } else if (['23503', '23514', '23502'].includes(err.code)) {
       statusCode = 400;
       code = 'CONSTRAINT_VIOLATION';
       message = 'Thao tác vi phạm ràng buộc toàn vẹn dữ liệu (Chủ thể XOR, ngày tháng hoặc liên kết không hợp lệ).';
-      details = [{ sqlErrorNumber: err.number, message: err.message }];
+      details = [{ sqlState: err.code, constraint: err.constraint, message: err.detail || err.message }];
     }
   }
 

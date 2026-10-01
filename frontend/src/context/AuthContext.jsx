@@ -4,23 +4,6 @@ import { setOnAuthFailedCallback, clearAccessToken } from '../services/apiClient
 
 const AuthContext = createContext(null);
 
-const DEMO_FALLBACK_USER = {
-  userId: 1,
-  username: 'an.nv',
-  email: 'an.nv@lhu.edu.vn',
-  displayName: 'PGS.TS. Nguyễn Văn An',
-  status: 'ACTIVE',
-  roles: [{ roleId: 2, code: 'LECTURER', name: 'Giảng viên' }],
-  lecturerProfile: {
-    fullName: 'Nguyễn Văn An',
-    employeeCode: 'GV00234',
-    title: 'Phó Giáo sư',
-    degree: 'Tiến sĩ',
-    primaryUnit: { unitId: 2, name: 'Bộ môn Kỹ thuật Phần mềm' },
-  },
-  scopes: [],
-};
-
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -62,15 +45,10 @@ export function AuthProvider({ children }) {
           }
         }
       } catch {
-        // Nếu không có cookie hoặc hết hạn phiên
         if (isMounted) {
-          const hadSession =
-            localStorage.getItem('ptud-session-active') === 'true' ||
-            sessionStorage.getItem('ptud-session-active') === 'true';
-          if (hadSession) {
-            // Nếu người dùng đã từng đăng nhập demo trước đó
-            setUser(DEMO_FALLBACK_USER);
-          }
+          setUser(null);
+          localStorage.removeItem('ptud-session-active');
+          sessionStorage.removeItem('ptud-session-active');
         }
       } finally {
         if (isMounted) {
@@ -91,23 +69,17 @@ export function AuthProvider({ children }) {
   const signIn = async (credentials, remember = false) => {
     setError(null);
     try {
-      // Nếu credentials là object { username, password }
-      const payload =
-        typeof credentials === 'object' && credentials !== null
-          ? {
-              username: credentials.username || credentials.email,
-              password: credentials.password,
-              rememberMe: remember || Boolean(credentials.rememberMe),
-            }
-          : {
-              username: credentials,
-              password: 'demo1234',
-              rememberMe: remember,
-            };
+      const payload = {
+        username: credentials?.username || credentials?.email,
+        password: credentials?.password,
+        rememberMe: remember || Boolean(credentials?.rememberMe),
+      };
 
       const loginRes = await authApi.login(payload);
       if (loginRes?.user) {
         setUser(loginRes.user);
+        localStorage.removeItem('ptud-session-active');
+        sessionStorage.removeItem('ptud-session-active');
         (payload.rememberMe ? localStorage : sessionStorage).setItem('ptud-session-active', 'true');
         return loginRes.user;
       }

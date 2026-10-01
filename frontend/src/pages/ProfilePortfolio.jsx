@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FileText,
@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useAuth } from '../hooks/useDemoAuth';
+import { portfolioApi } from '../services/portfolioApi';
+import { EmptyState, ErrorState, LoadingState } from '../components/common/AsyncState';
 
 export default function ProfilePortfolio() {
   const { isDark, toggleTheme } = useTheme();
@@ -37,6 +39,24 @@ export default function ProfilePortfolio() {
   const [passwordError, setPasswordError] = useState(null);
   const [passwordSuccess, setPasswordSuccess] = useState(null);
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState(null);
+
+  const loadProfile = useCallback(async () => {
+    setProfileLoading(true);
+    setProfileError(null);
+    try {
+      setProfile(await portfolioApi.getPersonalProfile());
+    } catch (error) {
+      setProfile(null);
+      setProfileError(error);
+    } finally {
+      setProfileLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadProfile(); }, [loadProfile]);
 
   const tabs = [
     { id: 'nckh', label: 'Nghiên cứu khoa học' },
@@ -86,6 +106,10 @@ export default function ProfilePortfolio() {
       setPasswordLoading(false);
     }
   };
+
+  if (profileLoading) return <LoadingState label="Đang tải hồ sơ năng lực..." />;
+  if (profileError) return <ErrorState error={profileError} onRetry={loadProfile} />;
+  if (!profile) return <EmptyState message="Chưa có hồ sơ năng lực." />;
 
   return (
     <div className="space-y-7 animate-fadeIn">

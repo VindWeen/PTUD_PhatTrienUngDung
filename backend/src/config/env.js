@@ -1,14 +1,16 @@
 import dotenv from 'dotenv';
 import path from 'path';
+import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { z } from 'zod';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Tải biến môi trường: ưu tiên backend/.env, nếu không có tải từ root
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+// Chỉ dùng root .env làm fallback khi backend/.env không tồn tại, tránh trộn cấu hình DB cũ.
+const backendEnvPath = path.resolve(__dirname, '../../.env');
+const rootEnvPath = path.resolve(__dirname, '../../../.env');
+dotenv.config({ path: existsSync(backendEnvPath) ? backendEnvPath : rootEnvPath });
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),

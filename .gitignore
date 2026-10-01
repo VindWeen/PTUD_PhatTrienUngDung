@@ -3,6 +3,7 @@ dist/
 .env
 .env.*
 !.env.example
+!frontend/.env.fixture
 *.log
 .DS_Store
 output/

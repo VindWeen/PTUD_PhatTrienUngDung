@@ -1108,27 +1108,48 @@ components:
             type: object
     PersonalPortfolioResponse:
       type: object
+      required:
+        - success
+        - data
       properties:
         success:
           type: boolean
           example: true
         data:
           type: object
+          required:
+            - lecturerId
+            - userId
+            - fullName
+            - employeeCode
+            - email
+            - version
+            - workHistory
+            - titlesAndHonors
+            - stats
           properties:
             lecturerId:
               type: integer
+              format: int64
+            userId:
+              type: integer
+              format: int64
             fullName:
               type: string
             employeeCode:
               type: string
             email:
               type: string
+              format: email
             phone:
               type: string
+              nullable: true
             title:
               type: string
+              nullable: true
             degree:
               type: string
+              nullable: true
             version:
               type: integer
               format: int64
@@ -1137,23 +1158,93 @@ components:
               type: array
               items:
                 type: object
+                required:
+                  - assignmentId
+                  - unitId
+                  - unitCode
+                  - unitName
+                  - isPrimary
+                  - validFrom
+                properties:
+                  assignmentId:
+                    type: integer
+                    format: int64
+                  unitId:
+                    type: integer
+                    format: int64
+                  unitCode:
+                    type: string
+                  unitName:
+                    type: string
+                  isPrimary:
+                    type: boolean
+                  validFrom:
+                    type: string
+                    format: date-time
+                  validTo:
+                    type: string
+                    format: date-time
+                    nullable: true
             titlesAndHonors:
               type: array
               items:
                 type: object
             stats:
               type: object
+              required:
+                - totalAchievements
+                - verifiedAchievements
+                - pendingAchievements
+                - recordedAwards
+              properties:
+                totalAchievements:
+                  type: integer
+                  minimum: 0
+                verifiedAchievements:
+                  type: integer
+                  minimum: 0
+                pendingAchievements:
+                  type: integer
+                  minimum: 0
+                needCorrectionAchievements:
+                  type: integer
+                  minimum: 0
+                rejectedAchievements:
+                  type: integer
+                  minimum: 0
+                revokedAchievements:
+                  type: integer
+                  minimum: 0
+                draftAchievements:
+                  type: integer
+                  minimum: 0
+                recordedAwards:
+                  type: integer
+                  minimum: 0
     UnitProfileResponse:
       type: object
+      required:
+        - success
+        - data
       properties:
         success:
           type: boolean
           example: true
         data:
           type: object
+          required:
+            - unitId
+            - code
+            - name
+            - type
+            - isActive
+            - version
+            - lecturersCount
+            - stats
           properties:
             unitId:
               type: integer
+              format: int64
             code:
               type: string
             name:
@@ -1162,12 +1253,57 @@ components:
               type: string
             description:
               type: string
+              nullable: true
+            isActive:
+              type: boolean
             version:
               type: integer
               format: int64
               description: Số hiệu phiên bản kiểm soát đồng thời (version bigint)
+            parentUnit:
+              type: object
+              nullable: true
+              properties:
+                unitId:
+                  type: integer
+                  format: int64
+                code:
+                  type: string
+                name:
+                  type: string
+            representative:
+              $ref: "#/components/schemas/UnitRepresentative"
+            lecturersCount:
+              type: integer
+              minimum: 0
             stats:
               type: object
+    UnitRepresentative:
+      type: object
+      required:
+        - unitRepresentativeId
+        - userId
+        - displayName
+        - validFrom
+      properties:
+        unitRepresentativeId:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        displayName:
+          type: string
+        email:
+          type: string
+          format: email
+        validFrom:
+          type: string
+          format: date-time
+        validTo:
+          type: string
+          format: date-time
+          nullable: true
     CreateAchievementRequest:
       type: object
       required:

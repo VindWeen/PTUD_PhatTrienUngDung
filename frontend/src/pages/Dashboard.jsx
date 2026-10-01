@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Search,
   Sun,
@@ -22,17 +22,36 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
-import { demoUser, dashboardSummaries } from '../data/demo';
 import { useNavigate } from 'react-router-dom';
 import NotificationBell from '../components/common/NotificationBell';
+import { useAuth } from '../context/AuthContext';
+import { portfolioApi } from '../services/portfolioApi';
+import { EmptyState, ErrorState, LoadingState } from '../components/common/AsyncState';
 
 export default function Dashboard() {
   const { isDark, toggleTheme } = useTheme();
-  const user = demoUser;
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [viewMode, setViewMode] = useState('personal'); // 'personal' | 'unit'
-  const summaryData = dashboardSummaries[viewMode];
+  const [summaryData, setSummaryData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  const loadSummary = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      setSummaryData(await portfolioApi.getDashboardSummary({ scope: viewMode }));
+    } catch (error) {
+      setSummaryData(null);
+      setLoadError(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [viewMode]);
+
+  useEffect(() => { loadSummary(); }, [loadSummary]);
 
   // Calendar dates for Month 4 (April)
   const calendarDays = [
@@ -68,6 +87,10 @@ export default function Dashboard() {
 
 
 
+  if (loading) return <LoadingState label="Đang tải tổng quan..." />;
+  if (loadError) return <ErrorState error={loadError} onRetry={loadSummary} />;
+  if (!summaryData) return <EmptyState message="Chưa có dữ liệu tổng quan." />;
+
   const { achievements, awards, categories } = summaryData;
 
   return (
@@ -77,7 +100,7 @@ export default function Dashboard() {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              Chào mừng, {user?.fullName || 'Giảng viên LHU'}!
+              Chào mừng, {user?.displayName || user?.lecturerProfile?.fullName || 'Giảng viên LHU'}!
             </h1>
           </div>
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
@@ -114,7 +137,7 @@ export default function Dashboard() {
 
           {/* Reports quick button */}
           <button
-            onClick={() => navigate('/ai-forecast')}
+            onClick={() => navigate('/me/ai-forecast')}
             title="Xem phân tích & dự báo AI"
             className="p-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 shadow-soft-sm transition-all"
           >
@@ -155,19 +178,25 @@ export default function Dashboard() {
 
           <div className="relative z-10 mt-6 flex items-center gap-3">
             <button
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate('/me/profile')}
               className="px-4 py-2.5 rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold text-xs shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5"
             >
               Xem Hồ sơ năng lực
               <ArrowUpRight className="w-4 h-4" />
             </button>
             <button
-              onClick={() => navigate('/ai-forecast')}
+              onClick={() => navigate('/me/ai-forecast')}
               className="px-4 py-2.5 rounded-2xl bg-white/50 dark:bg-black/30 backdrop-blur-sm text-slate-900 dark:text-white font-bold text-xs hover:bg-white/70 transition-all"
             >
               Phân tích & Dự báo AI
             </button>
           </div>
+
+          <img
+            src="/dashboard-student.png"
+            alt="Minh họa sinh viên học tập cùng sách"
+            className="pointer-events-none absolute -bottom-1 -right-2 hidden w-[50%] max-w-[480px] select-none lg:block"
+          />
         </div>
 
         {/* Right Health Widget (4 cols) */}
@@ -309,7 +338,7 @@ export default function Dashboard() {
             <CalendarIcon className="w-5 h-5 text-brand-600" />
             <span className="font-bold text-sm text-slate-900 dark:text-white">Lịch Kê khai & Xét duyệt Thi đua (Tháng 4/2024)</span>
           </div>
-          <button onClick={() => navigate('/profile')} className="text-xs font-bold text-brand-600 hover:underline">
+          <button onClick={() => navigate('/me/profile')} className="text-xs font-bold text-brand-600 hover:underline">
             Xem hồ sơ năng lực →
           </button>
         </div>
