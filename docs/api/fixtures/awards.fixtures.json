@@ -31,7 +31,7 @@
             "recordedBy": 4,
             "recordedByName": "Cán bộ Thi đua - Khen thưởng",
             "recordedAt": "2023-12-25T10:00:00Z",
-            "rowVersion": "AAAAAAAADTA="
+            "version": 1
           },
           {
             "awardRecordId": 502,
@@ -59,7 +59,7 @@
             "recordedBy": 4,
             "recordedByName": "Cán bộ Thi đua - Khen thưởng",
             "recordedAt": "2022-12-26T09:30:00Z",
-            "rowVersion": "AAAAAAAADTw="
+            "version": 1
           },
           {
             "awardRecordId": 503,
@@ -87,7 +87,7 @@
             "recordedBy": 4,
             "recordedByName": "Cán bộ Thi đua - Khen thưởng",
             "recordedAt": "2023-11-20T14:15:00Z",
-            "rowVersion": "AAAAAAAADUI="
+            "version": 1
           }
         ],
         "pagination": {

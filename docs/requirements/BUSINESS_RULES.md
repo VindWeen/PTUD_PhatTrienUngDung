@@ -177,32 +177,36 @@ stateDiagram-v2
 2. **Cơ chế gọi API:**
    - Khi client tải thông tin hồ sơ (`GET`), server trả về chuỗi `rowVersion` (mã hóa Base64 hoặc chuỗi byte).
    - Khi client gửi yêu cầu thay đổi (`PATCH`, `submit`, `verify`, `request-correction`, `reject`, `revoke`), **bắt buộc phải gửi kèm trường `rowVersion` hiện tại** trong payload.
-3. **Xử lý xung đột tại Backend:**
-   - Câu lệnh cập nhật trạng thái trong SQL kiểm tra đồng thời:
+3. **Xử lý xung đột tại Backend với `version` (bigint):**
+   - Câu lệnh cập nhật trạng thái trong PostgreSQL kiểm tra đồng thời theo `id + version + status` rồi tăng `version = version + 1`:
      ```sql
-     UPDATE Achievements
-     SET Status = @NewStatus, UpdatedAt = SYSUTCDATETIME()
-     WHERE AchievementId = @AchievementId 
-       AND Status = @ExpectedCurrentStatus
-       AND RowVersion = @ClientRowVersion;
+     UPDATE app.achievements
+     SET status = $1, version = version + 1, updated_at = NOW()
+     WHERE achievement_id = $2 
+       AND status = $3
+       AND version = $4;
      ```
-   - Nếu số dòng bị ảnh hưởng (`@@ROWCOUNT`) bằng 0: Backend lập tức rollback transaction và trả về mã lỗi HTTP **`409 CONFLICT`** với mã lỗi `CONCURRENCY_CONFLICT` hoặc `INVALID_STATE_TRANSITION`, yêu cầu người dùng tải lại dữ liệu mới nhất.
+   - Nếu không có bản ghi nào được cập nhật (`rowCount === 0`): Backend lập tức rollback transaction và trả về mã lỗi HTTP **`409 CONFLICT`** với mã lỗi `CONCURRENCY_CONFLICT` hoặc `INVALID_STATE_TRANSITION`, yêu cầu người dùng tải lại dữ liệu mới nhất.
 
 ---
 
 ## 8. QUY TẮC KHEN THƯỞNG CÓ QUYẾT ĐỊNH (AWARD RECORDS)
 
-1. **Căn cứ pháp lý:** Bản ghi khen thưởng `AwardRecords` chỉ được tạo khi đã có quyết định khen thưởng chính thức (`AwardDecisions`), gồm số quyết định, ngày ký, cơ quan ban hành và tập tin đính kèm quyết định (`AwardDecisionFiles`).
+1. **Căn cứ pháp lý:** Bản ghi khen thưởng `AwardRecords` chỉ được tạo khi đã có quyết định khen thưởng chính thức, gồm số quyết định, ngày ký, cơ quan ban hành và tập tin đính kèm quyết định.
 2. **Quyền hạn:** Chỉ người dùng có vai trò `RECORDS_OFFICER` trong phạm vi đơn vị mới được phép nhập quyết định và ghi nhận khen thưởng.
-3. **Liên kết thành tích:** `AwardRecords` có thể liên kết với một hoặc nhiều `Achievements` đã `VERIFIED` qua bảng `AwardRecordAchievements`. Tuy nhiên, liên kết này là **tùy chọn (optional)** để hỗ trợ việc số hóa các quyết định khen thưởng cũ trong lịch sử trường khi chưa có dữ liệu chi tiết của từng thành tích.
+3. **Liên kết thành tích:** `AwardRecords` có thể liên kết với một hoặc nhiều `Achievements` đã `VERIFIED`. Tuy nhiên, liên kết này là **tùy chọn (optional)** để hỗ trợ việc số hóa các quyết định khen thưởng cũ trong lịch sử trường khi chưa có dữ liệu chi tiết của từng thành tích.
 4. **Chống trùng lặp khen thưởng:**
    - Một quyết định khen thưởng có thể trao cho nhiều cá nhân hoặc tập thể.
-   - Nhưng **với cùng một chủ thể + cùng một loại danh hiệu/khen thưởng (`AwardTypeId`) + trong cùng một quyết định (`DecisionId`)**: Hệ thống chỉ cho phép tồn tại duy nhất một bản ghi ở trạng thái `RECORDED`.
-   - Cơ chế bảo vệ: Sử dụng **Filtered Unique Index** trên SQL Server:
+   - Nhưng **với cùng một chủ thể trong cùng một đợt khen thưởng**: Hệ thống chỉ cho phép tồn tại duy nhất một bản ghi ở trạng thái `RECORDED`.
+   - Cơ chế bảo vệ: Sử dụng **Partial Unique Index** trên PostgreSQL:
      ```sql
-     CREATE UNIQUE NONCLUSTERED INDEX UX_AwardRecords_Lecturer_Recorded
-     ON AwardRecords(LecturerId, AwardTypeId, DecisionId)
-     WHERE Status = 'RECORDED' AND LecturerId IS NOT NULL;
+     CREATE UNIQUE INDEX uq_award_records_lecturer_recorded
+     ON app.award_records (award_period_id, lecturer_id)
+     WHERE status = 'RECORDED' AND lecturer_id IS NOT NULL;
+
+     CREATE UNIQUE INDEX uq_award_records_unit_recorded
+     ON app.award_records (award_period_id, unit_id)
+     WHERE status = 'RECORDED' AND unit_id IS NOT NULL;
      ```
 5. **Tính bất biến và sửa sai:** Bản ghi đã ở trạng thái `RECORDED` không được phép sửa nội dung. Sửa sai thông qua hành động Thu hồi (`REVOKED` có lý do) và tạo bản ghi thay thế liên kết `ReplacesAwardRecordId`.
 

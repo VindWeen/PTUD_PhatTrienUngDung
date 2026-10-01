@@ -68,7 +68,7 @@ export class NotFoundError extends AppError {
 }
 
 /**
- * 409 - Xung đột phiên bản RowVersion (Optimistic Concurrency Control)
+ * 409 - Xung đột phiên bản (Optimistic Concurrency Control với version bigint)
  */
 export class ConcurrencyConflictError extends AppError {
   constructor(message = 'Dữ liệu đã được cập nhật bởi một phiên thao tác khác. Vui lòng làm mới dữ liệu mới nhất.', details = []) {

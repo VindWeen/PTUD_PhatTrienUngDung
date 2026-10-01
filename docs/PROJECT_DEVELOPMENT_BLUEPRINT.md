@@ -49,26 +49,31 @@ Ví dụ số năm liên tục, số bài báo, ngưỡng KPI chỉ minh họa. 
 # 3. CÔNG NGHỆ VÀ KIẾN TRÚC
 
 - Frontend: ReactJS, Vite, Tailwind CSS, React Router, Axios.
-- Backend: Node.js, Express.js, REST API; controller–service–repository–validator.
-- Database: Microsoft SQL Server.
-- Auth: JWT access token, refresh token có thể thu hồi, mật khẩu được hash.
-- File: kho riêng trên server, tải qua API kiểm tra quyền; tách lớp lưu trữ để đổi sang object storage khi cần.
-- Ngôn ngữ PTUD: JavaScript thống nhất, schema validation và tài liệu API cho hợp đồng dữ liệu.
+- Backend: Node.js, Express.js, REST API (/api/v1); controller–service–repository–validator.
+- Database: Supabase (PostgreSQL) kết nối qua driver `pg` (node-postgres) với connection pooler và TLS.
+- Auth: Express tự quản lý JWT access token (trong bộ nhớ), HttpOnly refresh token cookie có cơ chế thu hồi và Token Rotation; mật khẩu hash bcrypt.
+- File: Kho lưu trữ private trên Express server, tải qua API kiểm tra quyền; không expose public bucket trên Supabase.
+- Ngôn ngữ PTUD: JavaScript thống nhất, schema validation Zod và tài liệu API OpenAPI 3.0 cho hợp đồng dữ liệu.
 - KLTN: chọn LLM API/model local, LangChain/LlamaIndex và ChromaDB/FAISS sau thử nghiệm nhu cầu, chi phí và điều kiện dữ liệu.
 
 ```text
 React Web App
      |
-Express REST API
-     +-- Auth / Roles / Organization scopes
+Express REST API (/api/v1)
+     +-- Auth / Roles / Organization scopes (Express JWT + HttpOnly Cookie)
      +-- Lecturer and collective profiles
      +-- Achievements / Evidence / Verification
      +-- Awards / Reports / Notifications / Audit
-     +-- SQL Server
-     +-- Private file storage
+     +-- Supabase PostgreSQL (schema 'app' cô lập Data API, pg Pool TLS)
+     +-- Private file storage (Express controlled)
      +-- AI Service (KLTN): Retrieval + Criteria evaluation + LLM
      +-- KPI connector (KLTN): gọi External KPI API
 ```
+
+> **Quyết định Kiến trúc (ADR-001 - Cập nhật W1-Q1/W1-Q2): Chuyển đổi Cơ sở dữ liệu sang Supabase PostgreSQL**  
+> - **Bối cảnh:** Kế hoạch ban đầu sử dụng Microsoft SQL Server cục bộ. Nhằm tăng cường tính linh hoạt trong triển khai đám mây, tối ưu hóa chi phí vận hành và chuẩn bị tốt cho KLTN, dự án quyết định chuyển sang sử dụng Supabase (PostgreSQL).  
+> - **Quyết định:** Sử dụng PostgreSQL trên Supabase làm cơ sở dữ liệu chính thông qua driver `pg` (node-postgres). Toàn bộ nghiệp vụ được cô lập trong schema `app`, thu hồi quyền truy cập của các vai trò `anon` và `authenticated` để ngăn chặn việc bypass nghiệp vụ qua PostgREST Data API. Tầng Auth và Private Storage vẫn giữ nguyên hoàn toàn do Express Backend kiểm soát.  
+> - **Cơ chế Khóa đồng thời:** Thay thế `ROWVERSION` của SQL Server bằng cột `version BIGINT DEFAULT 1 NOT NULL`, cập nhật theo `WHERE id = $1 AND version = $2 AND status = $3` và trả về mã lỗi 409 Conflict nếu có xung đột phiên bản.
 
 Backend quyết định quyền/business rules. Frontend chỉ điều chỉnh giao diện. Không nhúng AI vào controller nghiệp vụ lõi.
 

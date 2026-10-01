@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 console.log('================================================================');
-console.log('KIỂM TRA HỢP ĐỒNG KỸ THUẬT VÀ TÀI LIỆU BÀN GIAO W1-Q1');
+console.log('KIỂM TRA HỢP ĐỒNG KỸ THUẬT VÀ TÀI LIỆU BÀN GIAO W1-Q1 (SUPABASE)');
 console.log('Tác giả: Tạ Trần Vinh Quang (Phụ trách Backend / Database / API)');
 console.log('================================================================\n');
 
@@ -91,9 +91,9 @@ try {
   const allHaveContextUnit = items.every(item => item.contextUnitId > 0);
   assert(allHaveContextUnit, 'Tất cả các thành tích mẫu đều có ContextUnitId bất biến');
 
-  // Kiểm tra RowVersion
-  const allHaveRowVersion = items.every(item => typeof item.rowVersion === 'string' && item.rowVersion.length > 0);
-  assert(allHaveRowVersion, 'Tất cả các thành tích mẫu đều có chuỗi token RowVersion kiểm soát đồng thời');
+  // Kiểm tra version bigint
+  const allHaveVersion = items.every(item => typeof item.version === 'number' && item.version > 0);
+  assert(allHaveVersion, 'Tất cả các thành tích mẫu đều có version bigint kiểm soát đồng thời');
 } catch (err) {
   assert(false, `Lỗi kiểm tra quy tắc nghiệp vụ trên achievements fixtures: ${err.message}`);
 }
@@ -109,17 +109,19 @@ try {
   assert(false, `Lỗi kiểm tra errors fixtures: ${err.message}`);
 }
 
-// 6. Kiểm tra Schema DDL T-SQL
+// 6. Kiểm tra Schema DDL PostgreSQL cho Supabase
 try {
   const ddlPath = path.resolve('docs/database/SCHEMA_DDL.sql');
   assert(fs.existsSync(ddlPath), 'Tệp docs/database/SCHEMA_DDL.sql tồn tại');
   const ddlContent = fs.readFileSync(ddlPath, 'utf8');
-  assert(ddlContent.includes('CK_Achievements_Subject_XOR'), 'DDL có ràng buộc CK_Achievements_Subject_XOR');
-  assert(ddlContent.includes('CK_AwardRecords_Subject_XOR'), 'DDL có ràng buộc CK_AwardRecords_Subject_XOR');
-  assert(ddlContent.includes('UX_AwardRecords_Lecturer_Recorded'), 'DDL có Filtered Unique Index UX_AwardRecords_Lecturer_Recorded');
-  assert(ddlContent.includes('UX_AwardRecords_Unit_Recorded'), 'DDL có Filtered Unique Index UX_AwardRecords_Unit_Recorded');
-  assert(ddlContent.includes('RowVersion ROWVERSION NOT NULL'), 'DDL có cột RowVersion trên các bảng nghiệp vụ');
-  assert(ddlContent.includes('ContextUnitId BIGINT NOT NULL'), 'DDL có cột ContextUnitId bảo toàn bối cảnh đơn vị');
+  assert(ddlContent.includes('CREATE SCHEMA IF NOT EXISTS app;'), 'DDL khởi tạo schema app nghiệp vụ riêng biệt');
+  assert(ddlContent.includes('REVOKE ALL ON SCHEMA app FROM anon, authenticated;'), 'DDL thu hồi quyền từ anon và authenticated Data API');
+  assert(ddlContent.includes('ck_achievements_subject_xor'), 'DDL có ràng buộc CHECK XOR trên achievements');
+  assert(ddlContent.includes('ck_award_records_subject_xor'), 'DDL có ràng buộc CHECK XOR trên award_records');
+  assert(ddlContent.includes('uq_award_records_lecturer_recorded'), 'DDL có Partial Unique Index uq_award_records_lecturer_recorded');
+  assert(ddlContent.includes('uq_award_records_unit_recorded'), 'DDL có Partial Unique Index uq_award_records_unit_recorded');
+  assert(ddlContent.includes('version BIGINT NOT NULL DEFAULT 1'), 'DDL có cột version bigint kiểm soát đồng thời');
+  assert(ddlContent.includes('context_unit_id BIGINT NOT NULL'), 'DDL có cột context_unit_id bảo toàn bối cảnh đơn vị');
 } catch (err) {
   assert(false, `Lỗi kiểm tra SCHEMA_DDL.sql: ${err.message}`);
 }

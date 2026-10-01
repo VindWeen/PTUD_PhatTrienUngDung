@@ -1,0 +1,33 @@
+# ==============================================================================
+# SUPABASE CONFIGURATION - PTUD LHU
+# Hệ thống Quản lý Hồ sơ Thành tích Số & Hỗ trợ Xét duyệt Khen thưởng LHU
+# ==============================================================================
+
+project_id = "ptud-lhu-achievement"
+
+[api]
+enabled = true
+port = 54321
+# Chỉ expose schema public qua PostgREST Data API
+# Schema nghiệp vụ 'app' tuyệt đối không khai báo tại đây để bảo vệ dữ liệu backend
+schemas = ["public"]
+extra_search_path = ["public"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[auth]
+enabled = false
+
+[storage]
+enabled = false
