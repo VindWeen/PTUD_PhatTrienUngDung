@@ -9,7 +9,7 @@
 
 1. **Bên bàn giao (Backend / Cơ sở dữ liệu):**
    - Họ và tên: **Tạ Trần Vinh Quang**
-   - Vai trò: Phụ trách thiết kế Cơ sở dữ liệu MSSQL, Kiến trúc Backend Express REST API `/api/v1`, Ma trận phân quyền và Hợp đồng dữ liệu.
+   - Vai trò: Phụ trách thiết kế Cơ sở dữ liệu Supabase (PostgreSQL) qua driver `pg`, Kiến trúc Backend Express REST API `/api/v1`, Ma trận phân quyền và Hợp đồng dữ liệu.
 2. **Bên tiếp nhận (Frontend / Giao diện người dùng):**
    - Họ và tên: **Bạn Phước**
    - Vai trò: Phụ trách phát triển giao diện React / Vite / Tailwind CSS, Tích hợp API Client, Quản lý trạng thái và luồng trải nghiệm người dùng (UX).
@@ -22,10 +22,12 @@
 2. **Mục tiêu bàn giao W1-Q1:**
    - Cung cấp toàn bộ đặc tả chuẩn hóa OpenAPI 3.0 (`docs/api/openapi.yaml` & `docs/api/openapi.json`).
    - Cung cấp trọn bộ dữ liệu mẫu thực tế (**Fixtures**) tại `docs/api/fixtures/` để **Phước có thể đối chiếu payload và phát triển giao diện ngay lập tức mà không cần chờ backend chạy thật**.
-   - Chốt các ràng buộc kiến trúc quan trọng: **Chủ thể XOR, ContextUnitId, RowVersion kiểm soát đồng thời, và Quy tắc Cấm tự duyệt**.
-3. **Nguyên tắc nghiệm thu:**
+   - Chốt các ràng buộc kiến trúc quan trọng: **Chủ thể XOR, ContextUnitId, version bigint kiểm soát đồng thời (UPDATE id+version+status -> 409), và Quy tắc Cấm tự duyệt**.
+3. **Quyết định Đổi Database (ADR-001):**
+   - Thay thế SQL Server bằng **Supabase (PostgreSQL)** kết nối qua `pg` có TLS pooler. Schema nghiệp vụ đặt trong `app`, cô lập hoàn toàn khỏi anon/authenticated Data API. Tầng Auth Express và Private Storage giữ nguyên.
+4. **Nguyên tắc nghiệm thu:**
    - Trong giai đoạn tuần 1–3, frontend được phép chạy kiểm thử với Mock Fixtures hoặc Mock Service Worker (MSW).
-   - Nghiệm thu cuối cùng bắt buộc phải tích hợp thực tế với backend Express và SQL Server thật. Nếu thiếu phụ thuộc nào từ phía máy chủ, hai bên sẽ ghi nhận đúng phần bị chặn để cùng xử lý.
+   - Nghiệm thu cuối cùng bắt buộc phải tích hợp thực tế với backend Express và Supabase PostgreSQL thật. Nếu thiếu phụ thuộc nào từ phía máy chủ, hai bên sẽ ghi nhận đúng phần bị chặn để cùng xử lý.
 
 ---
 
@@ -71,7 +73,7 @@
 | `403` | `SELF_APPROVAL_PROHIBITED` | **CẤM TỰ DUYỆT:** Manager bấm duyệt hồ sơ của chính mình. FE hiển thị toast cảnh báo liêm chính học thuật và ẩn nút duyệt. |
 | `403` | `OUT_OF_SCOPE` | Truy cập ngoài phạm vi phân công. FE hiển thị thông báo không có thẩm quyền. |
 | `404` | `NOT_FOUND` | Tài nguyên không tồn tại hoặc đã bị xóa. Điều hướng hoặc hiển thị Empty State. |
-| `409` | `CONCURRENCY_CONFLICT` | **Xung đột phiên bản RowVersion:** Có người khác đã cập nhật trước. FE hiển thị modal yêu cầu người dùng tải lại dữ liệu mới nhất. |
+| `409` | `CONCURRENCY_CONFLICT` | **Xung đột phiên bản version bigint:** Dữ liệu đã bị phiên khác cập nhật. FE hiển thị modal yêu cầu người dùng tải lại dữ liệu mới nhất. |
 | `409` | `INVALID_STATE_TRANSITION` | Thao tác sai trạng thái (ví dụ cố bấm nộp hồ sơ đã bị thu hồi). FE làm mới lại trạng thái giao diện. |
 | `413` | `PAYLOAD_TOO_LARGE` | Tập tin vượt quá 10MB. FE chặn kiểm tra dung lượng ngay tại trình duyệt trước khi upload. |
 
@@ -86,9 +88,10 @@
      - Tuyệt đối không gửi đồng thời cả hai hoặc để trống cả hai.
 2. **Tính bất biến của Bối cảnh đơn vị (`ContextUnitId`):**
    - Khi hiển thị danh sách hay chi tiết hồ sơ, luôn dựa vào `contextUnitId` và `contextUnitName` để biết thành tích đó thuộc về đơn vị nào trong lịch sử, không lấy theo đơn vị hiện tại nếu giảng viên đã chuyển công tác.
-3. **Kiểm soát cập nhật đồng thời với `RowVersion`:**
-   - Mỗi khi gọi `GET` chi tiết (thành tích, khen thưởng, hồ sơ), server luôn trả về trường `rowVersion` (chuỗi base64, ví dụ `"AAAAAAAADFE="`).
-   - Mọi form chỉnh sửa (`PATCH`) và các nút bấm chuyển trạng thái (`submit`, `cancel`, `verify`, `request-correction`, `reject`, `revoke`) **bắt buộc phải gửi kèm trường `rowVersion` này**.
+3. **Kiểm soát cập nhật đồng thời với `version` (bigint):**
+   - Mỗi khi gọi `GET` chi tiết (thành tích, khen thưởng, hồ sơ), server luôn trả về trường `version` (kiểu số nguyên bigint, ví dụ: `1`, `2`, `3`).
+   - Mọi form chỉnh sửa (`PATCH`) và các nút bấm chuyển trạng thái (`submit`, `cancel`, `verify`, `request-correction`, `reject`, `revoke`) **bắt buộc phải gửi kèm trường `version` này**.
+   - Backend thực thi: `UPDATE ... SET status = $status, version = version + 1 WHERE id = $id AND version = $version AND status = $status`. Nếu không tìm thấy bản ghi khớp thì trả về mã 409 `CONCURRENCY_CONFLICT`.
 4. **Quy tắc Cấm tự duyệt (Anti-Self-Approval):**
    - Trên giao diện hàng chờ duyệt (`/approvals`):
      - Server sẽ tự động lọc các hồ sơ mà Manager không được phép duyệt.

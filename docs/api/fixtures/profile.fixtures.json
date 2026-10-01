@@ -14,7 +14,7 @@
         "degree": "Tiến sĩ",
         "avatarUrl": null,
         "updatedAt": "2024-04-10T08:30:00Z",
-        "rowVersion": "AAAAAAAAB9E=",
+        "version": 1,
         "workHistory": [
           {
             "period": "2020 – Hiện tại",
@@ -82,7 +82,7 @@
         },
         "description": "Đào tạo kỹ sư phần mềm, nghiên cứu ứng dụng AI, IoT và Hệ thống thông tin phân tán",
         "isActive": true,
-        "rowVersion": "AAAAAAAACAA=",
+        "version": 1,
         "representative": {
           "userId": 3,
           "displayName": "ThS. Lê Hoàng Cường",
