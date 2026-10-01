@@ -170,19 +170,19 @@
       },
       "patch": {
         "summary": "Cập nhật thông tin hồ sơ cá nhân",
-        "description": "Cập nhật số điện thoại, chức danh, học vị. Bắt buộc kiểm tra rowVersion.",
+        "description": "Cập nhật số điện thoại, chức danh, học vị. Bắt buộc kiểm tra version.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["rowVersion"],
+                "required": ["version"],
                 "properties": {
                   "phone": { "type": "string" },
                   "title": { "type": "string" },
                   "degree": { "type": "string" },
-                  "rowVersion": { "type": "string" }
+                  "version": { "type": "integer", "format": "int64", "description": "Số hiệu phiên bản kiểm soát đồng thời (version bigint)" }
                 }
               }
             }
@@ -314,7 +314,7 @@
       },
       "patch": {
         "summary": "Chỉnh sửa bản nháp thành tích",
-        "description": "Chỉ được sửa khi hồ sơ ở trạng thái DRAFT hoặc NEED_CORRECTION. Bắt buộc kiểm tra rowVersion.",
+        "description": "Chỉ được sửa khi hồ sơ ở trạng thái DRAFT hoặc NEED_CORRECTION. Bắt buộc kiểm tra version.",
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
         ],
@@ -371,9 +371,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["rowVersion"],
+                "required": ["version"],
                 "properties": {
-                  "rowVersion": { "type": "string" },
+                  "version": { "type": "integer", "format": "int64", "description": "Số hiệu phiên bản kiểm soát đồng thời (version bigint)" },
                   "note": { "type": "string" }
                 }
               }
@@ -407,9 +407,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["rowVersion"],
+                "required": ["version"],
                 "properties": {
-                  "rowVersion": { "type": "string" },
+                  "version": { "type": "integer", "format": "int64", "description": "Số hiệu phiên bản kiểm soát đồng thời (version bigint)" },
                   "reason": { "type": "string" }
                 }
               }
@@ -559,7 +559,7 @@
     "/achievements/{id}/verify": {
       "post": {
         "summary": "Xác nhận hồ sơ thành tích (VERIFIED)",
-        "description": "Thẩm định và xác nhận hồ sơ. Kiểm tra quyền Scope, CHỐNG TỰ DUYỆT, kiểm tra RowVersion. Khóa dữ liệu bất biến.",
+        "description": "Thẩm định và xác nhận hồ sơ. Kiểm tra quyền Scope, CHỐNG TỰ DUYỆT, kiểm tra version. Khóa dữ liệu bất biến.",
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
         ],
@@ -569,9 +569,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["rowVersion"],
+                "required": ["version"],
                 "properties": {
-                  "rowVersion": { "type": "string" },
+                  "version": { "type": "integer", "format": "int64", "description": "Số hiệu phiên bản kiểm soát đồng thời (version bigint)" },
                   "note": { "type": "string" }
                 }
               }
@@ -605,9 +605,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["rowVersion", "reason"],
+                "required": ["version", "reason"],
                 "properties": {
-                  "rowVersion": { "type": "string" },
+                  "version": { "type": "integer", "format": "int64", "description": "Số hiệu phiên bản kiểm soát đồng thời (version bigint)" },
                   "reason": { "type": "string", "minLength": 10 }
                 }
               }
@@ -642,9 +642,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["rowVersion", "reason"],
+                "required": ["version", "reason"],
                 "properties": {
-                  "rowVersion": { "type": "string" },
+                  "version": { "type": "integer", "format": "int64", "description": "Số hiệu phiên bản kiểm soát đồng thời (version bigint)" },
                   "reason": { "type": "string", "minLength": 10 }
                 }
               }
@@ -679,9 +679,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["rowVersion", "reason"],
+                "required": ["version", "reason"],
                 "properties": {
-                  "rowVersion": { "type": "string" },
+                  "version": { "type": "integer", "format": "int64", "description": "Số hiệu phiên bản kiểm soát đồng thời (version bigint)" },
                   "reason": { "type": "string", "minLength": 10 }
                 }
               }
@@ -763,8 +763,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["rowVersion"],
-                "properties": { "rowVersion": { "type": "string" } }
+                "required": ["version"],
+                "properties": { "version": { "type": "integer", "format": "int64", "description": "Số hiệu phiên bản kiểm soát đồng thời (version bigint)" } }
               }
             }
           }
@@ -794,9 +794,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["rowVersion", "reason"],
+                "required": ["version", "reason"],
                 "properties": {
-                  "rowVersion": { "type": "string" },
+                  "version": { "type": "integer", "format": "int64", "description": "Số hiệu phiên bản kiểm soát đồng thời (version bigint)" },
                   "reason": { "type": "string", "minLength": 10 }
                 }
               }
@@ -931,7 +931,7 @@
         }
       },
       "409Conflict": {
-        "description": "Xung đột đồng thời (RowVersion thay đổi) hoặc chuyển trạng thái không hợp lệ",
+        "description": "Xung đột đồng thời (version thay đổi) hoặc chuyển trạng thái không hợp lệ",
         "content": {
           "application/json": {
             "schema": { "$ref": "#/components/schemas/StandardErrorResponse" }
@@ -1005,7 +1005,7 @@
               "phone": { "type": "string" },
               "title": { "type": "string" },
               "degree": { "type": "string" },
-              "rowVersion": { "type": "string" },
+              "version": { "type": "integer", "format": "int64", "description": "Số hiệu phiên bản kiểm soát đồng thời (version bigint)" },
               "workHistory": { "type": "array", "items": { "type": "object" } },
               "titlesAndHonors": { "type": "array", "items": { "type": "object" } },
               "stats": { "type": "object" }
@@ -1025,7 +1025,7 @@
               "name": { "type": "string" },
               "type": { "type": "string" },
               "description": { "type": "string" },
-              "rowVersion": { "type": "string" },
+              "version": { "type": "integer", "format": "int64", "description": "Số hiệu phiên bản kiểm soát đồng thời (version bigint)" },
               "stats": { "type": "object" }
             }
           }
@@ -1049,7 +1049,7 @@
       },
       "UpdateAchievementRequest": {
         "type": "object",
-        "required": ["rowVersion"],
+        "required": ["version"],
         "properties": {
           "title": { "type": "string" },
           "description": { "type": "string" },
@@ -1058,7 +1058,7 @@
           "endDate": { "type": "string", "format": "date" },
           "recognitionYear": { "type": "integer" },
           "academicYearId": { "type": "integer", "nullable": true },
-          "rowVersion": { "type": "string" }
+          "version": { "type": "integer", "format": "int64", "description": "Số hiệu phiên bản kiểm soát đồng thời (version bigint)" }
         }
       },
       "AchievementsListResponse": {
@@ -1098,7 +1098,7 @@
               "description": { "type": "string" },
               "status": { "type": "string" },
               "recognitionYear": { "type": "integer" },
-              "rowVersion": { "type": "string" },
+              "version": { "type": "integer", "format": "int64", "description": "Số hiệu phiên bản kiểm soát đồng thời (version bigint)" },
               "evidences": { "type": "array", "items": { "type": "object" } }
             }
           }
@@ -1185,7 +1185,7 @@
             "properties": {
               "awardRecordId": { "type": "integer" },
               "status": { "type": "string" },
-              "rowVersion": { "type": "string" }
+              "version": { "type": "integer", "format": "int64", "description": "Số hiệu phiên bản kiểm soát đồng thời (version bigint)" }
             }
           }
         }

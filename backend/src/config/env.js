@@ -16,16 +16,17 @@ const envSchema = z.object({
   API_PREFIX: z.string().default('/api/v1'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
 
-  // Cấu hình Database
-  DB_SERVER: z.string().default('localhost'),
-  DB_PORT: z.coerce.number().int().positive().default(1433),
-  DB_NAME: z.string().default('PTUD_AchievementDB'),
-  DB_USER: z.string().optional().default('sa'),
+  // Cấu hình Database Supabase PostgreSQL
+  DATABASE_URL: z.string().optional(),
+  SUPABASE_DB_URL: z.string().optional(),
+  DB_HOST: z.string().optional().default('localhost'),
+  DB_SERVER: z.string().optional(), // tương thích ngược nếu đặt DB_SERVER
+  DB_PORT: z.coerce.number().int().positive().default(5432),
+  DB_NAME: z.string().default('postgres'),
+  DB_USER: z.string().default('postgres'),
   DB_PASSWORD: z.string().optional().default(''),
-  DB_ENCRYPT: z.preprocess((val) => val === 'true' || val === true, z.boolean()).default(false),
-  DB_TRUST_SERVER_CERTIFICATE: z.preprocess((val) => val === 'true' || val === true, z.boolean()).default(true),
+  DB_SSL: z.preprocess((val) => val === 'true' || val === true || val === '1', z.boolean()).default(false),
   DB_CONNECTION_TIMEOUT: z.coerce.number().int().default(15000),
-  DB_REQUEST_TIMEOUT: z.coerce.number().int().default(30000),
 
   // Pool
   DB_POOL_MIN: z.coerce.number().int().min(0).default(2),
@@ -54,6 +55,11 @@ try {
     process.exit(1);
   }
   throw error;
+}
+
+// Chuẩn hóa DB_HOST từ DB_SERVER nếu có
+if (!process.env.DB_HOST && parsedConfig.DB_SERVER) {
+  parsedConfig.DB_HOST = parsedConfig.DB_SERVER;
 }
 
 export const config = Object.freeze(parsedConfig);

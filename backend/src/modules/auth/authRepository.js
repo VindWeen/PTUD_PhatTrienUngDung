@@ -5,12 +5,16 @@ import { query, withTransaction } from '../../utils/dbHelper.js';
  */
 export async function findUserByUsernameOrEmail(identifier) {
   const result = await query(
-    `SELECT UserId, Username, Email, PasswordHash, DisplayName, Status, MustChangePassword, PasswordChangedAt, LastLoginAt, RowVersion
-     FROM dbo.Users
-     WHERE (Username = @identifier OR Email = @identifier)`,
-    { identifier }
+    `SELECT user_id AS "UserId", username AS "Username", email AS "Email", 
+            password_hash AS "PasswordHash", display_name AS "DisplayName", 
+            status AS "Status", must_change_password AS "MustChangePassword", 
+            password_changed_at AS "PasswordChangedAt", last_login_at AS "LastLoginAt", 
+            version AS "Version"
+     FROM app.users
+     WHERE (username = $1 OR email = $1)`,
+    [identifier]
   );
-  return result.recordset[0] || null;
+  return result.rows[0] || null;
 }
 
 /**
@@ -18,12 +22,16 @@ export async function findUserByUsernameOrEmail(identifier) {
  */
 export async function findUserById(userId) {
   const result = await query(
-    `SELECT UserId, Username, Email, PasswordHash, DisplayName, Status, MustChangePassword, PasswordChangedAt, LastLoginAt, RowVersion
-     FROM dbo.Users
-     WHERE UserId = @userId`,
-    { userId }
+    `SELECT user_id AS "UserId", username AS "Username", email AS "Email", 
+            password_hash AS "PasswordHash", display_name AS "DisplayName", 
+            status AS "Status", must_change_password AS "MustChangePassword", 
+            password_changed_at AS "PasswordChangedAt", last_login_at AS "LastLoginAt", 
+            version AS "Version"
+     FROM app.users
+     WHERE user_id = $1`,
+    [userId]
   );
-  return result.recordset[0] || null;
+  return result.rows[0] || null;
 }
 
 /**
@@ -31,25 +39,26 @@ export async function findUserById(userId) {
  */
 export async function updateLastLogin(userId) {
   await query(
-    `UPDATE dbo.Users
-     SET LastLoginAt = SYSUTCDATETIME(), UpdatedAt = SYSUTCDATETIME()
-     WHERE UserId = @userId`,
-    { userId }
+    `UPDATE app.users
+     SET last_login_at = NOW(), updated_at = NOW()
+     WHERE user_id = $1`,
+    [userId]
   );
 }
 
 /**
- * Cập nhật mật khẩu người dùng
+ * Cập nhật mật khẩu người dùng và tăng version (Optimistic Lock)
  */
 export async function updatePassword(userId, passwordHash) {
   await query(
-    `UPDATE dbo.Users
-     SET PasswordHash = @passwordHash,
-         MustChangePassword = 0,
-         PasswordChangedAt = SYSUTCDATETIME(),
-         UpdatedAt = SYSUTCDATETIME()
-     WHERE UserId = @userId`,
-    { userId, passwordHash }
+    `UPDATE app.users
+     SET password_hash = $1,
+         must_change_password = FALSE,
+         password_changed_at = NOW(),
+         updated_at = NOW(),
+         version = version + 1
+     WHERE user_id = $2`,
+    [passwordHash, userId]
   );
 }
 
@@ -58,16 +67,16 @@ export async function updatePassword(userId, passwordHash) {
  */
 export async function getActiveRoles(userId) {
   const result = await query(
-    `SELECT r.RoleId, r.Code, r.Name, r.Description
-     FROM dbo.UserRoles ur
-     INNER JOIN dbo.Roles r ON ur.RoleId = r.RoleId
-     WHERE ur.UserId = @userId
-       AND r.IsActive = 1
-       AND ur.ValidFrom <= SYSUTCDATETIME()
-       AND (ur.ValidTo IS NULL OR ur.ValidTo >= SYSUTCDATETIME())`,
-    { userId }
+    `SELECT r.role_id AS "RoleId", r.code AS "Code", r.name AS "Name", r.description AS "Description"
+     FROM app.user_roles ur
+     INNER JOIN app.roles r ON ur.role_id = r.role_id
+     WHERE ur.user_id = $1
+       AND r.is_active = TRUE
+       AND ur.valid_from <= NOW()
+       AND (ur.valid_to IS NULL OR ur.valid_to >= NOW())`,
+    [userId]
   );
-  return result.recordset;
+  return result.rows;
 }
 
 /**
@@ -75,18 +84,24 @@ export async function getActiveRoles(userId) {
  */
 export async function getLecturerProfile(userId) {
   const result = await query(
-    `SELECT l.LecturerId, l.EmployeeCode, l.FullName, l.Email, l.Phone, l.Title, l.Degree,
-            ou.UnitId, ou.Code AS UnitCode, ou.Name AS UnitName,
-            p.Name AS FacultyName
-     FROM dbo.Lecturers l
-     LEFT JOIN dbo.LecturerAssignments la ON l.LecturerId = la.LecturerId AND la.IsPrimary = 1 AND la.ValidFrom <= SYSUTCDATETIME() AND (la.ValidTo IS NULL OR la.ValidTo >= SYSUTCDATETIME())
-     LEFT JOIN dbo.OrganizationUnits ou ON la.UnitId = ou.UnitId
-     LEFT JOIN dbo.OrganizationUnits p ON ou.ParentId = p.UnitId
-     WHERE l.UserId = @userId AND l.IsActive = 1`,
-    { userId }
+    `SELECT l.lecturer_id AS "LecturerId", l.employee_code AS "EmployeeCode", 
+            l.full_name AS "FullName", l.email AS "Email", l.phone AS "Phone", 
+            l.title AS "Title", l.degree AS "Degree",
+            ou.unit_id AS "UnitId", ou.code AS "UnitCode", ou.name AS "UnitName",
+            p.name AS "FacultyName"
+     FROM app.lecturers l
+     LEFT JOIN app.lecturer_assignments la 
+       ON l.lecturer_id = la.lecturer_id 
+       AND la.is_primary = TRUE 
+       AND la.valid_from <= NOW() 
+       AND (la.valid_to IS NULL OR la.valid_to >= NOW())
+     LEFT JOIN app.organization_units ou ON la.unit_id = ou.unit_id
+     LEFT JOIN app.organization_units p ON ou.parent_id = p.unit_id
+     WHERE l.user_id = $1 AND l.is_active = TRUE`,
+    [userId]
   );
 
-  const row = result.recordset[0];
+  const row = result.rows[0];
   if (!row) return null;
 
   return {
@@ -111,18 +126,21 @@ export async function getLecturerProfile(userId) {
  */
 export async function getActiveScopes(userId) {
   const result = await query(
-    `SELECT s.UserUnitScopeId, r.Code AS RoleCode, s.UnitId, ou.Code AS UnitCode,
-            ou.Name AS UnitName, ou.Type AS UnitType, s.IncludeDescendants, s.ValidFrom, s.ValidTo
-     FROM dbo.UserUnitScopes s
-     INNER JOIN dbo.Roles r ON s.RoleId = r.RoleId
-     INNER JOIN dbo.OrganizationUnits ou ON s.UnitId = ou.UnitId
-     WHERE s.UserId = @userId
-       AND s.ValidFrom <= SYSUTCDATETIME()
-       AND (s.ValidTo IS NULL OR s.ValidTo >= SYSUTCDATETIME())`,
-    { userId }
+    `SELECT s.user_unit_scope_id AS "UserUnitScopeId", r.code AS "RoleCode", 
+            s.unit_id AS "UnitId", ou.code AS "UnitCode",
+            ou.name AS "UnitName", ou.type AS "UnitType", 
+            s.include_descendants AS "IncludeDescendants", 
+            s.valid_from AS "ValidFrom", s.valid_to AS "ValidTo"
+     FROM app.user_unit_scopes s
+     INNER JOIN app.roles r ON s.role_id = r.role_id
+     INNER JOIN app.organization_units ou ON s.unit_id = ou.unit_id
+     WHERE s.user_id = $1
+       AND s.valid_from <= NOW()
+       AND (s.valid_to IS NULL OR s.valid_to >= NOW())`,
+    [userId]
   );
 
-  return result.recordset.map((row) => ({
+  return result.rows.map((row) => ({
     userUnitScopeId: row.UserUnitScopeId,
     roleCode: row.RoleCode,
     unitId: row.UnitId,
@@ -130,8 +148,8 @@ export async function getActiveScopes(userId) {
     unitName: row.UnitName,
     unitType: row.UnitType,
     includeDescendants: Boolean(row.IncludeDescendants),
-    validFrom: row.ValidFrom ? row.ValidFrom.toISOString() : null,
-    validTo: row.ValidTo ? row.ValidTo.toISOString() : null,
+    validFrom: row.ValidFrom ? (row.ValidFrom instanceof Date ? row.ValidFrom.toISOString() : String(row.ValidFrom)) : null,
+    validTo: row.ValidTo ? (row.ValidTo instanceof Date ? row.ValidTo.toISOString() : String(row.ValidTo)) : null,
   }));
 }
 
@@ -140,12 +158,12 @@ export async function getActiveScopes(userId) {
  */
 export async function createRefreshToken({ userId, tokenHash, expiresAt, ip = null, userAgent = null }) {
   const result = await query(
-    `INSERT INTO dbo.RefreshTokens (UserId, TokenHash, ExpiresAt, CreatedIp, UserAgent)
-     OUTPUT INSERTED.RefreshTokenId, INSERTED.CreatedAt
-     VALUES (@userId, @tokenHash, @expiresAt, @ip, @userAgent)`,
-    { userId, tokenHash, expiresAt, ip, userAgent }
+    `INSERT INTO app.refresh_tokens (user_id, token_hash, expires_at, created_ip, user_agent)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING refresh_token_id AS "RefreshTokenId", created_at AS "CreatedAt"`,
+    [userId, tokenHash, expiresAt, ip, userAgent]
   );
-  return result.recordset[0];
+  return result.rows[0];
 }
 
 /**
@@ -153,35 +171,38 @@ export async function createRefreshToken({ userId, tokenHash, expiresAt, ip = nu
  */
 export async function findRefreshTokenByHash(tokenHash) {
   const result = await query(
-    `SELECT RefreshTokenId, UserId, TokenHash, ExpiresAt, RevokedAt, ReplacedByTokenId, CreatedAt
-     FROM dbo.RefreshTokens
-     WHERE TokenHash = @tokenHash`,
-    { tokenHash }
+    `SELECT refresh_token_id AS "RefreshTokenId", user_id AS "UserId", 
+            token_hash AS "TokenHash", expires_at AS "ExpiresAt", 
+            revoked_at AS "RevokedAt", replaced_by_token_id AS "ReplacedByTokenId", 
+            created_at AS "CreatedAt"
+     FROM app.refresh_tokens
+     WHERE token_hash = $1`,
+    [tokenHash]
   );
-  return result.recordset[0] || null;
+  return result.rows[0] || null;
 }
 
 /**
- * Xoay vòng Refresh Token (Token Rotation) trong Transaction:
- * Cấp token mới và thu hồi token cũ, liên kết ReplacedByTokenId
+ * Xoay vòng Refresh Token (Token Rotation) trong Transaction dùng pg BEGIN/COMMIT/ROLLBACK
+ * Cấp token mới và thu hồi token cũ, liên kết replaced_by_token_id
  */
 export async function rotateRefreshToken(oldTokenId, { userId, newTokenHash, newExpiresAt, ip = null, userAgent = null }) {
-  return withTransaction(async ({ request, query: txQuery }) => {
+  return withTransaction(async ({ query: txQuery }) => {
     // 1. Tạo Refresh Token mới
     const insertRes = await txQuery(
-      `INSERT INTO dbo.RefreshTokens (UserId, TokenHash, ExpiresAt, CreatedIp, UserAgent)
-       OUTPUT INSERTED.RefreshTokenId, INSERTED.CreatedAt
-       VALUES (@userId, @newTokenHash, @newExpiresAt, @ip, @userAgent)`,
-      { userId, newTokenHash, newExpiresAt, ip, userAgent }
+      `INSERT INTO app.refresh_tokens (user_id, token_hash, expires_at, created_ip, user_agent)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING refresh_token_id AS "RefreshTokenId", created_at AS "CreatedAt"`,
+      [userId, newTokenHash, newExpiresAt, ip, userAgent]
     );
-    const newTokenId = insertRes.recordset[0].RefreshTokenId;
+    const newTokenId = insertRes.rows[0].RefreshTokenId;
 
     // 2. Thu hồi token cũ và liên kết
     await txQuery(
-      `UPDATE dbo.RefreshTokens
-       SET RevokedAt = SYSUTCDATETIME(), ReplacedByTokenId = @newTokenId
-       WHERE RefreshTokenId = @oldTokenId`,
-      { newTokenId, oldTokenId }
+      `UPDATE app.refresh_tokens
+       SET revoked_at = NOW(), replaced_by_token_id = $1
+       WHERE refresh_token_id = $2`,
+      [newTokenId, oldTokenId]
     );
 
     return { newTokenId };
@@ -193,12 +214,12 @@ export async function rotateRefreshToken(oldTokenId, { userId, newTokenHash, new
  */
 export async function revokeRefreshTokenByHash(tokenHash) {
   const result = await query(
-    `UPDATE dbo.RefreshTokens
-     SET RevokedAt = SYSUTCDATETIME()
-     WHERE TokenHash = @tokenHash AND RevokedAt IS NULL`,
-    { tokenHash }
+    `UPDATE app.refresh_tokens
+     SET revoked_at = NOW()
+     WHERE token_hash = $1 AND revoked_at IS NULL`,
+    [tokenHash]
   );
-  return result.rowsAffected[0] > 0;
+  return result.rowCount > 0;
 }
 
 /**
@@ -206,46 +227,47 @@ export async function revokeRefreshTokenByHash(tokenHash) {
  */
 export async function revokeAllUserTokens(userId) {
   const result = await query(
-    `UPDATE dbo.RefreshTokens
-     SET RevokedAt = SYSUTCDATETIME()
-     WHERE UserId = @userId AND RevokedAt IS NULL`,
-    { userId }
+    `UPDATE app.refresh_tokens
+     SET revoked_at = NOW()
+     WHERE user_id = $1 AND revoked_at IS NULL`,
+    [userId]
   );
-  return result.rowsAffected[0];
+  return result.rowCount;
 }
 
 /**
  * Kiểm tra xem targetUnitId có nằm trong phạm vi được phân công của User hay không.
- * Nếu phạm vi có IncludeDescendants = 1, sử dụng CTE đệ quy kiểm tra toàn bộ đơn vị con.
+ * Nếu phạm vi có include_descendants = TRUE, sử dụng WITH RECURSIVE ScopeHierarchy kiểm tra toàn bộ đơn vị con.
  * Lưu ý: Role ADMIN không tự động có quyền bypass phạm vi (ADMIN != MANAGER).
  */
 export async function isUnitInUserScope(userId, targetUnitId, roleCode = null) {
   const result = await query(
-    `WITH ScopeHierarchy AS (
+    `WITH RECURSIVE ScopeHierarchy AS (
          -- Điểm neo: Các đơn vị được gán scope trực tiếp
-         SELECT s.UnitId, s.IncludeDescendants
-         FROM dbo.UserUnitScopes s
-         INNER JOIN dbo.Roles r ON s.RoleId = r.RoleId
-         WHERE s.UserId = @userId
-           AND (@roleCode IS NULL OR r.Code = @roleCode)
-           AND s.ValidFrom <= SYSUTCDATETIME()
-           AND (s.ValidTo IS NULL OR s.ValidTo >= SYSUTCDATETIME())
+         SELECT s.unit_id, s.include_descendants
+         FROM app.user_unit_scopes s
+         INNER JOIN app.roles r ON s.role_id = r.role_id
+         WHERE s.user_id = $1
+           AND ($2::varchar IS NULL OR r.code = $2)
+           AND s.valid_from <= NOW()
+           AND (s.valid_to IS NULL OR s.valid_to >= NOW())
 
          UNION ALL
 
-         -- Đệ quy: Mở rộng xuống các đơn vị con nếu IncludeDescendants = 1
-         SELECT ou.UnitId, h.IncludeDescendants
-         FROM dbo.OrganizationUnits ou
-         INNER JOIN ScopeHierarchy h ON ou.ParentId = h.UnitId
-         WHERE h.IncludeDescendants = 1 AND ou.IsActive = 1
+         -- Đệ quy: Mở rộng xuống các đơn vị con nếu include_descendants = TRUE
+         SELECT ou.unit_id, h.include_descendants
+         FROM app.organization_units ou
+         INNER JOIN ScopeHierarchy h ON ou.parent_id = h.unit_id
+         WHERE h.include_descendants = TRUE AND ou.is_active = TRUE
      )
-     SELECT TOP 1 1 AS HasScope
+     SELECT 1 AS "HasScope"
      FROM ScopeHierarchy
-     WHERE UnitId = @targetUnitId`,
-    { userId, targetUnitId, roleCode }
+     WHERE unit_id = $3
+     LIMIT 1`,
+    [userId, roleCode, targetUnitId]
   );
 
-  return result.recordset.length > 0 && result.recordset[0].HasScope === 1;
+  return result.rows.length > 0 && result.rows[0].HasScope === 1;
 }
 
 export default {

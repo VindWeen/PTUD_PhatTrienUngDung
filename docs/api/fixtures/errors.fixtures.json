@@ -98,8 +98,8 @@
         "message": "Dữ liệu hồ sơ đã được cập nhật bởi một người dùng khác hoặc một phiên thao tác khác trong lúc bạn đang xử lý. Vui lòng làm mới dữ liệu để xem trạng thái mới nhất.",
         "details": [
           {
-            "clientRowVersion": "AAAAAAAADFE=",
-            "currentRowVersion": "AAAAAAAADGI=",
+            "clientVersion": 1,
+            "currentVersion": 2,
             "currentStatus": "VERIFIED"
           }
         ],
