@@ -23,7 +23,7 @@ export default function Sidebar() {
     </NavLink>
   );
   return <>
-    <aside className="hidden lg:flex fixed left-5 top-5 bottom-5 w-[76px] bg-soft-sidebar dark:bg-soft-sidebarDark rounded-[32px] flex-col items-center py-6 z-30 shadow-soft-lg text-white">
+    <aside className="hidden lg:flex fixed left-5 top-5 bottom-5 w-[76px] bg-gradient-to-b from-[#182b3d] via-[#274b64] to-[#365f79] dark:from-[#111c2a] dark:to-[#223e52] rounded-[32px] flex-col items-center py-6 z-30 shadow-soft-lg text-white">
       <Link to="/me/dashboard" aria-label="Trang chủ LHU" className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center"><GraduationCap /></Link>
       <nav aria-label="Menu chính" className="flex flex-col items-center gap-5 my-auto">{visibleItems.map(navLink)}</nav>
       <button onClick={signOut} title="Đăng xuất" aria-label="Đăng xuất" className="p-3 text-slate-400 hover:text-white"><LogOut className="w-5 h-5" /></button>
