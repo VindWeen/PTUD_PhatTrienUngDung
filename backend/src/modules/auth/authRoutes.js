@@ -27,8 +27,8 @@ router.get('/me', authenticate, authController.me);
 router.get(
   '/verify-scope/:unitId',
   authenticate,
-  requireRoles('MANAGER', 'UNIT_REP'),
-  requireScope((req) => req.params.unitId, { actionName: 'thẩm định thành tích đơn vị' }),
+  requireRoles('MANAGER'),
+  requireScope((req) => req.params.unitId, { roleCode: 'MANAGER', actionName: 'thẩm định thành tích đơn vị' }),
   (req, res) => {
     res.status(200).json({
       success: true,

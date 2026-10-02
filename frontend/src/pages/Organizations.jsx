@@ -56,8 +56,10 @@ export default function Organizations() {
   const appoint = async () => {
     const userId = Number(window.prompt('User ID của đại diện mới'));
     if (!Number.isInteger(userId) || userId <= 0) return;
+    const end = window.prompt('Ngày kết thúc đại diện (YYYY-MM-DD); thu hồi phân công cũ ở trang Quản trị nếu bị chồng lấn');
+    if (!end || !/^\d{4}-\d{2}-\d{2}$/.test(end) || Number.isNaN(Date.parse(end))) return;
     setBusy(true); setError(null);
-    try { await organizationsApi.appointRepresentative(selected.unitId, { userId, validFrom: new Date().toISOString() }); setSelected(await organizationsApi.getProfile(selected.unitId)); } catch (e) { setError(e); } finally { setBusy(false); }
+    try { await organizationsApi.appointRepresentative(selected.unitId, { userId, validFrom: new Date().toISOString(), validTo: new Date(`${end}T23:59:59+07:00`).toISOString() }); setSelected(await organizationsApi.getProfile(selected.unitId)); } catch (e) { setError(e); } finally { setBusy(false); }
   };
   const transfer = async () => {
     const lecturerId = Number(window.prompt('Lecturer ID cần chuyển vào đơn vị này'));

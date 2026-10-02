@@ -26,7 +26,11 @@ export async function getCurrentRepresentative(unitId) {
     `SELECT r.unit_representative_id AS "unitRepresentativeId", r.user_id AS "userId",
             u.display_name AS "displayName", u.email, r.valid_from AS "appointedFrom", r.valid_to AS "appointedTo"
        FROM app.unit_representatives r JOIN app.users u ON u.user_id = r.user_id
-      WHERE r.unit_id = $1 AND r.valid_from <= NOW() AND (r.valid_to IS NULL OR r.valid_to > NOW())
+      WHERE r.unit_id = $1 AND r.revoked_at IS NULL AND u.status='ACTIVE'
+        AND r.valid_from <= NOW() AND (r.valid_to IS NULL OR r.valid_to > NOW())
+        AND EXISTS (SELECT 1 FROM app.user_roles ur JOIN app.roles role ON role.role_id=ur.role_id
+          WHERE ur.user_id=r.user_id AND role.code='UNIT_REPRESENTATIVE' AND role.is_active=TRUE
+            AND ur.revoked_at IS NULL AND ur.valid_from <= NOW() AND (ur.valid_to IS NULL OR ur.valid_to > NOW()))
       ORDER BY r.valid_from DESC LIMIT 1`, [unitId]);
   return result.rows[0] || null;
 }
@@ -99,7 +103,7 @@ export async function appointRepresentative({ unitId, userId, validFrom, assigne
   return withTransaction(async ({ query: txQuery }) => {
     await txQuery(
       `UPDATE app.unit_representatives SET valid_to = $1
-        WHERE unit_id = $2 AND valid_from < $1 AND (valid_to IS NULL OR valid_to > $1)`,
+        WHERE unit_id = $2 AND revoked_at IS NULL AND valid_from < $1 AND (valid_to IS NULL OR valid_to > $1)`,
       [validFrom, unitId]);
     const result = await txQuery(
       `INSERT INTO app.unit_representatives (unit_id, user_id, valid_from, assigned_by)

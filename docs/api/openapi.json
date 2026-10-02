@@ -21,6 +21,21 @@
     }
   ],
   "paths": {
+    "/admin/users": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1users" },
+    "/admin/users/{id}": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1users~1{id}" },
+    "/admin/roles": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1roles" },
+    "/admin/user-roles": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1user-roles" },
+    "/admin/user-roles/{id}": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1user-roles~1{id}" },
+    "/admin/scopes": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1scopes" },
+    "/admin/scopes/{id}": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1scopes~1{id}" },
+    "/admin/representatives": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1representatives" },
+    "/admin/representatives/{id}": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1representatives~1{id}" },
+    "/admin/academic-years": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1academic-years" },
+    "/admin/academic-years/{id}": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1academic-years~1{id}" },
+    "/admin/achievement-types": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1achievement-types" },
+    "/admin/achievement-types/{id}": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1achievement-types~1{id}" },
+    "/admin/award-types": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1award-types" },
+    "/admin/award-types/{id}": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1award-types~1{id}" },
     "/auth/login": {
       "post": {
         "summary": "Đăng nhập hệ thống",
@@ -294,7 +309,7 @@
       "post": {
         "summary": "Phân công đại diện đơn vị theo thời gian (ADMIN)",
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["userId", "validFrom"], "properties": { "userId": { "type": "integer" }, "validFrom": { "type": "string", "format": "date-time" } } } } } },
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["userId", "validFrom", "validTo"], "properties": { "userId": { "type": "integer" }, "validFrom": { "type": "string", "format": "date-time" }, "validTo": { "type": "string", "format": "date-time" } } } } } },
         "responses": { "201": { "description": "Đã phân công" }, "403": { "$ref": "#/components/responses/403Forbidden" } }
       }
     },

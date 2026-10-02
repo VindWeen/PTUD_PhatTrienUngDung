@@ -1,0 +1,2006 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "W2-P1 Admin API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "paths": {
+    "/admin/users": {
+      "get": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Danh sách users (tối đa 500)",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "maxItems": 500,
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Tạo / phân công users",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      }
+    },
+    "/admin/users/{id}": {
+      "patch": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Cập nhật tài khoản; INACTIVE/LOCKED thu hồi refresh token",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      }
+    },
+    "/admin/roles": {
+      "get": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Danh sách roles (tối đa 500)",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "maxItems": 500,
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      }
+    },
+    "/admin/user-roles": {
+      "get": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Danh sách user-roles (tối đa 500)",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "maxItems": 500,
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Tạo / phân công user-roles",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleAssignment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      }
+    },
+    "/admin/user-roles/{id}": {
+      "delete": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Thu hồi tức thời; giữ nguyên thời hạn và lịch sử",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      }
+    },
+    "/admin/scopes": {
+      "get": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Danh sách scopes (tối đa 500)",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "maxItems": 500,
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Tạo / phân công scopes",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScopeAssignment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      }
+    },
+    "/admin/scopes/{id}": {
+      "delete": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Thu hồi tức thời; giữ nguyên thời hạn và lịch sử",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      }
+    },
+    "/admin/representatives": {
+      "get": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Danh sách representatives (tối đa 500)",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "maxItems": 500,
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Tạo / phân công representatives",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Representative"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      }
+    },
+    "/admin/representatives/{id}": {
+      "delete": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Thu hồi tức thời; giữ nguyên thời hạn và lịch sử",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      }
+    },
+    "/admin/academic-years": {
+      "get": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Danh sách academic-years (tối đa 500)",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "maxItems": 500,
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Tạo / phân công academic-years",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcademicYear"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      }
+    },
+    "/admin/academic-years/{id}": {
+      "patch": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Cập nhật academic-years",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcademicYear"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Ngừng hoạt động; giữ tham chiếu, không DELETE vật lý",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      }
+    },
+    "/admin/achievement-types": {
+      "get": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Danh sách achievement-types (tối đa 500)",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "maxItems": 500,
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Tạo / phân công achievement-types",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AchievementType"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      }
+    },
+    "/admin/achievement-types/{id}": {
+      "patch": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Cập nhật achievement-types",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AchievementType"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Ngừng hoạt động; giữ tham chiếu, không DELETE vật lý",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      }
+    },
+    "/admin/award-types": {
+      "get": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Danh sách award-types (tối đa 500)",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "maxItems": 500,
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Tạo / phân công award-types",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AwardType"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      }
+    },
+    "/admin/award-types/{id}": {
+      "patch": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Cập nhật award-types",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AwardType"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin W2-P1"
+        ],
+        "summary": "Ngừng hoạt động; giữ tham chiếu, không DELETE vật lý",
+        "description": "Yêu cầu ADMIN đang hiệu lực; backend đọc lại trạng thái và phân công từ DB. Request camelCase; dữ liệu trả về dùng tên cột snake_case, mutation thêm id. Ghi và audit cùng transaction.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_ERROR hoặc CONSTRAINT_VIOLATION"
+          },
+          "401": {
+            "description": "UNAUTHORIZED; tài khoản không hoạt động / token không hợp lệ"
+          },
+          "403": {
+            "description": "FORBIDDEN; thiếu ADMIN hiện tại"
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "409": {
+            "description": "DUPLICATE_RECORD, OVERLAPPING_HISTORY hoặc CONFLICT"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UserCreate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "username": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "pattern": "^[A-Za-z0-9_.-]+$"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "password": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 72,
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "username",
+          "email",
+          "displayName",
+          "password"
+        ]
+      },
+      "UserUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "LOCKED"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "email",
+          "displayName",
+          "status",
+          "version"
+        ]
+      },
+      "RoleAssignment": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "roleId": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "unitId": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "includeDescendants": {
+            "type": "boolean"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "userId",
+          "roleId",
+          "validFrom",
+          "validTo"
+        ]
+      },
+      "ScopeAssignment": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "roleId": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "unitId": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "includeDescendants": {
+            "type": "boolean",
+            "default": false
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "userId",
+          "roleId",
+          "unitId",
+          "validFrom",
+          "validTo"
+        ]
+      },
+      "Representative": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "unitId": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "userId",
+          "unitId",
+          "validFrom",
+          "validTo"
+        ]
+      },
+      "AcademicYear": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20,
+            "description": "Chữ Unicode (giữ mã CSTĐ_CS đã chốt), số, dấu gạch và gạch dưới; chuẩn hóa chữ hoa."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "isCurrent": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "startDate",
+          "endDate"
+        ]
+      },
+      "AchievementType": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "Chữ Unicode (giữ mã CSTĐ_CS đã chốt), số, dấu gạch và gạch dưới; chuẩn hóa chữ hoa."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500,
+            "nullable": true
+          },
+          "applicableSubjectType": {
+            "type": "string",
+            "enum": [
+              "LECTURER",
+              "UNIT",
+              "BOTH"
+            ],
+            "default": "BOTH"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ]
+      },
+      "AwardType": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "Chữ Unicode (giữ mã CSTĐ_CS đã chốt), số, dấu gạch và gạch dưới; chuẩn hóa chữ hoa."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500,
+            "nullable": true
+          },
+          "applicableSubjectType": {
+            "type": "string",
+            "enum": [
+              "LECTURER",
+              "UNIT",
+              "BOTH"
+            ],
+            "default": "BOTH"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "TITLE",
+              "REWARD_FORM"
+            ]
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "FACULTY",
+              "UNIVERSITY",
+              "MINISTRY",
+              "STATE"
+            ]
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "category",
+          "level"
+        ]
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
