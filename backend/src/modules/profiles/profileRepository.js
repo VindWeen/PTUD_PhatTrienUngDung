@@ -32,13 +32,14 @@ export async function getWorkHistory(lecturerId) {
 export async function getTitlesAndHonors(lecturerId) {
   const result = await query(
     `SELECT r.record_id AS "awardRecordId", COALESCE(t.name, p.name) AS "awardTypeName",
-            EXTRACT(YEAR FROM r.decision_date)::int AS "recognitionYear",
-            COALESCE(t.level, 'UNIVERSITY') AS level, r.decision_number AS "decisionNumber",
-            r.decision_date AS "decisionDate", r.status
+            COALESCE(r.recognition_year, EXTRACT(YEAR FROM r.decision_date)::int) AS "recognitionYear",
+            COALESCE(t.level, 'UNIVERSITY') AS level, COALESCE(d.decision_number,r.decision_number) AS "decisionNumber",
+            COALESCE(d.decision_date,r.decision_date) AS "decisionDate", r.status
        FROM app.award_records r
-       JOIN app.award_periods p ON p.award_period_id = r.award_period_id
+       LEFT JOIN app.award_periods p ON p.award_period_id = r.award_period_id
+       LEFT JOIN app.award_decisions d ON d.decision_id = r.decision_id
        LEFT JOIN app.award_types t ON t.award_type_id = r.award_type_id
-      WHERE r.lecturer_id = $1 ORDER BY r.decision_date DESC`, [lecturerId]);
+      WHERE r.lecturer_id = $1 AND r.status IN ('RECORDED','REVOKED') ORDER BY COALESCE(d.decision_date,r.decision_date) DESC`, [lecturerId]);
   return result.rows;
 }
 

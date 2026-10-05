@@ -21,6 +21,11 @@
     }
   ],
   "paths": {
+    "/notifications": {"$ref":"./W2_P3.openapi.json#/paths/~1notifications"},
+    "/notifications/{id}/read": {"$ref":"./W2_P3.openapi.json#/paths/~1notifications~1{id}~1read"},
+    "/award-decision-files/{id}/download": {"$ref":"./W2_P2.openapi.json#/paths/~1award-decision-files~1{id}~1download"},
+    "/award-decisions/{id}/files": {"$ref":"./W2_P2.openapi.json#/paths/~1award-decisions~1{id}~1files"},
+    "/award-records/{id}": {"$ref":"./W2_P2.openapi.json#/paths/~1award-records~1{id}"},
     "/admin/users": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1users" },
     "/admin/users/{id}": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1users~1{id}" },
     "/admin/roles": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1roles" },
@@ -784,152 +789,10 @@
         }
       }
     },
-    "/award-records": {
-      "get": {
-        "summary": "Danh sách kết quả khen thưởng có quyết định",
-        "parameters": [
-          { "name": "subjectType", "in": "query", "schema": { "type": "string", "enum": ["LECTURER", "UNIT"] } },
-          { "name": "recognitionYear", "in": "query", "schema": { "type": "integer" } },
-          { "name": "awardTypeId", "in": "query", "schema": { "type": "integer" } },
-          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["DRAFT", "RECORDED", "REVOKED"] } },
-          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
-          { "name": "pageSize", "in": "query", "schema": { "type": "integer", "default": 10 } }
-        ],
-        "responses": {
-          "200": {
-            "description": "Danh sách khen thưởng",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/AwardRecordsListResponse" }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "Tạo bản ghi khen thưởng mới (DRAFT)",
-        "description": "RecordsOfficer nhập khen thưởng cho cá nhân hoặc tập thể dựa trên Quyết định đã có. Tuân thủ XOR chủ thể.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/CreateAwardRecordRequest" }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Tạo bản ghi khen thưởng thành công",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/AwardRecordDetailResponse" }
-              }
-            }
-          },
-          "400": { "$ref": "#/components/responses/400BadRequest" },
-          "403": { "$ref": "#/components/responses/403Forbidden" }
-        }
-      }
-    },
-    "/award-records/{id}/record": {
-      "post": {
-        "summary": "Ghi nhận khen thưởng chính thức (RECORDED)",
-        "description": "Chuyển trạng thái từ DRAFT sang RECORDED. Kiểm tra chống trùng lặp qua Filtered Unique Index.",
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["version"],
-                "properties": { "version": { "type": "integer", "format": "int64", "description": "Số hiệu phiên bản kiểm soát đồng thời (version bigint)" } }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Ghi nhận thành công",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/AwardRecordDetailResponse" }
-              }
-            }
-          },
-          "409": { "$ref": "#/components/responses/409Conflict" }
-        }
-      }
-    },
-    "/award-records/{id}/revoke": {
-      "post": {
-        "summary": "Thu hồi kết quả khen thưởng (REVOKED)",
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["version", "reason"],
-                "properties": {
-                  "version": { "type": "integer", "format": "int64", "description": "Số hiệu phiên bản kiểm soát đồng thời (version bigint)" },
-                  "reason": { "type": "string", "minLength": 10 }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Thu hồi khen thưởng thành công",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/StandardSuccessResponse" }
-              }
-            }
-          },
-          "409": { "$ref": "#/components/responses/409Conflict" }
-        }
-      }
-    },
-    "/award-decisions": {
-      "post": {
-        "summary": "Nhập quyết định khen thưởng",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["decisionNumber", "decisionDate", "issuer", "title"],
-                "properties": {
-                  "decisionNumber": { "type": "string", "example": "123/QĐ-ĐHLH" },
-                  "decisionDate": { "type": "string", "format": "date", "example": "2023-12-20" },
-                  "issuer": { "type": "string", "example": "Hiệu trưởng Trường Đại học Lạc Hồng" },
-                  "title": { "type": "string", "example": "Về việc công nhận danh hiệu CSTĐ cơ sở năm học 2022-2023" },
-                  "description": { "type": "string" }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Tạo quyết định thành công",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/StandardSuccessResponse" }
-              }
-            }
-          }
-        }
-      }
-    },
+    "/award-records": {"$ref":"./W2_P2.openapi.json#/paths/~1award-records"},
+    "/award-records/{id}/record": {"$ref":"./W2_P2.openapi.json#/paths/~1award-records~1{id}~1record"},
+    "/award-records/{id}/revoke": {"$ref":"./W2_P2.openapi.json#/paths/~1award-records~1{id}~1revoke"},
+    "/award-decisions": {"$ref":"./W2_P2.openapi.json#/paths/~1award-decisions"},
     "/reports/achievements": {
       "get": {
         "summary": "Báo cáo thống kê thành tích",

@@ -1,0 +1,82 @@
+{
+  "openapi": "3.0.3",
+  "info": {"title": "W2-P3 Notifications", "version": "1.0.0"},
+  "servers": [{"url": "/api/v1"}],
+  "security": [{"bearerAuth": []}],
+  "paths": {
+    "/notifications": {
+      "get": {
+        "tags": ["Notifications"],
+        "summary": "Thông báo của phiên đăng nhập còn quyền hiện tại",
+        "description": "Không nhận userId. Query ngoài hợp đồng bị từ chối. Sắp xếp createdAt DESC, notificationId DESC.",
+        "parameters": [
+          {"name": "page", "in": "query", "schema": {"type": "integer", "minimum": 1, "default": 1}},
+          {"name": "pageSize", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20}},
+          {"name": "unreadOnly", "in": "query", "schema": {"type": "string", "enum": ["true", "false"], "default": "false"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Inbox theo scope hiện tại; unreadCount trên toàn inbox",
+            "content": {"application/json": {"schema": {
+              "type": "object", "required": ["success", "data"],
+              "properties": {
+                "success": {"type": "boolean", "enum": [true]},
+                "data": {
+                  "type": "object", "required": ["items", "total", "unreadCount", "page", "pageSize"],
+                  "properties": {
+                    "items": {"type": "array", "items": {"$ref": "#/components/schemas/Notification"}},
+                    "total": {"type": "integer", "minimum": 0},
+                    "unreadCount": {"type": "integer", "minimum": 0},
+                    "page": {"type": "integer", "minimum": 1},
+                    "pageSize": {"type": "integer", "minimum": 1, "maximum": 100}
+                  }
+                }
+              }
+            }}}
+          },
+          "400": {"description": "VALIDATION_ERROR"},
+          "401": {"description": "UNAUTHORIZED"}
+        }
+      }
+    },
+    "/notifications/{id}/read": {
+      "patch": {
+        "tags": ["Notifications"],
+        "summary": "Đánh dấu thông báo của mình đã đọc (idempotent)",
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer", "minimum": 1}}],
+        "responses": {
+          "200": {
+            "description": "Không đổi readAt nếu đã đọc",
+            "content": {"application/json": {"schema": {
+              "type": "object", "required": ["success", "data"],
+              "properties": {"success": {"type": "boolean", "enum": [true]}, "data": {"$ref": "#/components/schemas/Notification"}}
+            }}}
+          },
+          "400": {"description": "VALIDATION_ERROR"},
+          "401": {"description": "UNAUTHORIZED"},
+          "404": {"description": "NOT_FOUND: ID không có, của người khác, hoặc không còn scope"}
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {"bearerAuth": {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}},
+    "schemas": {
+      "Notification": {
+        "type": "object", "additionalProperties": false,
+        "required": ["notificationId", "entityType", "entityId", "version", "fromStatus", "toStatus", "createdAt", "readAt"],
+        "properties": {
+          "notificationId": {"$ref": "#/components/schemas/BigintId"},
+          "entityType": {"type": "string", "enum": ["AWARD", "ACHIEVEMENT"]},
+          "entityId": {"$ref": "#/components/schemas/BigintId"},
+          "version": {"$ref": "#/components/schemas/BigintId"},
+          "fromStatus": {"type": "string"},
+          "toStatus": {"type": "string"},
+          "createdAt": {"type": "string", "format": "date-time"},
+          "readAt": {"type": "string", "format": "date-time", "nullable": true}
+        }
+      },
+      "BigintId": {"oneOf": [{"type": "string", "pattern": "^[1-9][0-9]*$"}, {"type": "integer", "minimum": 1}]}
+    }
+  }
+}

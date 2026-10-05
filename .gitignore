@@ -13,3 +13,4 @@ storage/*
 backend/storage/*
 !backend/storage/.gitkeep
 outputs/
+.npm-cache/
