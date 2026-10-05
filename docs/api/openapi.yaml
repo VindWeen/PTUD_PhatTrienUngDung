@@ -12,6 +12,10 @@ servers:
 security:
   - bearerAuth: []
 paths:
+  /notifications:
+    $ref: './W2_P3.openapi.json#/paths/~1notifications'
+  /notifications/{id}/read:
+    $ref: './W2_P3.openapi.json#/paths/~1notifications~1{id}~1read'
   /award-decision-files/{id}/download:
     $ref: './W2_P2.openapi.json#/paths/~1award-decision-files~1{id}~1download'
 

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getPool } from '../../config/database.js';
 import { isUnitInUserScope, getActiveRoles } from '../auth/authRepository.js';
 import { recordAuditLog } from '../audit/auditService.js';
+import { notifyStatusChanged } from '../notifications/notificationService.js';
 import storage from '../evidences/storage/localStorageAdapter.js';
 import { validateUploadedFile } from '../evidences/evidenceValidators.js';
 import { ForbiddenError, OutOfScopeError, NotFoundError, ValidationError, ConflictError } from '../../utils/errors.js';
@@ -13,7 +14,7 @@ export const decisionSchema = z.object({ decisionNumber: z.string().trim().min(1
 export const recordSchema = z.object({ lecturerId: id.nullish(), organizationUnitId: id.nullish(), awardTypeId: id, decisionId: id, recognitionYear: z.coerce.number().int().min(1990).max(2100), achievementIds: z.array(id).max(100).default([]), replacesAwardRecordId: id.nullish() }).strict().refine(v => Boolean(v.lecturerId) !== Boolean(v.organizationUnitId), 'Chọn đúng một cá nhân hoặc tập thể');
 export const transitionSchema = z.object({ version: id, reason: z.string().trim().max(1000).optional() }).strict();
 export class AwardService {
- constructor({ pool = getPool, adapter = storage, scope = isUnitInUserScope, audit = recordAuditLog, roles = getActiveRoles } = {}) { Object.assign(this, { pool, storage: adapter, scope, audit, roles }); }
+ constructor({ pool = getPool, adapter = storage, scope = isUnitInUserScope, audit = recordAuditLog, roles = getActiveRoles, notify = notifyStatusChanged } = {}) { Object.assign(this, { pool, storage: adapter, scope, audit, roles, notify }); }
  async authorize(user, unit) {
   if (!user?.userId || !(await this.roles(user.userId)).some(r => (typeof r === 'string' ? r : r.Code || r.code) === 'RECORDS_OFFICER')) throw new ForbiddenError('Cần vai trò RecordsOfficer hiệu lực');
   if (unit && !await this.scope(user.userId, unit, 'RECORDS_OFFICER')) throw new OutOfScopeError();
@@ -54,7 +55,9 @@ export class AwardService {
    await c.query('SELECT decision_id FROM app.award_decisions WHERE decision_id=$1 FOR UPDATE',[r.decision_id]);
    if (target === 'RECORDED') { const f = (await c.query('SELECT storage_key FROM app.award_decision_files WHERE decision_id=$1 ORDER BY version_no DESC LIMIT 1',[r.decision_id])).rows[0]; if (!f || !await this.storage.fileExists(f.storage_key)) throw new ValidationError('Cần file quyết định tồn tại trong kho private'); }
    const updated = (await c.query(`UPDATE app.award_records SET status=$2::varchar,version=version+1,updated_at=NOW(),recorded_by=CASE WHEN $2::varchar='RECORDED' THEN $3 ELSE recorded_by END,recorded_at=CASE WHEN $2::varchar='RECORDED' THEN NOW() ELSE recorded_at END WHERE record_id=$1 RETURNING *`,[r.record_id,target,user.userId])).rows[0];
-   await c.query('INSERT INTO app.award_record_histories(record_id,from_status,to_status,actor_id,reason) VALUES($1,$2,$3,$4,$5)',[r.record_id,r.status,target,user.userId,b.reason || null]); return updated;
+   await c.query('INSERT INTO app.award_record_histories(record_id,from_status,to_status,actor_id,reason) VALUES($1,$2,$3,$4,$5)',[r.record_id,r.status,target,user.userId,b.reason || null]);
+   await this.notify(c,{entityType:'AWARD',entityId:r.record_id,version:updated.version,fromStatus:r.status,toStatus:target});
+   return updated;
   });
  }
  async upload(rawId,file,user) {

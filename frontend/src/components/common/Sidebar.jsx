@@ -1,9 +1,10 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { GraduationCap, Home, User, Cpu, LogOut, Building2, Award } from 'lucide-react';
+import { GraduationCap, Home, User, Cpu, LogOut, Building2, Award, Bell } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
+  { to: '/notifications', icon: Bell, label: 'Thông báo', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
   { to: '/awards', icon: Award, label: 'Khen thưởng', roles: ['RECORDS_OFFICER'] },
   { to: '/admin', icon: User, label: 'Quản trị', roles: ['ADMIN'] },
   { to: '/me/dashboard', icon: Home, label: 'Trang chủ', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },

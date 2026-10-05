@@ -5,6 +5,8 @@
   "main": "src/server.js",
   "type": "module",
   "scripts": {
+    "test:w2-p3": "node --test tests/w2-p3.test.js",
+    "test:w2-p3:integration": "node tests/w2-p3.integration.js",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "migrate": "node ../database/scripts/migrate.js up",
