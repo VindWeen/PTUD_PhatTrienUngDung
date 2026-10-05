@@ -83,8 +83,45 @@ export const listAchievementsQuerySchema = z.object({
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
+export const submitAchievementSchema = z.object({
+  version: z.coerce.number().int().positive({ message: 'Số hiệu phiên bản version là bắt buộc để kiểm soát cập nhật đồng thời' }),
+  note: z.string().trim().max(1000).optional(),
+  submitNote: z.string().trim().max(1000).optional(),
+});
+
+export const verifyAchievementSchema = z.object({
+  version: z.coerce.number().int().positive({ message: 'Số hiệu phiên bản version là bắt buộc để kiểm soát cập nhật đồng thời' }),
+  note: z.string().trim().max(1000).optional(),
+});
+
+export const requestCorrectionSchema = z.object({
+  version: z.coerce.number().int().positive({ message: 'Số hiệu phiên bản version là bắt buộc để kiểm soát cập nhật đồng thời' }),
+  reason: z.string().trim().min(5, 'Lý do yêu cầu bổ sung phải có ít nhất 5 ký tự').max(1000),
+});
+
+export const rejectAchievementSchema = z.object({
+  version: z.coerce.number().int().positive({ message: 'Số hiệu phiên bản version là bắt buộc để kiểm soát cập nhật đồng thời' }),
+  reason: z.string().trim().min(5, 'Lý do từ chối phải có ít nhất 5 ký tự').max(1000),
+});
+
+export const cancelAchievementSchema = z.object({
+  version: z.coerce.number().int().positive({ message: 'Số hiệu phiên bản version là bắt buộc để kiểm soát cập nhật đồng thời' }),
+  reason: z.string().trim().max(1000).optional(),
+});
+
+export const revokeAchievementSchema = z.object({
+  version: z.coerce.number().int().positive({ message: 'Số hiệu phiên bản version là bắt buộc để kiểm soát cập nhật đồng thời' }),
+  reason: z.string().trim().min(5, 'Lý do thu hồi phải có ít nhất 5 ký tự').max(1000),
+});
+
 export default {
   createAchievementSchema,
   updateAchievementSchema,
   listAchievementsQuerySchema,
+  submitAchievementSchema,
+  verifyAchievementSchema,
+  requestCorrectionSchema,
+  rejectAchievementSchema,
+  cancelAchievementSchema,
+  revokeAchievementSchema,
 };

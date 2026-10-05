@@ -110,5 +110,33 @@ export const fixtureClient = {
     mimeType: file?.type || 'application/pdf',
   }),
   deleteEvidence: async (evidenceId) => ({ success: true, evidenceId }),
+  submitAchievement: async (id, data) => {
+    return { ...clone(achievementFixtures.achievementDetailVerified.payload.data), status: 'SUBMITTED', version: (data?.version || 1) + 1 };
+  },
+  verifyAchievement: async (id, data) => {
+    return { ...clone(achievementFixtures.achievementDetailVerified.payload.data), status: 'VERIFIED', version: (data?.version || 1) + 1 };
+  },
+  requestCorrection: async (id, data) => {
+    return { ...clone(achievementFixtures.achievementDetailNeedCorrection.payload.data), status: 'NEED_CORRECTION', latestCorrectionReason: data?.reason, version: (data?.version || 1) + 1 };
+  },
+  rejectAchievement: async (id, data) => {
+    return { ...clone(achievementFixtures.achievementDetailVerified.payload.data), status: 'REJECTED', version: (data?.version || 1) + 1 };
+  },
+  cancelAchievement: async (id, data) => {
+    return { ...clone(achievementFixtures.achievementDetailVerified.payload.data), status: 'CANCELLED', version: (data?.version || 1) + 1 };
+  },
+  revokeAchievement: async (id, data) => {
+    return { ...clone(achievementFixtures.achievementDetailVerified.payload.data), status: 'REVOKED', version: (data?.version || 1) + 1 };
+  },
+  getAchievementHistory: async (id) => clone(achievementFixtures.achievementHistoryList.payload.data),
+  getAchievementSubmissions: async (id) => [
+    {
+      submissionId: 501,
+      revisionNo: 1,
+      submittedBy: { userId: 1, displayName: 'PGS.TS. Nguyễn Văn An' },
+      submittedAt: '2024-02-20T09:30:00Z',
+      frozenFilesCount: 2,
+    },
+  ],
   fixtures: { achievements: achievementFixtures, awards: awardFixtures },
 };

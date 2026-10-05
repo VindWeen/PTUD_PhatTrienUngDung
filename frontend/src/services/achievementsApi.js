@@ -20,8 +20,29 @@ export const achievementsApi = {
   update: (id, data) =>
     USE_FIXTURES ? fixtureWriteError() : request({ method: 'PATCH', url: `/achievements/${id}`, data }),
 
-  remove: (id) =>
-    USE_FIXTURES ? fixtureWriteError() : request({ method: 'DELETE', url: `/achievements/${id}` }),
+  submit: (id, data) =>
+    USE_FIXTURES ? fixtureClient.submitAchievement(id, data) : request({ method: 'POST', url: `/achievements/${id}/submit`, data }),
+
+  verify: (id, data) =>
+    USE_FIXTURES ? fixtureClient.verifyAchievement(id, data) : request({ method: 'POST', url: `/achievements/${id}/verify`, data }),
+
+  requestCorrection: (id, data) =>
+    USE_FIXTURES ? fixtureClient.requestCorrection(id, data) : request({ method: 'POST', url: `/achievements/${id}/request-correction`, data }),
+
+  reject: (id, data) =>
+    USE_FIXTURES ? fixtureClient.rejectAchievement(id, data) : request({ method: 'POST', url: `/achievements/${id}/reject`, data }),
+
+  cancel: (id, data) =>
+    USE_FIXTURES ? fixtureClient.cancelAchievement(id, data) : request({ method: 'POST', url: `/achievements/${id}/cancel`, data }),
+
+  revoke: (id, data) =>
+    USE_FIXTURES ? fixtureClient.revokeAchievement(id, data) : request({ method: 'POST', url: `/achievements/${id}/revoke`, data }),
+
+  getHistory: (id) =>
+    USE_FIXTURES ? fixtureClient.getAchievementHistory(id) : request({ method: 'GET', url: `/achievements/${id}/history` }),
+
+  getSubmissions: (id) =>
+    USE_FIXTURES ? fixtureClient.getAchievementSubmissions(id) : request({ method: 'GET', url: `/achievements/${id}/submissions` }),
 
   listAchievementTypes: () =>
     USE_FIXTURES

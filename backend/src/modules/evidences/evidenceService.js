@@ -4,6 +4,7 @@ import {
   ValidationError,
   UnauthorizedError,
   OutOfScopeError,
+  ConflictError,
 } from '../../utils/errors.js';
 import { recordAuditLog } from '../audit/auditService.js';
 import { isUnitInUserScope } from '../auth/authRepository.js';
@@ -26,18 +27,18 @@ export class EvidenceService {
   async _assertCanModifyAchievement(achievement, user) {
     const roles = (user?.roles || []).map((r) => (typeof r === 'string' ? r : r.code));
 
-    // Admin và Records Officer có quyền tối cao
-    if (roles.includes('ADMIN') || roles.includes('RECORDS_OFFICER')) {
-      return true;
-    }
-
-    // Kiểm tra trạng thái hồ sơ: Chỉ DRAFT và NEED_CORRECTION được phép thêm/sửa minh chứng
+    // Kiểm tra trạng thái hồ sơ: Chỉ DRAFT và NEED_CORRECTION được phép thêm/sửa minh chứng (VERIFIED khóa sửa/file)
     const allowedStatuses = ['DRAFT', 'NEED_CORRECTION'];
     if (!allowedStatuses.includes(achievement.status)) {
-      throw new ValidationError(
-        `Không thể thêm, sửa hoặc xóa minh chứng khi hồ sơ đang ở trạng thái "${achievement.status}"`,
-        { status: [`Chỉ hồ sơ ở trạng thái DRAFT hoặc NEED_CORRECTION mới được chỉnh sửa minh chứng`] }
+      throw new ConflictError(
+        `Không thể thêm, sửa hoặc xóa minh chứng khi hồ sơ đang ở trạng thái "${achievement.status}". Dữ liệu hồ sơ đã được khóa bất biến.`,
+        'ACHIEVEMENT_IMMUTABLE'
       );
+    }
+
+    // Admin và Records Officer có quyền quản trị trong giai đoạn hồ sơ cho phép chỉnh sửa
+    if (roles.includes('ADMIN') || roles.includes('RECORDS_OFFICER')) {
+      return true;
     }
 
     const lecturerUserId = achievement.lecturer?.userId || achievement.lecturerUserId;

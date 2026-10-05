@@ -44,8 +44,9 @@ export async function listUserRepresentedUnitIds(userId) {
   return result.rows.map((r) => Number(r.unitId));
 }
 
-export async function findAchievementById(id) {
-  const result = await query(
+export async function findAchievementById(id, client = null) {
+  const runQuery = client ? client.query.bind(client) : query;
+  const result = await runQuery(
     `SELECT a.achievement_id AS "achievementId",
             CASE WHEN a.lecturer_id IS NOT NULL THEN 'LECTURER' ELSE 'UNIT' END AS "subjectType",
             a.lecturer_id AS "lecturerId",
@@ -62,6 +63,8 @@ export async function findAchievementById(id) {
             a.status AS "status",
             a.created_by AS "createdBy",
             a.submitted_by AS "submittedBy",
+            a.verified_by AS "verifiedBy",
+            a.verified_at AS "verifiedAt",
             a.replaces_achievement_id AS "replacesAchievementId",
             a.version AS "version",
             a.created_at AS "createdAt",
@@ -96,6 +99,37 @@ export async function findAchievementById(id) {
   const row = result.rows[0];
   if (!row) return null;
 
+  const submissionsRes = await runQuery(
+    `SELECT s.submission_id AS "submissionId", s.revision_no AS "revisionNo",
+            s.submitted_at AS "submittedAt", s.submitted_by AS "submittedByUserId",
+            u.display_name AS "submittedByFullName",
+            (SELECT COUNT(*)::int FROM app.submission_evidence_files sef WHERE sef.submission_id = s.submission_id) AS "frozenFilesCount"
+     FROM app.achievement_submissions s
+     LEFT JOIN app.users u ON s.submitted_by = u.user_id
+     WHERE s.achievement_id = $1
+     ORDER BY s.revision_no ASC`,
+    [id]
+  );
+  const submissions = submissionsRes.rows.map((s) => ({
+    submissionId: Number(s.submissionId),
+    revisionNo: Number(s.revisionNo),
+    submittedBy: {
+      userId: Number(s.submittedByUserId),
+      displayName: s.submittedByFullName || `User #${s.submittedByUserId}`,
+    },
+    submittedAt: s.submittedAt,
+    frozenFilesCount: Number(s.frozenFilesCount),
+  }));
+
+  const correctionRes = await runQuery(
+    `SELECT h.reason
+     FROM app.achievement_status_histories h
+     WHERE h.achievement_id = $1 AND h.to_status = 'NEED_CORRECTION'
+     ORDER BY h.created_at DESC, h.history_id DESC LIMIT 1`,
+    [id]
+  );
+  const latestCorrectionReason = correctionRes.rows[0]?.reason || null;
+
   return {
     achievementId: Number(row.achievementId),
     subjectType: row.subjectType,
@@ -113,10 +147,14 @@ export async function findAchievementById(id) {
     status: row.status,
     createdBy: Number(row.createdBy),
     submittedBy: row.submittedBy ? Number(row.submittedBy) : null,
+    verifiedBy: row.verifiedBy ? Number(row.verifiedBy) : null,
+    verifiedAt: row.verifiedAt || null,
     replacesAchievementId: row.replacesAchievementId ? Number(row.replacesAchievementId) : null,
     version: Number(row.version),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    latestCorrectionReason,
+    submissions,
     lecturer: row.lecturerId
       ? {
           lecturerId: Number(row.lecturerId),
@@ -265,8 +303,8 @@ export async function listAchievements({ filters = {}, limit = 10, offset = 0, s
            a.version AS "version",
            a.created_at AS "createdAt",
            a.updated_at AS "updatedAt",
-           0 AS "evidenceCount",
-           1 AS "latestRevisionNo"
+           (SELECT COUNT(*)::int FROM app.evidences e WHERE e.achievement_id = a.achievement_id AND e.is_removed = FALSE) AS "evidenceCount",
+           (SELECT COALESCE(MAX(s.revision_no), 0)::int FROM app.achievement_submissions s WHERE s.achievement_id = a.achievement_id) AS "latestRevisionNo"
     FROM app.achievements a
     LEFT JOIN app.lecturers l ON a.lecturer_id = l.lecturer_id
     LEFT JOIN app.organization_units u_subj ON a.unit_id = u_subj.unit_id
@@ -407,6 +445,211 @@ export async function deleteAchievement(id) {
   return result.rowCount > 0;
 }
 
+/**
+ * W2-Q3: Khóa dòng thành tích với SELECT ... FOR UPDATE trên pg client của transaction
+ */
+export async function findAchievementForUpdate(client, id) {
+  const result = await client.query(
+    `SELECT a.*,
+            CASE WHEN a.lecturer_id IS NOT NULL THEN 'LECTURER' ELSE 'UNIT' END AS "subjectType",
+            l.user_id AS "lecturerUserId"
+     FROM app.achievements a
+     LEFT JOIN app.lecturers l ON a.lecturer_id = l.lecturer_id
+     WHERE a.achievement_id = $1
+     FOR UPDATE OF a`,
+    [id]
+  );
+  return result.rows[0] || null;
+}
+
+/**
+ * W2-Q3: Lấy các minh chứng còn hiệu lực kèm phiên bản tệp mới nhất để tạo snapshot và đóng băng
+ */
+export async function getActiveEvidencesWithFiles(achievementId, client = null) {
+  const sql = `
+    SELECT e.evidence_id AS "evidenceId", e.title AS "title", e.description AS "description",
+           ef.evidence_file_id AS "evidenceFileId", ef.version_no AS "versionNo",
+           ef.original_file_name AS "originalFileName", ef.storage_key AS "storageKey",
+           ef.mime_type AS "mimeType", ef.file_size AS "fileSize", ef.sha256_hash AS "sha256Hash",
+           ef.uploaded_at AS "uploadedAt"
+    FROM app.evidences e
+    JOIN app.evidence_files ef ON e.evidence_id = ef.evidence_id
+    JOIN (
+      SELECT evidence_id, MAX(version_no) as max_v
+      FROM app.evidence_files
+      GROUP BY evidence_id
+    ) latest ON ef.evidence_id = latest.evidence_id AND ef.version_no = latest.max_v
+    WHERE e.achievement_id = $1 AND e.is_removed = FALSE
+    ORDER BY e.evidence_id ASC
+  `;
+  if (client) {
+    const res = await client.query(sql, [achievementId]);
+    return res.rows;
+  }
+  const res = await query(sql, [achievementId]);
+  return res.rows;
+}
+
+/**
+ * W2-Q3: Tạo bản ghi snapshot lần nộp (AchievementSubmissions)
+ */
+export async function createSubmission(client, { achievementId, revisionNo, snapshotData, submittedBy }) {
+  const result = await client.query(
+    `INSERT INTO app.achievement_submissions (
+        achievement_id, revision_no, snapshot_data, submitted_by, submitted_at, created_at
+     ) VALUES ($1, $2, $3, $4, NOW(), NOW())
+     RETURNING submission_id AS "submissionId", revision_no AS "revisionNo", submitted_at AS "submittedAt"`,
+    [achievementId, revisionNo, JSON.stringify(snapshotData), submittedBy]
+  );
+  return result.rows[0];
+}
+
+/**
+ * W2-Q3: Đóng băng các phiên bản tệp tin gắn với lần nộp (SubmissionEvidenceFiles)
+ */
+export async function linkSubmissionEvidenceFiles(client, submissionId, evidenceFileIds) {
+  if (!evidenceFileIds || evidenceFileIds.length === 0) return [];
+  const rows = [];
+  for (const fileId of evidenceFileIds) {
+    const res = await client.query(
+      `INSERT INTO app.submission_evidence_files (submission_id, evidence_file_id, attached_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (submission_id, evidence_file_id) DO NOTHING
+       RETURNING submission_id AS "submissionId", evidence_file_id AS "evidenceFileId"`,
+      [submissionId, fileId]
+    );
+    if (res.rows[0]) rows.push(res.rows[0]);
+  }
+  return rows;
+}
+
+/**
+ * W2-Q3: Ghi nhận lịch sử thẩm định và chuyển trạng thái (AchievementStatusHistories)
+ */
+export async function recordStatusHistory(client, { achievementId, submissionId = null, fromStatus, toStatus, actorId, reason = null }) {
+  const result = await client.query(
+    `INSERT INTO app.achievement_status_histories (
+        achievement_id, submission_id, from_status, to_status, actor_id, reason, created_at
+     ) VALUES ($1, $2, $3, $4, $5, $6, NOW())
+     RETURNING history_id AS "historyId", achievement_id AS "achievementId", from_status AS "fromStatus", to_status AS "toStatus", created_at AS "createdAt"`,
+    [achievementId, submissionId, fromStatus, toStatus, actorId, reason]
+  );
+  return result.rows[0];
+}
+
+/**
+ * W2-Q3: Cập nhật trạng thái thành tích có kiểm tra version + id + status chống xung đột đồng thời (OCC)
+ */
+export async function updateAchievementStatus(client, id, currentVersion, currentStatus, targetStatus, extraFields = {}) {
+  const setClauses = [
+    'status = $1',
+    'version = version + 1',
+    'updated_at = NOW()',
+  ];
+  const params = [targetStatus];
+  let idx = 2;
+
+  if (extraFields.submittedBy !== undefined) {
+    setClauses.push(`submitted_by = $${idx++}`);
+    params.push(extraFields.submittedBy);
+  }
+  if (extraFields.submittedAt !== undefined) {
+    setClauses.push(`submitted_at = $${idx++}`);
+    params.push(extraFields.submittedAt);
+  }
+  if (extraFields.verifiedBy !== undefined) {
+    setClauses.push(`verified_by = $${idx++}`);
+    params.push(extraFields.verifiedBy);
+  }
+  if (extraFields.verifiedAt !== undefined) {
+    setClauses.push(`verified_at = $${idx++}`);
+    params.push(extraFields.verifiedAt);
+  }
+
+  const sql = `
+    UPDATE app.achievements
+    SET ${setClauses.join(', ')}
+    WHERE achievement_id = $${idx++} AND version = $${idx++} AND status = $${idx++}
+    RETURNING *
+  `;
+  params.push(id, currentVersion, currentStatus);
+
+  const result = await client.query(sql, params);
+  return result.rows[0] || null;
+}
+
+/**
+ * W2-Q3: Lấy danh sách lịch sử chuyển trạng thái kèm thông tin người thực hiện
+ */
+export async function listHistories(achievementId) {
+  const result = await query(
+    `SELECT h.history_id AS "historyId", h.achievement_id AS "achievementId",
+            h.submission_id AS "submissionId", h.from_status AS "fromStatus",
+            h.to_status AS "toStatus", h.actor_id AS "actorId",
+            h.reason AS "reason", h.created_at AS "createdAt",
+            u.display_name AS "actorFullName",
+            r.code AS "actorRoleCode",
+            l.full_name AS "lecturerFullName"
+     FROM app.achievement_status_histories h
+     LEFT JOIN app.users u ON h.actor_id = u.user_id
+     LEFT JOIN app.lecturers l ON u.user_id = l.user_id
+     LEFT JOIN LATERAL (
+       SELECT ro.code FROM app.user_roles ur
+       JOIN app.roles ro ON ur.role_id = ro.role_id
+       WHERE ur.user_id = h.actor_id AND ur.revoked_at IS NULL
+       LIMIT 1
+     ) r ON true
+     WHERE h.achievement_id = $1
+     ORDER BY h.created_at ASC, h.history_id ASC`,
+    [achievementId]
+  );
+
+  return result.rows.map((row) => ({
+    historyId: Number(row.historyId),
+    achievementId: Number(row.achievementId),
+    submissionId: row.submissionId ? Number(row.submissionId) : null,
+    fromStatus: row.fromStatus,
+    toStatus: row.toStatus,
+    actor: {
+      userId: Number(row.actorId),
+      displayName: row.lecturerFullName || row.actorFullName || `User #${row.actorId}`,
+      role: row.actorRoleCode || 'USER',
+    },
+    reason: row.reason,
+    createdAt: row.createdAt,
+  }));
+}
+
+/**
+ * W2-Q3: Lấy danh sách các lần nộp hồ sơ
+ */
+export async function listSubmissions(achievementId) {
+  const result = await query(
+    `SELECT s.submission_id AS "submissionId", s.revision_no AS "revisionNo",
+            s.snapshot_data AS "snapshotData", s.submitted_by AS "submittedByUserId",
+            s.submitted_at AS "submittedAt", s.created_at AS "createdAt",
+            u.display_name AS "submittedByFullName",
+            (SELECT COUNT(*)::int FROM app.submission_evidence_files sef WHERE sef.submission_id = s.submission_id) AS "frozenFilesCount"
+     FROM app.achievement_submissions s
+     LEFT JOIN app.users u ON s.submitted_by = u.user_id
+     WHERE s.achievement_id = $1
+     ORDER BY s.revision_no ASC`,
+    [achievementId]
+  );
+
+  return result.rows.map((row) => ({
+    submissionId: Number(row.submissionId),
+    revisionNo: Number(row.revisionNo),
+    snapshotData: row.snapshotData,
+    submittedBy: {
+      userId: Number(row.submittedByUserId),
+      displayName: row.submittedByFullName || `User #${row.submittedByUserId}`,
+    },
+    submittedAt: row.submittedAt,
+    frozenFilesCount: Number(row.frozenFilesCount),
+  }));
+}
+
 export default {
   findLecturerByUserId,
   findActiveRepresentative,
@@ -416,4 +659,12 @@ export default {
   createAchievement,
   updateAchievement,
   deleteAchievement,
+  findAchievementForUpdate,
+  getActiveEvidencesWithFiles,
+  createSubmission,
+  linkSubmissionEvidenceFiles,
+  recordStatusHistory,
+  updateAchievementStatus,
+  listHistories,
+  listSubmissions,
 };
