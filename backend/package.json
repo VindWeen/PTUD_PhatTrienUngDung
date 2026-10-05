@@ -15,7 +15,9 @@
     "test:audit": "node --test tests/audit.test.js",
     "demo:w1-q4": "node ../scripts/demo_w1_q4.mjs",
     "test:w2-p1": "node --test tests/w2-p1.test.js",
-    "test:w2-p1:integration": "node tests/w2-p1.integration.js"
+    "test:w2-p1:integration": "node tests/w2-p1.integration.js",
+    "test:w2-q1": "node --test tests/w2-q1.test.js",
+    "test:w2-q1:integration": "node tests/w2-q1.integration.js"
   },
   "keywords": [
     "express",
