@@ -60,6 +60,10 @@ OVERRIDING SYSTEM VALUE VALUES
 
 ALTER SEQUENCE app.users_user_id_seq RESTART WITH 10;
 
+-- W2-P1: synthetic demo account, reserved example.invalid domain, no real data.
+INSERT INTO app.users (user_id,username,email,password_hash,display_name,status)
+VALUES (5,'records.demo','records.demo@example.invalid','$2a$10$YvuV3ek5NZd4o.bokur7bOktk2T7iV4a0B3HMb3Jx..tp77Y7AfSK','Cán bộ hồ sơ DEMO','ACTIVE');
+
 -- 5. Gán Vai trò cho Người dùng (User Roles)
 INSERT INTO app.user_roles (user_role_id, user_id, role_id, valid_from, valid_to)
 OVERRIDING SYSTEM VALUE VALUES
@@ -71,6 +75,7 @@ OVERRIDING SYSTEM VALUE VALUES
 (6, 4, 5, TIMESTAMPTZ '2025-01-01 00:00:00+00', NULL); -- cuong.lh: UNIT_REPRESENTATIVE
 
 ALTER SEQUENCE app.user_roles_user_role_id_seq RESTART WITH 10;
+INSERT INTO app.user_roles (user_id,role_id,valid_from) VALUES (5,6,NOW()-INTERVAL '1 day');
 
 -- 6. Khởi tạo Hồ sơ Giảng viên (Lecturers)
 INSERT INTO app.lecturers (lecturer_id, user_id, employee_code, full_name, email, phone, title, degree, is_active, version)
@@ -99,11 +104,13 @@ OVERRIDING SYSTEM VALUE VALUES
 (1, 2, 3, 1, TRUE, NOW() - INTERVAL '1 year', NULL);
 
 ALTER SEQUENCE app.user_unit_scopes_user_unit_scope_id_seq RESTART WITH 10;
+INSERT INTO app.user_unit_scopes (user_id,role_id,unit_id,include_descendants,valid_from)
+VALUES (5,6,1,TRUE,NOW()-INTERVAL '1 day');
 
 -- 9. Đại diện hồ sơ tập thể (dữ liệu phát triển mô phỏng)
 INSERT INTO app.unit_representatives (unit_representative_id, user_id, unit_id, valid_from, valid_to, assigned_by)
 OVERRIDING SYSTEM VALUE VALUES
-(1, 4, 2, TIMESTAMPTZ '2025-01-01 00:00:00+00', NULL, 3);
+(1, 4, 2, TIMESTAMPTZ '2025-01-01 00:00:00+00', TIMESTAMPTZ '2027-10-02 00:00:00+00', 3);
 
 ALTER SEQUENCE app.unit_representatives_unit_representative_id_seq RESTART WITH 10;
 
