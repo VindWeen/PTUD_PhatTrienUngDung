@@ -62,5 +62,53 @@ export const fixtureClient = {
     return { items, pagination: { total: items.length, page: 1, pageSize: 10, totalPages: 1 } };
   },
   getAchievementById: async () => clone(achievementFixtures.achievementDetailVerified.payload.data),
+  getEvidencesByAchievement: async (achievementId) => {
+    return [
+      {
+        evidenceId: 303,
+        achievementId: Number(achievementId),
+        title: 'Hợp đồng nghiên cứu khoa học và biên bản nghiệm thu cấp trường',
+        description: 'Hợp đồng số 45/HĐ-KHCN ký ngày 15/01/2024',
+        isRemoved: false,
+        createdBy: 1,
+        createdAt: '2024-08-22T08:10:00Z',
+        latestFileId: 405,
+        latestVersionNo: 1,
+        latestFileName: 'Hop_dong_NCKH_daky.pdf',
+        latestFileSize: 3355443,
+        latestMimeType: 'application/pdf',
+        latestSha256Hash: 'a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0',
+        latestUploadedAt: '2024-08-22T08:15:00Z',
+        totalVersions: 1,
+      },
+    ];
+  },
+  createEvidence: async (achievementId, payload) => ({
+    evidenceId: Date.now(),
+    achievementId: Number(achievementId),
+    title: payload.title,
+    description: payload.description || null,
+    isRemoved: false,
+    createdBy: 1,
+    createdAt: new Date().toISOString(),
+    files: [
+      {
+        evidenceFileId: Date.now() + 1,
+        versionNo: 1,
+        originalFileName: payload.file?.name || 'file.pdf',
+        fileSize: payload.file?.size || 1024,
+        mimeType: payload.file?.type || 'application/pdf',
+      },
+    ],
+  }),
+  uploadFileVersion: async (evidenceId, file) => ({
+    evidenceFileId: Date.now(),
+    evidenceId: Number(evidenceId),
+    versionNo: 2,
+    originalFileName: file?.name || 'file_v2.pdf',
+    fileSize: file?.size || 2048,
+    mimeType: file?.type || 'application/pdf',
+  }),
+  deleteEvidence: async (evidenceId) => ({ success: true, evidenceId }),
   fixtures: { achievements: achievementFixtures, awards: awardFixtures },
 };
