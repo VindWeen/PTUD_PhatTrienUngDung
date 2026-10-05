@@ -17,7 +17,9 @@
     "test:w2-p1": "node --test tests/w2-p1.test.js",
     "test:w2-p1:integration": "node tests/w2-p1.integration.js",
     "test:w2-q1": "node --test tests/w2-q1.test.js",
-    "test:w2-q1:integration": "node tests/w2-q1.integration.js"
+    "test:w2-q1:integration": "node tests/w2-q1.integration.js",
+    "test:w2-q2": "node --test tests/w2-q2.test.js",
+    "test:w2-q2:integration": "node tests/w2-q2.integration.js"
   },
   "keywords": [
     "express",
@@ -38,6 +40,7 @@
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "multer": "^2.4.0",
     "pg": "^8.23.1",
     "zod": "^3.24.1"
   },

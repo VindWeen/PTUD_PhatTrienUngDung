@@ -10,4 +10,6 @@ output/
 .playwright-cli/
 storage/*
 !storage/.gitkeep
+backend/storage/*
+!backend/storage/.gitkeep
 outputs/

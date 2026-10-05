@@ -16,10 +16,15 @@ import {
   Clock,
   X,
   RefreshCw,
+  FileText,
+  Download,
+  UploadCloud,
+  FileUp,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { achievementsApi } from '../services/achievementsApi';
 import { organizationsApi } from '../services/organizationsApi';
+import { evidencesApi } from '../services/evidencesApi';
 import { LoadingState, ErrorState, EmptyState } from '../components/common/AsyncState';
 
 const STATUS_BADGES = {
@@ -56,6 +61,14 @@ export default function Achievements() {
   const [isEditing, setIsEditing] = useState(false);
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formError, setFormError] = useState(null);
+
+  // Evidence States (W2-Q2)
+  const [evidences, setEvidences] = useState([]);
+  const [evidencesLoading, setEvidencesLoading] = useState(false);
+  const [evidenceFormOpen, setEvidenceFormOpen] = useState(false);
+  const [evidenceFormData, setEvidenceFormData] = useState({ title: '', description: '', file: null });
+  const [evidenceSubmitting, setEvidenceSubmitting] = useState(false);
+  const [evidenceError, setEvidenceError] = useState(null);
 
   // Form Fields
   const [formData, setFormData] = useState({
@@ -155,13 +168,81 @@ export default function Achievements() {
     setModalOpen(true);
   };
 
+  const loadEvidences = useCallback(async (achievementId) => {
+    if (!achievementId) return;
+    setEvidencesLoading(true);
+    setEvidenceError(null);
+    try {
+      const data = await evidencesApi.getEvidencesByAchievement(achievementId);
+      setEvidences(data || []);
+    } catch (err) {
+      setEvidenceError(err.message || 'Không thể tải danh sách minh chứng');
+    } finally {
+      setEvidencesLoading(false);
+    }
+  }, []);
+
   const openDetailModal = async (ach) => {
     try {
       const detail = await achievementsApi.getById(ach.achievementId);
       setSelectedAchievement(detail);
       setDetailModalOpen(true);
+      setEvidenceFormOpen(false);
+      loadEvidences(detail.achievementId);
     } catch (err) {
       alert(`Không thể xem chi tiết: ${err.message}`);
+    }
+  };
+
+  const handleCreateEvidence = async (e) => {
+    e.preventDefault();
+    if (!selectedAchievement || !evidenceFormData.file) {
+      alert('Vui lòng chọn tệp tin minh chứng (PDF, JPG, PNG, DOCX <= 10MB)');
+      return;
+    }
+    setEvidenceSubmitting(true);
+    setEvidenceError(null);
+    try {
+      await evidencesApi.createEvidence(selectedAchievement.achievementId, evidenceFormData);
+      setEvidenceFormOpen(false);
+      setEvidenceFormData({ title: '', description: '', file: null });
+      await loadEvidences(selectedAchievement.achievementId);
+    } catch (err) {
+      setEvidenceError(err.response?.data?.error?.message || err.message || 'Lỗi khi tải lên minh chứng');
+    } finally {
+      setEvidenceSubmitting(false);
+    }
+  };
+
+  const handleUploadFileVersion = async (evidenceId, file) => {
+    if (!file) return;
+    try {
+      await evidencesApi.uploadFileVersion(evidenceId, file);
+      if (selectedAchievement) {
+        await loadEvidences(selectedAchievement.achievementId);
+      }
+    } catch (err) {
+      alert(err.response?.data?.error?.message || err.message || 'Không thể tải lên phiên bản mới');
+    }
+  };
+
+  const handleDeleteEvidence = async (evidenceId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa minh chứng này khỏi hồ sơ?')) return;
+    try {
+      await evidencesApi.deleteEvidence(evidenceId);
+      if (selectedAchievement) {
+        await loadEvidences(selectedAchievement.achievementId);
+      }
+    } catch (err) {
+      alert(err.response?.data?.error?.message || err.message || 'Không thể xóa minh chứng');
+    }
+  };
+
+  const handleDownloadFile = async (fileId, fileName) => {
+    try {
+      await evidencesApi.downloadEvidenceFile(fileId, fileName);
+    } catch (err) {
+      alert(err.response?.data?.error?.message || err.message || 'Không thể tải về tệp tin này');
     }
   };
 
@@ -735,6 +816,173 @@ export default function Achievements() {
                   </p>
                 </div>
               )}
+
+              {/* PHÂN HỆ MINH CHỨNG SỐ & PHIÊN BẢN TỆP (W2-Q2) */}
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                      Minh chứng số & Phiên bản tệp ({evidences.length})
+                    </h4>
+                  </div>
+                  {['DRAFT', 'NEED_CORRECTION'].includes(selectedAchievement.status) && (
+                    <button
+                      type="button"
+                      onClick={() => setEvidenceFormOpen(!evidenceFormOpen)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 dark:bg-teal-950/60 dark:hover:bg-teal-900/60 dark:text-teal-300 text-xs font-medium transition"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>{evidenceFormOpen ? 'Hủy' : 'Thêm minh chứng'}</span>
+                    </button>
+                  )}
+                </div>
+
+                {evidenceError && (
+                  <div className="mb-3 p-2.5 rounded-xl bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 text-xs flex items-center gap-2 border border-rose-200 dark:border-rose-900">
+                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>{evidenceError}</span>
+                  </div>
+                )}
+
+                {/* Form thêm minh chứng mới */}
+                {evidenceFormOpen && (
+                  <form onSubmit={handleCreateEvidence} className="mb-4 p-4 rounded-2xl bg-teal-50/50 dark:bg-teal-950/20 border border-teal-200/80 dark:border-teal-900/50 space-y-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Tên minh chứng / Quyết định <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="VD: Hợp đồng NCKH số 45/HĐ-KHCN"
+                        value={evidenceFormData.title}
+                        onChange={(e) => setEvidenceFormData({ ...evidenceFormData, title: e.target.value })}
+                        className="w-full px-3 py-1.5 text-xs bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Diễn giải chi tiết
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ghi chú thêm về văn bản đính kèm..."
+                        value={evidenceFormData.description}
+                        onChange={(e) => setEvidenceFormData({ ...evidenceFormData, description: e.target.value })}
+                        className="w-full px-3 py-1.5 text-xs bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Chọn tệp đính kèm (PDF, JPG, PNG, DOCX tối đa 10 MB) <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="file"
+                        required
+                        accept=".pdf,.jpg,.jpeg,.png,.docx"
+                        onChange={(e) => setEvidenceFormData({ ...evidenceFormData, file: e.target.files?.[0] || null })}
+                        className="w-full text-xs text-slate-600 dark:text-slate-400 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-teal-600 file:text-white hover:file:bg-teal-700"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2 pt-1">
+                      <button
+                        type="submit"
+                        disabled={evidenceSubmitting}
+                        className="px-3.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium transition disabled:opacity-50"
+                      >
+                        {evidenceSubmitting ? 'Đang tải lên...' : 'Tải lên minh chứng'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* Danh sách các minh chứng */}
+                {evidencesLoading ? (
+                  <div className="py-4 text-center text-xs text-slate-400">Đang tải danh sách minh chứng...</div>
+                ) : evidences.length === 0 ? (
+                  <div className="py-6 text-center text-xs text-slate-400 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                    Chưa có tệp minh chứng nào được đính kèm.
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {evidences.map((ev) => (
+                      <div
+                        key={ev.evidenceId}
+                        className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-700/80 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                              {ev.title}
+                            </span>
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                              v{ev.latestVersionNo || 1}
+                            </span>
+                          </div>
+                          {ev.description && (
+                            <p className="text-[11px] text-slate-500 truncate mt-0.5">{ev.description}</p>
+                          )}
+                          <div className="text-[10px] text-slate-400 mt-1 flex items-center gap-3">
+                            <span>Tệp: {ev.latestFileName || 'Chưa có tệp'}</span>
+                            {ev.latestFileSize && (
+                              <span>{(ev.latestFileSize / 1024).toFixed(1)} KB</span>
+                            )}
+                            {ev.totalVersions > 1 && (
+                              <span>Tổng {ev.totalVersions} phiên bản</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Nút thao tác tệp */}
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {ev.latestFileId && (
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadFile(ev.latestFileId, ev.latestFileName)}
+                              title="Tải về tệp minh chứng"
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+                            >
+                              <Download className="w-3.5 h-3.5 text-teal-600" />
+                              <span>Tải về</span>
+                            </button>
+                          )}
+
+                          {['DRAFT', 'NEED_CORRECTION'].includes(selectedAchievement.status) && (
+                            <>
+                              <label
+                                title="Thay tệp mới (tăng phiên bản)"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer"
+                              >
+                                <UploadCloud className="w-3.5 h-3.5 text-blue-600" />
+                                <span>Thay file</span>
+                                <input
+                                  type="file"
+                                  accept=".pdf,.jpg,.jpeg,.png,.docx"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleUploadFileVersion(ev.evidenceId, file);
+                                  }}
+                                />
+                              </label>
+
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteEvidence(ev.evidenceId)}
+                                title="Xóa minh chứng"
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-800 transition"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <div className="pt-2 flex justify-end">
                 <button
