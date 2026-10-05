@@ -4,6 +4,7 @@ import { GraduationCap, Home, User, Cpu, LogOut, Building2, Award } from 'lucide
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
+  { to: '/awards', icon: Award, label: 'Khen thưởng', roles: ['RECORDS_OFFICER'] },
   { to: '/admin', icon: User, label: 'Quản trị', roles: ['ADMIN'] },
   { to: '/me/dashboard', icon: Home, label: 'Trang chủ', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
   { to: '/achievements', icon: Award, label: 'Thành tích', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },

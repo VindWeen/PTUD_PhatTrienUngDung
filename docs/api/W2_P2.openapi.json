@@ -1,0 +1,602 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "W2-P2 Awards",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/award-decisions": {
+      "post": {
+        "summary": "Nhập quyết định đã ban hành",
+        "tags": [
+          "Awards"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "decisionNumber": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "decisionDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "issuer": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 150
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255
+                  }
+                },
+                "required": [
+                  "decisionNumber",
+                  "decisionDate",
+                  "issuer",
+                  "title"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success envelope; DB BIGINT IDs/version are decimal strings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "description": "Snake_case database fields; detail adds decision, files, histories, achievementIds."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation"
+          },
+          "403": {
+            "description": "Active RecordsOfficer role/scope required"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "409": {
+            "description": "State/version/duplicate conflict"
+          }
+        }
+      }
+    },
+    "/award-records": {
+      "get": {
+        "summary": "Danh sách trong scope đơn vị",
+        "tags": [
+          "Awards"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success envelope; DB BIGINT IDs/version are decimal strings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "description": "Snake_case database fields; detail adds decision, files, histories, achievementIds."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation"
+          },
+          "403": {
+            "description": "Active RecordsOfficer role/scope required"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "409": {
+            "description": "State/version/duplicate conflict"
+          }
+        },
+        "parameters": [
+          {
+            "name": "contextUnitId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Tạo DRAFT; XOR chủ thể, lấy ContextUnitId từ DB",
+        "tags": [
+          "Awards"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "lecturerId": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "organizationUnitId": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "awardTypeId": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "decisionId": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "recognitionYear": {
+                    "type": "integer",
+                    "minimum": 1990,
+                    "maximum": 2100
+                  },
+                  "achievementIds": {
+                    "type": "array",
+                    "maxItems": 100,
+                    "items": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "replacesAwardRecordId": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "awardTypeId",
+                  "decisionId",
+                  "recognitionYear"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success envelope; DB BIGINT IDs/version are decimal strings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "description": "Snake_case database fields; detail adds decision, files, histories, achievementIds."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation"
+          },
+          "403": {
+            "description": "Active RecordsOfficer role/scope required"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "409": {
+            "description": "State/version/duplicate conflict"
+          }
+        }
+      }
+    },
+    "/award-records/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "get": {
+        "summary": "Chi tiết và lịch sử theo scope",
+        "tags": [
+          "Awards"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success envelope; DB BIGINT IDs/version are decimal strings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "description": "Snake_case database fields; detail adds decision, files, histories, achievementIds."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation"
+          },
+          "403": {
+            "description": "Active RecordsOfficer role/scope required"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "409": {
+            "description": "State/version/duplicate conflict"
+          }
+        }
+      }
+    },
+    "/award-records/{id}/record": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "post": {
+        "summary": "DRAFT → RECORDED, yêu cầu file private",
+        "tags": [
+          "Awards"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "version"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success envelope; DB BIGINT IDs/version are decimal strings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "description": "Snake_case database fields; detail adds decision, files, histories, achievementIds."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation"
+          },
+          "403": {
+            "description": "Active RecordsOfficer role/scope required"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "409": {
+            "description": "State/version/duplicate conflict"
+          }
+        }
+      }
+    },
+    "/award-records/{id}/revoke": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "post": {
+        "summary": "RECORDED → REVOKED, yêu cầu lý do",
+        "tags": [
+          "Awards"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "version",
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success envelope; DB BIGINT IDs/version are decimal strings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "description": "Snake_case database fields; detail adds decision, files, histories, achievementIds."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation"
+          },
+          "403": {
+            "description": "Active RecordsOfficer role/scope required"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "409": {
+            "description": "State/version/duplicate conflict"
+          }
+        }
+      }
+    },
+    "/award-decisions/{id}/files": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "post": {
+        "summary": "Upload version bất biến; khóa sau khi quyết định được sử dụng",
+        "tags": [
+          "Awards"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success envelope; DB BIGINT IDs/version are decimal strings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "description": "Snake_case database fields; detail adds decision, files, histories, achievementIds."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation"
+          },
+          "403": {
+            "description": "Active RecordsOfficer role/scope required"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "409": {
+            "description": "State/version/duplicate conflict"
+          }
+        }
+      }
+    },
+    "/award-decision-files/{id}/download": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "get": {
+        "summary": "Download private, kiểm tra scope",
+        "tags": [
+          "Awards"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Private attachment",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Out of scope"
+          },
+          "404": {
+            "description": "Missing file"
+          }
+        }
+      }
+    }
+  }
+}

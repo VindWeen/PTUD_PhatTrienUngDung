@@ -1,4 +1,5 @@
 import express from 'express';
+import awardRoutes from './modules/awards/awardRoutes.js';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -47,6 +48,7 @@ app.use(apiPrefix, profileRoutes);
 app.use(apiPrefix, organizationRoutes);
 app.use(apiPrefix, achievementRoutes);
 app.use(apiPrefix, evidenceRoutes);
+app.use(apiPrefix, awardRoutes);
 app.use(`${apiPrefix}/admin`, adminRoutes);
 
 // Root Welcome Route

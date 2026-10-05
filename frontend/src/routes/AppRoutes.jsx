@@ -10,6 +10,7 @@ import ProfilePortfolio from '../pages/ProfilePortfolio';
 import Organizations from '../pages/Organizations';
 import AdminManagement from '../pages/AdminManagement';
 import Achievements from '../pages/Achievements';
+import Awards from '../pages/Awards';
 import { LoadingState } from '../components/common/AsyncState';
 
 const APP_ROLES = ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'];
@@ -40,6 +41,7 @@ export default function AppRoutes() {
           <Route path="me/ai-forecast" element={<RequireRole roles={PROFILE_ROLES}><AIForecast /></RequireRole>} />
           <Route path="organizations" element={<RequireRole roles={APP_ROLES}><Organizations /></RequireRole>} />
           <Route path="achievements" element={<RequireRole roles={APP_ROLES}><Achievements /></RequireRole>} />
+          <Route path="awards" element={<RequireRole roles={['RECORDS_OFFICER']}><Awards /></RequireRole>} />
           <Route path="me/achievements" element={<Navigate to="/achievements" replace />} />
           <Route path="admin" element={<RequireRole roles={['ADMIN']}><AdminManagement /></RequireRole>} />
           <Route path="dashboard" element={<Navigate to="/me/dashboard" replace />} />
