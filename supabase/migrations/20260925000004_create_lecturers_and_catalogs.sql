@@ -33,10 +33,10 @@ CREATE TABLE IF NOT EXISTS app.lecturer_assignments (
     CONSTRAINT ck_assignments_validity CHECK (valid_to IS NULL OR valid_to >= valid_from)
 );
 
--- Partial Unique Index: Mỗi giảng viên chỉ có duy nhất 1 đơn vị chính đang có hiệu lực
+-- Partial Unique Index: Mỗi giảng viên chỉ có duy nhất 1 đơn vị chính đang có hiệu lực (valid_to IS NULL)
 CREATE UNIQUE INDEX IF NOT EXISTS uq_lecturer_assignments_primary 
 ON app.lecturer_assignments (lecturer_id) 
-WHERE is_primary = TRUE AND (valid_to IS NULL OR valid_to >= NOW());
+WHERE is_primary = TRUE AND valid_to IS NULL;
 
 -- Bảng Danh mục Nhóm Thành tích (Categories)
 CREATE TABLE IF NOT EXISTS app.achievement_categories (

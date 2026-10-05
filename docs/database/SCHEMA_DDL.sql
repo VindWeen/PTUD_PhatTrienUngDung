@@ -134,7 +134,7 @@ CREATE TABLE IF NOT EXISTS app.lecturer_assignments (
 -- Partial Unique Index: Mỗi giảng viên chỉ có đúng một đơn vị chính có hiệu lực tại một thời điểm
 CREATE UNIQUE INDEX IF NOT EXISTS uq_lecturer_assignments_primary 
 ON app.lecturer_assignments (lecturer_id) 
-WHERE is_primary = TRUE AND (valid_to IS NULL OR valid_to >= NOW());
+WHERE is_primary = TRUE AND valid_to IS NULL;
 
 -- ====================================================================================
 -- 5. PHÂN HỆ DANH MỤC TIÊU CHÍ (CATALOGS & CRITERIA)

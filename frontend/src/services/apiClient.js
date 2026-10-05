@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { API_BASE_URL } from './apiConfig.js';
+import { normalizeApiError } from './apiError.js';
 
 let inMemoryAccessToken = null;
 let onAuthFailedCallback = null;
@@ -31,7 +33,7 @@ export const setOnAuthFailedCallback = (callback) => {
 };
 
 export const apiClient = axios.create({
-  baseURL: '/api/v1',
+  baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -55,20 +57,15 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Chuẩn hóa format lỗi trả về từ API
-    const errorResponse = error.response?.data?.error || {
-      message: error.response?.data?.message || error.message || 'Lỗi kết nối máy chủ',
-      code: error.response?.data?.code || 'NETWORK_ERROR',
-      fieldErrors: error.response?.data?.fieldErrors || null,
-    };
+    const apiError = normalizeApiError(error);
 
     // Nếu endpoint là refresh hoặc login mà bị 401 thì không thử lại để tránh vòng lặp
     const isAuthRoute =
-      originalRequest.url?.includes('/auth/refresh') ||
-      originalRequest.url?.includes('/auth/login') ||
-      originalRequest.url?.includes('/auth/logout');
+      originalRequest?.url?.includes('/auth/refresh') ||
+      originalRequest?.url?.includes('/auth/login') ||
+      originalRequest?.url?.includes('/auth/logout');
 
-    if (error.response?.status === 401 && !originalRequest._retry && !isAuthRoute) {
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthRoute) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -85,7 +82,7 @@ apiClient.interceptors.response.use(
 
       try {
         // Gọi refresh token bằng HttpOnly cookie
-        const res = await axios.post('/api/v1/auth/refresh', {}, { withCredentials: true });
+        const res = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true });
         const newAccessToken = res.data?.data?.accessToken;
 
         if (newAccessToken) {
@@ -100,13 +97,13 @@ apiClient.interceptors.response.use(
         if (typeof onAuthFailedCallback === 'function') {
           onAuthFailedCallback();
         }
-        return Promise.reject(errorResponse);
+        return Promise.reject(apiError);
       } finally {
         isRefreshing = false;
       }
     }
 
-    return Promise.reject(errorResponse);
+    return Promise.reject(apiError);
   }
 );
 

@@ -5,6 +5,7 @@ import { BookLoader } from '../components/auth/BookLoader';
 import { ThemeSwitch } from '../components/auth/ThemeSwitch';
 import { useTheme } from '../hooks/useTheme';
 import { useDemoAuth } from '../hooks/useDemoAuth';
+import { USE_FIXTURES } from '../services/apiConfig';
 import './auth.css';
 
 export default function AuthPage() {
@@ -177,8 +178,6 @@ export default function AuthPage() {
         {/* --- Form Container --- */}
         <div className={`form-container ${isLogin ? 'login' : 'register'}`}>
           <h1>{isLogin ? 'LOGIN' : 'REGISTER'}</h1>
-          <p className="demo-notice">Bản trải nghiệm · Không dùng mật khẩu thật.<br />Nhập email hợp lệ và mật khẩu bất kỳ từ 6 ký tự để vào demo.</p>
-
           {error && <div role="alert" className="alert-box alert-error">{error}</div>}
           {success && <div role="status" className="alert-box alert-success">{success}<button type="button" className="forgot-password-link" onClick={() => switchMode('login')}>Quay lại đăng nhập</button></div>}
 
@@ -202,9 +201,12 @@ export default function AuthPage() {
               {/* Email field */}
               <div className="input-box">
                 <Mail size={18} aria-hidden="true" />
-                <input 
-                  type="email" 
-                  placeholder="Email" aria-label="Email" autoComplete="email" 
+                <input
+                  type={isLogin ? 'text' : 'email'}
+                  placeholder={isLogin ? 'Tên đăng nhập hoặc email' : 'Email'}
+                  aria-label={isLogin ? 'Tên đăng nhập hoặc email' : 'Email'}
+                  autoComplete={isLogin ? 'username' : 'email'}
+                  inputMode={isLogin ? 'text' : 'email'}
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
@@ -217,7 +219,7 @@ export default function AuthPage() {
                 <LockKeyhole size={18} aria-hidden="true" />
                 <input 
                   type={showPassword ? "text" : "password"} 
-                  placeholder="Mật khẩu demo" aria-label="Mật khẩu demo" minLength={6} autoComplete={isLogin ? "current-password" : "new-password"} 
+                  placeholder="Mật khẩu" aria-label="Mật khẩu" minLength={6} autoComplete={isLogin ? "current-password" : "new-password"}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
@@ -243,7 +245,7 @@ export default function AuthPage() {
                     onChange={(event) => setRemember(event.target.checked)}
                     disabled={isPendingTransition || registerLoading}
                   />
-                  <span>Ghi nhớ phiên demo</span>
+                  <span>Ghi nhớ phiên đăng nhập</span>
                 </label>
               )}
 
@@ -254,7 +256,7 @@ export default function AuthPage() {
               >
                 {registerLoading || resetLoading ? 'Đang xử lý...' : isLogin ? 'Sign In' : 'Sign Up'}
               </button>
-              {isLogin && (
+              {isLogin && USE_FIXTURES && (
                 <button
                   type="button"
                   className="forgot-password-link"
@@ -292,6 +294,13 @@ export default function AuthPage() {
                       className="px-2 py-1 text-[11px] rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-700 border border-slate-200 transition-colors"
                     >
                       Admin (duc.pm)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fillQuickAccount('cuong.lh')}
+                      className="px-2 py-1 text-[11px] rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-700 border border-slate-200 transition-colors"
+                    >
+                      ĐBCL (cuong.lh)
                     </button>
                   </div>
                 </div>

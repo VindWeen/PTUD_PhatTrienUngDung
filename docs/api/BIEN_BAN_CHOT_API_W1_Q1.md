@@ -147,7 +147,7 @@ export default apiClient;
 2. **Quy trình khi cần bổ sung trường mới:**
    - Nếu Frontend cần bổ sung thêm trường hiển thị mới, hai bên sẽ thảo luận và cập nhật đồng bộ vào `docs/api/openapi.json` và bộ fixtures trước khi tiến hành code.
 3. **Lịch trình tiếp theo (Tuần 2):**
-   - Quang hoàn thành dựng database bằng `database/migrations/` và kết nối Express REST API với SQL Server.
+   - Quang hoàn thành dựng database bằng `database/migrations/` và kết nối Express REST API với Supabase PostgreSQL qua `pg`.
    - Phước hoàn thiện các biểu mẫu nhập liệu và kết nối gọi API thật.
    - Hai bên cùng thực hiện kiểm thử tích hợp (End-to-End Test) cho luồng: *Giảng viên tạo thành tích -> Tải file -> Gửi -> Quản lý duyệt -> Cập nhật Dashboard*.
 

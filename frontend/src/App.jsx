@@ -2,8 +2,8 @@ import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from './hooks/useTheme';
 import AppRoutes from './routes/AppRoutes';
-import { DemoAuthProvider } from './hooks/useDemoAuth';
+import { AuthProvider } from './context/AuthContext';
 
 export default function App() {
-  return <BrowserRouter><ThemeProvider><DemoAuthProvider><AppRoutes /></DemoAuthProvider></ThemeProvider></BrowserRouter>;
+  return <BrowserRouter><ThemeProvider><AuthProvider><AppRoutes /></AuthProvider></ThemeProvider></BrowserRouter>;
 }

@@ -21,6 +21,21 @@
     }
   ],
   "paths": {
+    "/admin/users": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1users" },
+    "/admin/users/{id}": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1users~1{id}" },
+    "/admin/roles": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1roles" },
+    "/admin/user-roles": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1user-roles" },
+    "/admin/user-roles/{id}": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1user-roles~1{id}" },
+    "/admin/scopes": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1scopes" },
+    "/admin/scopes/{id}": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1scopes~1{id}" },
+    "/admin/representatives": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1representatives" },
+    "/admin/representatives/{id}": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1representatives~1{id}" },
+    "/admin/academic-years": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1academic-years" },
+    "/admin/academic-years/{id}": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1academic-years~1{id}" },
+    "/admin/achievement-types": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1achievement-types" },
+    "/admin/achievement-types/{id}": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1achievement-types~1{id}" },
+    "/admin/award-types": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1award-types" },
+    "/admin/award-types/{id}": { "$ref": "./W2_P1.openapi.json#/paths/~1admin~1award-types~1{id}" },
     "/auth/login": {
       "post": {
         "summary": "Đăng nhập hệ thống",
@@ -219,6 +234,31 @@
           },
           "404": { "$ref": "#/components/responses/404NotFound" }
         }
+      },
+      "patch": {
+        "summary": "Sửa các trường hồ sơ được phép của chính chủ",
+        "description": "Backend đối chiếu userId trong access token với chủ hồ sơ; ADMIN không được dùng endpoint này để sửa hồ sơ người khác.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": {
+            "type": "object", "additionalProperties": false, "required": ["version"],
+            "properties": {
+              "phone": { "type": "string", "nullable": true, "maxLength": 20 },
+              "title": { "type": "string", "nullable": true, "maxLength": 50 },
+              "degree": { "type": "string", "nullable": true, "maxLength": 50 },
+              "version": { "type": "integer", "minimum": 1 }
+            }
+          } } }
+        },
+        "responses": {
+          "200": { "description": "Hồ sơ sau cập nhật", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PersonalPortfolioResponse" } } } },
+          "403": { "$ref": "#/components/responses/403Forbidden" },
+          "404": { "$ref": "#/components/responses/404NotFound" },
+          "409": { "$ref": "#/components/responses/409Conflict" }
+        }
       }
     },
     "/units/{id}/profile": {
@@ -238,6 +278,47 @@
           },
           "404": { "$ref": "#/components/responses/404NotFound" }
         }
+      }
+    },
+    "/organizations": {
+      "get": {
+        "summary": "Danh sách cơ cấu tổ chức",
+        "responses": { "200": { "description": "Danh sách đơn vị" } }
+      },
+      "post": {
+        "summary": "Tạo đơn vị (ADMIN)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OrganizationWriteRequest" } } } },
+        "responses": { "201": { "description": "Đã tạo đơn vị" }, "403": { "$ref": "#/components/responses/403Forbidden" }, "409": { "$ref": "#/components/responses/409Conflict" } }
+      }
+    },
+    "/organizations/{id}": {
+      "patch": {
+        "summary": "Cập nhật đơn vị và chặn chu trình (ADMIN)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OrganizationUpdateRequest" } } } },
+        "responses": { "200": { "description": "Đã cập nhật" }, "403": { "$ref": "#/components/responses/403Forbidden" }, "409": { "$ref": "#/components/responses/409Conflict" } }
+      },
+      "delete": {
+        "summary": "Xóa đơn vị rỗng (ADMIN)",
+        "description": "Từ chối nếu có đơn vị con, lịch sử công tác, thành tích, khen thưởng, scope hoặc lịch sử đại diện.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Đã xóa" }, "403": { "$ref": "#/components/responses/403Forbidden" }, "409": { "$ref": "#/components/responses/409Conflict" } }
+      }
+    },
+    "/organizations/{id}/representative": {
+      "post": {
+        "summary": "Phân công đại diện đơn vị theo thời gian (ADMIN)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["userId", "validFrom", "validTo"], "properties": { "userId": { "type": "integer" }, "validFrom": { "type": "string", "format": "date-time" }, "validTo": { "type": "string", "format": "date-time" } } } } } },
+        "responses": { "201": { "description": "Đã phân công" }, "403": { "$ref": "#/components/responses/403Forbidden" } }
+      }
+    },
+    "/lecturers/{id}/assignments": {
+      "post": {
+        "summary": "Chuyển đơn vị chính, giữ nguyên ContextUnitId lịch sử (ADMIN)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["unitId", "effectiveAt"], "properties": { "unitId": { "type": "integer" }, "effectiveAt": { "type": "string", "format": "date-time" } } } } } },
+        "responses": { "201": { "description": "Đã tạo mốc lịch sử công tác mới" }, "403": { "$ref": "#/components/responses/403Forbidden" }, "409": { "$ref": "#/components/responses/409Conflict" } }
       }
     },
     "/achievements": {
@@ -940,6 +1021,27 @@
       }
     },
     "schemas": {
+      "OrganizationWriteRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "name", "type"],
+        "properties": {
+          "code": { "type": "string", "maxLength": 50 },
+          "name": { "type": "string", "maxLength": 255 },
+          "type": { "type": "string", "enum": ["FACULTY", "DEPARTMENT", "DIVISION", "OFFICE", "CENTER", "UNIVERSITY"] },
+          "parentId": { "type": "integer", "nullable": true },
+          "description": { "type": "string", "nullable": true, "maxLength": 2000 }
+        }
+      },
+      "OrganizationUpdateRequest": {
+        "allOf": [
+          { "$ref": "#/components/schemas/OrganizationWriteRequest" },
+          { "type": "object", "required": ["isActive", "version"], "properties": {
+            "isActive": { "type": "boolean" },
+            "version": { "type": "integer", "minimum": 1 }
+          } }
+        ]
+      },
       "StandardSuccessResponse": {
         "type": "object",
         "properties": {
@@ -993,42 +1095,101 @@
       },
       "PersonalPortfolioResponse": {
         "type": "object",
+        "required": ["success", "data"],
         "properties": {
           "success": { "type": "boolean", "example": true },
           "data": {
             "type": "object",
+            "required": ["lecturerId", "userId", "fullName", "employeeCode", "email", "version", "workHistory", "titlesAndHonors", "stats"],
             "properties": {
-              "lecturerId": { "type": "integer" },
+              "lecturerId": { "type": "integer", "format": "int64" },
+              "userId": { "type": "integer", "format": "int64" },
               "fullName": { "type": "string" },
               "employeeCode": { "type": "string" },
-              "email": { "type": "string" },
-              "phone": { "type": "string" },
-              "title": { "type": "string" },
-              "degree": { "type": "string" },
+              "email": { "type": "string", "format": "email" },
+              "phone": { "type": "string", "nullable": true },
+              "title": { "type": "string", "nullable": true },
+              "degree": { "type": "string", "nullable": true },
               "version": { "type": "integer", "format": "int64", "description": "Số hiệu phiên bản kiểm soát đồng thời (version bigint)" },
-              "workHistory": { "type": "array", "items": { "type": "object" } },
+              "workHistory": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["assignmentId", "unitId", "unitCode", "unitName", "isPrimary", "validFrom"],
+                  "properties": {
+                    "assignmentId": { "type": "integer", "format": "int64" },
+                    "unitId": { "type": "integer", "format": "int64" },
+                    "unitCode": { "type": "string" },
+                    "unitName": { "type": "string" },
+                    "isPrimary": { "type": "boolean" },
+                    "validFrom": { "type": "string", "format": "date-time" },
+                    "validTo": { "type": "string", "format": "date-time", "nullable": true }
+                  }
+                }
+              },
               "titlesAndHonors": { "type": "array", "items": { "type": "object" } },
-              "stats": { "type": "object" }
+              "stats": {
+                "type": "object",
+                "required": ["totalAchievements", "verifiedAchievements", "pendingAchievements", "recordedAwards"],
+                "properties": {
+                  "totalAchievements": { "type": "integer", "minimum": 0 },
+                  "verifiedAchievements": { "type": "integer", "minimum": 0 },
+                  "pendingAchievements": { "type": "integer", "minimum": 0 },
+                  "needCorrectionAchievements": { "type": "integer", "minimum": 0 },
+                  "rejectedAchievements": { "type": "integer", "minimum": 0 },
+                  "revokedAchievements": { "type": "integer", "minimum": 0 },
+                  "draftAchievements": { "type": "integer", "minimum": 0 },
+                  "recordedAwards": { "type": "integer", "minimum": 0 }
+                }
+              }
             }
           }
         }
       },
       "UnitProfileResponse": {
         "type": "object",
+        "required": ["success", "data"],
         "properties": {
           "success": { "type": "boolean", "example": true },
           "data": {
             "type": "object",
+            "required": ["unitId", "code", "name", "type", "isActive", "version", "lecturersCount", "stats"],
             "properties": {
-              "unitId": { "type": "integer" },
+              "unitId": { "type": "integer", "format": "int64" },
               "code": { "type": "string" },
               "name": { "type": "string" },
               "type": { "type": "string" },
-              "description": { "type": "string" },
+              "description": { "type": "string", "nullable": true },
+              "isActive": { "type": "boolean" },
               "version": { "type": "integer", "format": "int64", "description": "Số hiệu phiên bản kiểm soát đồng thời (version bigint)" },
+              "parentUnit": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "unitId": { "type": "integer", "format": "int64" },
+                  "code": { "type": "string" },
+                  "name": { "type": "string" }
+                }
+              },
+              "representative": {
+                "$ref": "#/components/schemas/UnitRepresentative"
+              },
+              "lecturersCount": { "type": "integer", "minimum": 0 },
               "stats": { "type": "object" }
             }
           }
+        }
+      },
+      "UnitRepresentative": {
+        "type": "object",
+        "required": ["unitRepresentativeId", "userId", "displayName", "validFrom"],
+        "properties": {
+          "unitRepresentativeId": { "type": "integer", "format": "int64" },
+          "userId": { "type": "integer", "format": "int64" },
+          "displayName": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "validFrom": { "type": "string", "format": "date-time" },
+          "validTo": { "type": "string", "format": "date-time", "nullable": true }
         }
       },
       "CreateAchievementRequest": {

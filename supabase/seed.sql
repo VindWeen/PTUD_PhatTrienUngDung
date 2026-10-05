@@ -15,10 +15,14 @@ TRUNCATE TABLE app.evidence_files CASCADE;
 TRUNCATE TABLE app.achievements CASCADE;
 TRUNCATE TABLE app.criteria CASCADE;
 TRUNCATE TABLE app.achievement_categories CASCADE;
+TRUNCATE TABLE app.achievement_types CASCADE;
+TRUNCATE TABLE app.academic_years CASCADE;
 TRUNCATE TABLE app.lecturer_assignments CASCADE;
 TRUNCATE TABLE app.lecturers CASCADE;
+TRUNCATE TABLE app.unit_representatives CASCADE;
 TRUNCATE TABLE app.user_unit_scopes CASCADE;
 TRUNCATE TABLE app.organization_units CASCADE;
+TRUNCATE TABLE app.award_types CASCADE;
 TRUNCATE TABLE app.user_roles CASCADE;
 TRUNCATE TABLE app.roles CASCADE;
 TRUNCATE TABLE app.users CASCADE;
@@ -29,17 +33,19 @@ OVERRIDING SYSTEM VALUE VALUES
 (1, 'ADMIN', 'Quản trị viên Hệ thống', 'Toàn quyền cấu hình hệ thống, quản lý tài khoản và danh mục. Không có thẩm quyền xét duyệt chuyên môn.', TRUE),
 (2, 'LECTURER', 'Giảng viên / Nghiên cứu viên', 'Khai báo thành tích số, nộp minh chứng và theo dõi đề xuất khen thưởng.', TRUE),
 (3, 'MANAGER', 'Lãnh đạo Đơn vị (Trưởng Khoa/Bộ môn)', 'Thẩm định hồ sơ thành tích và đề xuất khen thưởng trong phạm vi đơn vị và các đơn vị con.', TRUE),
-(4, 'COUNCIL', 'Hội đồng Khen thưởng', 'Hội đồng thi đua cấp Trường thẩm định và phê duyệt quyết định khen thưởng.', TRUE);
+(4, 'COUNCIL', 'Hội đồng Khen thưởng', 'Hội đồng thi đua cấp Trường thẩm định và phê duyệt quyết định khen thưởng.', TRUE),
+(5, 'UNIT_REPRESENTATIVE', 'Đại diện Đơn vị', 'Kê khai hồ sơ thành tích tập thể trong thời gian được phân công.', TRUE),
+(6, 'RECORDS_OFFICER', 'Cán bộ Văn thư', 'Quản lý quyết định và sổ khen thưởng; không mặc nhiên có quyền thẩm định.', TRUE);
 
 ALTER SEQUENCE app.roles_role_id_seq RESTART WITH 10;
 
 -- 3. Khởi tạo Cơ cấu Đơn vị Tổ chức (Organization Units)
-INSERT INTO app.organization_units (unit_id, code, name, parent_id, type, is_active, version)
+INSERT INTO app.organization_units (unit_id, code, name, parent_id, type, description, is_active, version)
 OVERRIDING SYSTEM VALUE VALUES
-(1, 'FIT', 'Khoa Công nghệ Thông tin', NULL, 'FACULTY', TRUE, 1),
-(2, 'FIT_SE', 'Bộ môn Kỹ thuật Phần mềm', 1, 'DEPARTMENT', TRUE, 1),
-(3, 'FIT_CS', 'Bộ môn Khoa học Máy tính', 1, 'DEPARTMENT', TRUE, 1),
-(4, 'PHARM', 'Khoa Dược', NULL, 'FACULTY', TRUE, 1);
+(1, 'FIT', 'Khoa Công nghệ Thông tin', NULL, 'FACULTY', 'Dữ liệu phát triển mô phỏng cho hồ sơ tập thể.', TRUE, 1),
+(2, 'FIT_SE', 'Bộ môn Kỹ thuật Phần mềm', 1, 'DEPARTMENT', 'Dữ liệu phát triển mô phỏng cho hồ sơ tập thể.', TRUE, 1),
+(3, 'FIT_CS', 'Bộ môn Khoa học Máy tính', 1, 'DEPARTMENT', 'Dữ liệu phát triển mô phỏng cho hồ sơ tập thể.', TRUE, 1),
+(4, 'PHARM', 'Khoa Dược', NULL, 'FACULTY', 'Dữ liệu phát triển mô phỏng cho hồ sơ tập thể.', TRUE, 1);
 
 ALTER SEQUENCE app.organization_units_unit_id_seq RESTART WITH 10;
 
@@ -54,6 +60,10 @@ OVERRIDING SYSTEM VALUE VALUES
 
 ALTER SEQUENCE app.users_user_id_seq RESTART WITH 10;
 
+-- W2-P1: synthetic demo account, reserved example.invalid domain, no real data.
+INSERT INTO app.users (user_id,username,email,password_hash,display_name,status)
+VALUES (5,'records.demo','records.demo@example.invalid','$2a$10$YvuV3ek5NZd4o.bokur7bOktk2T7iV4a0B3HMb3Jx..tp77Y7AfSK','Cán bộ hồ sơ DEMO','ACTIVE');
+
 -- 5. Gán Vai trò cho Người dùng (User Roles)
 INSERT INTO app.user_roles (user_role_id, user_id, role_id, valid_from, valid_to)
 OVERRIDING SYSTEM VALUE VALUES
@@ -61,9 +71,11 @@ OVERRIDING SYSTEM VALUE VALUES
 (2, 2, 3, NOW() - INTERVAL '1 year', NULL), -- bich.tt: MANAGER
 (3, 2, 2, NOW() - INTERVAL '1 year', NULL), -- bich.tt: LECTURER
 (4, 3, 1, NOW() - INTERVAL '1 year', NULL), -- duc.pm: ADMIN (Tuyệt đối không gán MANAGER)
-(5, 4, 2, NOW() - INTERVAL '1 year', NULL); -- cuong.lh: LECTURER
+(5, 4, 2, NOW() - INTERVAL '1 year', NULL), -- cuong.lh: LECTURER
+(6, 4, 5, TIMESTAMPTZ '2025-01-01 00:00:00+00', NULL); -- cuong.lh: UNIT_REPRESENTATIVE
 
 ALTER SEQUENCE app.user_roles_user_role_id_seq RESTART WITH 10;
+INSERT INTO app.user_roles (user_id,role_id,valid_from) VALUES (5,6,NOW()-INTERVAL '1 day');
 
 -- 6. Khởi tạo Hồ sơ Giảng viên (Lecturers)
 INSERT INTO app.lecturers (lecturer_id, user_id, employee_code, full_name, email, phone, title, degree, is_active, version)
@@ -76,11 +88,12 @@ OVERRIDING SYSTEM VALUE VALUES
 ALTER SEQUENCE app.lecturers_lecturer_id_seq RESTART WITH 10;
 
 -- 7. Phân công Công tác Đơn vị của Giảng viên (Assignments)
-INSERT INTO app.lecturer_assignments (assignment_id, lecturer_id, unit_id, is_primary, valid_from, valid_to)
+INSERT INTO app.lecturer_assignments (assignment_id, lecturer_id, unit_id, is_primary, valid_from, valid_to, assigned_by)
 OVERRIDING SYSTEM VALUE VALUES
-(1, 1, 2, TRUE, NOW() - INTERVAL '1 year', NULL), -- PGS. An thuộc BM KTPM (FIT_SE)
-(2, 2, 1, TRUE, NOW() - INTERVAL '1 year', NULL), -- TS. Bích thuộc Khoa CNTT (FIT)
-(3, 4, 3, TRUE, NOW() - INTERVAL '1 year', NULL); -- ThS. Cường thuộc BM KHMT (FIT_CS)
+(1, 1, 2, TRUE, TIMESTAMPTZ '2020-09-01 00:00:00+00', NULL, 3), -- PGS. An thuộc BM KTPM (FIT_SE)
+(2, 2, 1, TRUE, TIMESTAMPTZ '2020-09-01 00:00:00+00', NULL, 3), -- TS. Bích thuộc Khoa CNTT (FIT)
+(3, 4, 3, TRUE, TIMESTAMPTZ '2022-09-01 00:00:00+00', NULL, 3), -- ThS. Cường thuộc BM KHMT (FIT_CS)
+(4, 1, 1, TRUE, TIMESTAMPTZ '2015-09-01 00:00:00+00', TIMESTAMPTZ '2020-08-31 23:59:59+00', 3); -- Lịch sử của PGS. An
 
 ALTER SEQUENCE app.lecturer_assignments_assignment_id_seq RESTART WITH 10;
 
@@ -91,8 +104,45 @@ OVERRIDING SYSTEM VALUE VALUES
 (1, 2, 3, 1, TRUE, NOW() - INTERVAL '1 year', NULL);
 
 ALTER SEQUENCE app.user_unit_scopes_user_unit_scope_id_seq RESTART WITH 10;
+INSERT INTO app.user_unit_scopes (user_id,role_id,unit_id,include_descendants,valid_from)
+VALUES (5,6,1,TRUE,NOW()-INTERVAL '1 day');
 
--- 9. Danh mục Nhóm Thành tích & Tiêu chí
+-- 9. Đại diện hồ sơ tập thể (dữ liệu phát triển mô phỏng)
+INSERT INTO app.unit_representatives (unit_representative_id, user_id, unit_id, valid_from, valid_to, assigned_by)
+OVERRIDING SYSTEM VALUE VALUES
+(1, 4, 2, TIMESTAMPTZ '2025-01-01 00:00:00+00', TIMESTAMPTZ '2027-10-02 00:00:00+00', 3);
+
+ALTER SEQUENCE app.unit_representatives_unit_representative_id_seq RESTART WITH 10;
+
+-- 10. Danh mục năm học (mốc thời gian mô phỏng phục vụ phát triển)
+INSERT INTO app.academic_years (academic_year_id, code, name, start_date, end_date, is_current, is_active)
+OVERRIDING SYSTEM VALUE VALUES
+(1, '2023-2024', 'Năm học 2023 - 2024', DATE '2023-09-01', DATE '2024-08-31', FALSE, TRUE),
+(2, '2024-2025', 'Năm học 2024 - 2025', DATE '2024-09-01', DATE '2025-08-31', FALSE, TRUE),
+(3, '2025-2026', 'Năm học 2025 - 2026', DATE '2025-09-01', DATE '2026-08-31', FALSE, TRUE);
+
+ALTER SEQUENCE app.academic_years_academic_year_id_seq RESTART WITH 10;
+
+-- 11. Danh mục loại thành tích theo mã đã chốt trong Data Dictionary
+INSERT INTO app.achievement_types (achievement_type_id, code, name, description, applicable_subject_type, is_active)
+OVERRIDING SYSTEM VALUE VALUES
+(1, 'RESEARCH_JOURNAL_Q1', 'Bài báo quốc tế ISI/Scopus Q1', 'Dữ liệu danh mục phát triển; tiêu chuẩn xét duyệt do nghiệp vụ cấu hình.', 'LECTURER', TRUE),
+(2, 'RESEARCH_PATENT', 'Bằng độc quyền sáng chế', 'Dữ liệu danh mục phát triển; không tự suy diễn điểm hoặc KPI.', 'BOTH', TRUE),
+(3, 'TEACHING_CURRICULUM', 'Giáo trình được nghiệm thu', 'Dữ liệu danh mục phát triển; cần minh chứng theo hợp đồng nghiệp vụ.', 'LECTURER', TRUE);
+
+ALTER SEQUENCE app.achievement_types_achievement_type_id_seq RESTART WITH 10;
+
+-- 12. Danh mục loại thưởng theo mã đã chốt trong Data Dictionary
+INSERT INTO app.award_types (award_type_id, code, name, category, level, applicable_subject_type, description, is_active)
+OVERRIDING SYSTEM VALUE VALUES
+(1, 'CSTĐ_CS', 'Chiến sĩ thi đua cơ sở', 'TITLE', 'UNIVERSITY', 'LECTURER', 'Dữ liệu danh mục phát triển; không phải quyết định khen thưởng.', TRUE),
+(2, 'CSTĐ_BGD', 'Chiến sĩ thi đua cấp Bộ', 'TITLE', 'MINISTRY', 'LECTURER', 'Dữ liệu danh mục phát triển; không phải quyết định khen thưởng.', TRUE),
+(3, 'BANG_KHEN_TTCP', 'Bằng khen Thủ tướng Chính phủ', 'REWARD_FORM', 'STATE', 'BOTH', 'Dữ liệu danh mục phát triển; không phải quyết định khen thưởng.', TRUE),
+(4, 'TAP_THE_LĐXS', 'Tập thể lao động xuất sắc', 'TITLE', 'UNIVERSITY', 'UNIT', 'Dữ liệu danh mục phát triển; không phải quyết định khen thưởng.', TRUE);
+
+ALTER SEQUENCE app.award_types_award_type_id_seq RESTART WITH 10;
+
+-- 13. Danh mục Nhóm Thành tích & Tiêu chí
 INSERT INTO app.achievement_categories (category_id, code, name, description, is_active)
 OVERRIDING SYSTEM VALUE VALUES
 (1, 'NCKH', 'Nghiên cứu Khoa học', 'Các đề tài, bài báo khoa học trên các tạp chí và kỷ yếu trong nước, quốc tế', TRUE),
@@ -110,7 +160,7 @@ OVERRIDING SYSTEM VALUE VALUES
 
 ALTER SEQUENCE app.criteria_criterion_id_seq RESTART WITH 10;
 
--- 10. Đợt Xét duyệt Khen thưởng
+-- 14. Đợt Xét duyệt Khen thưởng
 INSERT INTO app.award_periods (award_period_id, code, name, start_date, end_date, status)
 OVERRIDING SYSTEM VALUE VALUES
 (1, 'KT_2025_2026', 'Khen thưởng Tổng kết Năm học 2025 - 2026', CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE + INTERVAL '60 days', 'OPEN');

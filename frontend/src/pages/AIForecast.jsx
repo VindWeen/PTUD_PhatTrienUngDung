@@ -52,6 +52,7 @@ export default function AIForecast() {
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Phân tích & Dự báo AI – Award Validator
             </h1>
+            <p className="mt-1 text-xs font-semibold text-amber-700 dark:text-amber-300">MÔ PHỎNG — kết quả và KPI chỉ là dữ liệu minh họa, chưa phải căn cứ xét thưởng.</p>
             <span className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-[10px] font-mono font-bold text-slate-600 dark:text-slate-300 tracking-wider">
               SMART ENGINE
             </span>

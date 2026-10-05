@@ -960,8 +960,6 @@
 
 
 /* Điều chỉnh cho bản PTUD: chỉ áp dụng trong trang auth. */
-.ptud-auth .demo-notice { font-size: 11px; line-height: 1.5; color: #64748b; margin: -10px 0 16px; }
-.dark .ptud-auth .demo-notice { color: #cbd5e1; }
 .ptud-auth .input-box > svg { flex-shrink: 0; color: #4b6f91; }
 .dark .ptud-auth .input-box > svg { color: #cbd5e1; }
 .ptud-auth .theme-switch__checkbox { display: block; position: absolute; width: 1px; height: 1px; opacity: 0; }

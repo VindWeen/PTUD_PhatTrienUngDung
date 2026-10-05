@@ -1,0 +1,83 @@
+name: CI Pipeline - PTUD LHU
+
+on:
+  push:
+    branches:
+      - main
+      - w1q4
+      - 'quang/**'
+      - 'w1-**'
+  pull_request:
+    branches:
+      - main
+      - w1q4
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend-lint-and-build:
+    name: Frontend Lint & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint Frontend
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Build Frontend Application
+        working-directory: frontend
+        run: npm run build
+
+  backend-contracts-and-tests:
+    name: Backend API & Contract Tests
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      PORT: 5000
+      API_PREFIX: /api/v1
+      JWT_ACCESS_SECRET: ci_test_jwt_access_secret_32_characters_minimum_len
+      JWT_REFRESH_SECRET: ci_test_jwt_refresh_secret_32_characters_minimum_len
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Backend Dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Validate API & DB Contracts (W1-Q1 / W1-P2 / W1-P3)
+        run: node scripts/validate_contracts.mjs
+
+      - name: Run Backend Auth & Scopes Test Suite (W1-Q3)
+        working-directory: backend
+        run: npm test
+
+      - name: Run Profiles & Organizations Unit Tests (W1-P3)
+        working-directory: backend
+        run: npm run test:w1-p3
+
+      - name: Run Audit Service & Data Masking Tests (W1-Q4)
+        working-directory: backend
+        run: npm run test:audit

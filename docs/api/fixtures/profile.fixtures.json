@@ -17,20 +17,28 @@
         "version": 1,
         "workHistory": [
           {
+            "assignmentId": 1,
             "period": "2020 – Hiện tại",
             "position": "Phó Giáo sư, Tiến sĩ",
             "department": "Khoa Công nghệ Thông tin, Đại học Lạc Hồng",
             "unitId": 2,
+            "unitCode": "FIT_SE",
             "unitName": "Bộ môn Kỹ thuật Phần mềm",
-            "isPrimary": true
+            "isPrimary": true,
+            "validFrom": "2020-09-01T00:00:00Z",
+            "validTo": null
           },
           {
+            "assignmentId": 2,
             "period": "2015 – 2020",
             "position": "Giảng viên chính",
             "department": "Bộ môn Kỹ thuật Phần mềm",
             "unitId": 2,
+            "unitCode": "FIT_SE",
             "unitName": "Bộ môn Kỹ thuật Phần mềm",
-            "isPrimary": true
+            "isPrimary": true,
+            "validFrom": "2015-09-01T00:00:00Z",
+            "validTo": "2020-08-31T23:59:59Z"
           }
         ],
         "titlesAndHonors": [
@@ -84,6 +92,7 @@
         "isActive": true,
         "version": 1,
         "representative": {
+          "unitRepresentativeId": 1,
           "userId": 3,
           "displayName": "ThS. Lê Hoàng Cường",
           "email": "cuong.lh@lhu.edu.vn",

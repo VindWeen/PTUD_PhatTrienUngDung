@@ -372,6 +372,11 @@ function createInMemorySupabaseMock() {
       return { rows: [], rowCount: count };
     }
 
+    // 13b. audit_logs mock
+    if (text.includes('INSERT INTO app.audit_logs')) {
+      return { rows: [{ audit_id: 1, created_at: new Date().toISOString() }], rowCount: 1 };
+    }
+
     // 14. CTE ScopeHierarchy
     if (text.includes('WITH RECURSIVE ScopeHierarchy')) {
       const userId = Number(values[0]);

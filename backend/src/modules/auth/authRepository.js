@@ -71,9 +71,10 @@ export async function getActiveRoles(userId) {
      FROM app.user_roles ur
      INNER JOIN app.roles r ON ur.role_id = r.role_id
      WHERE ur.user_id = $1
+       AND ur.revoked_at IS NULL
        AND r.is_active = TRUE
        AND ur.valid_from <= NOW()
-       AND (ur.valid_to IS NULL OR ur.valid_to >= NOW())`,
+       AND (ur.valid_to IS NULL OR ur.valid_to > NOW())`,
     [userId]
   );
   return result.rows;
@@ -135,8 +136,11 @@ export async function getActiveScopes(userId) {
      INNER JOIN app.roles r ON s.role_id = r.role_id
      INNER JOIN app.organization_units ou ON s.unit_id = ou.unit_id
      WHERE s.user_id = $1
+       AND s.revoked_at IS NULL AND r.is_active = TRUE AND ou.is_active = TRUE
+       AND EXISTS (SELECT 1 FROM app.user_roles ur WHERE ur.user_id=s.user_id AND ur.role_id=s.role_id
+         AND ur.revoked_at IS NULL AND ur.valid_from <= NOW() AND (ur.valid_to IS NULL OR ur.valid_to > NOW()))
        AND s.valid_from <= NOW()
-       AND (s.valid_to IS NULL OR s.valid_to >= NOW())`,
+       AND (s.valid_to IS NULL OR s.valid_to > NOW())`,
     [userId]
   );
 
@@ -241,16 +245,33 @@ export async function revokeAllUserTokens(userId) {
  * Lưu ý: Role ADMIN không tự động có quyền bypass phạm vi (ADMIN != MANAGER).
  */
 export async function isUnitInUserScope(userId, targetUnitId, roleCode = null) {
+  if (roleCode === 'UNIT_REPRESENTATIVE') {
+    const result = await query(`SELECT 1 FROM app.unit_representatives rep
+      JOIN app.users u ON u.user_id=rep.user_id AND u.status='ACTIVE'
+      JOIN app.organization_units ou ON ou.unit_id=rep.unit_id AND ou.is_active=TRUE
+      WHERE rep.user_id=$1 AND rep.unit_id=$2 AND rep.revoked_at IS NULL
+        AND rep.valid_from <= NOW() AND (rep.valid_to IS NULL OR rep.valid_to > NOW())
+        AND EXISTS (SELECT 1 FROM app.user_roles ur JOIN app.roles r ON r.role_id=ur.role_id
+          WHERE ur.user_id=rep.user_id AND r.code='UNIT_REPRESENTATIVE' AND r.is_active=TRUE
+            AND ur.revoked_at IS NULL AND ur.valid_from <= NOW() AND (ur.valid_to IS NULL OR ur.valid_to > NOW()))`, [userId,targetUnitId]);
+    return result.rowCount > 0;
+  }
   const result = await query(
     `WITH RECURSIVE ScopeHierarchy AS (
          -- Điểm neo: Các đơn vị được gán scope trực tiếp
          SELECT s.unit_id, s.include_descendants
          FROM app.user_unit_scopes s
          INNER JOIN app.roles r ON s.role_id = r.role_id
+         INNER JOIN app.users u ON u.user_id = s.user_id AND u.status = 'ACTIVE'
+         INNER JOIN app.organization_units root ON root.unit_id = s.unit_id AND root.is_active = TRUE
          WHERE s.user_id = $1
+           AND s.revoked_at IS NULL
+           AND r.is_active = TRUE
+           AND EXISTS (SELECT 1 FROM app.user_roles ur WHERE ur.user_id = s.user_id AND ur.role_id = s.role_id
+             AND ur.revoked_at IS NULL AND ur.valid_from <= NOW() AND (ur.valid_to IS NULL OR ur.valid_to > NOW()))
            AND ($2::varchar IS NULL OR r.code = $2)
            AND s.valid_from <= NOW()
-           AND (s.valid_to IS NULL OR s.valid_to >= NOW())
+           AND (s.valid_to IS NULL OR s.valid_to > NOW())
 
          UNION ALL
 
