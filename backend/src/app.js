@@ -12,6 +12,7 @@ import authRoutes from './modules/auth/authRoutes.js';
 import profileRoutes from './modules/profiles/profileRoutes.js';
 import organizationRoutes from './modules/organizations/organizationRoutes.js';
 import adminRoutes from './modules/admin/adminRoutes.js';
+import achievementRoutes from './modules/achievements/achievementRoutes.js';
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use(`${apiPrefix}/health`, healthRoutes);
 app.use(`${apiPrefix}/auth`, authRoutes);
 app.use(apiPrefix, profileRoutes);
 app.use(apiPrefix, organizationRoutes);
+app.use(apiPrefix, achievementRoutes);
 app.use(`${apiPrefix}/admin`, adminRoutes);
 
 // Root Welcome Route

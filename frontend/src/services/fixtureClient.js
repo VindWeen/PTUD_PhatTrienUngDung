@@ -55,5 +55,12 @@ export const fixtureClient = {
   getUnitProfile: async (unitId) => Number(unitId) === Number(fixtureUnit.unitId) ? clone(fixtureUnit) : null,
   listOrganizations: async () => [clone(fixtureUnit)],
   getDashboardSummary: async () => toDashboardSummary(fixtureProfile),
+  listAchievements: async (params = {}) => {
+    let items = clone(achievementFixtures.achievementsList.payload.data.items);
+    if (params.subjectType) items = items.filter(i => i.subjectType === params.subjectType);
+    if (params.status) items = items.filter(i => i.status === params.status);
+    return { items, pagination: { total: items.length, page: 1, pageSize: 10, totalPages: 1 } };
+  },
+  getAchievementById: async () => clone(achievementFixtures.achievementDetailVerified.payload.data),
   fixtures: { achievements: achievementFixtures, awards: awardFixtures },
 };
