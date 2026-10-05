@@ -286,7 +286,7 @@ function createInMemorySupabaseMock() {
     }
 
     // 6. getActiveRoles
-    if (text.includes('FROM app.user_roles ur')) {
+    if (text.includes('FROM app.user_roles ur') && !text.includes('WITH RECURSIVE') && !text.includes('user_unit_scopes')) {
       const uid = Number(values[0]);
       const uRoles = state.userRoles.filter((ur) => ur.UserId === uid);
       const rows = uRoles.map((ur) => {
