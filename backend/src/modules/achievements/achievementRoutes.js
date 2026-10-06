@@ -87,4 +87,18 @@ router.post(
   controller.revoke
 );
 
+// 14. Gửi lại hồ sơ thành tích (alias cho submit khi ở NEED_CORRECTION)
+router.post(
+  '/achievements/:id/resubmit',
+  requireRoles('LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'),
+  controller.submit
+);
+
+// 15. Tạo bản thay thế cho hồ sơ đã kết thúc (REJECTED, CANCELLED, REVOKED)
+router.post(
+  '/achievements/:id/replace',
+  requireRoles('LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'),
+  controller.replace
+);
+
 export default router;

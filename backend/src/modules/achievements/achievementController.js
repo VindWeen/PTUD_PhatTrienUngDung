@@ -9,6 +9,7 @@ import {
   rejectAchievementSchema,
   cancelAchievementSchema,
   revokeAchievementSchema,
+  replaceAchievementSchema,
 } from './achievementSchemas.js';
 
 const ok = (res, data, status = 200) =>
@@ -131,6 +132,17 @@ export async function revoke(req, res, next) {
   }
 }
 
+export async function replace(req, res, next) {
+  try {
+    const id = Number(req.params.id);
+    const payload = replaceAchievementSchema.parse(req.body || {});
+    const result = await achievementService.replaceAchievement(req.user, id, payload);
+    ok(res, result, 201);
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function getHistory(req, res, next) {
   try {
     const id = Number(req.params.id);
@@ -163,6 +175,7 @@ export default {
   reject,
   cancel,
   revoke,
+  replace,
   getHistory,
   getSubmissions,
 };

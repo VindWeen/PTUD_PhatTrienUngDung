@@ -356,14 +356,16 @@ export async function createAchievement(data) {
         lecturer_id, unit_id, context_unit_id, achievement_type_id,
         title, description, contribution_role, start_date, end_date,
         recognition_year, academic_year_id, status, created_by, version,
+        replaces_achievement_id,
         created_at, updated_at
      ) VALUES (
         $1, $2, $3, $4,
         $5, $6, $7, $8, $9,
         $10, $11, 'DRAFT', $12, 1,
+        $13,
         NOW(), NOW()
      )
-     RETURNING achievement_id AS "achievementId", version, created_at AS "createdAt", updated_at AS "updatedAt"`,
+     RETURNING achievement_id AS "achievementId", version, replaces_achievement_id AS "replacesAchievementId", created_at AS "createdAt", updated_at AS "updatedAt"`,
     [
       data.lecturerId || null,
       data.organizationUnitId || null,
@@ -377,6 +379,7 @@ export async function createAchievement(data) {
       data.recognitionYear,
       data.academicYearId || null,
       data.createdBy,
+      data.replacesAchievementId || null,
     ]
   );
   return result.rows[0];

@@ -18,6 +18,7 @@ export const createAchievementSchema = z
       .min(1990, 'Năm ghi nhận thành tích phải từ 1990 trở lại')
       .max(2100, 'Năm ghi nhận không hợp lệ'),
     academicYearId: z.coerce.number().int().positive().nullable().optional(),
+    replacesAchievementId: z.coerce.number().int().positive().nullable().optional(),
   })
   .superRefine((data, ctx) => {
     // 1. Ràng buộc XOR chủ thể: Nếu là Tập thể (UNIT) thì bắt buộc có organizationUnitId
@@ -114,6 +115,19 @@ export const revokeAchievementSchema = z.object({
   reason: z.string().trim().min(5, 'Lý do thu hồi phải có ít nhất 5 ký tự').max(1000),
 });
 
+export const replaceAchievementSchema = z.object({
+  version: z.coerce.number().int().positive().optional(),
+  title: z.string().trim().min(5, 'Tiêu đề thành tích phải có ít nhất 5 ký tự').max(255).optional(),
+  description: z.string().trim().max(4000).nullable().optional(),
+  contributionRole: z.string().trim().max(100).nullable().optional(),
+  startDate: z.string().regex(dateRegex, 'Ngày bắt đầu phải theo định dạng YYYY-MM-DD').nullable().optional(),
+  endDate: z.string().regex(dateRegex, 'Ngày kết thúc phải theo định dạng YYYY-MM-DD').nullable().optional(),
+  recognitionYear: z.coerce.number().int().min(1990).max(2100).optional(),
+  academicYearId: z.coerce.number().int().positive().nullable().optional(),
+  achievementTypeId: z.coerce.number().int().positive().optional(),
+  reason: z.string().trim().max(1000).optional(),
+});
+
 export default {
   createAchievementSchema,
   updateAchievementSchema,
@@ -124,4 +138,5 @@ export default {
   rejectAchievementSchema,
   cancelAchievementSchema,
   revokeAchievementSchema,
+  replaceAchievementSchema,
 };

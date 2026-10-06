@@ -186,6 +186,20 @@ export function createAchievementService(
       throw new ValidationError('Loại chủ thể không hợp lệ (chỉ chấp nhận LECTURER hoặc UNIT)');
     }
 
+    let replacesAchievementId = null;
+    if (payload.replacesAchievementId) {
+      const targetOld = await repo.findAchievementById(payload.replacesAchievementId);
+      if (!targetOld) {
+        throw new NotFoundError(`Không tìm thấy hồ sơ thành tích cần thay thế với ID #${payload.replacesAchievementId}`);
+      }
+      if (!['REJECTED', 'CANCELLED', 'REVOKED'].includes(targetOld.status)) {
+        throw new ConflictError(
+          `Chỉ có thể tạo bản thay thế cho hồ sơ đã kết thúc (REJECTED, CANCELLED, REVOKED). Trạng thái hiện tại của hồ sơ #${payload.replacesAchievementId}: [${targetOld.status}]`
+        );
+      }
+      replacesAchievementId = payload.replacesAchievementId;
+    }
+
     const created = await repo.createAchievement({
       lecturerId,
       organizationUnitId,
@@ -199,6 +213,7 @@ export function createAchievementService(
       recognitionYear: payload.recognitionYear,
       academicYearId: payload.academicYearId,
       createdBy: user.userId,
+      replacesAchievementId,
     });
 
     const fullRecord = await repo.findAchievementById(created.achievementId);
@@ -659,6 +674,11 @@ export function createAchievementService(
       throw new OutOfScopeError('Hồ sơ nằm ngoài phạm vi đơn vị được phân công quản lý của bạn');
     }
 
+    // W3-Q1: Bắt buộc lý do yêu cầu bổ sung
+    if (!payload?.reason || !payload.reason.trim() || payload.reason.trim().length < 5) {
+      throw new ValidationError('Lý do yêu cầu bổ sung là bắt buộc và phải có ít nhất 5 ký tự');
+    }
+
     return await withTransaction(async ({ client }) => {
       const locked = await repo.findAchievementForUpdate(client, id);
       if (!locked || locked.status !== 'SUBMITTED' || Number(locked.version) !== Number(payload.version)) {
@@ -747,6 +767,11 @@ export function createAchievementService(
       throw new OutOfScopeError('Hồ sơ nằm ngoài phạm vi đơn vị được phân công quản lý của bạn');
     }
 
+    // W3-Q1: Bắt buộc lý do từ chối
+    if (!payload?.reason || !payload.reason.trim() || payload.reason.trim().length < 5) {
+      throw new ValidationError('Lý do từ chối là bắt buộc và phải có ít nhất 5 ký tự');
+    }
+
     return await withTransaction(async ({ client }) => {
       const locked = await repo.findAchievementForUpdate(client, id);
       if (!locked || locked.status !== 'SUBMITTED' || Number(locked.version) !== Number(payload.version)) {
@@ -805,6 +830,11 @@ export function createAchievementService(
       throw new ConflictError(
         `Không thể hủy hồ sơ đang ở trạng thái [${existing.status}]. Chỉ hồ sơ DRAFT, SUBMITTED hoặc NEED_CORRECTION mới được hủy.`
       );
+    }
+
+    // W3-Q1: Bắt buộc lý do nếu đã gửi (SUBMITTED hoặc NEED_CORRECTION)
+    if (existing.status !== 'DRAFT' && (!payload?.reason || !payload.reason.trim() || payload.reason.trim().length < 5)) {
+      throw new ValidationError('Lý do hủy là bắt buộc và phải có ít nhất 5 ký tự đối với hồ sơ đã gửi duyệt');
     }
 
     if (existing.subjectType === 'LECTURER') {
@@ -879,6 +909,11 @@ export function createAchievementService(
       );
     }
 
+    // W3-Q1: Bắt buộc lý do thu hồi
+    if (!payload?.reason || !payload.reason.trim() || payload.reason.trim().length < 5) {
+      throw new ValidationError('Lý do thu hồi là bắt buộc và phải có ít nhất 5 ký tự');
+    }
+
     const roles = (await getActiveRoles(user.userId)).map((r) => r.Code);
     if (!roles.includes('MANAGER')) {
       throw new ForbiddenError('Chỉ cán bộ có vai trò MANAGER mới có quyền thu hồi hồ sơ');
@@ -935,6 +970,62 @@ export function createAchievementService(
   }
 
   /**
+   * W3-Q1: Tạo bản thay thế có liên kết cho hồ sơ kết thúc (REJECTED, CANCELLED, REVOKED)
+   */
+  async function replaceAchievement(user, id, payload = {}) {
+    const existing = await repo.findAchievementById(id);
+    if (!existing) {
+      throw new NotFoundError(`Không tìm thấy hồ sơ thành tích với ID #${id}`);
+    }
+
+    if (!['REJECTED', 'CANCELLED', 'REVOKED'].includes(existing.status)) {
+      throw new ConflictError(
+        `Chỉ có thể tạo bản thay thế cho hồ sơ đã kết thúc (REJECTED, CANCELLED, REVOKED). Trạng thái hiện tại của hồ sơ #${id}: [${existing.status}]`
+      );
+    }
+
+    if (existing.subjectType === 'LECTURER') {
+      if (existing.lecturer?.userId !== user.userId) {
+        throw new ForbiddenError('Chỉ giảng viên chủ sở hữu mới có quyền tạo bản thay thế cho hồ sơ cá nhân này');
+      }
+    } else if (existing.subjectType === 'UNIT') {
+      const activeRep = await repo.findActiveRepresentative(user.userId, existing.organizationUnitId);
+      if (!activeRep) {
+        throw new ForbiddenError('Chỉ đại diện đơn vị còn hiệu lực mới có quyền tạo bản thay thế cho hồ sơ tập thể này');
+      }
+    }
+
+    const created = await repo.createAchievement({
+      lecturerId: existing.lecturerId,
+      organizationUnitId: existing.organizationUnitId,
+      contextUnitId: existing.contextUnitId,
+      achievementTypeId: payload.achievementTypeId || existing.achievementTypeId,
+      title: payload.title || `[Bản thay thế #${id}] ${existing.title}`,
+      description: payload.description !== undefined ? payload.description : existing.description,
+      contributionRole: payload.contributionRole !== undefined ? payload.contributionRole : existing.contributionRole,
+      startDate: payload.startDate !== undefined ? payload.startDate : existing.startDate,
+      endDate: payload.endDate !== undefined ? payload.endDate : existing.endDate,
+      recognitionYear: payload.recognitionYear || existing.recognitionYear,
+      academicYearId: payload.academicYearId !== undefined ? payload.academicYearId : existing.academicYearId,
+      createdBy: user.userId,
+      replacesAchievementId: id,
+    });
+
+    const fullRecord = await repo.findAchievementById(created.achievementId);
+
+    await recordAuditLog({
+      userId: user.userId,
+      action: 'ACHIEVEMENT_REPLACE',
+      entityName: 'achievements',
+      entityId: created.achievementId,
+      oldValues: { replacedAchievementId: id, oldStatus: existing.status },
+      newValues: { ...fullRecord, replacesAchievementId: id },
+    });
+
+    return fullRecord;
+  }
+
+  /**
    * W2-Q3: Xem lịch sử chuyển trạng thái
    */
   async function getAchievementHistory(user, id) {
@@ -964,6 +1055,7 @@ export function createAchievementService(
     rejectAchievement,
     cancelAchievement,
     revokeAchievement,
+    replaceAchievement,
     getAchievementHistory,
     getAchievementSubmissions,
   };

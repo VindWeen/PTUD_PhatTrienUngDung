@@ -38,6 +38,12 @@ export const achievementsApi = {
   revoke: (id, data) =>
     USE_FIXTURES ? fixtureClient.revokeAchievement(id, data) : request({ method: 'POST', url: `/achievements/${id}/revoke`, data }),
 
+  resubmit: (id, data) =>
+    USE_FIXTURES ? fixtureClient.submitAchievement(id, data) : request({ method: 'POST', url: `/achievements/${id}/resubmit`, data }),
+
+  replace: (id, data = {}) =>
+    USE_FIXTURES ? fixtureWriteError() : request({ method: 'POST', url: `/achievements/${id}/replace`, data }),
+
   getHistory: (id) =>
     USE_FIXTURES ? fixtureClient.getAchievementHistory(id) : request({ method: 'GET', url: `/achievements/${id}/history` }),
 

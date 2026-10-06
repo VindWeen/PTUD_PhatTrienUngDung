@@ -421,6 +421,24 @@ export default function Achievements() {
     }
   };
 
+  const handleCreateReplacement = async (ach) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn tạo bản kê khai mới thay thế cho hồ sơ #${ach.achievementId} (${ach.title})?`)) {
+      return;
+    }
+    try {
+      setLoading(true);
+      const res = await achievementsApi.replace(ach.achievementId);
+      await loadData();
+      if (res.data) {
+        openDetailModal(res.data);
+      }
+    } catch (err) {
+      alert(err.response?.data?.error?.message || err.message || 'Lỗi khi tạo bản thay thế');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* 1. Header & Quick Actions */}
@@ -670,13 +688,22 @@ export default function Achievements() {
                               <Lock className="w-4 h-4" />
                             </span>
                           )}
-                          {ach.status === 'VERIFIED' && isAdmin && (
+                          {ach.status === 'VERIFIED' && canReview && (
                             <button
                               onClick={() => openActionModal(ach, 'REVOKE')}
-                              title="Thu hồi quyết định xác nhận (Admin)"
+                              title="Thu hồi quyết định xác nhận (Manager có thẩm quyền)"
                               className="p-1.5 rounded-lg text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition"
                             >
                               <ShieldAlert className="w-4 h-4" />
+                            </button>
+                          )}
+                          {['REJECTED', 'CANCELLED', 'REVOKED'].includes(ach.status) && isSelf(ach) && (
+                            <button
+                              onClick={() => handleCreateReplacement(ach)}
+                              title="Tạo bản kê khai thay thế (Liên kết với hồ sơ đã kết thúc)"
+                              className="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition"
+                            >
+                              <RotateCcw className="w-4 h-4" />
                             </button>
                           )}
                           {ach.status === 'DRAFT' && (
@@ -1032,6 +1059,28 @@ export default function Achievements() {
                   </div>
                 </div>
               )}
+
+              {['REJECTED', 'CANCELLED', 'REVOKED'].includes(selectedAchievement.status) && isSelf(selectedAchievement) && (
+                <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800 text-xs flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <RotateCcw className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                    <span>Hồ sơ đã kết thúc ({selectedAchievement.status}). Bạn có thể tạo bản kê khai mới thay thế có liên kết.</span>
+                  </div>
+                  <button
+                    onClick={() => handleCreateReplacement(selectedAchievement)}
+                    className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium flex items-center gap-1.5 flex-shrink-0 shadow-soft-sm"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Tạo bản thay thế
+                  </button>
+                </div>
+              )}
+
+              {selectedAchievement.replacesAchievementId && (
+                <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-xs flex items-center gap-2">
+                  <RotateCcw className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Bản kê khai này thay thế cho hồ sơ kết thúc: <strong>#{selectedAchievement.replacesAchievementId}</strong></span>
+                </div>
+              )}
             </div>
 
             {/* Modal Detail Tabs */}
@@ -1368,7 +1417,9 @@ export default function Achievements() {
                               Lần nộp #{sub.revisionNo}
                             </span>
                             <span className="text-slate-600 dark:text-slate-400">
-                              Người nộp: <strong className="text-slate-800 dark:text-white">{sub.submitterName || `User #${sub.submittedBy}`}</strong>
+                              Người nộp: <strong className="text-slate-800 dark:text-white">
+                                {sub.submitterName || (typeof sub.submittedBy === 'object' ? sub.submittedBy?.displayName || sub.submittedBy?.email || `User #${sub.submittedBy?.userId}` : `User #${sub.submittedBy}`)}
+                              </strong>
                             </span>
                           </div>
                           <span className="text-slate-400 text-[11px]">
@@ -1402,7 +1453,9 @@ export default function Achievements() {
                           ) : (
                             <div className="space-y-1.5">
                               {snapEvidences.map((evItem) => {
-                                const file = evItem.files?.[0] || {};
+                                const file = evItem.file || evItem.files?.[0] || {};
+                                const fileId = file.evidenceFileId || file.fileId;
+                                const fileName = file.originalFileName || file.fileName || 'Tệp minh chứng';
                                 return (
                                   <div
                                     key={evItem.evidenceId}
@@ -1410,12 +1463,12 @@ export default function Achievements() {
                                   >
                                     <div className="truncate">
                                       <span className="font-medium text-slate-800 dark:text-slate-200">{evItem.title}</span>
-                                      <span className="text-slate-400 ml-2">({file.fileName || 'Tệp'} - v{file.versionNo || 1})</span>
+                                      <span className="text-slate-400 ml-2">({fileName} - v{file.versionNo || 1})</span>
                                     </div>
-                                    {file.fileId && (
+                                    {fileId && (
                                       <button
                                         type="button"
-                                        onClick={() => handleDownloadFile(file.fileId, file.fileName)}
+                                        onClick={() => handleDownloadFile(fileId, fileName)}
                                         className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 flex items-center gap-1 text-[11px] transition"
                                       >
                                         <Download className="w-3 h-3 text-teal-600" />
