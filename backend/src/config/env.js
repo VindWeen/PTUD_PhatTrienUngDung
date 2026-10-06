@@ -43,6 +43,16 @@ const envSchema = z.object({
   // Storage
   UPLOAD_DIR: z.string().default('../storage/evidences'),
   MAX_FILE_SIZE_BYTES: z.coerce.number().int().default(10485760),
+
+  // AI Provider Adapter (W3-Q3)
+  AI_PROVIDER: z.enum(['groq', 'openrouter', 'mock']).default('groq'),
+  GROQ_API_KEY: z.string().optional(),
+  GROQ_MODEL: z.string().default('llama-3.1-8b-instant'),
+  OPENROUTER_API_KEY: z.string().optional(),
+  OPENROUTER_MODEL: z.string().default('meta-llama/llama-3.2-3b-instruct:free'),
+  AI_TIMEOUT_MS: z.coerce.number().int().min(1000).default(15000),
+  AI_MAX_RETRIES: z.coerce.number().int().min(0).max(5).default(2),
+  AI_CACHE_ENABLED: z.preprocess((val) => val === 'true' || val === true || val === '1', z.boolean()).default(true),
 });
 
 let parsedConfig;

@@ -187,6 +187,15 @@ export async function confirmVersion(client, versionId, { isConfirmed, lhuApplic
 }
 
 // Chunks
+export async function findChunkById(client, chunkId) {
+  const result = await query(
+    `SELECT * FROM app.regulation_chunks WHERE chunk_id = $1`,
+    [chunkId],
+    client
+  );
+  return result.rows[0] || null;
+}
+
 export async function listChunksByVersionId(client, versionId) {
   const result = await query(
     `SELECT * FROM app.regulation_chunks WHERE version_id = $1 ORDER BY page_no ASC NULLS LAST, chunk_id ASC`,
