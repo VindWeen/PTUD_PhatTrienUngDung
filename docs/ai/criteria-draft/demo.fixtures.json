@@ -1,0 +1,16 @@
+{
+  "sourceId": "W1-P4-SIMULATION",
+  "sourceVersion": "bb6eb73",
+  "label": "MÔ PHỎNG — không phải dữ liệu KPI thật hoặc căn cứ xét thưởng",
+  "textbooks": [
+    { "externalId": "SIM-TEXTBOOK-01", "evidence": "SIM-FILE-01", "version": 1 },
+    { "externalId": "SIM-TEXTBOOK-02", "evidence": "SIM-FILE-02", "version": 1 }
+  ],
+  "guidance": [
+    { "learnerId": "SIM-LEARNER-01", "role": "SIM_SUPERVISOR", "period": "SIM-DEMO" },
+    { "learnerId": "SIM-LEARNER-02", "role": "SIM_SUPERVISOR", "period": "SIM-DEMO" },
+    { "learnerId": "SIM-LEARNER-03", "role": "SIM_SUPERVISOR", "period": "SIM-DEMO" }
+  ],
+  "deadline": null,
+  "confirmedLhuCouncilForm": null
+}

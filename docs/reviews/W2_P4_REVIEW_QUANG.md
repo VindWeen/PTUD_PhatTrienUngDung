@@ -1,0 +1,32 @@
+# W2-P4 — Review submit/file của Quang
+
+Reviewer: Võ Nhạc Phước · 06/10/2026 · baseline `f091c57` (W2-Q3), `d8448d8` (W2-Q2), W2-P2 `53167d8`. Nhánh làm việc `w2-p4`; không sửa module nghiệp vụ của người khác. **Kết luận: CHANGES_REQUIRED trước nghiệm thu**, không đề nghị merge luồng submit/file ở trạng thái hiện tại.
+
+## Các điểm cần sửa
+
+1. **P1 — ADMIN tự có quyền thẩm định trái ma trận quyền.** `achievementService.js:517`–`528`: verify cho ADMIN và bỏ scope; requestCorrection/reject tương tự. `PERMISSIONS_MATRIX.md` mục Approvals và mô tả ADMIN quy định chỉ Manager có phạm vi, ADMIN không mặc nhiên duyệt. Test HTTP thật: user chỉ ADMIN, không MANAGER/scope vẫn verify hồ sơ người khác **200**. Cần chỉ cho Manager đang hiệu lực và đúng scope; người quản trị phải được phân công Manager riêng nếu cần thẩm định. Giữ chống tự duyệt cho các actor.
+2. **P1 — RecordsOfficer ngoài scope tải được file private; roles từ token cũ.** `evidenceService.js:72`–`77` return cho RECORDS_OFFICER trước lookup scope; nhánh sửa cũng cho quyền này vô điều kiện trong DRAFT/NEED_CORRECTION. Test thật hết hạn scope records officer vẫn download **200**. Service dùng `user.roles` trong JWT, không đọc roles đang hiệu lực; evidence router chỉ authenticate. Cần quyền đọc gắn scope, quyền sửa gắn chủ/đại diện theo ma trận và đọc quyền hiện hành từ DB. `getUserRoles` mới của achievement cũng ưu tiên roles JWT cho list/verify/correction/reject; requireRoles ghi `activeRoles` nhưng service không dùng. Không coi việc account còn ACTIVE là xác nhận role còn hiệu lực.
+3. **P1 — Snapshot file đọc trước transaction/row lock; submit không kiểm file vật lý.** `achievementService.js:356` lấy `evidencesWithFiles` qua pool trước `withTransaction`, sau lock chỉ kiểm trạng thái/version hồ sơ và dùng danh sách cũ. Upload/delete evidence không tăng version hồ sơ hoặc khóa cùng row nên version không bắt được race này. Test interleaving thật trên PostgreSQL: xóa mềm evidence sau preflight nhưng trước BEGIN vẫn submit **200** và đưa file đã removed vào snapshot. Test xóa đúng file synthetic khỏi storage trước submit vẫn **200**. Cần lấy/kiểm evidence/file qua cùng client sau lock; các mutation file phải phối hợp khóa achievement; kiểm tồn tại file private trước snapshot. Đây là trình tự lỗi được dựng có kiểm soát, chưa phải load test hai transaction song song.
+4. **P2 — Audit file mất actor/before/after và nằm ngoài transaction.** `evidenceService.js:171`–`181`, `263`–`273`, `309`–`316` truyền `actorId`, `beforeData`, `afterData`, trong khi auditService nhận `userId`, `oldValues`, `newValues`. HTTP upload thật tạo audit `user_id=null`, `new_values=null`. Ghi sau COMMIT, không đảm bảo rollback nghiệp vụ khi audit lỗi. Cần tên tham số đúng và audit cùng transaction/client với throwOnError khi nghiệp vụ yêu cầu toàn vẹn.
+5. **P2 — Hợp đồng Q3 mô tả khác runtime.** `ACHIEVEMENTS_W2_Q3.md`: cancel→DRAFT, revoke→NEED_CORRECTION, records officer thẩm định, route file `/files`, response evidenceFiles/history actor, audit action khác code. Code và BUSINESS_RULES dùng CANCELLED/REVOKED; revoke thực thi Manager có scope. Không thay workflow theo tài liệu sai: cần chốt bản hợp đồng mô tả cùng hành vi và cập nhật ví dụ. `submitNote` được schema nhận nhưng service chỉ lưu `note`; nếu khách dùng alias thì ghi chú mất.
+
+6. **P2 — UI fixture chọn sai chi tiết và snapshot thiếu dữ liệu.** `fixtureClient.js:64` luôn trả achievementDetailVerified, không dùng ID; `getAchievementSubmissions` trả object không có snapshotData. Đã mở hàng SUBMITTED trên UI fixture nhưng modal hiện #1001 VERIFIED; tab snapshot trống nội dung/file dù frozenFilesCount=2. `Achievements.jsx:1371` còn dựng `User #${sub.submittedBy}` với object từ API, hiện `User #[object Object]`; vấn đề định dạng actor cũng áp dụng response thật. Ảnh fixture trong nhật ký chứng minh nhánh UI hiện tại; không dùng ảnh này chứng minh snapshot API thật.
+
+Ngoài các finding tái hiện, upload v2 tính MAX+1 trước transaction, pool.connect nằm sau saveFile nhưng trước try và guard file nằm ngoài transaction. Cần test race upload/submit, lỗi acquire connection/rollback và map unique conflict 409; chưa có kết quả xác nhận các nhánh này trong W2-P4. Test cleanup W2-Q2 hiện chỉ assert có lỗi, không assert fileWasDeleted nên 4/4 không chứng minh cleanup sau save.
+
+## Những phần đã kiểm chứng đạt
+
+Q3 đã sửa guard trạng thái file: SUBMITTED/VERIFIED/REVOKED bị 409 với mọi vai trò. Không giữ finding bypass state từ baseline cũ. Submit/gửi lại tạo revision và giữ v1 sau v2; tải bytes v1 đúng hash; ngoài chủ file bị 403; version cũ 409; Manager tự duyệt 403; scope Manager/đại diện hết hạn bị 403. Notification lỗi giả lập sau audit/history làm rollback toàn bộ state/version/submission/history/audit trên cùng client. W2-P2 thiếu file quyết định bị 400, upload và ghi nhận đúng quyền thành công.
+
+Chi tiết: `npm --prefix backend run test:w2-p4:integration` ghi số assertions cuối cùng trong `docs/testing/week-2/W2_P4_RESULT.json`, gồm **5 observations lỗi**, acceptance **CHANGES_REQUIRED**. Test unit W2-P4 **5/5** gồm 1 REPRO; Q3/Q2/P2 **4/4** mỗi suite; contracts **68/68**. Đếm REPRO pass không đồng nghĩa hệ thống an toàn. Chưa kiểm transaction song song, khóa/thu hồi role mọi endpoint, đầy đủ reject/cancel/revoke, lỗi audit của snapshot hoặc UI với API thật.
+
+## Dependency và PR
+
+- W1-P4 có source register/biên bản và 4 mục tiêu mô phỏng; chưa có quy chế LHU.
+- W2-P2 có REST và OpenAPI riêng, được tích hợp trong test W2-P4.
+- W2-Q3 đã có code/schema/contract tại `f091c57`; không còn báo thiếu implementation.
+- 06/10/2026, GitHub API public `/repos/VindWeen/PTUD_PhatTrienUngDung/pulls?state=all&per_page=50` trả 3 PR, không có link PR W2-P2/Q3. [PR #3](https://github.com/VindWeen/PTUD_PhatTrienUngDung/pull/3) W1-q4 đã merged; [PR #2](https://github.com/VindWeen/PTUD_PhatTrienUngDung/pull/2) là chuyển DB W1-Q3. Dùng PR cũ làm bằng chứng lịch sử, không review/attach nhầm PR. `git ls-remote` lỗi SEC_E_NO_CREDENTIALS; truy vấn HTTP Python đọc public API thành công, không dùng token. Review này là artifact cục bộ theo commit, chưa đăng bình luận GitHub hoặc tạo PR mới.
+
+## Gate chấp thuận
+
+Sửa các finding P1/P2, chốt lại contract/runtime/ma trận quyền và chạy test phủ negative cases thật. Nguồn LHU chưa có nên bộ criteria vẫn mô phỏng, không kích hoạt AI xét thưởng. Sau đó demo cá nhân/tập thể đầy đủ, bằng chứng file/snapshot thật và người xác nhận quy chế/tiêu chí. Không tự thêm Q1/Q2 từ UI, không tự trao thưởng.

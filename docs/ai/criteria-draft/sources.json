@@ -1,0 +1,47 @@
+{
+  "checkedAt": "2026-10-06",
+  "referenceDate": "2026-10-06",
+  "sources": [
+    {
+      "id": "W1-P4-SIMULATION",
+      "version": "bb6eb73",
+      "url": "docs/ai/BUSINESS_CONFIRMATION_W1_P4.md",
+      "verification": "REPOSITORY_SIMULATION",
+      "allowedUse": "UI_DEMO_ONLY",
+      "lhuApplication": "UNCONFIRMED"
+    },
+    {
+      "id": "VN-LAW-002",
+      "version": "06/2026/QH16, 23/04/2026",
+      "url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+      "sha256": "3e25d80b3549136a2b80e8b9487ddf9f06108925e57424c976196a1998ee4105",
+      "verification": "OFFICIAL_PDF_RELEVANT_PAGES_VISUALLY_CHECKED",
+      "pages": [14, 15],
+      "clauses": ["Điều 3 khoản 1", "Điều 4 khoản 1", "Điều 4 khoản 3", "Điều 4 khoản 4"],
+      "effectiveFrom": "2026-10-01",
+      "allowedUse": "VERSION_SCOPE_TRANSITION_REVIEW_ONLY",
+      "lhuApplication": "INTERNAL_CRITERIA_UNCONFIRMED"
+    },
+    {
+      "id": "VN-EDU-001",
+      "version": "07/2026/TT-BGDĐT, 15/02/2026; gắn với trang công bố chính thức",
+      "url": "https://xdcs.cdnchinhphu.vn/446259493575335936/2026/3/3/07-2026-tt-bgddt-signed-9952f-17725329618222113655448.pdf",
+      "sha256": "91c663da7cbd340244a6cae33513727efbaecd6c9873e15654b8f9f0ce0aea5d",
+      "verification": "OFFICIAL_PUBLICATION_PDF_RELEVANT_PAGES_VISUALLY_CHECKED",
+      "pages": [1, 2, 3, 22],
+      "clauses": ["Điều 2", "Điều 3 khoản 1-3", "Điều 30 khoản 3", "Điều 31 khoản 1-2", "Điều 32 khoản 1"],
+      "effectiveFrom": "2026-04-02",
+      "allowedUse": "VERSION_SCOPE_TRANSITION_REVIEW_ONLY",
+      "lhuApplication": "INTERNAL_CRITERIA_UNCONFIRMED",
+      "notes": "PDF scan có chỗ trống số/ngày ở header trang 1; nhận diện phiên bản qua trang công bố và metadata VBPL, không tự điền vào bản gốc. Chưa xác nhận bộ tiêu chí nội bộ LHU."
+    },
+    {
+      "id": "LHU-REQ-001",
+      "version": "NOT_PROVIDED",
+      "url": null,
+      "verification": "MISSING_BLOCKING_SOURCE",
+      "allowedUse": "NONE",
+      "lhuApplication": "UNCONFIRMED"
+    }
+  ]
+}

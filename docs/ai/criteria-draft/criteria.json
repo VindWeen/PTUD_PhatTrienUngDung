@@ -1,0 +1,57 @@
+{
+  "version": "W2-P4-draft-1",
+  "checkedAt": "2026-10-06",
+  "mode": "SIMULATION_ONLY",
+  "lhuApplication": "UNCONFIRMED",
+  "automaticAward": false,
+  "criteria": [
+    {
+      "id": "SIM-KPI-01",
+      "goal": "Chuẩn bị 02 bản ghi giáo trình có minh chứng trước hạn demo",
+      "sourceId": "W1-P4-SIMULATION",
+      "sourceVersion": "bb6eb73 / BUSINESS_CONFIRMATION_W1_P4.md / 4 mục tiêu demo",
+      "confirmation": "SIMULATION_DOCUMENTED_LHU_UNCONFIRMED",
+      "legalReferences": ["VN-EDU-001: Điều 2, Điều 3, Điều 32; không quy định ngưỡng 02 giáo trình"],
+      "machine": ["Fixture có 2 bản ghi TEACHING_CURRICULUM riêng biệt, mỗi bản ghi có file ID/version/hash", "Ngày đích phải được người dùng cung cấp; không có ngày trả CHUA_XAC_DINH", "Đếm bản ghi không đồng nghĩa xác nhận giáo trình hợp lệ"],
+      "human": ["Xác nhận bản gốc, đóng góp, nghiệm thu giáo trình và thời hạn", "Xác nhận quy chế/phiên bản/đối tượng LHU trước khi dùng cho xét thưởng"],
+      "integration": "PARTIAL: API giáo trình/file/snapshot đã test; số 02 và ngày đích chỉ là fixture",
+      "blockedBy": ["LHU-REQ-001", "chưa có ngày đích được GVHD/LHU xác nhận"]
+    },
+    {
+      "id": "SIM-KPI-02",
+      "goal": "Ghi nhận hoạt động hướng dẫn 03 học viên/nghiên cứu sinh",
+      "sourceId": "W1-P4-SIMULATION",
+      "sourceVersion": "bb6eb73 / BUSINESS_CONFIRMATION_W1_P4.md / 4 mục tiêu demo",
+      "confirmation": "SIMULATION_DOCUMENTED_LHU_UNCONFIRMED",
+      "legalReferences": ["VN-EDU-001: Điều 2; không quy định ngưỡng 03 người học cho mục tiêu này"],
+      "machine": ["Fixture có 3 định danh người học riêng biệt; không ghép theo tên", "Thiếu định danh/loại học viên/vai trò/kỳ trả CHUA_XAC_DINH", "Chưa có API hướng dẫn chuyên biệt: không tuyên bố đã tích hợp nguồn KPI"],
+      "human": ["Xác nhận người học, quyết định phân công, vai trò và kỳ hướng dẫn", "Chốt nguyên tắc chống trùng và phạm vi đối tượng"],
+      "integration": "BLOCKED: chưa có mô hình/API hướng dẫn chuyên biệt",
+      "blockedBy": ["LHU-REQ-001", "nguồn hướng dẫn/KPI thật chưa được cung cấp"]
+    },
+    {
+      "id": "SIM-KPI-03",
+      "goal": "Hoàn thiện 01 hồ sơ thành tích nghiên cứu để gửi thẩm định",
+      "sourceId": "W1-P4-SIMULATION",
+      "sourceVersion": "bb6eb73 / BUSINESS_CONFIRMATION_W1_P4.md / 4 mục tiêu demo",
+      "confirmation": "SIMULATION_DOCUMENTED_LHU_UNCONFIRMED",
+      "legalReferences": ["VN-LAW-002: Điều 3 khoản 1, Điều 4 khoản 1 và khoản 4; phân loại hiệu lực/chuyển tiếp, không tự công nhận nghiên cứu"],
+      "machine": ["POST submit bắt buộc version và ít nhất 1 evidence/file theo hợp đồng phần mềm", "Gửi lại tạo revision mới, snapshot nội dung/file v1 vẫn đọc được sau v2", "Sai chủ thể/scope, tự duyệt, version cũ và sửa VERIFIED phải bị từ chối", "Lỗi notification phải rollback trạng thái/submission/history/audit"],
+      "human": ["Xác nhận nội dung nghiên cứu, giá trị minh chứng và người thẩm định", "Xác nhận thời điểm cơ quan có thẩm quyền tiếp nhận; không dùng timestamp submit nội bộ thay chứng cứ chuyển tiếp", "Đánh giá điều kiện có lợi hơn thuộc người có thẩm quyền"],
+      "integration": "PARTIAL: W2-Q3 đã có và test thật; còn findings quyền/race/snapshot",
+      "blockedBy": ["LHU-REQ-001", "W2-Q3 và W2-Q2 review findings"]
+    },
+    {
+      "id": "SIM-KPI-04",
+      "goal": "Rà soát 100% trường bắt buộc của hồ sơ hội đồng demo",
+      "sourceId": "W1-P4-SIMULATION",
+      "sourceVersion": "bb6eb73 / BUSINESS_CONFIRMATION_W1_P4.md / 4 mục tiêu demo",
+      "confirmation": "SIMULATION_DOCUMENTED_LHU_UNCONFIRMED",
+      "legalReferences": ["VN-EDU-001: Điều 30 khoản 3, Điều 31 khoản 1, Điều 32 khoản 1; không xác nhận mẫu hội đồng LHU"],
+      "machine": ["Liệt kê trường bắt buộc từ schema/API version cụ thể; không tự đặt mẫu hội đồng", "W2-P2 chặn ghi nhận thiếu file quyết định, sai scope hoặc version", "Độ đầy đủ không được chuyển thành xác suất hoặc kết luận đủ điều kiện thưởng"],
+      "human": ["Chốt mẫu hội đồng, danh sách trường và thẩm quyền ký", "Đối chiếu quyết định gốc, thời điểm gửi Bộ nếu thuộc chuyển tiếp", "Người có thẩm quyền xác nhận nội dung, không để AI tự trao thưởng"],
+      "integration": "PARTIAL: decision/award API test thật; mẫu hội đồng chưa xác nhận",
+      "blockedBy": ["LHU-REQ-001", "mẫu hội đồng hiện hành chưa được cung cấp"]
+    }
+  ]
+}
