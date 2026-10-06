@@ -5,6 +5,8 @@
   "main": "src/server.js",
   "type": "module",
   "scripts": {
+    "test:w3-p3": "node --test tests/w3-p3.test.js",
+    "test:w3-p3:integration": "node tests/w3-p3.integration.js",
     "test:w3-q1": "node --test tests/w3-q1.test.js",
     "test:w3-q1:integration": "node tests/w3-q1.integration.js",
     "test:w2-q4": "node --test tests/w2-q4.test.js",

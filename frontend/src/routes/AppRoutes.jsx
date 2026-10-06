@@ -13,6 +13,7 @@ import Organizations from '../pages/Organizations';
 import AdminManagement from '../pages/AdminManagement';
 import Achievements from '../pages/Achievements';
 import Awards from '../pages/Awards';
+import AwardApplications from '../pages/AwardApplications';
 import Notifications from '../pages/Notifications';
 import Regulations from '../pages/Regulations';
 import { LoadingState } from '../components/common/AsyncState';
@@ -50,6 +51,7 @@ export default function AppRoutes() {
           <Route path="achievements" element={<RequireRole roles={APP_ROLES}><Achievements /></RequireRole>} />
           <Route path="regulations" element={<RequireRole roles={APP_ROLES}><Regulations /></RequireRole>} />
           <Route path="awards" element={<RequireRole roles={['RECORDS_OFFICER']}><Awards /></RequireRole>} />
+          <Route path="award-applications" element={<RequireRole roles={['LECTURER','UNIT_REPRESENTATIVE','MANAGER','RECORDS_OFFICER']}><AwardApplications /></RequireRole>} />
           <Route path="me/achievements" element={<Navigate to="/achievements" replace />} />
           <Route path="admin" element={<RequireRole roles={['ADMIN']}><AdminManagement /></RequireRole>} />
           <Route path="dashboard" element={<Navigate to="/me/dashboard" replace />} />

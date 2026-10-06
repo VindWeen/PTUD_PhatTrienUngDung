@@ -1,0 +1,887 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "W3-P3 Award Applications / Cycles",
+    "version": "1.0.0",
+    "description": "Supabase PostgreSQL via pg. Cycles reuse award_periods. See AWARD_APPLICATIONS_W3_P3.md; existing record/revoke/replacement contract remains W2_P2.openapi.json. Council adjudication is a draft extension, never creates AwardRecord."
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "paths": {
+    "/award-cycles": {
+      "get": {
+        "summary": "List cycles (authenticated)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Cycle"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing/invalid cycle, target, source status or revision"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Active role/ownership/scope required; self-forward prohibited"
+          },
+          "404": {
+            "description": "Resource missing"
+          },
+          "409": {
+            "description": "Wrong state/version or duplicate cycle"
+          }
+        }
+      },
+      "post": {
+        "summary": "RecordsOfficer opens cycle",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Cycle"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing/invalid cycle, target, source status or revision"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Active role/ownership/scope required; self-forward prohibited"
+          },
+          "404": {
+            "description": "Resource missing"
+          },
+          "409": {
+            "description": "Wrong state/version or duplicate cycle"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CycleInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/award-applications": {
+      "post": {
+        "summary": "Owner/active representative creates DRAFT",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Application"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing/invalid cycle, target, source status or revision"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Active role/ownership/scope required; self-forward prohibited"
+          },
+          "404": {
+            "description": "Resource missing"
+          },
+          "409": {
+            "description": "Wrong state/version or duplicate cycle"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationInput"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Own submissions or exact unit in Manager/RecordsOfficer scope",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Application"
+                          }
+                        },
+                        "page": {
+                          "type": "integer"
+                        },
+                        "pageSize": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing/invalid cycle, target, source status or revision"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Active role/ownership/scope required; self-forward prohibited"
+          },
+          "404": {
+            "description": "Resource missing"
+          },
+          "409": {
+            "description": "Wrong state/version or duplicate cycle"
+          }
+        },
+        "parameters": [
+          {
+            "name": "contextUnitId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ]
+      }
+    },
+    "/award-applications/{id}": {
+      "get": {
+        "summary": "Authorized detail with immutable input and history",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Detail"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing/invalid cycle, target, source status or revision"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Active role/ownership/scope required; self-forward prohibited"
+          },
+          "404": {
+            "description": "Resource missing"
+          },
+          "409": {
+            "description": "Wrong state/version or duplicate cycle"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          }
+        ]
+      }
+    },
+    "/award-applications/{id}/submit": {
+      "post": {
+        "summary": "DRAFT → SUBMITTED; atomic input snapshot v1",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Application"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing/invalid cycle, target, source status or revision"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Active role/ownership/scope required; self-forward prohibited"
+          },
+          "404": {
+            "description": "Resource missing"
+          },
+          "409": {
+            "description": "Wrong state/version or duplicate cycle"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/award-applications/{id}/forward": {
+      "post": {
+        "summary": "Scoped Manager: SUBMITTED → COUNCIL_PENDING",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Application"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing/invalid cycle, target, source status or revision"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Active role/ownership/scope required; self-forward prohibited"
+          },
+          "404": {
+            "description": "Resource missing"
+          },
+          "409": {
+            "description": "Wrong state/version or duplicate cycle"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForwardInput"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApplicationInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "lecturerId": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "organizationUnitId": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "cycleId": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "targetAwardTypeId": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 2000
+          },
+          "achievementIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "maxItems": 100,
+            "uniqueItems": true,
+            "default": []
+          },
+          "awardRecordIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "maxItems": 100,
+            "uniqueItems": true,
+            "default": []
+          }
+        },
+        "required": [
+          "cycleId",
+          "targetAwardTypeId",
+          "purpose"
+        ],
+        "oneOf": [
+          {
+            "required": [
+              "lecturerId"
+            ],
+            "not": {
+              "required": [
+                "organizationUnitId"
+              ]
+            }
+          },
+          {
+            "required": [
+              "organizationUnitId"
+            ],
+            "not": {
+              "required": [
+                "lecturerId"
+              ]
+            }
+          }
+        ]
+      },
+      "CycleInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "startDate",
+          "endDate"
+        ]
+      },
+      "SubmitInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "version"
+        ]
+      },
+      "ForwardInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "version",
+          "reason"
+        ]
+      },
+      "Application": {
+        "type": "object",
+        "properties": {
+          "application_id": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "pg BIGINT response"
+          },
+          "award_period_id": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "pg BIGINT response"
+          },
+          "target_award_type_id": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "pg BIGINT response"
+          },
+          "lecturer_id": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "pg BIGINT response",
+            "nullable": true
+          },
+          "unit_id": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "pg BIGINT response",
+            "nullable": true
+          },
+          "context_unit_id": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "pg BIGINT response"
+          },
+          "created_by": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "pg BIGINT response"
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "SUBMITTED",
+              "COUNCIL_PENDING",
+              "UNDER_REVIEW",
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "pg BIGINT response"
+          },
+          "achievement_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[0-9]+$",
+              "description": "pg BIGINT response"
+            }
+          },
+          "award_record_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[0-9]+$",
+              "description": "pg BIGINT response"
+            }
+          }
+        }
+      },
+      "Cycle": {
+        "type": "object",
+        "properties": {
+          "award_period_id": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "pg BIGINT response"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PLANNED",
+              "OPEN",
+              "IN_REVIEW",
+              "COMPLETED",
+              "CLOSED"
+            ]
+          }
+        }
+      },
+      "FrozenInput": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "application_id": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "pg BIGINT response"
+          },
+          "input_version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "submitted_by": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "pg BIGINT response"
+          },
+          "submitted_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "snapshot": {
+            "type": "object",
+            "properties": {
+              "schemaVersion": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
+              },
+              "inputVersion": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "SUPABASE_POSTGRESQL"
+                ]
+              },
+              "cycle": {
+                "type": "object"
+              },
+              "target": {
+                "type": "object"
+              },
+              "purpose": {
+                "type": "string"
+              },
+              "achievements": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "description": "record (id/version/status VERIFIED), submission (revision_no/snapshot_data), frozen files (id/version/hash)"
+                }
+              },
+              "awards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "description": "record (id/version/status RECORDED), decision, versioned files"
+                }
+              },
+              "workflow": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "UNIT",
+                    "COUNCIL"
+                  ]
+                }
+              },
+              "criteriaEvaluation": {
+                "nullable": true,
+                "description": "Always null; no AI or eligibility evaluation"
+              }
+            }
+          }
+        }
+      },
+      "History": {
+        "type": "object",
+        "properties": {
+          "history_id": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "pg BIGINT response"
+          },
+          "application_id": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "pg BIGINT response"
+          },
+          "from_status": {
+            "type": "string",
+            "nullable": true
+          },
+          "to_status": {
+            "type": "string"
+          },
+          "actor_id": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "pg BIGINT response"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Detail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Application"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "input": {
+                "$ref": "#/components/schemas/FrozenInput"
+              },
+              "histories": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/History"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

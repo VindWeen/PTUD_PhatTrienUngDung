@@ -21,7 +21,7 @@ export class AwardService {
  }
  async transaction(user, action, fn) {
   const c = await this.pool().connect();
-  try { await c.query('BEGIN'); const result = await fn(c); await this.audit({ userId: user.userId, action, entityName: 'awards', entityId: result.record_id || result.decision_id, newValues: result, client: c, throwOnError: true }); await c.query('COMMIT'); return result; }
+  try { await c.query('BEGIN'); const result = await fn(c); await this.audit({ userId: user.userId, action, entityName: 'awards', entityId: result.record_id || result.decision_id || result.application_id || result.award_period_id, newValues: result, client: c, throwOnError: true }); await c.query('COMMIT'); return result; }
   catch (e) { await c.query('ROLLBACK'); if (e.code === '23505') throw new ConflictError('Trùng chủ thể–loại–quyết định hoặc số quyết định'); if (e.code === '23503') throw new ValidationError('Tham chiếu không tồn tại'); throw e; } finally { c.release(); }
  }
  async createDecision(body, user) {
