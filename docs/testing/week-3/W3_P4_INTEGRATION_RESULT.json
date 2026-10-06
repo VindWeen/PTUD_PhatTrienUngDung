@@ -1,0 +1,20 @@
+{
+  "executedAt": "2026-10-06T15:54:34.132Z",
+  "mode": "REAL_EXPRESS_SUPABASE_MOCK_PROVIDER",
+  "passed": 49,
+  "observations": [
+    {
+      "id": "W3P4-R03",
+      "finding": "Both predecessor and successor returned at effective boundary",
+      "evidence": "2 active_versions at 2026-06-01"
+    },
+    {
+      "id": "W3P4-R01",
+      "finding": "achievement_submissions has no DB update/delete guard",
+      "evidence": "UPDATE permitted in rolled-back schema"
+    }
+  ],
+  "professionalConfirmation": false,
+  "automaticAwardGranted": false,
+  "sharedSchemaModified": false
+}

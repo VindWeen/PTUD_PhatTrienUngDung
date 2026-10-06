@@ -31,7 +31,7 @@ export async function smokeTest(req, res, next) {
 export async function evaluateCriterion(req, res, next) {
   try {
     const payload = evaluateCriterionSchema.parse(req.body);
-    const result = await aiService.evaluateCriterion(payload);
+    const result = await aiService.evaluateCriterion({ ...payload, forcedProvider: payload.provider }, req.user);
     ok(res, result);
   } catch (err) {
     next(err);

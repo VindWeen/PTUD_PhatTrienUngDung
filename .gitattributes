@@ -1,0 +1,5 @@
+# W3-P4 frozen byte hashes must survive Windows/Linux checkouts.
+docs/ai/eval-dev/*.json text eol=lf
+docs/ai/eval-final/*.json text eol=lf
+scripts/w3-p4-eval.mjs text eol=lf
+scripts/w3-p4-freeze.mjs text eol=lf

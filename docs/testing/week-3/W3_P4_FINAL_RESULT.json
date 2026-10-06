@@ -1,0 +1,85 @@
+{
+  "split": "final-test",
+  "kind": "DETERMINISTIC_GUARDS_NOT_LLM_ACCURACY",
+  "labelAuthority": "ENGINEERING_EXPECTATION_UNCONFIRMED_BY_DOMAIN_EXPERT",
+  "automaticAwardGranted": false,
+  "passed": 6,
+  "total": 6,
+  "datasetSha256": "0fea24caa6c7cccb116b826ebd2281192ef7a8fd89a8a1526299a1bf13304461",
+  "details": [
+    {
+      "caseId": "FINAL-01",
+      "pass": true,
+      "expectedIssues": [
+        "OUT_OF_EFFECTIVE_WINDOW"
+      ],
+      "actualIssues": [
+        "OUT_OF_EFFECTIVE_WINDOW"
+      ],
+      "actualDistinctYears": 3
+    },
+    {
+      "caseId": "FINAL-02",
+      "pass": true,
+      "expectedIssues": [
+        "DUPLICATE_YEAR",
+        "YEAR_GAP",
+        "BELOW_SIMULATED_THRESHOLD"
+      ],
+      "actualIssues": [
+        "BELOW_SIMULATED_THRESHOLD",
+        "DUPLICATE_YEAR",
+        "YEAR_GAP"
+      ],
+      "actualDistinctYears": 2
+    },
+    {
+      "caseId": "FINAL-03",
+      "pass": true,
+      "expectedIssues": [
+        "MISSING_DATA",
+        "YEAR_GAP"
+      ],
+      "actualIssues": [
+        "MISSING_DATA",
+        "YEAR_GAP"
+      ],
+      "actualDistinctYears": 2
+    },
+    {
+      "caseId": "FINAL-04",
+      "pass": true,
+      "expectedIssues": [],
+      "actualIssues": [],
+      "actualDistinctYears": 4
+    },
+    {
+      "caseId": "FINAL-05",
+      "pass": true,
+      "expectedIssues": [
+        "REVOKED_SOURCE",
+        "SIMULATED_KPI"
+      ],
+      "actualIssues": [
+        "REVOKED_SOURCE",
+        "SIMULATED_KPI"
+      ],
+      "actualDistinctYears": 2
+    },
+    {
+      "caseId": "FINAL-06",
+      "pass": true,
+      "expectedIssues": [
+        "WRONG_SUBJECT",
+        "UNAPPROVED_DOCUMENT",
+        "UNAPPROVED_CRITERION"
+      ],
+      "actualIssues": [
+        "UNAPPROVED_CRITERION",
+        "UNAPPROVED_DOCUMENT",
+        "WRONG_SUBJECT"
+      ],
+      "actualDistinctYears": 2
+    }
+  ]
+}

@@ -1,0 +1,1734 @@
+{
+  "schemaVersion": 1,
+  "source": "W3-P4 DEVELOPMENT FIXTURES ONLY",
+  "notice": "Các ngưỡng và chuỗi năm dưới đây là đặc tả kiểm thử MÔ PHỎNG do người phát triển đặt; không phải điều kiện xét thưởng, luật hoặc chính sách LHU.",
+  "fixtures": [
+    {
+      "caseId": "DEV-01",
+      "title": "Input đầy đủ ba năm — chỉ mô phỏng",
+      "labelAuthority": "ENGINEERING_EXPECTATION_UNCONFIRMED_BY_DOMAIN_EXPERT",
+      "expectedIssues": [],
+      "basis": [
+        {
+          "sourceId": "SIM-YEARS-v1",
+          "path": "docs/ai/eval-dev/rules.json",
+          "sha256": "cbfff8ddc5133f6716459bc0ff776ec8ded8dd286380c9b5fc9073a88ccfa55e",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        },
+        {
+          "sourceId": "W3-Q1",
+          "path": "docs/api/WORKFLOW_W3_Q1.md",
+          "sha256": "14f40d9d0c8b3bee6f253099eb050ebe821ebf3d2236e8dfdc222a66cb053949",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        },
+        {
+          "sourceId": "W2-P2",
+          "path": "docs/api/AWARDS_W2_P2.md",
+          "sha256": "fcb27ced9fef939936272076c5e51d18b4ddd81e6ead11356f25b1c14fe62412",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        }
+      ],
+      "input": {
+        "subject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10000
+        },
+        "sourceLabel": "SYNTHETIC — NOT LHU POLICY",
+        "ruleId": "SIM-YEARS-v1",
+        "pinnedRuleId": "SIM-YEARS-v1",
+        "document": {
+          "id": "SYNTHETIC-DEV-S01",
+          "version": "1",
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false,
+          "asOfDate": "2026-10-06",
+          "effectiveFrom": "2020-01-01",
+          "effectiveTo": null
+        },
+        "criterion": {
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false
+        },
+        "kpi": null,
+        "records": [
+          {
+            "id": 100000,
+            "subjectId": 10000,
+            "year": 2022,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100000,
+              "version": 1,
+              "sha256": "43e9055e62a3897e0fd8dc6ae8fcd3ad0edf6670d2cc33bacb99f06f895633a5",
+              "content": "W3-P4 SYNTHETIC DEV-S01 file 0"
+            }
+          },
+          {
+            "id": 100001,
+            "subjectId": 10000,
+            "year": 2023,
+            "version": 1,
+            "status": "RECORDED",
+            "file": {
+              "id": 100001,
+              "version": 1,
+              "sha256": "c06851f8e0ef40f8e1aed0c7a84ad2a3e099ae5a5ecabf4596d6b453e3b612c0",
+              "content": "W3-P4 SYNTHETIC DEV-S01 file 1"
+            }
+          },
+          {
+            "id": 100002,
+            "subjectId": 10000,
+            "year": 2024,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100002,
+              "version": 1,
+              "sha256": "2d18cb62bc339a3ba8584e6793c50bbb56319e8a12190954dbda0af36dd979e3",
+              "content": "W3-P4 SYNTHETIC DEV-S01 file 2"
+            }
+          }
+        ]
+      },
+      "run": {
+        "runId": "00000000-0000-4000-8000-000000000001",
+        "evaluationType": "BATCH_BENCHMARK",
+        "targetSubject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10000
+        },
+        "providerInfo": {
+          "provider": "mock",
+          "model": "deterministic-fixture-guard-v1",
+          "isMock": true
+        },
+        "overallStatus": "FLAGGED_UNCONFIRMED",
+        "overallConclusion": "SIMULATION_ONLY",
+        "automaticAwardGranted": false,
+        "usageMetrics": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "latencyMs": 0,
+          "cached": false
+        },
+        "executedAt": "2026-10-06T00:00:00.000Z",
+        "criterionResults": [
+          {
+            "criterionId": 900001,
+            "criterionCode": "SIM-YEARS-v1",
+            "criterionName": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng.",
+            "isConfirmedByLhu": false,
+            "isSimulation": true,
+            "thresholdMetric": {
+              "targetMin": 3,
+              "actualRecorded": 3,
+              "unitMetric": "năm MÔ PHỎNG",
+              "isSatisfied": "UNCONFIRMED"
+            },
+            "legalReferences": [],
+            "aiAnalysis": "Fixture kỹ thuật, không phải output LLM. Input đủ theo đặc tả mô phỏng. Không kết luận đủ điều kiện khen thưởng.",
+            "humanReviewRequired": true,
+            "warningNotice": "Nhãn chưa được chuyên môn xác nhận. Ngưỡng/chuỗi năm chỉ MÔ PHỎNG; chưa có quy chế LHU được xác nhận áp dụng."
+          }
+        ]
+      },
+      "observed": {
+        "issues": [],
+        "distinctYears": 3,
+        "rule": {
+          "id": "SIM-YEARS-v1",
+          "version": "1",
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true,
+          "content": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng."
+        }
+      }
+    },
+    {
+      "caseId": "DEV-02",
+      "title": "Thiếu file phiên bản input làm đứt chuỗi đã xác minh",
+      "labelAuthority": "ENGINEERING_EXPECTATION_UNCONFIRMED_BY_DOMAIN_EXPERT",
+      "expectedIssues": [
+        "MISSING_DATA",
+        "YEAR_GAP"
+      ],
+      "basis": [
+        {
+          "sourceId": "W3-Q1",
+          "path": "docs/api/WORKFLOW_W3_Q1.md",
+          "sha256": "14f40d9d0c8b3bee6f253099eb050ebe821ebf3d2236e8dfdc222a66cb053949",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        },
+        {
+          "sourceId": "SIM-YEARS-v1",
+          "path": "docs/ai/eval-dev/rules.json",
+          "sha256": "cbfff8ddc5133f6716459bc0ff776ec8ded8dd286380c9b5fc9073a88ccfa55e",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        }
+      ],
+      "input": {
+        "subject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10001
+        },
+        "sourceLabel": "SYNTHETIC — NOT LHU POLICY",
+        "ruleId": "SIM-YEARS-v1",
+        "pinnedRuleId": "SIM-YEARS-v1",
+        "document": {
+          "id": "SYNTHETIC-DEV-S02",
+          "version": "1",
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false,
+          "asOfDate": "2026-10-06",
+          "effectiveFrom": "2020-01-01",
+          "effectiveTo": null
+        },
+        "criterion": {
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false
+        },
+        "kpi": null,
+        "records": [
+          {
+            "id": 100010,
+            "subjectId": 10001,
+            "year": 2022,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100010,
+              "version": 1,
+              "sha256": "8719d42618adba87300c0fdf3a201e6175dd1c5884f3eb2f00fa3e6712bce58b",
+              "content": "W3-P4 SYNTHETIC DEV-S02 file 0"
+            }
+          },
+          {
+            "id": 100011,
+            "subjectId": 10001,
+            "year": 2023,
+            "version": 1,
+            "status": "RECORDED",
+            "file": null
+          },
+          {
+            "id": 100012,
+            "subjectId": 10001,
+            "year": 2024,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100012,
+              "version": 1,
+              "sha256": "7ef97614044d2444f286fef10745a30ae7a5d5e4a0f4dc67d62772463dbcdc83",
+              "content": "W3-P4 SYNTHETIC DEV-S02 file 2"
+            }
+          }
+        ]
+      },
+      "run": {
+        "runId": "00000000-0000-4000-8000-000000000002",
+        "evaluationType": "BATCH_BENCHMARK",
+        "targetSubject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10001
+        },
+        "providerInfo": {
+          "provider": "mock",
+          "model": "deterministic-fixture-guard-v1",
+          "isMock": true
+        },
+        "overallStatus": "FLAGGED_UNCONFIRMED",
+        "overallConclusion": "NEEDS_HUMAN_REVIEW",
+        "automaticAwardGranted": false,
+        "usageMetrics": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "latencyMs": 0,
+          "cached": false
+        },
+        "executedAt": "2026-10-06T00:00:00.000Z",
+        "criterionResults": [
+          {
+            "criterionId": 900001,
+            "criterionCode": "SIM-YEARS-v1",
+            "criterionName": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng.",
+            "isConfirmedByLhu": false,
+            "isSimulation": true,
+            "thresholdMetric": {
+              "targetMin": 3,
+              "actualRecorded": 2,
+              "unitMetric": "năm MÔ PHỎNG",
+              "isSatisfied": "UNCONFIRMED"
+            },
+            "legalReferences": [],
+            "aiAnalysis": "Fixture kỹ thuật, không phải output LLM. MISSING_DATA, YEAR_GAP. Không kết luận đủ điều kiện khen thưởng.",
+            "humanReviewRequired": true,
+            "warningNotice": "Nhãn chưa được chuyên môn xác nhận. Ngưỡng/chuỗi năm chỉ MÔ PHỎNG; chưa có quy chế LHU được xác nhận áp dụng."
+          }
+        ]
+      },
+      "observed": {
+        "issues": [
+          "MISSING_DATA",
+          "YEAR_GAP"
+        ],
+        "distinctYears": 2,
+        "rule": {
+          "id": "SIM-YEARS-v1",
+          "version": "1",
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true,
+          "content": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng."
+        }
+      }
+    },
+    {
+      "caseId": "DEV-03",
+      "title": "Đứt chuỗi năm",
+      "labelAuthority": "ENGINEERING_EXPECTATION_UNCONFIRMED_BY_DOMAIN_EXPERT",
+      "expectedIssues": [
+        "YEAR_GAP"
+      ],
+      "basis": [
+        {
+          "sourceId": "SIM-YEARS-v1",
+          "path": "docs/ai/eval-dev/rules.json",
+          "sha256": "cbfff8ddc5133f6716459bc0ff776ec8ded8dd286380c9b5fc9073a88ccfa55e",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        }
+      ],
+      "input": {
+        "subject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10002
+        },
+        "sourceLabel": "SYNTHETIC — NOT LHU POLICY",
+        "ruleId": "SIM-YEARS-v1",
+        "pinnedRuleId": "SIM-YEARS-v1",
+        "document": {
+          "id": "SYNTHETIC-DEV-S03",
+          "version": "1",
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false,
+          "asOfDate": "2026-10-06",
+          "effectiveFrom": "2020-01-01",
+          "effectiveTo": null
+        },
+        "criterion": {
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false
+        },
+        "kpi": null,
+        "records": [
+          {
+            "id": 100020,
+            "subjectId": 10002,
+            "year": 2021,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100020,
+              "version": 1,
+              "sha256": "aa5934b4529919c7ce0068a16800c036fea6d7ac595b51f13fee11ba86a64ee1",
+              "content": "W3-P4 SYNTHETIC DEV-S03 file 0"
+            }
+          },
+          {
+            "id": 100021,
+            "subjectId": 10002,
+            "year": 2023,
+            "version": 1,
+            "status": "RECORDED",
+            "file": {
+              "id": 100021,
+              "version": 1,
+              "sha256": "9562866bc01a5eb79b5b1b4840bc34822e3db3bb2f40094f8ac518499ea16afa",
+              "content": "W3-P4 SYNTHETIC DEV-S03 file 1"
+            }
+          },
+          {
+            "id": 100022,
+            "subjectId": 10002,
+            "year": 2024,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100022,
+              "version": 1,
+              "sha256": "66f3d73907cb7b7637409eec27e6fbe6012c43e64acbd25f4ba453e1faeab4ad",
+              "content": "W3-P4 SYNTHETIC DEV-S03 file 2"
+            }
+          }
+        ]
+      },
+      "run": {
+        "runId": "00000000-0000-4000-8000-000000000003",
+        "evaluationType": "BATCH_BENCHMARK",
+        "targetSubject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10002
+        },
+        "providerInfo": {
+          "provider": "mock",
+          "model": "deterministic-fixture-guard-v1",
+          "isMock": true
+        },
+        "overallStatus": "FLAGGED_UNCONFIRMED",
+        "overallConclusion": "NEEDS_HUMAN_REVIEW",
+        "automaticAwardGranted": false,
+        "usageMetrics": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "latencyMs": 0,
+          "cached": false
+        },
+        "executedAt": "2026-10-06T00:00:00.000Z",
+        "criterionResults": [
+          {
+            "criterionId": 900001,
+            "criterionCode": "SIM-YEARS-v1",
+            "criterionName": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng.",
+            "isConfirmedByLhu": false,
+            "isSimulation": true,
+            "thresholdMetric": {
+              "targetMin": 3,
+              "actualRecorded": 3,
+              "unitMetric": "năm MÔ PHỎNG",
+              "isSatisfied": "UNCONFIRMED"
+            },
+            "legalReferences": [],
+            "aiAnalysis": "Fixture kỹ thuật, không phải output LLM. YEAR_GAP. Không kết luận đủ điều kiện khen thưởng.",
+            "humanReviewRequired": true,
+            "warningNotice": "Nhãn chưa được chuyên môn xác nhận. Ngưỡng/chuỗi năm chỉ MÔ PHỎNG; chưa có quy chế LHU được xác nhận áp dụng."
+          }
+        ]
+      },
+      "observed": {
+        "issues": [
+          "YEAR_GAP"
+        ],
+        "distinctYears": 3,
+        "rule": {
+          "id": "SIM-YEARS-v1",
+          "version": "1",
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true,
+          "content": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng."
+        }
+      }
+    },
+    {
+      "caseId": "DEV-04",
+      "title": "Trùng năm không được tính thành ba năm",
+      "labelAuthority": "ENGINEERING_EXPECTATION_UNCONFIRMED_BY_DOMAIN_EXPERT",
+      "expectedIssues": [
+        "DUPLICATE_YEAR",
+        "BELOW_SIMULATED_THRESHOLD"
+      ],
+      "basis": [
+        {
+          "sourceId": "SIM-YEARS-v1",
+          "path": "docs/ai/eval-dev/rules.json",
+          "sha256": "cbfff8ddc5133f6716459bc0ff776ec8ded8dd286380c9b5fc9073a88ccfa55e",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        },
+        {
+          "sourceId": "W3-P2",
+          "path": "docs/api/KPI_W3_P2.md",
+          "sha256": "55cbfb1fec642615f63f264efd52b0d41e7792021962ad63993593996df2fa01",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        }
+      ],
+      "input": {
+        "subject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10003
+        },
+        "sourceLabel": "SYNTHETIC — NOT LHU POLICY",
+        "ruleId": "SIM-YEARS-v1",
+        "pinnedRuleId": "SIM-YEARS-v1",
+        "document": {
+          "id": "SYNTHETIC-DEV-S04",
+          "version": "1",
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false,
+          "asOfDate": "2026-10-06",
+          "effectiveFrom": "2020-01-01",
+          "effectiveTo": null
+        },
+        "criterion": {
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false
+        },
+        "kpi": null,
+        "records": [
+          {
+            "id": 100030,
+            "subjectId": 10003,
+            "year": 2022,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100030,
+              "version": 1,
+              "sha256": "227152bebeb78d2579ae4fcb2ce4d54cb91b83c6900287297a9b5924a2d209b7",
+              "content": "W3-P4 SYNTHETIC DEV-S04 file 0"
+            }
+          },
+          {
+            "id": 100031,
+            "subjectId": 10003,
+            "year": 2022,
+            "version": 1,
+            "status": "RECORDED",
+            "file": {
+              "id": 100031,
+              "version": 1,
+              "sha256": "5d54953121a76077e9227f6c47ac96132249db5541bda656188f58c3a85ac64a",
+              "content": "W3-P4 SYNTHETIC DEV-S04 file 1"
+            }
+          },
+          {
+            "id": 100032,
+            "subjectId": 10003,
+            "year": 2023,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100032,
+              "version": 1,
+              "sha256": "68f37c63dede91a090946bea060e4f2460b7c25b5e02046568baa887c3ca5c3a",
+              "content": "W3-P4 SYNTHETIC DEV-S04 file 2"
+            }
+          }
+        ]
+      },
+      "run": {
+        "runId": "00000000-0000-4000-8000-000000000004",
+        "evaluationType": "BATCH_BENCHMARK",
+        "targetSubject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10003
+        },
+        "providerInfo": {
+          "provider": "mock",
+          "model": "deterministic-fixture-guard-v1",
+          "isMock": true
+        },
+        "overallStatus": "FLAGGED_UNCONFIRMED",
+        "overallConclusion": "NEEDS_HUMAN_REVIEW",
+        "automaticAwardGranted": false,
+        "usageMetrics": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "latencyMs": 0,
+          "cached": false
+        },
+        "executedAt": "2026-10-06T00:00:00.000Z",
+        "criterionResults": [
+          {
+            "criterionId": 900001,
+            "criterionCode": "SIM-YEARS-v1",
+            "criterionName": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng.",
+            "isConfirmedByLhu": false,
+            "isSimulation": true,
+            "thresholdMetric": {
+              "targetMin": 3,
+              "actualRecorded": 2,
+              "unitMetric": "năm MÔ PHỎNG",
+              "isSatisfied": "UNCONFIRMED"
+            },
+            "legalReferences": [],
+            "aiAnalysis": "Fixture kỹ thuật, không phải output LLM. BELOW_SIMULATED_THRESHOLD, DUPLICATE_YEAR. Không kết luận đủ điều kiện khen thưởng.",
+            "humanReviewRequired": true,
+            "warningNotice": "Nhãn chưa được chuyên môn xác nhận. Ngưỡng/chuỗi năm chỉ MÔ PHỎNG; chưa có quy chế LHU được xác nhận áp dụng."
+          }
+        ]
+      },
+      "observed": {
+        "issues": [
+          "BELOW_SIMULATED_THRESHOLD",
+          "DUPLICATE_YEAR"
+        ],
+        "distinctYears": 2,
+        "rule": {
+          "id": "SIM-YEARS-v1",
+          "version": "1",
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true,
+          "content": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng."
+        }
+      }
+    },
+    {
+      "caseId": "DEV-05",
+      "title": "Nguồn đã thu hồi không tính vào hiện trạng",
+      "labelAuthority": "ENGINEERING_EXPECTATION_UNCONFIRMED_BY_DOMAIN_EXPERT",
+      "expectedIssues": [
+        "REVOKED_SOURCE"
+      ],
+      "basis": [
+        {
+          "sourceId": "W3-Q1",
+          "path": "docs/api/WORKFLOW_W3_Q1.md",
+          "sha256": "14f40d9d0c8b3bee6f253099eb050ebe821ebf3d2236e8dfdc222a66cb053949",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        },
+        {
+          "sourceId": "W2-P2",
+          "path": "docs/api/AWARDS_W2_P2.md",
+          "sha256": "fcb27ced9fef939936272076c5e51d18b4ddd81e6ead11356f25b1c14fe62412",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        },
+        {
+          "sourceId": "SIM-YEARS-v1",
+          "path": "docs/ai/eval-dev/rules.json",
+          "sha256": "cbfff8ddc5133f6716459bc0ff776ec8ded8dd286380c9b5fc9073a88ccfa55e",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        }
+      ],
+      "input": {
+        "subject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10004
+        },
+        "sourceLabel": "SYNTHETIC — NOT LHU POLICY",
+        "ruleId": "SIM-YEARS-v1",
+        "pinnedRuleId": "SIM-YEARS-v1",
+        "document": {
+          "id": "SYNTHETIC-DEV-S05",
+          "version": "1",
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false,
+          "asOfDate": "2026-10-06",
+          "effectiveFrom": "2020-01-01",
+          "effectiveTo": null
+        },
+        "criterion": {
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false
+        },
+        "kpi": null,
+        "records": [
+          {
+            "id": 100040,
+            "subjectId": 10004,
+            "year": 2022,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100040,
+              "version": 1,
+              "sha256": "340a1ab2696099babdc196f0f15a22196778a412e5c01fdb3d9219fcfea1c244",
+              "content": "W3-P4 SYNTHETIC DEV-S05 file 0"
+            }
+          },
+          {
+            "id": 100041,
+            "subjectId": 10004,
+            "year": 2023,
+            "version": 1,
+            "status": "RECORDED",
+            "file": {
+              "id": 100041,
+              "version": 1,
+              "sha256": "fc88fe9dd843c4c8812d2b13c50f223f52574694cbc7217b7e80c0c688c0c10d",
+              "content": "W3-P4 SYNTHETIC DEV-S05 file 1"
+            }
+          },
+          {
+            "id": 100042,
+            "subjectId": 10004,
+            "year": 2024,
+            "version": 1,
+            "status": "REVOKED",
+            "file": {
+              "id": 100042,
+              "version": 1,
+              "sha256": "2853f06337c7159737741cf2560dd266fdb645a918db4e40084659216721440d",
+              "content": "W3-P4 SYNTHETIC DEV-S05 file 2"
+            }
+          }
+        ]
+      },
+      "run": {
+        "runId": "00000000-0000-4000-8000-000000000005",
+        "evaluationType": "BATCH_BENCHMARK",
+        "targetSubject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10004
+        },
+        "providerInfo": {
+          "provider": "mock",
+          "model": "deterministic-fixture-guard-v1",
+          "isMock": true
+        },
+        "overallStatus": "FLAGGED_UNCONFIRMED",
+        "overallConclusion": "NEEDS_HUMAN_REVIEW",
+        "automaticAwardGranted": false,
+        "usageMetrics": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "latencyMs": 0,
+          "cached": false
+        },
+        "executedAt": "2026-10-06T00:00:00.000Z",
+        "criterionResults": [
+          {
+            "criterionId": 900001,
+            "criterionCode": "SIM-YEARS-v1",
+            "criterionName": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng.",
+            "isConfirmedByLhu": false,
+            "isSimulation": true,
+            "thresholdMetric": {
+              "targetMin": 3,
+              "actualRecorded": 2,
+              "unitMetric": "năm MÔ PHỎNG",
+              "isSatisfied": "UNCONFIRMED"
+            },
+            "legalReferences": [],
+            "aiAnalysis": "Fixture kỹ thuật, không phải output LLM. REVOKED_SOURCE. Không kết luận đủ điều kiện khen thưởng.",
+            "humanReviewRequired": true,
+            "warningNotice": "Nhãn chưa được chuyên môn xác nhận. Ngưỡng/chuỗi năm chỉ MÔ PHỎNG; chưa có quy chế LHU được xác nhận áp dụng."
+          }
+        ]
+      },
+      "observed": {
+        "issues": [
+          "REVOKED_SOURCE"
+        ],
+        "distinctYears": 2,
+        "rule": {
+          "id": "SIM-YEARS-v1",
+          "version": "1",
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true,
+          "content": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng."
+        }
+      }
+    },
+    {
+      "caseId": "DEV-06",
+      "title": "Thay đặc tả v1 bằng v2, không đổi run cũ",
+      "labelAuthority": "ENGINEERING_EXPECTATION_UNCONFIRMED_BY_DOMAIN_EXPERT",
+      "expectedIssues": [
+        "RULE_CHANGED",
+        "BELOW_SIMULATED_THRESHOLD"
+      ],
+      "basis": [
+        {
+          "sourceId": "W3-Q2",
+          "path": "docs/api/REGULATIONS_W3_Q2.md",
+          "sha256": "0c5fbc96324f4f238a246a4a805565a382f08a9e1ace384bdffefd92fb27d161",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        },
+        {
+          "sourceId": "SIM-YEARS-v1",
+          "path": "docs/ai/eval-dev/rules.json",
+          "sha256": "cbfff8ddc5133f6716459bc0ff776ec8ded8dd286380c9b5fc9073a88ccfa55e",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        },
+        {
+          "sourceId": "SIM-YEARS-v2",
+          "path": "docs/ai/eval-dev/rules.json",
+          "sha256": "cbfff8ddc5133f6716459bc0ff776ec8ded8dd286380c9b5fc9073a88ccfa55e",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        }
+      ],
+      "input": {
+        "subject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10005
+        },
+        "sourceLabel": "SYNTHETIC — NOT LHU POLICY",
+        "ruleId": "SIM-YEARS-v2",
+        "pinnedRuleId": "SIM-YEARS-v1",
+        "document": {
+          "id": "SYNTHETIC-DEV-S06",
+          "version": "2",
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false,
+          "asOfDate": "2026-10-06",
+          "effectiveFrom": "2020-01-01",
+          "effectiveTo": null
+        },
+        "criterion": {
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false
+        },
+        "kpi": null,
+        "records": [
+          {
+            "id": 100050,
+            "subjectId": 10005,
+            "year": 2022,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100050,
+              "version": 1,
+              "sha256": "b7f3d427323d49cc4bfd000406eb2d76e80a194c9f14e13fadce84f01134a93a",
+              "content": "W3-P4 SYNTHETIC DEV-S06 file 0"
+            }
+          },
+          {
+            "id": 100051,
+            "subjectId": 10005,
+            "year": 2023,
+            "version": 1,
+            "status": "RECORDED",
+            "file": {
+              "id": 100051,
+              "version": 1,
+              "sha256": "4d2d19167d4f359abd1997ceb92c5bcb986f6e8ce288cff003b0f54ad083145d",
+              "content": "W3-P4 SYNTHETIC DEV-S06 file 1"
+            }
+          },
+          {
+            "id": 100052,
+            "subjectId": 10005,
+            "year": 2024,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100052,
+              "version": 1,
+              "sha256": "456f083548c02bfe24bb9105a88da4acc750c21991d92777884975ecd44003f2",
+              "content": "W3-P4 SYNTHETIC DEV-S06 file 2"
+            }
+          }
+        ]
+      },
+      "run": {
+        "runId": "00000000-0000-4000-8000-000000000006",
+        "evaluationType": "BATCH_BENCHMARK",
+        "targetSubject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10005
+        },
+        "providerInfo": {
+          "provider": "mock",
+          "model": "deterministic-fixture-guard-v1",
+          "isMock": true
+        },
+        "overallStatus": "FLAGGED_UNCONFIRMED",
+        "overallConclusion": "NEEDS_HUMAN_REVIEW",
+        "automaticAwardGranted": false,
+        "usageMetrics": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "latencyMs": 0,
+          "cached": false
+        },
+        "executedAt": "2026-10-06T00:00:00.000Z",
+        "criterionResults": [
+          {
+            "criterionId": 900002,
+            "criterionCode": "SIM-YEARS-v2",
+            "criterionName": "MÔ PHỎNG kiểm thử thay quy định: bốn năm khác nhau liên tiếp. Bản v1 vẫn phải giữ nguyên cho run đã chụp; không dùng làm chính sách LHU.",
+            "isConfirmedByLhu": false,
+            "isSimulation": true,
+            "thresholdMetric": {
+              "targetMin": 4,
+              "actualRecorded": 3,
+              "unitMetric": "năm MÔ PHỎNG",
+              "isSatisfied": "UNCONFIRMED"
+            },
+            "legalReferences": [],
+            "aiAnalysis": "Fixture kỹ thuật, không phải output LLM. BELOW_SIMULATED_THRESHOLD, RULE_CHANGED. Không kết luận đủ điều kiện khen thưởng.",
+            "humanReviewRequired": true,
+            "warningNotice": "Nhãn chưa được chuyên môn xác nhận. Ngưỡng/chuỗi năm chỉ MÔ PHỎNG; chưa có quy chế LHU được xác nhận áp dụng."
+          }
+        ]
+      },
+      "observed": {
+        "issues": [
+          "BELOW_SIMULATED_THRESHOLD",
+          "RULE_CHANGED"
+        ],
+        "distinctYears": 3,
+        "rule": {
+          "id": "SIM-YEARS-v2",
+          "version": "2",
+          "minimumDistinctYears": 4,
+          "requireConsecutive": true,
+          "content": "MÔ PHỎNG kiểm thử thay quy định: bốn năm khác nhau liên tiếp. Bản v1 vẫn phải giữ nguyên cho run đã chụp; không dùng làm chính sách LHU."
+        }
+      }
+    },
+    {
+      "caseId": "DEV-07",
+      "title": "Tài liệu chưa duyệt dù tiêu chí bật confirmed",
+      "labelAuthority": "ENGINEERING_EXPECTATION_UNCONFIRMED_BY_DOMAIN_EXPERT",
+      "expectedIssues": [
+        "UNAPPROVED_DOCUMENT"
+      ],
+      "basis": [
+        {
+          "sourceId": "W3-Q2",
+          "path": "docs/api/REGULATIONS_W3_Q2.md",
+          "sha256": "0c5fbc96324f4f238a246a4a805565a382f08a9e1ace384bdffefd92fb27d161",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        }
+      ],
+      "input": {
+        "subject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10006
+        },
+        "sourceLabel": "SYNTHETIC — NOT LHU POLICY",
+        "ruleId": "SIM-YEARS-v1",
+        "pinnedRuleId": "SIM-YEARS-v1",
+        "document": {
+          "id": "SYNTHETIC-DEV-S07",
+          "version": "1",
+          "isConfirmedForTest": false,
+          "professionalConfirmation": false,
+          "asOfDate": "2026-10-06",
+          "effectiveFrom": "2020-01-01",
+          "effectiveTo": null
+        },
+        "criterion": {
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false
+        },
+        "kpi": null,
+        "records": [
+          {
+            "id": 100060,
+            "subjectId": 10006,
+            "year": 2022,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100060,
+              "version": 1,
+              "sha256": "d81a4ca32f820fe26feab77dde36698e6643e4b166b9308a0abbf76e149ca6dc",
+              "content": "W3-P4 SYNTHETIC DEV-S07 file 0"
+            }
+          },
+          {
+            "id": 100061,
+            "subjectId": 10006,
+            "year": 2023,
+            "version": 1,
+            "status": "RECORDED",
+            "file": {
+              "id": 100061,
+              "version": 1,
+              "sha256": "e505b896eccb030e9d5bb4982548de7501667eb34c1d8e327866b38e556a0b83",
+              "content": "W3-P4 SYNTHETIC DEV-S07 file 1"
+            }
+          },
+          {
+            "id": 100062,
+            "subjectId": 10006,
+            "year": 2024,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100062,
+              "version": 1,
+              "sha256": "a5a62c365a7e2bfdfa857e74ec0420266632666049a8defe0a7d7b16487464cf",
+              "content": "W3-P4 SYNTHETIC DEV-S07 file 2"
+            }
+          }
+        ]
+      },
+      "run": {
+        "runId": "00000000-0000-4000-8000-000000000007",
+        "evaluationType": "BATCH_BENCHMARK",
+        "targetSubject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10006
+        },
+        "providerInfo": {
+          "provider": "mock",
+          "model": "deterministic-fixture-guard-v1",
+          "isMock": true
+        },
+        "overallStatus": "FLAGGED_UNCONFIRMED",
+        "overallConclusion": "NEEDS_HUMAN_REVIEW",
+        "automaticAwardGranted": false,
+        "usageMetrics": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "latencyMs": 0,
+          "cached": false
+        },
+        "executedAt": "2026-10-06T00:00:00.000Z",
+        "criterionResults": [
+          {
+            "criterionId": 900001,
+            "criterionCode": "SIM-YEARS-v1",
+            "criterionName": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng.",
+            "isConfirmedByLhu": false,
+            "isSimulation": true,
+            "thresholdMetric": {
+              "targetMin": 3,
+              "actualRecorded": 3,
+              "unitMetric": "năm MÔ PHỎNG",
+              "isSatisfied": "UNCONFIRMED"
+            },
+            "legalReferences": [],
+            "aiAnalysis": "Fixture kỹ thuật, không phải output LLM. UNAPPROVED_DOCUMENT. Không kết luận đủ điều kiện khen thưởng.",
+            "humanReviewRequired": true,
+            "warningNotice": "Nhãn chưa được chuyên môn xác nhận. Ngưỡng/chuỗi năm chỉ MÔ PHỎNG; chưa có quy chế LHU được xác nhận áp dụng."
+          }
+        ]
+      },
+      "observed": {
+        "issues": [
+          "UNAPPROVED_DOCUMENT"
+        ],
+        "distinctYears": 3,
+        "rule": {
+          "id": "SIM-YEARS-v1",
+          "version": "1",
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true,
+          "content": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng."
+        }
+      }
+    },
+    {
+      "caseId": "DEV-08",
+      "title": "Tiêu chí chưa duyệt dù tài liệu bật confirmed",
+      "labelAuthority": "ENGINEERING_EXPECTATION_UNCONFIRMED_BY_DOMAIN_EXPERT",
+      "expectedIssues": [
+        "UNAPPROVED_CRITERION"
+      ],
+      "basis": [
+        {
+          "sourceId": "W3-Q2",
+          "path": "docs/api/REGULATIONS_W3_Q2.md",
+          "sha256": "0c5fbc96324f4f238a246a4a805565a382f08a9e1ace384bdffefd92fb27d161",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        }
+      ],
+      "input": {
+        "subject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10007
+        },
+        "sourceLabel": "SYNTHETIC — NOT LHU POLICY",
+        "ruleId": "SIM-YEARS-v1",
+        "pinnedRuleId": "SIM-YEARS-v1",
+        "document": {
+          "id": "SYNTHETIC-DEV-S08",
+          "version": "1",
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false,
+          "asOfDate": "2026-10-06",
+          "effectiveFrom": "2020-01-01",
+          "effectiveTo": null
+        },
+        "criterion": {
+          "isConfirmedForTest": false,
+          "professionalConfirmation": false
+        },
+        "kpi": null,
+        "records": [
+          {
+            "id": 100070,
+            "subjectId": 10007,
+            "year": 2022,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100070,
+              "version": 1,
+              "sha256": "10bb638a6dd11cf291f316a6d90281a2573bce9b2a0a8f16d9bb58cc6cff9818",
+              "content": "W3-P4 SYNTHETIC DEV-S08 file 0"
+            }
+          },
+          {
+            "id": 100071,
+            "subjectId": 10007,
+            "year": 2023,
+            "version": 1,
+            "status": "RECORDED",
+            "file": {
+              "id": 100071,
+              "version": 1,
+              "sha256": "9e669035310a52adec10721d24432a9fb9560db8778f459459fd6fe43218d3ab",
+              "content": "W3-P4 SYNTHETIC DEV-S08 file 1"
+            }
+          },
+          {
+            "id": 100072,
+            "subjectId": 10007,
+            "year": 2024,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100072,
+              "version": 1,
+              "sha256": "0ae28713eeaf156fc498eb0839de3071d3de42c546c635c3fade9918e294e94a",
+              "content": "W3-P4 SYNTHETIC DEV-S08 file 2"
+            }
+          }
+        ]
+      },
+      "run": {
+        "runId": "00000000-0000-4000-8000-000000000008",
+        "evaluationType": "BATCH_BENCHMARK",
+        "targetSubject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10007
+        },
+        "providerInfo": {
+          "provider": "mock",
+          "model": "deterministic-fixture-guard-v1",
+          "isMock": true
+        },
+        "overallStatus": "FLAGGED_UNCONFIRMED",
+        "overallConclusion": "NEEDS_HUMAN_REVIEW",
+        "automaticAwardGranted": false,
+        "usageMetrics": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "latencyMs": 0,
+          "cached": false
+        },
+        "executedAt": "2026-10-06T00:00:00.000Z",
+        "criterionResults": [
+          {
+            "criterionId": 900001,
+            "criterionCode": "SIM-YEARS-v1",
+            "criterionName": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng.",
+            "isConfirmedByLhu": false,
+            "isSimulation": true,
+            "thresholdMetric": {
+              "targetMin": 3,
+              "actualRecorded": 3,
+              "unitMetric": "năm MÔ PHỎNG",
+              "isSatisfied": "UNCONFIRMED"
+            },
+            "legalReferences": [],
+            "aiAnalysis": "Fixture kỹ thuật, không phải output LLM. UNAPPROVED_CRITERION. Không kết luận đủ điều kiện khen thưởng.",
+            "humanReviewRequired": true,
+            "warningNotice": "Nhãn chưa được chuyên môn xác nhận. Ngưỡng/chuỗi năm chỉ MÔ PHỎNG; chưa có quy chế LHU được xác nhận áp dụng."
+          }
+        ]
+      },
+      "observed": {
+        "issues": [
+          "UNAPPROVED_CRITERION"
+        ],
+        "distinctYears": 3,
+        "rule": {
+          "id": "SIM-YEARS-v1",
+          "version": "1",
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true,
+          "content": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng."
+        }
+      }
+    },
+    {
+      "caseId": "DEV-09",
+      "title": "Nguồn KPI mô phỏng không thành nguồn đã xác nhận",
+      "labelAuthority": "ENGINEERING_EXPECTATION_UNCONFIRMED_BY_DOMAIN_EXPERT",
+      "expectedIssues": [
+        "SIMULATED_KPI"
+      ],
+      "basis": [
+        {
+          "sourceId": "W3-P2",
+          "path": "docs/api/KPI_W3_P2.md",
+          "sha256": "55cbfb1fec642615f63f264efd52b0d41e7792021962ad63993593996df2fa01",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        },
+        {
+          "sourceId": "W1-P4",
+          "path": "docs/ai/BUSINESS_CONFIRMATION_W1_P4.md",
+          "sha256": "08db59ab81f22cc3183f8bb33ebf7f0e1cff7d70ce0f6b5fbfa9a19d7de26b06",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        }
+      ],
+      "input": {
+        "subject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10008
+        },
+        "sourceLabel": "SYNTHETIC — NOT LHU POLICY",
+        "ruleId": "SIM-YEARS-v1",
+        "pinnedRuleId": "SIM-YEARS-v1",
+        "document": {
+          "id": "SYNTHETIC-DEV-S09",
+          "version": "1",
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false,
+          "asOfDate": "2026-10-06",
+          "effectiveFrom": "2020-01-01",
+          "effectiveTo": null
+        },
+        "criterion": {
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false
+        },
+        "kpi": {
+          "source": "MANUAL",
+          "sourceNote": "MO PHONG — synthetic KPI, not confirmed achievement",
+          "isSimulation": true
+        },
+        "records": [
+          {
+            "id": 100080,
+            "subjectId": 10008,
+            "year": 2022,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100080,
+              "version": 1,
+              "sha256": "aa5cddacb0bf00c573362549405b9e44a6a2abd388225b9e4a309805dd389824",
+              "content": "W3-P4 SYNTHETIC DEV-S09 file 0"
+            }
+          },
+          {
+            "id": 100081,
+            "subjectId": 10008,
+            "year": 2023,
+            "version": 1,
+            "status": "RECORDED",
+            "file": {
+              "id": 100081,
+              "version": 1,
+              "sha256": "4d0da97b51092bb8062a832786cd7bf2ca3097f36c78a705413dc8a112017b9a",
+              "content": "W3-P4 SYNTHETIC DEV-S09 file 1"
+            }
+          },
+          {
+            "id": 100082,
+            "subjectId": 10008,
+            "year": 2024,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100082,
+              "version": 1,
+              "sha256": "a31ee72923c5992e488584d101af45ba61db065a98ef5a43868414930269a6f0",
+              "content": "W3-P4 SYNTHETIC DEV-S09 file 2"
+            }
+          }
+        ]
+      },
+      "run": {
+        "runId": "00000000-0000-4000-8000-000000000009",
+        "evaluationType": "BATCH_BENCHMARK",
+        "targetSubject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10008
+        },
+        "providerInfo": {
+          "provider": "mock",
+          "model": "deterministic-fixture-guard-v1",
+          "isMock": true
+        },
+        "overallStatus": "FLAGGED_UNCONFIRMED",
+        "overallConclusion": "NEEDS_HUMAN_REVIEW",
+        "automaticAwardGranted": false,
+        "usageMetrics": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "latencyMs": 0,
+          "cached": false
+        },
+        "executedAt": "2026-10-06T00:00:00.000Z",
+        "criterionResults": [
+          {
+            "criterionId": 900001,
+            "criterionCode": "SIM-YEARS-v1",
+            "criterionName": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng.",
+            "isConfirmedByLhu": false,
+            "isSimulation": true,
+            "thresholdMetric": {
+              "targetMin": 3,
+              "actualRecorded": 3,
+              "unitMetric": "năm MÔ PHỎNG",
+              "isSatisfied": "UNCONFIRMED"
+            },
+            "legalReferences": [],
+            "aiAnalysis": "Fixture kỹ thuật, không phải output LLM. SIMULATED_KPI. Không kết luận đủ điều kiện khen thưởng.",
+            "humanReviewRequired": true,
+            "warningNotice": "Nhãn chưa được chuyên môn xác nhận. Ngưỡng/chuỗi năm chỉ MÔ PHỎNG; chưa có quy chế LHU được xác nhận áp dụng."
+          }
+        ]
+      },
+      "observed": {
+        "issues": [
+          "SIMULATED_KPI"
+        ],
+        "distinctYears": 3,
+        "rule": {
+          "id": "SIM-YEARS-v1",
+          "version": "1",
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true,
+          "content": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng."
+        }
+      }
+    },
+    {
+      "caseId": "DEV-10",
+      "title": "Thiếu năm không tự điền năm xét thưởng",
+      "labelAuthority": "ENGINEERING_EXPECTATION_UNCONFIRMED_BY_DOMAIN_EXPERT",
+      "expectedIssues": [
+        "MISSING_DATA",
+        "YEAR_GAP"
+      ],
+      "basis": [
+        {
+          "sourceId": "SIM-YEARS-v1",
+          "path": "docs/ai/eval-dev/rules.json",
+          "sha256": "cbfff8ddc5133f6716459bc0ff776ec8ded8dd286380c9b5fc9073a88ccfa55e",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        },
+        {
+          "sourceId": "W3-P2",
+          "path": "docs/api/KPI_W3_P2.md",
+          "sha256": "55cbfb1fec642615f63f264efd52b0d41e7792021962ad63993593996df2fa01",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        }
+      ],
+      "input": {
+        "subject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10009
+        },
+        "sourceLabel": "SYNTHETIC — NOT LHU POLICY",
+        "ruleId": "SIM-YEARS-v1",
+        "pinnedRuleId": "SIM-YEARS-v1",
+        "document": {
+          "id": "SYNTHETIC-DEV-S10",
+          "version": "1",
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false,
+          "asOfDate": "2026-10-06",
+          "effectiveFrom": "2020-01-01",
+          "effectiveTo": null
+        },
+        "criterion": {
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false
+        },
+        "kpi": null,
+        "records": [
+          {
+            "id": 100090,
+            "subjectId": 10009,
+            "year": 2022,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100090,
+              "version": 1,
+              "sha256": "a609923089c8f2f15ec0413475d6c316ff0c91032f8004924aa3b42d18804b02",
+              "content": "W3-P4 SYNTHETIC DEV-S10 file 0"
+            }
+          },
+          {
+            "id": 100091,
+            "subjectId": 10009,
+            "year": null,
+            "version": 1,
+            "status": "RECORDED",
+            "file": {
+              "id": 100091,
+              "version": 1,
+              "sha256": "9baea8a760a7a550e3f9ad4b7df01f7e1c1a48d845fbaec61ac6ed3b245ee2ec",
+              "content": "W3-P4 SYNTHETIC DEV-S10 file 1"
+            }
+          },
+          {
+            "id": 100092,
+            "subjectId": 10009,
+            "year": 2024,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100092,
+              "version": 1,
+              "sha256": "e876b2da44411ff5d1998a529a4e42bf2d0ed00d77bf57e44dbee183ec0d60fd",
+              "content": "W3-P4 SYNTHETIC DEV-S10 file 2"
+            }
+          }
+        ]
+      },
+      "run": {
+        "runId": "00000000-0000-4000-8000-000000000010",
+        "evaluationType": "BATCH_BENCHMARK",
+        "targetSubject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10009
+        },
+        "providerInfo": {
+          "provider": "mock",
+          "model": "deterministic-fixture-guard-v1",
+          "isMock": true
+        },
+        "overallStatus": "FLAGGED_UNCONFIRMED",
+        "overallConclusion": "NEEDS_HUMAN_REVIEW",
+        "automaticAwardGranted": false,
+        "usageMetrics": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "latencyMs": 0,
+          "cached": false
+        },
+        "executedAt": "2026-10-06T00:00:00.000Z",
+        "criterionResults": [
+          {
+            "criterionId": 900001,
+            "criterionCode": "SIM-YEARS-v1",
+            "criterionName": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng.",
+            "isConfirmedByLhu": false,
+            "isSimulation": true,
+            "thresholdMetric": {
+              "targetMin": 3,
+              "actualRecorded": 2,
+              "unitMetric": "năm MÔ PHỎNG",
+              "isSatisfied": "UNCONFIRMED"
+            },
+            "legalReferences": [],
+            "aiAnalysis": "Fixture kỹ thuật, không phải output LLM. MISSING_DATA, YEAR_GAP. Không kết luận đủ điều kiện khen thưởng.",
+            "humanReviewRequired": true,
+            "warningNotice": "Nhãn chưa được chuyên môn xác nhận. Ngưỡng/chuỗi năm chỉ MÔ PHỎNG; chưa có quy chế LHU được xác nhận áp dụng."
+          }
+        ]
+      },
+      "observed": {
+        "issues": [
+          "MISSING_DATA",
+          "YEAR_GAP"
+        ],
+        "distinctYears": 2,
+        "rule": {
+          "id": "SIM-YEARS-v1",
+          "version": "1",
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true,
+          "content": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng."
+        }
+      }
+    },
+    {
+      "caseId": "DEV-11",
+      "title": "Bản thay thế không nhân đôi nguồn năm cũ",
+      "labelAuthority": "ENGINEERING_EXPECTATION_UNCONFIRMED_BY_DOMAIN_EXPERT",
+      "expectedIssues": [
+        "REVOKED_SOURCE"
+      ],
+      "basis": [
+        {
+          "sourceId": "W2-P2",
+          "path": "docs/api/AWARDS_W2_P2.md",
+          "sha256": "fcb27ced9fef939936272076c5e51d18b4ddd81e6ead11356f25b1c14fe62412",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        },
+        {
+          "sourceId": "W3-Q1",
+          "path": "docs/api/WORKFLOW_W3_Q1.md",
+          "sha256": "14f40d9d0c8b3bee6f253099eb050ebe821ebf3d2236e8dfdc222a66cb053949",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        },
+        {
+          "sourceId": "SIM-YEARS-v1",
+          "path": "docs/ai/eval-dev/rules.json",
+          "sha256": "cbfff8ddc5133f6716459bc0ff776ec8ded8dd286380c9b5fc9073a88ccfa55e",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        }
+      ],
+      "input": {
+        "subject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10010
+        },
+        "sourceLabel": "SYNTHETIC — NOT LHU POLICY",
+        "ruleId": "SIM-YEARS-v1",
+        "pinnedRuleId": "SIM-YEARS-v1",
+        "document": {
+          "id": "SYNTHETIC-DEV-S11",
+          "version": "1",
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false,
+          "asOfDate": "2026-10-06",
+          "effectiveFrom": "2020-01-01",
+          "effectiveTo": null
+        },
+        "criterion": {
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false
+        },
+        "kpi": null,
+        "records": [
+          {
+            "id": 100100,
+            "subjectId": 10010,
+            "year": 2022,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100100,
+              "version": 1,
+              "sha256": "16f00a24d2b81dcfef36e2415d942e43eeddf392a3b2c0f2578074e8a99d2dcb",
+              "content": "W3-P4 SYNTHETIC DEV-S11 file 0"
+            }
+          },
+          {
+            "id": 100101,
+            "subjectId": 10010,
+            "year": 2023,
+            "version": 1,
+            "status": "RECORDED",
+            "file": {
+              "id": 100101,
+              "version": 1,
+              "sha256": "45fed2e464d6232fcfc227c596a3ff22f624c59947194ba19df23861cdf4d314",
+              "content": "W3-P4 SYNTHETIC DEV-S11 file 1"
+            }
+          },
+          {
+            "id": 100102,
+            "subjectId": 10010,
+            "year": 2024,
+            "version": 1,
+            "status": "REVOKED",
+            "file": {
+              "id": 100102,
+              "version": 1,
+              "sha256": "cc97b4f58fa9bf885c1e1410751dabe5f2705a5408b2ed4f1b4e31c06d038837",
+              "content": "W3-P4 SYNTHETIC DEV-S11 file 2"
+            }
+          },
+          {
+            "id": 100103,
+            "subjectId": 10010,
+            "year": 2024,
+            "version": 2,
+            "status": "RECORDED",
+            "replacesRecordId": 100102,
+            "file": {
+              "id": 100103,
+              "version": 1,
+              "sha256": "e5f7e9c8b4ae80f3448bcc2c76dcb7ecf8d8f70a2e9e96c68974a2cd4034166c",
+              "content": "W3-P4 SYNTHETIC DEV-S11 file 3"
+            }
+          }
+        ]
+      },
+      "run": {
+        "runId": "00000000-0000-4000-8000-000000000011",
+        "evaluationType": "BATCH_BENCHMARK",
+        "targetSubject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10010
+        },
+        "providerInfo": {
+          "provider": "mock",
+          "model": "deterministic-fixture-guard-v1",
+          "isMock": true
+        },
+        "overallStatus": "FLAGGED_UNCONFIRMED",
+        "overallConclusion": "NEEDS_HUMAN_REVIEW",
+        "automaticAwardGranted": false,
+        "usageMetrics": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "latencyMs": 0,
+          "cached": false
+        },
+        "executedAt": "2026-10-06T00:00:00.000Z",
+        "criterionResults": [
+          {
+            "criterionId": 900001,
+            "criterionCode": "SIM-YEARS-v1",
+            "criterionName": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng.",
+            "isConfirmedByLhu": false,
+            "isSimulation": true,
+            "thresholdMetric": {
+              "targetMin": 3,
+              "actualRecorded": 3,
+              "unitMetric": "năm MÔ PHỎNG",
+              "isSatisfied": "UNCONFIRMED"
+            },
+            "legalReferences": [],
+            "aiAnalysis": "Fixture kỹ thuật, không phải output LLM. REVOKED_SOURCE. Không kết luận đủ điều kiện khen thưởng.",
+            "humanReviewRequired": true,
+            "warningNotice": "Nhãn chưa được chuyên môn xác nhận. Ngưỡng/chuỗi năm chỉ MÔ PHỎNG; chưa có quy chế LHU được xác nhận áp dụng."
+          }
+        ]
+      },
+      "observed": {
+        "issues": [
+          "REVOKED_SOURCE"
+        ],
+        "distinctYears": 3,
+        "rule": {
+          "id": "SIM-YEARS-v1",
+          "version": "1",
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true,
+          "content": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng."
+        }
+      }
+    },
+    {
+      "caseId": "DEV-12",
+      "title": "Input khác chủ thể cần chặn",
+      "labelAuthority": "ENGINEERING_EXPECTATION_UNCONFIRMED_BY_DOMAIN_EXPERT",
+      "expectedIssues": [
+        "WRONG_SUBJECT"
+      ],
+      "basis": [
+        {
+          "sourceId": "W3-P2",
+          "path": "docs/api/KPI_W3_P2.md",
+          "sha256": "55cbfb1fec642615f63f264efd52b0d41e7792021962ad63993593996df2fa01",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        },
+        {
+          "sourceId": "W3-Q1",
+          "path": "docs/api/WORKFLOW_W3_Q1.md",
+          "sha256": "14f40d9d0c8b3bee6f253099eb050ebe821ebf3d2236e8dfdc222a66cb053949",
+          "confirmation": "TECHNICAL_CONTRACT_OR_SYNTHETIC_SPEC_ONLY"
+        }
+      ],
+      "input": {
+        "subject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10011
+        },
+        "sourceLabel": "SYNTHETIC — NOT LHU POLICY",
+        "ruleId": "SIM-YEARS-v1",
+        "pinnedRuleId": "SIM-YEARS-v1",
+        "document": {
+          "id": "SYNTHETIC-DEV-S12",
+          "version": "1",
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false,
+          "asOfDate": "2026-10-06",
+          "effectiveFrom": "2020-01-01",
+          "effectiveTo": null
+        },
+        "criterion": {
+          "isConfirmedForTest": true,
+          "professionalConfirmation": false
+        },
+        "kpi": null,
+        "records": [
+          {
+            "id": 100110,
+            "subjectId": 11010,
+            "year": 2022,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100110,
+              "version": 1,
+              "sha256": "1220590df6c451135496937c4343c15286a3d08ea4dba91fbe9481e2e3f3ca7c",
+              "content": "W3-P4 SYNTHETIC DEV-S12 file 0"
+            }
+          },
+          {
+            "id": 100111,
+            "subjectId": 10011,
+            "year": 2023,
+            "version": 1,
+            "status": "RECORDED",
+            "file": {
+              "id": 100111,
+              "version": 1,
+              "sha256": "99266f3b7ff935e1ca5e63e002a38a2eb1b18c3df95a808fe6b57d8dd95a5944",
+              "content": "W3-P4 SYNTHETIC DEV-S12 file 1"
+            }
+          },
+          {
+            "id": 100112,
+            "subjectId": 10011,
+            "year": 2024,
+            "version": 1,
+            "status": "VERIFIED",
+            "file": {
+              "id": 100112,
+              "version": 1,
+              "sha256": "78200580d50d56036c71ce345ea8bac35ae1c265d81f2e5301bb79092920ed17",
+              "content": "W3-P4 SYNTHETIC DEV-S12 file 2"
+            }
+          }
+        ]
+      },
+      "run": {
+        "runId": "00000000-0000-4000-8000-000000000012",
+        "evaluationType": "BATCH_BENCHMARK",
+        "targetSubject": {
+          "subjectType": "LECTURER",
+          "subjectId": 10011
+        },
+        "providerInfo": {
+          "provider": "mock",
+          "model": "deterministic-fixture-guard-v1",
+          "isMock": true
+        },
+        "overallStatus": "FLAGGED_UNCONFIRMED",
+        "overallConclusion": "NEEDS_HUMAN_REVIEW",
+        "automaticAwardGranted": false,
+        "usageMetrics": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "latencyMs": 0,
+          "cached": false
+        },
+        "executedAt": "2026-10-06T00:00:00.000Z",
+        "criterionResults": [
+          {
+            "criterionId": 900001,
+            "criterionCode": "SIM-YEARS-v1",
+            "criterionName": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng.",
+            "isConfirmedByLhu": false,
+            "isSimulation": true,
+            "thresholdMetric": {
+              "targetMin": 3,
+              "actualRecorded": 2,
+              "unitMetric": "năm MÔ PHỎNG",
+              "isSatisfied": "UNCONFIRMED"
+            },
+            "legalReferences": [],
+            "aiAnalysis": "Fixture kỹ thuật, không phải output LLM. WRONG_SUBJECT. Không kết luận đủ điều kiện khen thưởng.",
+            "humanReviewRequired": true,
+            "warningNotice": "Nhãn chưa được chuyên môn xác nhận. Ngưỡng/chuỗi năm chỉ MÔ PHỎNG; chưa có quy chế LHU được xác nhận áp dụng."
+          }
+        ]
+      },
+      "observed": {
+        "issues": [
+          "WRONG_SUBJECT"
+        ],
+        "distinctYears": 2,
+        "rule": {
+          "id": "SIM-YEARS-v1",
+          "version": "1",
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true,
+          "content": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng."
+        }
+      }
+    }
+  ]
+}

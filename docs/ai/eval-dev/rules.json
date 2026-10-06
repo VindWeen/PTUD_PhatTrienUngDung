@@ -1,0 +1,22 @@
+{
+  "version": "W3-P4-test-spec-v1",
+  "professionalConfirmation": "UNCONFIRMED",
+  "automaticAwardGranted": false,
+  "notice": "Các ngưỡng và chuỗi năm dưới đây là đặc tả kiểm thử MÔ PHỎNG do người phát triển đặt; không phải điều kiện xét thưởng, luật hoặc chính sách LHU.",
+  "rules": [
+    {
+      "id": "SIM-YEARS-v1",
+      "version": "1",
+      "minimumDistinctYears": 3,
+      "requireConsecutive": true,
+      "content": "MÔ PHỎNG kiểm thử: ba năm khác nhau liên tiếp, mỗi năm có một nguồn VERIFIED/RECORDED kèm id/version/hash file; không suy ra đủ điều kiện khen thưởng."
+    },
+    {
+      "id": "SIM-YEARS-v2",
+      "version": "2",
+      "minimumDistinctYears": 4,
+      "requireConsecutive": true,
+      "content": "MÔ PHỎNG kiểm thử thay quy định: bốn năm khác nhau liên tiếp. Bản v1 vẫn phải giữ nguyên cho run đã chụp; không dùng làm chính sách LHU."
+    }
+  ]
+}

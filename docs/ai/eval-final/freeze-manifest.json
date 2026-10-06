@@ -1,0 +1,15 @@
+{
+  "version": "W3-P4-initial-1",
+  "frozenAt": "2026-10-06T15:58:03.807Z",
+  "developmentCount": 12,
+  "finalCount": 6,
+  "labelAuthority": "ENGINEERING_EXPECTATION_UNCONFIRMED_BY_DOMAIN_EXPERT",
+  "blindExternalEvaluation": false,
+  "notice": "Initial synthetic holdout authored by developer, not an independent domain benchmark. Do not tune after final execution.",
+  "hashes": {
+    "docs/ai/eval-final/cases.final.json": "0fea24caa6c7cccb116b826ebd2281192ef7a8fd89a8a1526299a1bf13304461",
+    "docs/ai/eval-dev/cases.dev.json": "bd711aefba8d32270b010a762e837ce071522744197e3c11148b6edee62eb8eb",
+    "docs/ai/eval-dev/rules.json": "cbfff8ddc5133f6716459bc0ff776ec8ded8dd286380c9b5fc9073a88ccfa55e",
+    "scripts/w3-p4-eval.mjs": "e7b175c2b7e19e2cc2a59e8b3d0399e4080f46296cb8ce479f2949a7d13abb46"
+  }
+}

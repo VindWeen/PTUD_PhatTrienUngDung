@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "split": "development",
+  "labelAuthority": "ENGINEERING_EXPECTATION_UNCONFIRMED_BY_DOMAIN_EXPERT",
+  "cases": [
+    {
+      "id": "DEV-01",
+      "groupId": "DEV-S01",
+      "title": "Input đầy đủ ba năm — chỉ mô phỏng",
+      "years": [2022, 2023, 2024],
+      "expectedIssues": [],
+      "expectedDistinctYears": 3,
+      "basis": ["SIM-YEARS-v1", "W3-Q1", "W2-P2"]
+    },
+    {
+      "id": "DEV-02",
+      "groupId": "DEV-S02",
+      "title": "Thiếu file phiên bản input làm đứt chuỗi đã xác minh",
+      "years": [2022, 2023, 2024],
+      "missingFileAt": 1,
+      "expectedIssues": ["MISSING_DATA", "YEAR_GAP"],
+      "expectedDistinctYears": 2,
+      "basis": ["W3-Q1", "SIM-YEARS-v1"]
+    },
+    {
+      "id": "DEV-03",
+      "groupId": "DEV-S03",
+      "title": "Đứt chuỗi năm",
+      "years": [2021, 2023, 2024],
+      "expectedIssues": ["YEAR_GAP"],
+      "expectedDistinctYears": 3,
+      "basis": ["SIM-YEARS-v1"]
+    },
+    {
+      "id": "DEV-04",
+      "groupId": "DEV-S04",
+      "title": "Trùng năm không được tính thành ba năm",
+      "years": [2022, 2022, 2023],
+      "expectedIssues": ["DUPLICATE_YEAR", "BELOW_SIMULATED_THRESHOLD"],
+      "expectedDistinctYears": 2,
+      "basis": ["SIM-YEARS-v1", "W3-P2"]
+    },
+    {
+      "id": "DEV-05",
+      "groupId": "DEV-S05",
+      "title": "Nguồn đã thu hồi không tính vào hiện trạng",
+      "years": [2022, 2023, 2024],
+      "revokedAt": 2,
+      "expectedIssues": ["REVOKED_SOURCE"],
+      "expectedDistinctYears": 2,
+      "basis": ["W3-Q1", "W2-P2", "SIM-YEARS-v1"]
+    },
+    {
+      "id": "DEV-06",
+      "groupId": "DEV-S06",
+      "title": "Thay đặc tả v1 bằng v2, không đổi run cũ",
+      "years": [2022, 2023, 2024],
+      "ruleId": "SIM-YEARS-v2",
+      "pinnedRuleId": "SIM-YEARS-v1",
+      "expectedIssues": ["RULE_CHANGED", "BELOW_SIMULATED_THRESHOLD"],
+      "expectedDistinctYears": 3,
+      "basis": ["W3-Q2", "SIM-YEARS-v1", "SIM-YEARS-v2"]
+    },
+    {
+      "id": "DEV-07",
+      "groupId": "DEV-S07",
+      "title": "Tài liệu chưa duyệt dù tiêu chí bật confirmed",
+      "years": [2022, 2023, 2024],
+      "documentConfirmedForTest": false,
+      "expectedIssues": ["UNAPPROVED_DOCUMENT"],
+      "expectedDistinctYears": 3,
+      "basis": ["W3-Q2"]
+    },
+    {
+      "id": "DEV-08",
+      "groupId": "DEV-S08",
+      "title": "Tiêu chí chưa duyệt dù tài liệu bật confirmed",
+      "years": [2022, 2023, 2024],
+      "criterionConfirmedForTest": false,
+      "expectedIssues": ["UNAPPROVED_CRITERION"],
+      "expectedDistinctYears": 3,
+      "basis": ["W3-Q2"]
+    },
+    {
+      "id": "DEV-09",
+      "groupId": "DEV-S09",
+      "title": "Nguồn KPI mô phỏng không thành nguồn đã xác nhận",
+      "years": [2022, 2023, 2024],
+      "simulatedKpi": true,
+      "expectedIssues": ["SIMULATED_KPI"],
+      "expectedDistinctYears": 3,
+      "basis": ["W3-P2", "W1-P4"]
+    },
+    {
+      "id": "DEV-10",
+      "groupId": "DEV-S10",
+      "title": "Thiếu năm không tự điền năm xét thưởng",
+      "years": [2022, null, 2024],
+      "expectedIssues": ["MISSING_DATA", "YEAR_GAP"],
+      "expectedDistinctYears": 2,
+      "basis": ["SIM-YEARS-v1", "W3-P2"]
+    },
+    {
+      "id": "DEV-11",
+      "groupId": "DEV-S11",
+      "title": "Bản thay thế không nhân đôi nguồn năm cũ",
+      "years": [2022, 2023, 2024, 2024],
+      "revokedAt": 2,
+      "replacementAt": 3,
+      "expectedIssues": ["REVOKED_SOURCE"],
+      "expectedDistinctYears": 3,
+      "basis": ["W2-P2", "W3-Q1", "SIM-YEARS-v1"]
+    },
+    {
+      "id": "DEV-12",
+      "groupId": "DEV-S12",
+      "title": "Input khác chủ thể cần chặn",
+      "years": [2022, 2023, 2024],
+      "wrongSubjectAt": 0,
+      "expectedIssues": ["WRONG_SUBJECT"],
+      "expectedDistinctYears": 2,
+      "basis": ["W3-P2", "W3-Q1"]
+    }
+  ]
+}

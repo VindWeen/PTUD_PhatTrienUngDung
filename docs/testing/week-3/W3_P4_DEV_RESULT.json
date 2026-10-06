@@ -1,0 +1,147 @@
+{
+  "split": "development",
+  "kind": "DETERMINISTIC_GUARDS_NOT_LLM_ACCURACY",
+  "labelAuthority": "ENGINEERING_EXPECTATION_UNCONFIRMED_BY_DOMAIN_EXPERT",
+  "automaticAwardGranted": false,
+  "passed": 12,
+  "total": 12,
+  "datasetSha256": "bd711aefba8d32270b010a762e837ce071522744197e3c11148b6edee62eb8eb",
+  "details": [
+    {
+      "caseId": "DEV-01",
+      "pass": true,
+      "expectedIssues": [],
+      "actualIssues": [],
+      "actualDistinctYears": 3
+    },
+    {
+      "caseId": "DEV-02",
+      "pass": true,
+      "expectedIssues": [
+        "MISSING_DATA",
+        "YEAR_GAP"
+      ],
+      "actualIssues": [
+        "MISSING_DATA",
+        "YEAR_GAP"
+      ],
+      "actualDistinctYears": 2
+    },
+    {
+      "caseId": "DEV-03",
+      "pass": true,
+      "expectedIssues": [
+        "YEAR_GAP"
+      ],
+      "actualIssues": [
+        "YEAR_GAP"
+      ],
+      "actualDistinctYears": 3
+    },
+    {
+      "caseId": "DEV-04",
+      "pass": true,
+      "expectedIssues": [
+        "DUPLICATE_YEAR",
+        "BELOW_SIMULATED_THRESHOLD"
+      ],
+      "actualIssues": [
+        "BELOW_SIMULATED_THRESHOLD",
+        "DUPLICATE_YEAR"
+      ],
+      "actualDistinctYears": 2
+    },
+    {
+      "caseId": "DEV-05",
+      "pass": true,
+      "expectedIssues": [
+        "REVOKED_SOURCE"
+      ],
+      "actualIssues": [
+        "REVOKED_SOURCE"
+      ],
+      "actualDistinctYears": 2
+    },
+    {
+      "caseId": "DEV-06",
+      "pass": true,
+      "expectedIssues": [
+        "RULE_CHANGED",
+        "BELOW_SIMULATED_THRESHOLD"
+      ],
+      "actualIssues": [
+        "BELOW_SIMULATED_THRESHOLD",
+        "RULE_CHANGED"
+      ],
+      "actualDistinctYears": 3
+    },
+    {
+      "caseId": "DEV-07",
+      "pass": true,
+      "expectedIssues": [
+        "UNAPPROVED_DOCUMENT"
+      ],
+      "actualIssues": [
+        "UNAPPROVED_DOCUMENT"
+      ],
+      "actualDistinctYears": 3
+    },
+    {
+      "caseId": "DEV-08",
+      "pass": true,
+      "expectedIssues": [
+        "UNAPPROVED_CRITERION"
+      ],
+      "actualIssues": [
+        "UNAPPROVED_CRITERION"
+      ],
+      "actualDistinctYears": 3
+    },
+    {
+      "caseId": "DEV-09",
+      "pass": true,
+      "expectedIssues": [
+        "SIMULATED_KPI"
+      ],
+      "actualIssues": [
+        "SIMULATED_KPI"
+      ],
+      "actualDistinctYears": 3
+    },
+    {
+      "caseId": "DEV-10",
+      "pass": true,
+      "expectedIssues": [
+        "MISSING_DATA",
+        "YEAR_GAP"
+      ],
+      "actualIssues": [
+        "MISSING_DATA",
+        "YEAR_GAP"
+      ],
+      "actualDistinctYears": 2
+    },
+    {
+      "caseId": "DEV-11",
+      "pass": true,
+      "expectedIssues": [
+        "REVOKED_SOURCE"
+      ],
+      "actualIssues": [
+        "REVOKED_SOURCE"
+      ],
+      "actualDistinctYears": 3
+    },
+    {
+      "caseId": "DEV-12",
+      "pass": true,
+      "expectedIssues": [
+        "WRONG_SUBJECT"
+      ],
+      "actualIssues": [
+        "WRONG_SUBJECT"
+      ],
+      "actualDistinctYears": 2
+    }
+  ]
+}

@@ -7,10 +7,12 @@ import aiCache from './aiCache.js';
 import { AiRateLimitError, AiTimeoutError } from './aiErrors.js';
 import { ValidationError, NotFoundError } from '../../utils/errors.js';
 import * as regulationRepo from '../regulations/regulationRepository.js';
-import * as achievementRepo from '../achievements/achievementRepository.js';
+import achievementService from '../achievements/achievementService.js';
 
 export class AiService {
   constructor(options = {}) {
+    this.regulations = options.regulations || regulationRepo;
+    this.readAchievement = options.readAchievement || achievementService.getAchievementById;
     this.providerName = options.providerName || config.AI_PROVIDER;
     this.groqProvider = new GroqProvider(options.groqApiKey || config.GROQ_API_KEY, options.groqModel || config.GROQ_MODEL);
     this.openrouterProvider = new OpenRouterProvider(options.openrouterApiKey || config.OPENROUTER_API_KEY, options.openrouterModel || config.OPENROUTER_MODEL);
@@ -99,10 +101,11 @@ export class AiService {
       throw new ValidationError('Mã trích đoạn (chunkId) là bắt buộc cho smoke test');
     }
 
-    const chunk = await regulationRepo.findChunkById(null, chunkId);
+    const chunk = await this.regulations.findChunkById(null, chunkId);
     if (!chunk) {
       throw new NotFoundError(`Không tìm thấy trích đoạn quy định với ID #${chunkId}`);
     }
+    await this.assertConfirmedVersion(chunk.version_id);
 
     const systemPrompt = `Bạn là trợ lý AI chuyên môn của Hội đồng Thi đua - Khen thưởng Trường Đại học Lạc Hồng.
 Nhiệm vụ của bạn là trả lời các câu hỏi dựa CHÍNH XÁC trên đoạn trích dẫn quy phạm pháp luật / quy chế sau đây.
@@ -146,16 +149,32 @@ ${question || 'Tóm tắt các điểm then chốt trong trích đoạn trên v�
   /**
    * Đánh giá tiêu chí khen thưởng dựa trên hồ sơ thành tích và quy chế
    */
-  async evaluateCriterion({ criterionId, achievementId, forcedProvider, model }) {
-    const criterion = await regulationRepo.findCriteriaVersionById(null, criterionId);
+  async assertConfirmedVersion(versionId) {
+    const version = await this.regulations.findVersionById(null, versionId);
+    if (!version?.is_confirmed || version.lhu_application_status !== 'CONFIRMED_LHU_POLICY') {
+      throw new ValidationError('Nguồn chưa được xác nhận áp dụng tại LHU; không gửi tới AI');
+    }
+    const day = value => value instanceof Date ? value.toISOString().slice(0,10) : String(value).slice(0,10);
+    const today = new Date().toISOString().slice(0,10);
+    if (!version.effective_from || day(version.effective_from) > today || (version.effective_to && day(version.effective_to) < today)) {
+      throw new ValidationError('Nguồn ngoài thời gian hiệu lực; cần người có thẩm quyền chốt phiên bản');
+    }
+    return version;
+  }
+
+  async evaluateCriterion({ criterionId, achievementId, forcedProvider, model }, user) {
+    if (!achievementId) throw new ValidationError('Thiếu achievementId; không đánh giá hồ sơ khi thiếu dữ liệu');
+    const achievement = await this.readAchievement(user, achievementId);
+    if (achievement.status !== 'VERIFIED') throw new ValidationError('Hồ sơ chưa VERIFIED hoặc đã thu hồi; không gửi tới AI');
+    const criterion = await this.regulations.findCriteriaVersionById(null, criterionId);
     if (!criterion) {
       throw new NotFoundError(`Không tìm thấy tiêu chí khen thưởng với ID #${criterionId}`);
     }
 
-    let achievement = null;
-    if (achievementId) {
-      achievement = await achievementRepo.findAchievementById(null, achievementId);
-    }
+    if (!criterion.is_confirmed) throw new ValidationError('Tiêu chí chưa được xác nhận; không gửi tới AI');
+    await this.assertConfirmedVersion(criterion.version_id);
+    const target = achievement.subjectType === 'LECTURER' ? 'INDIVIDUAL' : 'COLLECTIVE';
+    if (!['BOTH',target].includes(criterion.target_type)) throw new ValidationError('Tiêu chí không áp dụng cho chủ thể');
 
     // Fail-Closed Gatekeeper Check
     const isUnconfirmed = !criterion.is_confirmed;
@@ -175,7 +194,7 @@ Căn cứ pháp lý: ${criterion.legal_references || 'Không có'}
 Trạng thái duyệt LHU: ${criterion.is_confirmed ? 'ĐÃ PHÊ DUYỆT CHÍNH THỨC' : 'CHƯA DUYỆT / MÔ PHỎNG'}
 
 [HỒ SƠ THÀNH TÍCH ĐỐI CHIẾU]
-${achievement ? `Mã: ${achievement.achievement_code}, Tiêu đề: ${achievement.title}, Loại: ${achievement.category_code}, Trạng thái: ${achievement.status}` : 'Không có hồ sơ thực tế gắn kèm, thực hiện đánh giá nguyên lý tiêu chuẩn.'}
+${`Mã: ${achievement.achievementId}, Tiêu đề: ${achievement.title}, Loại: ${achievement.achievementTypeId}, Trạng thái: ${achievement.status}`}
 
 Hãy phân tích tính phù hợp và đưa ra kết luận.`;
 

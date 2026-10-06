@@ -22,8 +22,8 @@ export class MockAiProvider extends AiProvider {
 
     // Phân tích câu hỏi để sinh câu trả lời mock có tính logic
     let content = `[MOCK-AI-OUTPUT] Phân tích dựa trên trích đoạn quy định đã cung cấp:\n`;
-    content += `- Căn cứ trích dẫn: Phù hợp với điều khoản quy định.\n`;
-    content += `- Kết luận sơ bộ: Dữ liệu hồ sơ thỏa mãn các điều kiện tiên quyết trong trích đoạn.\n`;
+    content += `- Provider mô phỏng không xác minh điều kiện hay tính phù hợp của hồ sơ.\n`;
+    content += `- Cần người có thẩm quyền đối chiếu nguồn, phiên bản và minh chứng; không kết luận đủ điều kiện.\n`;
     content += `(Lưu ý: Đây là kết quả tạo bởi Mock Provider phục vụ kiểm thử đơn vị nội bộ, không thay thế cho gọi AI API thật)`;
 
     const usage = {

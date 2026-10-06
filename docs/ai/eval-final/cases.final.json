@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "split": "final-test",
+  "labelAuthority": "ENGINEERING_EXPECTATION_UNCONFIRMED_BY_DOMAIN_EXPERT",
+  "notice": "Bộ holdout có nhãn kỹ thuật, không chuyên môn. Không đưa vào UI/prompt/tuning. Sau lần chạy cuối, kết quả chỉ là kiểm tra guard kỹ thuật, không phải độ chính xác LLM.",
+  "cases": [
+    {
+      "id": "FINAL-01",
+      "groupId": "FINAL-S01",
+      "title": "Biên ngày hiệu lực chưa chốt chuyển tiếp",
+      "years": [2019, 2020, 2021],
+      "outsideEffectiveWindow": true,
+      "expectedIssues": ["OUT_OF_EFFECTIVE_WINDOW"],
+      "expectedDistinctYears": 3,
+      "basis": ["W3-Q2"]
+    },
+    {
+      "id": "FINAL-02",
+      "groupId": "FINAL-S02",
+      "title": "Trùng năm đồng thời đứt chuỗi",
+      "years": [2018, 2018, 2020],
+      "expectedIssues": [
+        "DUPLICATE_YEAR",
+        "YEAR_GAP",
+        "BELOW_SIMULATED_THRESHOLD"
+      ],
+      "expectedDistinctYears": 2,
+      "basis": ["SIM-YEARS-v1"]
+    },
+    {
+      "id": "FINAL-03",
+      "groupId": "FINAL-S03",
+      "title": "File có metadata nhưng hash không khớp bytes",
+      "years": [2017, 2018, 2019],
+      "tamperedHashAt": 1,
+      "expectedIssues": ["MISSING_DATA", "YEAR_GAP"],
+      "expectedDistinctYears": 2,
+      "basis": ["W3-Q1", "W3-Q2"]
+    },
+    {
+      "id": "FINAL-04",
+      "groupId": "FINAL-S04",
+      "title": "Đủ bốn năm kỹ thuật theo v2, chưa đủ căn cứ pháp lý",
+      "years": [2016, 2017, 2018, 2019],
+      "ruleId": "SIM-YEARS-v2",
+      "expectedIssues": [],
+      "expectedDistinctYears": 4,
+      "basis": ["SIM-YEARS-v2", "W1-P4"]
+    },
+    {
+      "id": "FINAL-05",
+      "groupId": "FINAL-S05",
+      "title": "Thu hồi cùng nguồn KPI mô phỏng",
+      "years": [2015, 2016, 2017],
+      "revokedAt": 0,
+      "simulatedKpi": true,
+      "expectedIssues": ["REVOKED_SOURCE", "SIMULATED_KPI"],
+      "expectedDistinctYears": 2,
+      "basis": ["W3-Q1", "W3-P2", "W1-P4"]
+    },
+    {
+      "id": "FINAL-06",
+      "groupId": "FINAL-S06",
+      "title": "Tập thể có input cá nhân và cả tài liệu/tiêu chí chưa duyệt",
+      "subjectType": "UNIT",
+      "years": [2014, 2015, 2016],
+      "wrongSubjectAt": 2,
+      "documentConfirmedForTest": false,
+      "criterionConfirmedForTest": false,
+      "expectedIssues": [
+        "WRONG_SUBJECT",
+        "UNAPPROVED_DOCUMENT",
+        "UNAPPROVED_CRITERION"
+      ],
+      "expectedDistinctYears": 2,
+      "basis": ["W3-Q1", "W3-Q2"]
+    }
+  ]
+}
