@@ -2,6 +2,7 @@ import achievementRepository from './achievementRepository.js';
 import { getActiveRoles, getActiveScopes, isUnitInUserScope } from '../auth/authRepository.js';
 import { recordAuditLog } from '../audit/auditService.js';
 import { notifyStatusChanged } from '../notifications/notificationService.js';
+import storage from '../evidences/storage/localStorageAdapter.js';
 import { withTransaction } from '../../utils/dbHelper.js';
 import {
   NotFoundError,
@@ -13,12 +14,28 @@ import {
   OutOfScopeError,
 } from '../../utils/errors.js';
 
-export function createAchievementService(repo = achievementRepository) {
+export function createAchievementService(
+  repo = achievementRepository,
+  {
+    roles = getActiveRoles,
+    scope = isUnitInUserScope,
+    adapter = storage,
+    notify = notifyStatusChanged,
+  } = {}
+) {
   async function getUserRoles(user) {
-    if (Array.isArray(user.roles)) {
+    if (user?.userId) {
+      try {
+        const active = await roles(user.userId);
+        if (Array.isArray(active)) {
+          return active.map((r) => (typeof r === 'string' ? r : r.Code || r.code));
+        }
+      } catch (err) {}
+    }
+    if (Array.isArray(user?.roles)) {
       return user.roles.map((r) => (typeof r === 'string' ? r : r.code || r.Code));
     }
-    return (await getActiveRoles(user.userId)).map((r) => r.Code);
+    return [];
   }
 
   async function listAchievements(user, queryParams = {}) {
@@ -331,21 +348,14 @@ export function createAchievementService(repo = achievementRepository) {
       );
     }
 
-    const roles = Array.isArray(user.roles)
-      ? user.roles.map((r) => (typeof r === 'string' ? r : r.code || r.Code))
-      : (await getActiveRoles(user.userId)).map((r) => r.Code);
-    const isAdmin = roles.includes('ADMIN');
-
-    if (!isAdmin) {
-      if (existing.subjectType === 'LECTURER') {
-        if (existing.lecturer?.userId !== user.userId) {
-          throw new ForbiddenError('Chỉ giảng viên chủ hồ sơ mới được phép nộp duyệt thành tích cá nhân');
-        }
-      } else if (existing.subjectType === 'UNIT') {
-        const activeRep = await repo.findActiveRepresentative(user.userId, existing.organizationUnitId);
-        if (!activeRep) {
-          throw new ForbiddenError('Chỉ đại diện đơn vị còn hiệu lực mới được phép nộp duyệt thành tích tập thể này');
-        }
+    if (existing.subjectType === 'LECTURER') {
+      if (existing.lecturer?.userId !== user.userId) {
+        throw new ForbiddenError('Chỉ giảng viên chủ hồ sơ mới được phép nộp duyệt thành tích cá nhân');
+      }
+    } else if (existing.subjectType === 'UNIT') {
+      const activeRep = await repo.findActiveRepresentative(user.userId, existing.organizationUnitId);
+      if (!activeRep) {
+        throw new ForbiddenError('Chỉ đại diện đơn vị còn hiệu lực mới được phép nộp duyệt thành tích tập thể này');
       }
     }
 
@@ -353,8 +363,8 @@ export function createAchievementService(repo = achievementRepository) {
       throw new ValidationError('Hồ sơ thành tích chưa điền đủ các thông tin bắt buộc');
     }
 
-    const evidencesWithFiles = await repo.getActiveEvidencesWithFiles(id);
-    if (!evidencesWithFiles || evidencesWithFiles.length === 0) {
+    const preflightEvidences = await repo.getActiveEvidencesWithFiles(id);
+    if (!preflightEvidences || preflightEvidences.length === 0) {
       throw new ValidationError(
         'Hồ sơ thành tích phải có ít nhất một minh chứng kèm tệp tin đính kèm trước khi gửi duyệt'
       );
@@ -376,6 +386,24 @@ export function createAchievementService(repo = achievementRepository) {
         );
       }
 
+      // W2-Q4: Đọc danh sách minh chứng và tệp tin BÊN TRONG transaction sau khi đã khóa dòng
+      const evidencesWithFiles = await repo.getActiveEvidencesWithFiles(id, client);
+      if (!evidencesWithFiles || evidencesWithFiles.length === 0) {
+        throw new ValidationError(
+          'Hồ sơ thành tích phải có ít nhất một minh chứng kèm tệp tin đính kèm trước khi gửi duyệt'
+        );
+      }
+
+      // W2-Q4: Kiểm tra tệp tin vật lý trong kho lưu trữ private trước khi đóng băng snapshot
+      for (const ev of evidencesWithFiles) {
+        const fileExists = await adapter.fileExists(ev.storageKey);
+        if (!fileExists) {
+          throw new ValidationError(
+            `Tệp tin minh chứng "${ev.originalFileName}" không tồn tại trên hệ thống lưu trữ`
+          );
+        }
+      }
+
       const currentVersion = Number(locked.version);
       const newVersion = currentVersion + 1;
       const fromStatus = locked.status;
@@ -386,6 +414,7 @@ export function createAchievementService(repo = achievementRepository) {
       );
       const revisionNo = Number(revRes.rows[0].next_rev);
 
+      const note = payload.note || payload.submitNote || null;
       const snapshotData = {
         achievementId: id,
         revisionNo,
@@ -401,7 +430,7 @@ export function createAchievementService(repo = achievementRepository) {
         endDate: locked.end_date,
         recognitionYear: Number(locked.recognition_year),
         academicYearId: locked.academic_year_id ? Number(locked.academic_year_id) : null,
-        note: payload.note || null,
+        note,
         submittedBy: {
           userId: user.userId,
           email: user.email,
@@ -465,7 +494,7 @@ export function createAchievementService(repo = achievementRepository) {
         newValues: { status: 'SUBMITTED', version: newVersion, revisionNo },
       });
 
-      await notifyStatusChanged(client, {
+      await notify(client, {
         entityType: 'ACHIEVEMENT',
         entityId: id,
         version: newVersion,
@@ -513,20 +542,15 @@ export function createAchievementService(repo = achievementRepository) {
       }
     }
 
-    // 2. Phân quyền: Phải có vai trò MANAGER hoặc ADMIN
+    // 2. Phân quyền: Phải có vai trò MANAGER đang hiệu lực trong phạm vi Scope
     const roles = await getUserRoles(user);
-    const isManager = roles.includes('MANAGER');
-    const isAdmin = roles.includes('ADMIN');
-    if (!isManager && !isAdmin) {
+    if (!roles.includes('MANAGER')) {
       throw new ForbiddenError('Chỉ cán bộ có vai trò MANAGER mới có thẩm quyền xác nhận hồ sơ thành tích');
     }
 
-    // Kiểm tra phạm vi Scope (nếu không phải ADMIN)
-    if (!isAdmin) {
-      const inScope = await isUnitInUserScope(user.userId, existing.contextUnitId, 'MANAGER');
-      if (!inScope) {
-        throw new OutOfScopeError('Hồ sơ thành tích này nằm ngoài phạm vi đơn vị được phân công quản lý của bạn');
-      }
+    const inScope = await scope(user.userId, existing.contextUnitId, 'MANAGER');
+    if (!inScope) {
+      throw new OutOfScopeError('Hồ sơ thành tích này nằm ngoài phạm vi đơn vị được phân công quản lý của bạn');
     }
 
     // 3. Thực thi Transaction CÙNG PG CLIENT
@@ -580,7 +604,7 @@ export function createAchievementService(repo = achievementRepository) {
         newValues: { status: 'VERIFIED', version: newVersion },
       });
 
-      await notifyStatusChanged(client, {
+      await notify(client, {
         entityType: 'ACHIEVEMENT',
         entityId: id,
         version: newVersion,
@@ -624,19 +648,15 @@ export function createAchievementService(repo = achievementRepository) {
       }
     }
 
-    // 2. Phân quyền: Phải có vai trò MANAGER hoặc ADMIN
+    // 2. Phân quyền: Phải có vai trò MANAGER đang hiệu lực trong phạm vi Scope
     const roles = await getUserRoles(user);
-    const isManager = roles.includes('MANAGER');
-    const isAdmin = roles.includes('ADMIN');
-    if (!isManager && !isAdmin) {
+    if (!roles.includes('MANAGER')) {
       throw new ForbiddenError('Chỉ cán bộ có vai trò MANAGER mới có quyền yêu cầu bổ sung hồ sơ');
     }
 
-    if (!isAdmin) {
-      const inScope = await isUnitInUserScope(user.userId, existing.contextUnitId, 'MANAGER');
-      if (!inScope) {
-        throw new OutOfScopeError('Hồ sơ nằm ngoài phạm vi đơn vị được phân công quản lý của bạn');
-      }
+    const inScope = await scope(user.userId, existing.contextUnitId, 'MANAGER');
+    if (!inScope) {
+      throw new OutOfScopeError('Hồ sơ nằm ngoài phạm vi đơn vị được phân công quản lý của bạn');
     }
 
     return await withTransaction(async ({ client }) => {
@@ -672,7 +692,7 @@ export function createAchievementService(repo = achievementRepository) {
         newValues: { status: 'NEED_CORRECTION', version: newVersion, reason: payload.reason },
       });
 
-      await notifyStatusChanged(client, {
+      await notify(client, {
         entityType: 'ACHIEVEMENT',
         entityId: id,
         version: newVersion,
@@ -716,19 +736,15 @@ export function createAchievementService(repo = achievementRepository) {
       }
     }
 
-    // 2. Phân quyền: Phải có vai trò MANAGER hoặc ADMIN
+    // 2. Phân quyền: Phải có vai trò MANAGER đang hiệu lực trong phạm vi Scope
     const roles = await getUserRoles(user);
-    const isManager = roles.includes('MANAGER');
-    const isAdmin = roles.includes('ADMIN');
-    if (!isManager && !isAdmin) {
+    if (!roles.includes('MANAGER')) {
       throw new ForbiddenError('Chỉ cán bộ có vai trò MANAGER mới có quyền từ chối hồ sơ');
     }
 
-    if (!isAdmin) {
-      const inScope = await isUnitInUserScope(user.userId, existing.contextUnitId, 'MANAGER');
-      if (!inScope) {
-        throw new OutOfScopeError('Hồ sơ nằm ngoài phạm vi đơn vị được phân công quản lý của bạn');
-      }
+    const inScope = await scope(user.userId, existing.contextUnitId, 'MANAGER');
+    if (!inScope) {
+      throw new OutOfScopeError('Hồ sơ nằm ngoài phạm vi đơn vị được phân công quản lý của bạn');
     }
 
     return await withTransaction(async ({ client }) => {
@@ -764,7 +780,7 @@ export function createAchievementService(repo = achievementRepository) {
         newValues: { status: 'REJECTED', version: newVersion, reason: payload.reason },
       });
 
-      await notifyStatusChanged(client, {
+      await notify(client, {
         entityType: 'ACHIEVEMENT',
         entityId: id,
         version: newVersion,
@@ -791,19 +807,14 @@ export function createAchievementService(repo = achievementRepository) {
       );
     }
 
-    const roles = (await getActiveRoles(user.userId)).map((r) => r.Code);
-    const isAdmin = roles.includes('ADMIN');
-
-    if (!isAdmin) {
-      if (existing.subjectType === 'LECTURER') {
-        if (existing.lecturer?.userId !== user.userId) {
-          throw new ForbiddenError('Chỉ chủ sở hữu hồ sơ mới được quyền hủy hồ sơ này');
-        }
-      } else if (existing.subjectType === 'UNIT') {
-        const activeRep = await repo.findActiveRepresentative(user.userId, existing.organizationUnitId);
-        if (!activeRep) {
-          throw new ForbiddenError('Chỉ đại diện đơn vị còn hiệu lực mới được quyền hủy hồ sơ tập thể này');
-        }
+    if (existing.subjectType === 'LECTURER') {
+      if (existing.lecturer?.userId !== user.userId) {
+        throw new ForbiddenError('Chỉ chủ sở hữu hồ sơ mới được quyền hủy hồ sơ này');
+      }
+    } else if (existing.subjectType === 'UNIT') {
+      const activeRep = await repo.findActiveRepresentative(user.userId, existing.organizationUnitId);
+      if (!activeRep) {
+        throw new ForbiddenError('Chỉ đại diện đơn vị còn hiệu lực mới được quyền hủy hồ sơ tập thể này');
       }
     }
 
@@ -841,7 +852,7 @@ export function createAchievementService(repo = achievementRepository) {
         newValues: { status: 'CANCELLED', version: newVersion },
       });
 
-      await notifyStatusChanged(client, {
+      await notify(client, {
         entityType: 'ACHIEVEMENT',
         entityId: id,
         version: newVersion,
@@ -911,7 +922,7 @@ export function createAchievementService(repo = achievementRepository) {
         newValues: { status: 'REVOKED', version: newVersion, reason: payload.reason },
       });
 
-      await notifyStatusChanged(client, {
+      await notify(client, {
         entityType: 'ACHIEVEMENT',
         entityId: id,
         version: newVersion,
@@ -959,8 +970,14 @@ export function createAchievementService(repo = achievementRepository) {
 }
 
 export class AchievementService {
-  constructor({ repository = achievementRepository } = {}) {
-    Object.assign(this, createAchievementService(repository));
+  constructor({
+    repository = achievementRepository,
+    roles = getActiveRoles,
+    scope = isUnitInUserScope,
+    adapter = storage,
+    notify = notifyStatusChanged,
+  } = {}) {
+    Object.assign(this, createAchievementService(repository, { roles, scope, adapter, notify }));
   }
 }
 
