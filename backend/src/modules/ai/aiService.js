@@ -2,6 +2,7 @@ import config from '../../config/env.js';
 import { GroqProvider } from './providers/groqProvider.js';
 import { OpenRouterProvider } from './providers/openrouterProvider.js';
 import { MockAiProvider } from './providers/mockProvider.js';
+import { validateFreeModel } from './aiProviderInterface.js';
 import aiCache from './aiCache.js';
 import { AiRateLimitError, AiTimeoutError } from './aiErrors.js';
 import { ValidationError, NotFoundError } from '../../utils/errors.js';
@@ -32,6 +33,10 @@ export class AiService {
   }
 
   async completeWithRetry({ prompt, systemPrompt, model, forcedProvider, chunkHash = '', version = '1.0' }) {
+    const targetProvider = forcedProvider || this.providerName;
+    if (model) {
+      validateFreeModel(targetProvider, model);
+    }
     const provider = this.getProvider(forcedProvider);
     const cacheKey = aiCache.generateKey({
       model: model || provider.defaultModel,
