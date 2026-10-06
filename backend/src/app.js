@@ -1,4 +1,5 @@
 import express from 'express';
+import kpiRoutes from './modules/kpi/kpiRoutes.js';
 import reportRoutes from './modules/reports/reportRoutes.js';
 import awardRoutes from './modules/awards/awardRoutes.js';
 import notificationRoutes from './modules/notifications/notificationRoutes.js';
@@ -53,6 +54,7 @@ app.use(apiPrefix, evidenceRoutes);
 app.use(apiPrefix, awardRoutes);
 app.use(apiPrefix, notificationRoutes);
 app.use(apiPrefix, reportRoutes);
+app.use(apiPrefix, kpiRoutes);
 app.use(`${apiPrefix}/admin`, adminRoutes);
 
 // Root Welcome Route

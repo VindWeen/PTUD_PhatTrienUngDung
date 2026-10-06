@@ -1,4 +1,5 @@
 import React from 'react';
+import Kpi from '../pages/Kpi';
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../layouts/MainLayout';
@@ -39,6 +40,7 @@ export default function AppRoutes() {
         <Route element={<MainLayout />}>
           <Route index element={<Navigate to="/me/dashboard" replace />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="kpi" element={<RequireRole roles={['LECTURER', 'UNIT_REPRESENTATIVE']}><Kpi /></RequireRole>} />
           <Route path="reports" element={<RequireRole roles={APP_ROLES}><Reports /></RequireRole>} />
           <Route path="me/dashboard" element={<RequireRole roles={APP_ROLES}><Dashboard /></RequireRole>} />
           <Route path="me/profile" element={<RequireRole roles={PROFILE_ROLES}><ProfilePortfolio /></RequireRole>} />
