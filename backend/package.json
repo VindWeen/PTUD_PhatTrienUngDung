@@ -27,7 +27,9 @@
     "test:w2-p2": "node --test tests/w2-p2.test.js",
     "test:w2-p2:integration": "node tests/w2-p2.integration.js",
     "test:w2-q3": "node --test tests/w2-q3.test.js",
-    "test:w2-q3:integration": "node tests/w2-q3.integration.js"
+    "test:w2-q3:integration": "node tests/w2-q3.integration.js",
+    "test:w3-p1": "node --test tests/w3-p1.test.js",
+    "test:w3-p1:integration": "node tests/w3-p1.integration.js"
   },
   "keywords": [
     "express",

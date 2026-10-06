@@ -4,6 +4,7 @@ import { GraduationCap, Home, User, Cpu, LogOut, Building2, Award, Bell } from '
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
+  { to: '/reports', icon: Award, label: 'Báo cáo / CSV', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
   { to: '/notifications', icon: Bell, label: 'Thông báo', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
   { to: '/awards', icon: Award, label: 'Khen thưởng', roles: ['RECORDS_OFFICER'] },
   { to: '/admin', icon: User, label: 'Quản trị', roles: ['ADMIN'] },

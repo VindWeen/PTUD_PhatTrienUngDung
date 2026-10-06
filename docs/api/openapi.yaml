@@ -12,6 +12,18 @@ servers:
 security:
   - bearerAuth: []
 paths:
+  /reports/export.csv:
+    $ref: './W3_P1.openapi.json#/paths/~1reports~1export.csv'
+
+  /reports/awards:
+    $ref: './W3_P1.openapi.json#/paths/~1reports~1awards'
+
+  /reports:
+    $ref: './W3_P1.openapi.json#/paths/~1reports'
+
+  /dashboard/summary:
+    $ref: './W3_P1.openapi.json#/paths/~1dashboard~1summary'
+
   /notifications:
     $ref: './W2_P3.openapi.json#/paths/~1notifications'
   /notifications/{id}/read:
@@ -955,54 +967,11 @@ paths:
     $ref: './W2_P2.openapi.json#/paths/~1award-decisions'
 
   /reports/achievements:
-    get:
-      summary: Báo cáo thống kê thành tích
-      description: "Thống kê tổng hợp số lượng thành tích theo năm, đơn vị (dựa trên ContextUnitId) và trạng thái."
-      parameters:
-        - name: recognitionYear
-          in: query
-          schema:
-            type: integer
-        - name: unitId
-          in: query
-          schema:
-            type: integer
-      responses:
-        200:
-          description: Số liệu thống kê thành tích
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AchievementReportResponse"
+    $ref: './W3_P1.openapi.json#/paths/~1reports~1achievements'
+
   /reports/export:
-    get:
-      summary: Xuất dữ liệu báo cáo ra file CSV
-      description: Xuất danh sách thành tích hoặc khen thưởng theo bộ lọc ra tệp CSV. Dữ liệu văn bản được làm sạch chống tấn công CSV Injection.
-      parameters:
-        - name: type
-          in: query
-          required: true
-          schema:
-            type: string
-            enum:
-              - achievements
-              - awards
-        - name: recognitionYear
-          in: query
-          schema:
-            type: integer
-        - name: unitId
-          in: query
-          schema:
-            type: integer
-      responses:
-        200:
-          description: Tệp CSV
-          content:
-            text/csv:
-              schema:
-                type: string
-                format: binary
+    $ref: './W3_P1.openapi.json#/paths/~1reports~1export'
+
 components:
   securitySchemes:
     bearerAuth:

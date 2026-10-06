@@ -1,5 +1,5 @@
 import { USE_FIXTURES } from './apiConfig.js';
-import { fixtureClient, toDashboardSummary } from './fixtureClient.js';
+import { fixtureClient } from './fixtureClient.js';
 import { request } from './request.js';
 
 export const portfolioApi = {
@@ -13,7 +13,6 @@ export const portfolioApi = {
     return USE_FIXTURES ? fixtureClient.getUnitProfile(unitId) : request({ method: 'GET', url: `/units/${unitId}/profile` });
   },
   getDashboardSummary() {
-    if (USE_FIXTURES) return fixtureClient.getDashboardSummary();
-    return request({ method: 'GET', url: '/me/profile' }).then(toDashboardSummary);
+    return request({ method: 'GET', url: '/dashboard/summary' });
   },
 };

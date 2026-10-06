@@ -1,0 +1,1528 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "W3-P1 Reports",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "paths": {
+    "/dashboard/summary": {
+      "get": {
+        "summary": "Thống kê và tìm kiếm SQL theo đơn vị lịch sử",
+        "description": "Roles and scope read from active DB assignments, never JWT role claims. VERIFIED achievements and RECORDED awards are separate. REVOKED is invalid. typeId requires kind. academicYearId filters achievements only; kind=AWARD plus academicYearId returns 400. Legacy awards without decision metadata are excluded. CSV requires representative/manager/records officer/admin; pagination ignored for CSV. Each response uses one SQL snapshot.",
+        "tags": [
+          "Reports"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACHIEVEMENT",
+                "AWARD"
+              ]
+            }
+          },
+          {
+            "name": "subjectType",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "LECTURER",
+                "UNIT"
+              ]
+            }
+          },
+          {
+            "name": "recognitionYear",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1990,
+              "maximum": 2100
+            }
+          },
+          {
+            "name": "academicYearId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "contextUnitId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "typeId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "SUBMITTED",
+                "NEED_CORRECTION",
+                "VERIFIED",
+                "REJECTED",
+                "CANCELLED",
+                "REVOKED",
+                "RECORDED"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success envelope; aggregates across all pages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "total",
+                        "items",
+                        "summary",
+                        "page",
+                        "pageSize"
+                      ],
+                      "properties": {
+                        "total": {
+                          "type": "integer"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "kind",
+                              "id",
+                              "subject_type",
+                              "title",
+                              "status",
+                              "is_valid"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "ACHIEVEMENT",
+                                  "AWARD"
+                                ]
+                              },
+                              "id": {
+                                "type": "string",
+                                "description": "PostgreSQL BIGINT as decimal string"
+                              },
+                              "lecturer_id": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "unit_id": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "context_unit_id": {
+                                "type": "string"
+                              },
+                              "context_unit_name": {
+                                "type": "string"
+                              },
+                              "subject_type": {
+                                "type": "string",
+                                "enum": [
+                                  "LECTURER",
+                                  "UNIT"
+                                ]
+                              },
+                              "subject_name": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "type_id": {
+                                "type": "string"
+                              },
+                              "type_name": {
+                                "type": "string"
+                              },
+                              "recognition_year": {
+                                "type": "integer"
+                              },
+                              "academic_year_id": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "academic_year_code": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "DRAFT",
+                                  "SUBMITTED",
+                                  "NEED_CORRECTION",
+                                  "VERIFIED",
+                                  "REJECTED",
+                                  "CANCELLED",
+                                  "REVOKED",
+                                  "RECORDED"
+                                ]
+                              },
+                              "is_valid": {
+                                "type": "boolean"
+                              },
+                              "decision_number": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "summary": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "kind",
+                              "subject_type",
+                              "total",
+                              "valid_count",
+                              "distinct_years"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "ACHIEVEMENT",
+                                  "AWARD"
+                                ]
+                              },
+                              "subject_type": {
+                                "type": "string",
+                                "enum": [
+                                  "LECTURER",
+                                  "UNIT"
+                                ]
+                              },
+                              "total": {
+                                "type": "integer"
+                              },
+                              "valid_count": {
+                                "type": "integer"
+                              },
+                              "distinct_years": {
+                                "type": "integer",
+                                "description": "Distinct recognition years of valid rows per kind and subject type; not an eligibility rule"
+                              }
+                            }
+                          }
+                        },
+                        "page": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "pageSize": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or ambiguous filters"
+          },
+          "401": {
+            "description": "Authentication or active user required"
+          },
+          "403": {
+            "description": "Active role/export permission required"
+          }
+        }
+      }
+    },
+    "/reports": {
+      "get": {
+        "summary": "Thống kê và tìm kiếm SQL theo đơn vị lịch sử",
+        "description": "Roles and scope read from active DB assignments, never JWT role claims. VERIFIED achievements and RECORDED awards are separate. REVOKED is invalid. typeId requires kind. academicYearId filters achievements only; kind=AWARD plus academicYearId returns 400. Legacy awards without decision metadata are excluded. CSV requires representative/manager/records officer/admin; pagination ignored for CSV. Each response uses one SQL snapshot.",
+        "tags": [
+          "Reports"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACHIEVEMENT",
+                "AWARD"
+              ]
+            }
+          },
+          {
+            "name": "subjectType",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "LECTURER",
+                "UNIT"
+              ]
+            }
+          },
+          {
+            "name": "recognitionYear",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1990,
+              "maximum": 2100
+            }
+          },
+          {
+            "name": "academicYearId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "contextUnitId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "typeId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "SUBMITTED",
+                "NEED_CORRECTION",
+                "VERIFIED",
+                "REJECTED",
+                "CANCELLED",
+                "REVOKED",
+                "RECORDED"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success envelope; aggregates across all pages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "total",
+                        "items",
+                        "summary",
+                        "page",
+                        "pageSize"
+                      ],
+                      "properties": {
+                        "total": {
+                          "type": "integer"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "kind",
+                              "id",
+                              "subject_type",
+                              "title",
+                              "status",
+                              "is_valid"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "ACHIEVEMENT",
+                                  "AWARD"
+                                ]
+                              },
+                              "id": {
+                                "type": "string",
+                                "description": "PostgreSQL BIGINT as decimal string"
+                              },
+                              "lecturer_id": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "unit_id": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "context_unit_id": {
+                                "type": "string"
+                              },
+                              "context_unit_name": {
+                                "type": "string"
+                              },
+                              "subject_type": {
+                                "type": "string",
+                                "enum": [
+                                  "LECTURER",
+                                  "UNIT"
+                                ]
+                              },
+                              "subject_name": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "type_id": {
+                                "type": "string"
+                              },
+                              "type_name": {
+                                "type": "string"
+                              },
+                              "recognition_year": {
+                                "type": "integer"
+                              },
+                              "academic_year_id": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "academic_year_code": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "DRAFT",
+                                  "SUBMITTED",
+                                  "NEED_CORRECTION",
+                                  "VERIFIED",
+                                  "REJECTED",
+                                  "CANCELLED",
+                                  "REVOKED",
+                                  "RECORDED"
+                                ]
+                              },
+                              "is_valid": {
+                                "type": "boolean"
+                              },
+                              "decision_number": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "summary": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "kind",
+                              "subject_type",
+                              "total",
+                              "valid_count",
+                              "distinct_years"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "ACHIEVEMENT",
+                                  "AWARD"
+                                ]
+                              },
+                              "subject_type": {
+                                "type": "string",
+                                "enum": [
+                                  "LECTURER",
+                                  "UNIT"
+                                ]
+                              },
+                              "total": {
+                                "type": "integer"
+                              },
+                              "valid_count": {
+                                "type": "integer"
+                              },
+                              "distinct_years": {
+                                "type": "integer",
+                                "description": "Distinct recognition years of valid rows per kind and subject type; not an eligibility rule"
+                              }
+                            }
+                          }
+                        },
+                        "page": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "pageSize": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or ambiguous filters"
+          },
+          "401": {
+            "description": "Authentication or active user required"
+          },
+          "403": {
+            "description": "Active role/export permission required"
+          }
+        }
+      }
+    },
+    "/reports/achievements": {
+      "get": {
+        "summary": "Thống kê và tìm kiếm SQL theo đơn vị lịch sử",
+        "description": "Roles and scope read from active DB assignments, never JWT role claims. VERIFIED achievements and RECORDED awards are separate. REVOKED is invalid. typeId requires kind. academicYearId filters achievements only; kind=AWARD plus academicYearId returns 400. Legacy awards without decision metadata are excluded. CSV requires representative/manager/records officer/admin; pagination ignored for CSV. Each response uses one SQL snapshot.",
+        "tags": [
+          "Reports"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACHIEVEMENT",
+                "AWARD"
+              ]
+            }
+          },
+          {
+            "name": "subjectType",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "LECTURER",
+                "UNIT"
+              ]
+            }
+          },
+          {
+            "name": "recognitionYear",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1990,
+              "maximum": 2100
+            }
+          },
+          {
+            "name": "academicYearId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "contextUnitId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "typeId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "SUBMITTED",
+                "NEED_CORRECTION",
+                "VERIFIED",
+                "REJECTED",
+                "CANCELLED",
+                "REVOKED",
+                "RECORDED"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "unitId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Legacy alias of contextUnitId, not current lecturer unit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success envelope; aggregates across all pages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "total",
+                        "items",
+                        "summary",
+                        "page",
+                        "pageSize"
+                      ],
+                      "properties": {
+                        "total": {
+                          "type": "integer"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "kind",
+                              "id",
+                              "subject_type",
+                              "title",
+                              "status",
+                              "is_valid"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "ACHIEVEMENT",
+                                  "AWARD"
+                                ]
+                              },
+                              "id": {
+                                "type": "string",
+                                "description": "PostgreSQL BIGINT as decimal string"
+                              },
+                              "lecturer_id": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "unit_id": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "context_unit_id": {
+                                "type": "string"
+                              },
+                              "context_unit_name": {
+                                "type": "string"
+                              },
+                              "subject_type": {
+                                "type": "string",
+                                "enum": [
+                                  "LECTURER",
+                                  "UNIT"
+                                ]
+                              },
+                              "subject_name": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "type_id": {
+                                "type": "string"
+                              },
+                              "type_name": {
+                                "type": "string"
+                              },
+                              "recognition_year": {
+                                "type": "integer"
+                              },
+                              "academic_year_id": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "academic_year_code": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "DRAFT",
+                                  "SUBMITTED",
+                                  "NEED_CORRECTION",
+                                  "VERIFIED",
+                                  "REJECTED",
+                                  "CANCELLED",
+                                  "REVOKED",
+                                  "RECORDED"
+                                ]
+                              },
+                              "is_valid": {
+                                "type": "boolean"
+                              },
+                              "decision_number": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "summary": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "kind",
+                              "subject_type",
+                              "total",
+                              "valid_count",
+                              "distinct_years"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "ACHIEVEMENT",
+                                  "AWARD"
+                                ]
+                              },
+                              "subject_type": {
+                                "type": "string",
+                                "enum": [
+                                  "LECTURER",
+                                  "UNIT"
+                                ]
+                              },
+                              "total": {
+                                "type": "integer"
+                              },
+                              "valid_count": {
+                                "type": "integer"
+                              },
+                              "distinct_years": {
+                                "type": "integer",
+                                "description": "Distinct recognition years of valid rows per kind and subject type; not an eligibility rule"
+                              }
+                            }
+                          }
+                        },
+                        "page": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "pageSize": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or ambiguous filters"
+          },
+          "401": {
+            "description": "Authentication or active user required"
+          },
+          "403": {
+            "description": "Active role/export permission required"
+          }
+        }
+      }
+    },
+    "/reports/awards": {
+      "get": {
+        "summary": "Thống kê và tìm kiếm SQL theo đơn vị lịch sử",
+        "description": "Roles and scope read from active DB assignments, never JWT role claims. VERIFIED achievements and RECORDED awards are separate. REVOKED is invalid. typeId requires kind. academicYearId filters achievements only; kind=AWARD plus academicYearId returns 400. Legacy awards without decision metadata are excluded. CSV requires representative/manager/records officer/admin; pagination ignored for CSV. Each response uses one SQL snapshot.",
+        "tags": [
+          "Reports"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACHIEVEMENT",
+                "AWARD"
+              ]
+            }
+          },
+          {
+            "name": "subjectType",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "LECTURER",
+                "UNIT"
+              ]
+            }
+          },
+          {
+            "name": "recognitionYear",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1990,
+              "maximum": 2100
+            }
+          },
+          {
+            "name": "academicYearId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "contextUnitId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "typeId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "SUBMITTED",
+                "NEED_CORRECTION",
+                "VERIFIED",
+                "REJECTED",
+                "CANCELLED",
+                "REVOKED",
+                "RECORDED"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "unitId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Legacy alias of contextUnitId, not current lecturer unit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success envelope; aggregates across all pages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "total",
+                        "items",
+                        "summary",
+                        "page",
+                        "pageSize"
+                      ],
+                      "properties": {
+                        "total": {
+                          "type": "integer"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "kind",
+                              "id",
+                              "subject_type",
+                              "title",
+                              "status",
+                              "is_valid"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "ACHIEVEMENT",
+                                  "AWARD"
+                                ]
+                              },
+                              "id": {
+                                "type": "string",
+                                "description": "PostgreSQL BIGINT as decimal string"
+                              },
+                              "lecturer_id": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "unit_id": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "context_unit_id": {
+                                "type": "string"
+                              },
+                              "context_unit_name": {
+                                "type": "string"
+                              },
+                              "subject_type": {
+                                "type": "string",
+                                "enum": [
+                                  "LECTURER",
+                                  "UNIT"
+                                ]
+                              },
+                              "subject_name": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "type_id": {
+                                "type": "string"
+                              },
+                              "type_name": {
+                                "type": "string"
+                              },
+                              "recognition_year": {
+                                "type": "integer"
+                              },
+                              "academic_year_id": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "academic_year_code": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "DRAFT",
+                                  "SUBMITTED",
+                                  "NEED_CORRECTION",
+                                  "VERIFIED",
+                                  "REJECTED",
+                                  "CANCELLED",
+                                  "REVOKED",
+                                  "RECORDED"
+                                ]
+                              },
+                              "is_valid": {
+                                "type": "boolean"
+                              },
+                              "decision_number": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "summary": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "kind",
+                              "subject_type",
+                              "total",
+                              "valid_count",
+                              "distinct_years"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "ACHIEVEMENT",
+                                  "AWARD"
+                                ]
+                              },
+                              "subject_type": {
+                                "type": "string",
+                                "enum": [
+                                  "LECTURER",
+                                  "UNIT"
+                                ]
+                              },
+                              "total": {
+                                "type": "integer"
+                              },
+                              "valid_count": {
+                                "type": "integer"
+                              },
+                              "distinct_years": {
+                                "type": "integer",
+                                "description": "Distinct recognition years of valid rows per kind and subject type; not an eligibility rule"
+                              }
+                            }
+                          }
+                        },
+                        "page": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "pageSize": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or ambiguous filters"
+          },
+          "401": {
+            "description": "Authentication or active user required"
+          },
+          "403": {
+            "description": "Active role/export permission required"
+          }
+        }
+      }
+    },
+    "/reports/export.csv": {
+      "get": {
+        "summary": "Xuất toàn bộ báo cáo theo cùng scope/filter; chống CSV formula injection",
+        "description": "Roles and scope read from active DB assignments, never JWT role claims. VERIFIED achievements and RECORDED awards are separate. REVOKED is invalid. typeId requires kind. academicYearId filters achievements only; kind=AWARD plus academicYearId returns 400. Legacy awards without decision metadata are excluded. CSV requires representative/manager/records officer/admin; pagination ignored for CSV. Each response uses one SQL snapshot.",
+        "tags": [
+          "Reports"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACHIEVEMENT",
+                "AWARD"
+              ]
+            }
+          },
+          {
+            "name": "subjectType",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "LECTURER",
+                "UNIT"
+              ]
+            }
+          },
+          {
+            "name": "recognitionYear",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1990,
+              "maximum": 2100
+            }
+          },
+          {
+            "name": "academicYearId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "contextUnitId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "typeId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "SUBMITTED",
+                "NEED_CORRECTION",
+                "VERIFIED",
+                "REJECTED",
+                "CANCELLED",
+                "REVOKED",
+                "RECORDED"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "UTF-8 BOM, CRLF, quoted CSV; all matching rows, attachment",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or ambiguous filters"
+          },
+          "401": {
+            "description": "Authentication or active user required"
+          },
+          "403": {
+            "description": "Active role/export permission required"
+          }
+        }
+      }
+    },
+    "/reports/export": {
+      "get": {
+        "summary": "Xuất toàn bộ báo cáo theo cùng scope/filter; chống CSV formula injection",
+        "description": "Roles and scope read from active DB assignments, never JWT role claims. VERIFIED achievements and RECORDED awards are separate. REVOKED is invalid. typeId requires kind. academicYearId filters achievements only; kind=AWARD plus academicYearId returns 400. Legacy awards without decision metadata are excluded. CSV requires representative/manager/records officer/admin; pagination ignored for CSV. Each response uses one SQL snapshot.",
+        "tags": [
+          "Reports"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACHIEVEMENT",
+                "AWARD"
+              ]
+            }
+          },
+          {
+            "name": "subjectType",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "LECTURER",
+                "UNIT"
+              ]
+            }
+          },
+          {
+            "name": "recognitionYear",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1990,
+              "maximum": 2100
+            }
+          },
+          {
+            "name": "academicYearId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "contextUnitId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "typeId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "SUBMITTED",
+                "NEED_CORRECTION",
+                "VERIFIED",
+                "REJECTED",
+                "CANCELLED",
+                "REVOKED",
+                "RECORDED"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "unitId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Legacy alias of contextUnitId, not current lecturer unit"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "achievements",
+                "awards"
+              ]
+            },
+            "description": "Legacy alias of kind"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "UTF-8 BOM, CRLF, quoted CSV; all matching rows, attachment",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or ambiguous filters"
+          },
+          "401": {
+            "description": "Authentication or active user required"
+          },
+          "403": {
+            "description": "Active role/export permission required"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

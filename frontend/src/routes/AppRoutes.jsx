@@ -5,6 +5,7 @@ import MainLayout from '../layouts/MainLayout';
 import AIForecast from '../pages/AIForecast';
 import AuthPage from '../pages/AuthPage';
 import Dashboard from '../pages/Dashboard';
+import Reports from '../pages/Reports';
 import NotFound from '../pages/NotFound';
 import ProfilePortfolio from '../pages/ProfilePortfolio';
 import Organizations from '../pages/Organizations';
@@ -38,6 +39,7 @@ export default function AppRoutes() {
         <Route element={<MainLayout />}>
           <Route index element={<Navigate to="/me/dashboard" replace />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="reports" element={<RequireRole roles={APP_ROLES}><Reports /></RequireRole>} />
           <Route path="me/dashboard" element={<RequireRole roles={APP_ROLES}><Dashboard /></RequireRole>} />
           <Route path="me/profile" element={<RequireRole roles={PROFILE_ROLES}><ProfilePortfolio /></RequireRole>} />
           <Route path="me/ai-forecast" element={<RequireRole roles={PROFILE_ROLES}><AIForecast /></RequireRole>} />
