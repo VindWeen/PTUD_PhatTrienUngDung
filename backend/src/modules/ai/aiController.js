@@ -1,4 +1,6 @@
 import aiService from './aiService.js';
+import * as ragRetrievalService from './rag/ragRetrievalService.js';
+import * as ragExplanationService from './rag/ragExplanationService.js';
 import { z } from 'zod';
 
 const ok = (res, data, status = 200) =>
@@ -93,3 +95,67 @@ export async function listEvaluationRuns(req, res, next) {
     next(err);
   }
 }
+
+export async function indexRegulationChunks(req, res, next) {
+  try {
+    const result = await ragRetrievalService.indexConfirmedChunks();
+    ok(res, result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+const retrieveChunksSchema = z.object({
+  queryText: z.string().trim().min(2),
+  asOfDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  targetType: z.enum(['INDIVIDUAL', 'COLLECTIVE', 'BOTH']).optional(),
+  versionId: z.coerce.number().int().positive().optional(),
+  topK: z.coerce.number().int().positive().max(10).optional(),
+  minSimilarity: z.coerce.number().min(0).max(1).optional(),
+}).strict();
+
+export async function retrieveChunks(req, res, next) {
+  try {
+    const payload = retrieveChunksSchema.parse(req.body);
+    const result = await ragRetrievalService.retrieveRelevantChunks(payload);
+    ok(res, result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+const explainSchema = z.object({
+  criterionResult: z.object({
+    criterionId: z.coerce.number().int().positive(),
+    criterionCode: z.string().min(1),
+    criterionName: z.string().min(1),
+    isConfirmedByLhu: z.boolean(),
+    isSimulation: z.boolean(),
+    thresholdMetric: z.object({
+      targetMin: z.number().nullable(),
+      actualRecorded: z.number().nullable(),
+      unitMetric: z.string().nullable().optional(),
+      isSatisfied: z.union([z.boolean(), z.literal('UNCONFIRMED')]),
+    }),
+    aiAnalysis: z.string(),
+    humanReviewRequired: z.boolean(),
+  }),
+  asOfDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  provider: z.enum(['groq', 'openrouter', 'mock']).optional(),
+  model: z.string().optional(),
+  runId: z.string().uuid().optional(),
+}).strict();
+
+export async function explainEvaluation(req, res, next) {
+  try {
+    const payload = explainSchema.parse(req.body);
+    const result = await ragExplanationService.explainEvaluationResult({
+      ...payload,
+      forcedProvider: payload.provider,
+    });
+    ok(res, result);
+  } catch (err) {
+    next(err);
+  }
+}
+

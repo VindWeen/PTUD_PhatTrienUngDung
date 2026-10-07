@@ -15,4 +15,9 @@ router.post('/ai/evaluations/structured', aiController.evaluateStructured);
 router.get('/ai/evaluations/:runId', aiController.getEvaluationRun);
 router.get('/ai/evaluations', aiController.listEvaluationRuns);
 
+// W4-Q2 RAG & Explanation with Citations endpoints
+router.post('/ai/rag/index-chunks', aiController.indexRegulationChunks);
+router.post('/ai/rag/retrieve', aiController.retrieveChunks);
+router.post('/ai/rag/explain', aiController.explainEvaluation);
+
 export default router;
