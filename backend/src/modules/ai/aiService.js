@@ -7,11 +7,19 @@ import aiCache from './aiCache.js';
 import { AiRateLimitError, AiTimeoutError } from './aiErrors.js';
 import { ValidationError, NotFoundError } from '../../utils/errors.js';
 import * as regulationRepo from '../regulations/regulationRepository.js';
+import * as evaluationRepo from './evaluationRepository.js';
+import { evaluateStructuredCriterion, buildInputSnapshot, buildEvaluationRunObject } from './criteriaEvaluator.js';
+import { evaluationRunSchema } from './evaluationSchemas.js';
 import achievementService from '../achievements/achievementService.js';
+import { getPool } from '../../config/database.js';
+import { query } from '../../utils/dbHelper.js';
+import { isUnitInUserScope, getActiveRoles } from '../auth/authRepository.js';
+import { ForbiddenError, OutOfScopeError } from '../../utils/errors.js';
 
 export class AiService {
   constructor(options = {}) {
     this.regulations = options.regulations || regulationRepo;
+    this.evaluationRepo = options.evaluationRepo || evaluationRepo;
     this.readAchievement = options.readAchievement || achievementService.getAchievementById;
     this.providerName = options.providerName || config.AI_PROVIDER;
     this.groqProvider = new GroqProvider(options.groqApiKey || config.GROQ_API_KEY, options.groqModel || config.GROQ_MODEL);
@@ -221,6 +229,259 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
       timestamp: completion.timestamp,
       latencyMs: completion.latencyMs,
     };
+  }
+
+  async authorizeSubjectAccess(user, subjectType, subjectId, client = null) {
+    if (!user) throw new ForbiddenError('Yêu cầu xác thực tài khoản');
+    const roles = await getActiveRoles(user.userId);
+    const roleCodes = roles.map((r) => (typeof r === 'string' ? r : r.Code || r.code));
+    if (roleCodes.includes('ADMIN')) return true;
+
+    const db = client ? client.query.bind(client) : query;
+
+    if (subjectType === 'LECTURER') {
+      const lecRes = await db('SELECT lecturer_id, user_id FROM app.lecturers WHERE lecturer_id = $1', [subjectId]);
+      const lecturer = lecRes.rows[0];
+      if (!lecturer) throw new NotFoundError('Không tìm thấy giảng viên');
+
+      // Chính chủ
+      if (Number(lecturer.user_id) === Number(user.userId)) return true;
+
+      // MANAGER có scope trên đơn vị công tác của giảng viên
+      if (roleCodes.includes('MANAGER')) {
+        const assignRes = await db(
+          `SELECT unit_id FROM app.lecturer_assignments 
+           WHERE lecturer_id = $1 AND is_primary = TRUE 
+             AND valid_from <= NOW() AND (valid_to IS NULL OR valid_to > NOW())`,
+          [subjectId]
+        );
+        const unitId = assignRes.rows[0]?.unit_id;
+        if (unitId && (await isUnitInUserScope(user.userId, unitId, 'MANAGER'))) {
+          return true;
+        }
+      }
+      throw new OutOfScopeError('Người ngoài scope không có quyền truy cập dữ liệu AI của giảng viên này');
+    }
+
+    if (subjectType === 'UNIT') {
+      if (roleCodes.includes('MANAGER')) {
+        const inScope = await isUnitInUserScope(user.userId, subjectId, 'MANAGER');
+        if (inScope) return true;
+      }
+      if (roleCodes.includes('UNIT_REPRESENTATIVE')) {
+        const inScope = await isUnitInUserScope(user.userId, subjectId, 'UNIT_REPRESENTATIVE');
+        if (inScope) return true;
+      }
+      throw new OutOfScopeError('Người ngoài scope không có quyền truy cập dữ liệu AI của đơn vị này');
+    }
+
+    throw new ForbiddenError('Chủ thể không hợp lệ');
+  }
+
+  async evaluateStructured(
+    {
+      subjectType = 'LECTURER',
+      subjectId,
+      criteriaVersionIds = [],
+      applicationId = null,
+      kpiGoalId = null,
+      asOfDate = new Date().toISOString().slice(0, 10),
+      forcedProvider = 'mock',
+      model = 'deterministic-evaluator-v1',
+      rules = null,
+      mockRecords = null,
+    },
+    user,
+    client = null
+  ) {
+    if (!subjectId) throw new ValidationError('Mã chủ thể (subjectId) là bắt buộc');
+    await this.authorizeSubjectAccess(user, subjectType, subjectId, client);
+
+    const db = client ? client.query.bind(client) : query;
+
+    // 1. Thu thập dữ liệu hồ sơ nguồn (Achievements + AwardRecords)
+    let records = [];
+    if (Array.isArray(mockRecords)) {
+      records = mockRecords;
+    } else {
+      const achSql = `
+        SELECT a.achievement_id AS id,
+               'ACHIEVEMENT' AS type,
+               a.lecturer_id, a.unit_id,
+               COALESCE(a.recognition_year, EXTRACT(YEAR FROM a.achievement_date)::int) AS year,
+               a.status,
+               a.replaces_achievement_id AS "replacesRecordId",
+               (
+                 SELECT json_agg(json_build_object(
+                   'id', ef.evidence_file_id,
+                   'sha256', ef.sha256_hash,
+                   'name', ef.original_file_name
+                 ))
+                 FROM app.evidences e
+                 JOIN app.evidence_files ef ON ef.evidence_id = e.evidence_id
+                 WHERE e.achievement_id = a.achievement_id AND e.is_removed = FALSE
+               ) AS files
+        FROM app.achievements a
+        WHERE ${subjectType === 'LECTURER' ? 'a.lecturer_id = $1' : 'a.unit_id = $1'}
+          AND a.status IN ('VERIFIED', 'RECORDED', 'REVOKED', 'CANCELLED')
+      `;
+      const achRes = await db(achSql, [subjectId]);
+
+      const awardSql = `
+        SELECT r.record_id AS id,
+               'AWARD_RECORD' AS type,
+               r.lecturer_id, r.unit_id,
+               r.recognition_year AS year,
+               r.status,
+               r.replaces_award_record_id AS "replacesRecordId",
+               (
+                 SELECT json_agg(json_build_object(
+                   'id', adf.decision_file_id,
+                   'sha256', adf.sha256_hash,
+                   'name', adf.original_file_name
+                 ))
+                 FROM app.award_decision_files adf
+                 WHERE adf.decision_id = r.decision_id
+               ) AS files
+        FROM app.award_records r
+        WHERE ${subjectType === 'LECTURER' ? 'r.lecturer_id = $1' : 'r.unit_id = $1'}
+          AND r.status IN ('RECORDED', 'REVOKED')
+      `;
+      const awardRes = await db(awardSql, [subjectId]);
+
+      const mapRow = (r) => ({
+        id: Number(r.id),
+        type: r.type,
+        subjectId: Number(subjectType === 'LECTURER' ? r.lecturer_id : r.unit_id),
+        year: Number(r.year),
+        status: r.status,
+        replacesRecordId: r.replacesRecordId ? Number(r.replacesRecordId) : null,
+        file: Array.isArray(r.files) && r.files[0] ? r.files[0] : null,
+        evidenceFiles: Array.isArray(r.files) ? r.files : [],
+        hasEvidence: Array.isArray(r.files) && r.files.length > 0,
+      });
+
+      records = [...achRes.rows.map(mapRow), ...awardRes.rows.map(mapRow)];
+    }
+
+    // 2. Tải danh sách tiêu chí cần đánh giá
+    let criteriaList = [];
+    if (Array.isArray(criteriaVersionIds) && criteriaVersionIds.length > 0) {
+      for (const cid of criteriaVersionIds) {
+        const c = await this.regulations.findCriteriaVersionById(client, cid);
+        if (c) criteriaList.push(c);
+      }
+    } else {
+      criteriaList = await this.regulations.listCriteriaVersions(client, {
+        confirmedOnly: false,
+        targetType: subjectType === 'LECTURER' ? 'INDIVIDUAL' : 'COLLECTIVE',
+      });
+    }
+
+    if (criteriaList.length === 0) {
+      throw new ValidationError('Không tìm thấy tiêu chí nào phù hợp để đánh giá');
+    }
+
+    // 3. Thực thi evaluateStructuredCriterion cho từng tiêu chí
+    const criterionResults = [];
+    for (const crit of criteriaList) {
+      const docVersion = await this.regulations.findVersionById(client, crit.version_id);
+      if (!docVersion) continue;
+
+      const evalResult = evaluateStructuredCriterion({
+        subject: { subjectType, subjectId },
+        criterion: {
+          criteriaVersionId: crit.criteria_version_id,
+          criterionCode: crit.criterion_code,
+          name: crit.name,
+          targetType: crit.target_type,
+          minThreshold: crit.min_threshold,
+          unitMetric: crit.unit_metric,
+          isConfirmed: crit.is_confirmed,
+          versionId: crit.version_id,
+          legalReferences: crit.legal_references,
+        },
+        documentVersion: {
+          versionId: docVersion.version_id,
+          versionNumber: docVersion.version_number,
+          sha256Hash: docVersion.sha256_hash,
+          isConfirmed: docVersion.is_confirmed,
+          lhuApplicationStatus: docVersion.lhu_application_status,
+          effectiveFrom: docVersion.effective_from,
+          effectiveTo: docVersion.effective_to,
+          documentCode: docVersion.document_code,
+        },
+        records,
+        asOfDate,
+        rules,
+      });
+      criterionResults.push(evalResult);
+    }
+
+    // 4. Tạo input snapshot & SHA-256 hash
+    const primaryCrit = criteriaList[0] || {};
+    const primaryDoc = (await this.regulations.findVersionById(client, primaryCrit.version_id)) || {};
+    const { snapshot, inputHash } = buildInputSnapshot({
+      subject: { subjectType, subjectId },
+      criterion: primaryCrit,
+      documentVersion: primaryDoc,
+      records,
+      asOfDate,
+      rules,
+    });
+
+    // 5. Build EvaluationRun object
+    const runObject = buildEvaluationRunObject({
+      evaluationType: 'CRITERION_ASSESSMENT',
+      subject: { subjectType, subjectId, kpiGoalId },
+      providerInfo: {
+        provider: forcedProvider || 'mock',
+        model: model || 'deterministic-evaluator-v1',
+        isMock: forcedProvider === 'mock' || !forcedProvider,
+      },
+      criterionResults,
+    });
+
+    // 6. Kiểm tra hợp đồng evaluationRunSchema
+    evaluationRunSchema.parse(runObject);
+
+    // 7. Lưu trữ vào CSDL
+    const saved = await this.evaluationRepo.saveEvaluationRun(
+      client,
+      {
+        ...runObject,
+        applicationId,
+        inputSnapshot: snapshot,
+        inputHash,
+        executedBy: user.userId,
+      },
+      criterionResults
+    );
+
+    return {
+      ...runObject,
+      runId: saved.run.run_id,
+      inputSnapshot: snapshot,
+      inputHash,
+      applicationId: saved.run.application_id,
+      executedBy: user.userId,
+    };
+  }
+
+  async getEvaluationRun(runId, user, client = null) {
+    if (!runId) throw new ValidationError('runId là bắt buộc');
+    const run = await this.evaluationRepo.getEvaluationRunById(client, runId);
+    if (!run) throw new NotFoundError(`Không tìm thấy phiên đánh giá #${runId}`);
+    await this.authorizeSubjectAccess(user, run.targetSubject.subjectType, run.targetSubject.subjectId, client);
+    return run;
+  }
+
+  async listEvaluations(filters = {}, user, client = null) {
+    const { subjectType, subjectId } = filters;
+    if (subjectId) {
+      await this.authorizeSubjectAccess(user, subjectType || 'LECTURER', subjectId, client);
+    }
+    return this.evaluationRepo.listEvaluationRuns(client, filters);
   }
 }
 

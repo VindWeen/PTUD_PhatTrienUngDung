@@ -85,6 +85,11 @@ export const evaluationRunSchema = z
       .strict(),
     executedAt: z.string().datetime(),
     criterionResults: z.array(criterionResultSchema).min(1),
+    applicationId: z.number().int().positive().nullable().optional(),
+    inputSnapshot: z.any().optional(),
+    inputHash: z.string().optional(),
+    isStale: z.boolean().optional(),
+    executedBy: z.number().int().positive().optional(),
   })
   .strict()
   .superRefine((r, ctx) => {
