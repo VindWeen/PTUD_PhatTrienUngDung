@@ -56,7 +56,7 @@ export async function assign(actor, resource, v) {
     if (!role.rowCount) throw new ConflictError('Vai trò không hoạt động');
     if (resource === 'user-roles') return (await tx(`INSERT INTO app.user_roles (user_id,role_id,valid_from,valid_to)
       VALUES ($1,$2,$3,$4) RETURNING *,user_role_id AS id`, [v.userId,v.roleId,v.validFrom,v.validTo])).rows[0];
-    if (!['MANAGER','RECORDS_OFFICER'].includes(role.rows[0].code)) throw new ConflictError('Scope chỉ dành cho Manager/RecordsOfficer; đại diện dùng phân công đại diện');
+    if (!['MANAGER','RECORDS_OFFICER','COUNCIL'].includes(role.rows[0].code)) throw new ConflictError('Scope chỉ dành cho Manager/RecordsOfficer/Council; đại diện dùng phân công đại diện');
     if (!v.unitId) throw new ConflictError('Thiếu đơn vị scope');
     const grant = await tx(`SELECT 1 FROM app.user_roles WHERE user_id=$1 AND role_id=$2 AND revoked_at IS NULL AND valid_from <= $3
       AND (valid_to IS NULL OR ($4::timestamptz IS NOT NULL AND valid_to >= $4))`, [v.userId,v.roleId,v.validFrom,v.validTo]);

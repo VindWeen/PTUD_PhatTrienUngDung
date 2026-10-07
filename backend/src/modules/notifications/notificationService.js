@@ -37,6 +37,13 @@ const manager = (a, uid) => `(${activeRole(uid,'MANAGER')} AND EXISTS (
  AND ${a}.created_by<>${uid} AND (${a}.submitted_by IS NULL OR ${a}.submitted_by<>${uid})
  AND NOT EXISTS (SELECT 1 FROM app.lecturers l WHERE l.lecturer_id=${a}.lecturer_id AND l.user_id=${uid}))`;
 const visible = `n.user_id=$1 AND (
+ (n.entity_type='APPLICATION' AND EXISTS (SELECT 1 FROM app.award_applications a WHERE a.application_id=n.entity_id
+ AND ((${subject('a','$1')} AND (a.lecturer_id IS NULL OR (${activeRole('$1','LECTURER')} AND EXISTS (SELECT 1 FROM app.lecturers l WHERE l.lecturer_id=a.lecturer_id AND l.is_active=TRUE)))) OR (${manager('a','$1').replaceAll('a.submitted_by','a.created_by')}) OR (${manager('a','$1').replaceAll('a.submitted_by','a.created_by').replaceAll('MANAGER','COUNCIL')}
+ AND a.status IN ('COUNCIL_PENDING','UNDER_REVIEW','NEED_CORRECTION','RECOMMENDED','NOT_RECOMMENDED')
+ AND NOT (${subject('a','$1')})
+ AND NOT EXISTS (SELECT 1 FROM app.award_application_inputs i WHERE i.application_id=a.application_id AND i.submitted_by=$1)
+ AND NOT EXISTS (SELECT 1 FROM app.application_review_comments c WHERE c.application_id=a.application_id AND c.actor_id=$1 AND c.action='resubmit')))))
+ OR
  (n.entity_type='AWARD' AND EXISTS (SELECT 1 FROM app.award_records a WHERE a.record_id=n.entity_id AND ${subject('a','$1')}))
  OR (n.entity_type='ACHIEVEMENT' AND EXISTS (SELECT 1 FROM app.achievements a WHERE a.achievement_id=n.entity_id
  AND ((n.audience='SUBJECT' AND ${subject('a','$1')}) OR (n.audience='MANAGER' AND ${manager('a','$1')})))))`;

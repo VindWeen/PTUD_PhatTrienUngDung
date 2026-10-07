@@ -49,6 +49,117 @@ export const cycleSchema = z
   .refine((b) => b.endDate >= b.startDate, "Ngày kết thúc trước ngày bắt đầu");
 
 export class ApplicationService extends AwardService {
+  async council(user, r, c, assigned = false) {
+    if (
+      !(await this.roleCodes(user)).includes("COUNCIL") ||
+      !(await this.scope(user.userId, r.context_unit_id, "COUNCIL"))
+    )
+      throw new ForbiddenError("Cần Hội đồng đúng phạm vi");
+    await this.noSelf(user, r, c);
+    if (
+      assigned &&
+      !(
+        await c.query(
+          "SELECT 1 FROM app.application_reviews WHERE application_id=$1 AND reviewer_id=$2",
+          [r.application_id, user.userId],
+        )
+      ).rows.length
+    )
+      throw new ForbiddenError("Chưa được phân công hồ sơ");
+  }
+  async noSelf(user, r, c) {
+    const own = (
+      await c.query(
+        `SELECT 1 FROM app.lecturers WHERE lecturer_id=$1 AND user_id=$2
+           UNION ALL SELECT 1 FROM app.award_application_inputs WHERE application_id=$3 AND submitted_by=$2
+           UNION ALL SELECT 1 FROM app.application_review_comments WHERE application_id=$3 AND actor_id=$2 AND action='resubmit'`,
+        [r.lecturer_id, user.userId, r.application_id],
+      )
+    ).rows.length;
+    const representative =
+      r.unit_id &&
+      (await this.scope(user.userId, r.unit_id, "UNIT_REPRESENTATIVE"));
+    if (own || representative || String(r.created_by) === String(user.userId))
+      throw new ForbiddenError(
+        "Không tự xét hồ sơ cá nhân hoặc tập thể mình đại diện",
+      );
+  }
+  async applicationNotice(c, r, from) {
+    const recipients = (
+      await c.query(
+        `SELECT user_id FROM app.users WHERE status='ACTIVE' AND (user_id=$1 OR user_id IN (SELECT reviewer_id FROM app.application_reviews WHERE application_id=$2))`,
+        [r.created_by, r.application_id],
+      )
+    ).rows;
+    for (const u of recipients) {
+      try {
+        await this.reader({ userId: u.user_id }, r, c);
+      } catch (e) {
+        if (e instanceof ForbiddenError) continue;
+        throw e;
+      }
+      await c.query(
+        `INSERT INTO app.notifications(user_id,entity_type,entity_id,entity_version,from_status,to_status,audience) VALUES($1,'APPLICATION',$2,$3,$4,$5,'SUBJECT') ON CONFLICT DO NOTHING`,
+        [u.user_id, r.application_id, r.version, from, r.status],
+      );
+    }
+  }
+  async review(rawId, body, user, action) {
+    const b = z
+      .object({
+        version: id,
+        reason: z.string().trim().min(5).max(1000),
+        reviewerId: id.optional(),
+      })
+      .strict()
+      .parse(body);
+    if (action !== "assign" && b.reviewerId)
+      throw new ValidationError("Chỉ phân công nhận reviewerId");
+    return this.transaction(user, "APPLICATION_" + action, async (c) => {
+      const r = await this.get(rawId, user, c, true);
+      if (String(r.version) !== String(b.version))
+        throw new ConflictError("Sai phiên bản hồ sơ");
+      let target = r.status;
+      if (action === "resubmit") {
+        await this.applicant(user, r, c);
+        if (r.status !== "NEED_CORRECTION")
+          throw new ConflictError("Chỉ bổ sung hồ sơ NEED_CORRECTION");
+        target = "SUBMITTED";
+      } else {
+        await this.council(user, r, c, action !== "assign");
+        if (!["COUNCIL_PENDING", "UNDER_REVIEW"].includes(r.status))
+          throw new ConflictError("Hồ sơ chưa ở bước Hội đồng");
+        if (action === "assign") {
+          if (!b.reviewerId)
+            throw new ValidationError("Cần người được phân công");
+          await this.council({ userId: b.reviewerId }, r, c);
+          await c.query(
+            "INSERT INTO app.application_reviews(application_id,reviewer_id,assigned_by) VALUES($1,$2,$3)",
+            [r.application_id, b.reviewerId, user.userId],
+          );
+          target = "UNDER_REVIEW";
+        } else if (action === "request-correction") target = "NEED_CORRECTION";
+        else if (action === "recommend") target = "RECOMMENDED";
+        else if (action === "not-recommend") target = "NOT_RECOMMENDED";
+        else if (action !== "comment")
+          throw new ValidationError("Hành động không hỗ trợ");
+      }
+      await c.query(
+        "INSERT INTO app.application_review_comments(application_id,actor_id,action,content) VALUES($1,$2,$3,$4)",
+        [r.application_id, user.userId, action, b.reason],
+      );
+      const updated = (
+        await c.query(
+          "UPDATE app.award_applications SET status=$2,version=version+1,updated_at=NOW() WHERE application_id=$1 AND version=$3 AND status=$4 RETURNING *",
+          [r.application_id, target, b.version, r.status],
+        )
+      ).rows[0];
+      if (!updated) throw new ConflictError("Sai phiên bản hoặc trạng thái");
+      await this.history(c, updated, r.status, user, b.reason);
+      await this.applicationNotice(c, updated, r.status);
+      return updated;
+    });
+  }
   async roleCodes(user) {
     if (!user?.userId) throw new ForbiddenError();
     return (await this.roles(user.userId)).map((r) =>
@@ -77,6 +188,22 @@ export class ApplicationService extends AwardService {
     );
   }
   async reader(user, r, c) {
+    if (
+      [
+        "COUNCIL_PENDING",
+        "UNDER_REVIEW",
+        "NEED_CORRECTION",
+        "RECOMMENDED",
+        "NOT_RECOMMENDED",
+      ].includes(r.status)
+    ) {
+      try {
+        await this.council(user, r, c);
+        return;
+      } catch (e) {
+        if (!(e instanceof ForbiddenError)) throw e;
+      }
+    }
     try {
       await this.applicant(user, r, c);
       return;
@@ -331,6 +458,7 @@ export class ApplicationService extends AwardService {
           [r.application_id, JSON.stringify(snapshot), user.userId],
         );
       } else if (action === "forward") {
+        await this.noSelf(user, r, c);
         const roles = await this.roleCodes(user);
         if (
           !roles.includes("MANAGER") ||
@@ -364,12 +492,35 @@ export class ApplicationService extends AwardService {
       if (!updated)
         throw new ConflictError("Sai trạng thái hoặc phiên bản hồ sơ");
       await this.history(c, updated, r.status, user, b.reason);
+      await this.applicationNotice(c, updated, r.status);
       return updated;
     });
   }
   async detail(rawId, user) {
     const r = await this.get(rawId, user);
     const c = this.pool();
+    r.reviews = (
+      await c.query(
+        "SELECT * FROM app.application_reviews WHERE application_id=$1 ORDER BY review_id",
+        [r.application_id],
+      )
+    ).rows;
+    r.comments = (
+      await c.query(
+        "SELECT * FROM app.application_review_comments WHERE application_id=$1 ORDER BY comment_id",
+        [r.application_id],
+      )
+    ).rows;
+    r.canCouncil = false;
+    try {
+      await this.council(user, r, c);
+      r.canCouncil = true;
+    } catch (e) {
+      if (!(e instanceof ForbiddenError)) throw e;
+    }
+    r.canReview =
+      r.canCouncil &&
+      r.reviews.some((a) => String(a.reviewer_id) === String(user.userId));
     r.input =
       (
         await c.query(
@@ -398,17 +549,27 @@ export class ApplicationService extends AwardService {
       const unit = id.parse(query.contextUnitId);
       const roles = await this.roleCodes(user);
       let allowed = false;
-      for (const role of ["MANAGER", "RECORDS_OFFICER"])
+      for (const role of ["MANAGER", "RECORDS_OFFICER", "COUNCIL"])
         if (roles.includes(role) && (await this.scope(user.userId, unit, role)))
           allowed = true;
       if (!allowed) throw new ForbiddenError("Cần quyền đọc đơn vị");
+      const candidates = (
+        await c.query(
+          "SELECT * FROM app.award_applications WHERE context_unit_id=$1 ORDER BY application_id DESC LIMIT $2 OFFSET $3",
+          [unit, pageSize, (page - 1) * pageSize],
+        )
+      ).rows;
+      const items = [];
+      for (const r of candidates) {
+        try {
+          await this.reader(user, r, c);
+          items.push(r);
+        } catch (e) {
+          if (!(e instanceof ForbiddenError)) throw e;
+        }
+      }
       return {
-        items: (
-          await c.query(
-            "SELECT * FROM app.award_applications WHERE context_unit_id=$1 ORDER BY application_id DESC LIMIT $2 OFFSET $3",
-            [unit, pageSize, (page - 1) * pageSize],
-          )
-        ).rows,
+        items,
         page,
         pageSize,
       };

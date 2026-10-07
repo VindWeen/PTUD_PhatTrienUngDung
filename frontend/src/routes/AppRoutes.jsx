@@ -34,13 +34,14 @@ function RequireRole({ roles, children }) {
 }
 
 export default function AppRoutes() {
-  const { signedIn, loading } = useAuth();
+  const { signedIn, loading, user } = useAuth();
+  const landing = (user?.roles || []).some(r => (typeof r === 'string' ? r : r.code) === 'COUNCIL') ? '/award-applications' : '/me/dashboard';
   return (
     <Routes>
-      <Route path="/login" element={loading ? <LoadingState label="Đang kiểm tra phiên đăng nhập..." /> : signedIn ? <Navigate to="/me/dashboard" replace /> : <AuthPage />} />
+      <Route path="/login" element={loading ? <LoadingState label="Đang kiểm tra phiên đăng nhập..." /> : signedIn ? <Navigate to={landing} replace /> : <AuthPage />} />
       <Route element={<RequireAuth />}>
         <Route element={<MainLayout />}>
-          <Route index element={<Navigate to="/me/dashboard" replace />} />
+          <Route index element={<Navigate to={landing} replace />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="kpi" element={<RequireRole roles={['LECTURER', 'UNIT_REPRESENTATIVE']}><Kpi /></RequireRole>} />
           <Route path="reports" element={<RequireRole roles={APP_ROLES}><Reports /></RequireRole>} />
@@ -51,10 +52,10 @@ export default function AppRoutes() {
           <Route path="achievements" element={<RequireRole roles={APP_ROLES}><Achievements /></RequireRole>} />
           <Route path="regulations" element={<RequireRole roles={APP_ROLES}><Regulations /></RequireRole>} />
           <Route path="awards" element={<RequireRole roles={['RECORDS_OFFICER']}><Awards /></RequireRole>} />
-          <Route path="award-applications" element={<RequireRole roles={['LECTURER','UNIT_REPRESENTATIVE','MANAGER','RECORDS_OFFICER']}><AwardApplications /></RequireRole>} />
+          <Route path="award-applications" element={<RequireRole roles={['LECTURER','UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'COUNCIL']}><AwardApplications /></RequireRole>} />
           <Route path="me/achievements" element={<Navigate to="/achievements" replace />} />
           <Route path="admin" element={<RequireRole roles={['ADMIN']}><AdminManagement /></RequireRole>} />
-          <Route path="dashboard" element={<Navigate to="/me/dashboard" replace />} />
+          <Route path="dashboard" element={<Navigate to={landing} replace />} />
           <Route path="profile" element={<Navigate to="/me/profile" replace />} />
           <Route path="ai-forecast" element={<Navigate to="/me/ai-forecast" replace />} />
         </Route>

@@ -20,6 +20,10 @@ import { notificationsApi } from '../services/notificationsApi';
 export function notificationText(n) {
   const label = {
     SUBMITTED: 'đã gửi',
+    COUNCIL_PENDING: 'chờ Hội đồng',
+    UNDER_REVIEW: 'đang xét',
+    RECOMMENDED: 'được đề nghị khen thưởng, chưa có quyết định',
+    NOT_RECOMMENDED: 'không được đề nghị',
     NEED_CORRECTION: 'cần bổ sung',
     VERIFIED: 'đã xác nhận',
     REJECTED: 'bị từ chối',
@@ -27,7 +31,7 @@ export function notificationText(n) {
     REVOKED: 'đã thu hồi',
     RECORDED: 'đã ghi nhận quyết định',
   };
-  return `${n.entityType === 'AWARD' ? 'Bản ghi khen thưởng' : 'Thành tích'} #${n.entityId}: ${label[n.toStatus] || n.toStatus}`;
+  return `${n.entityType === 'APPLICATION' ? 'Hồ sơ đề nghị' : n.entityType === 'AWARD' ? 'Bản ghi khen thưởng' : 'Thành tích'} #${n.entityId}: ${label[n.toStatus] || n.toStatus}`;
 }
 
 const STATUS_CONFIG = {

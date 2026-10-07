@@ -12,6 +12,7 @@ export default function AwardApplications() {
   const [items, setItems] = useState([]);
   const [detail, setDetail] = useState(null);
   const [unit, setUnit] = useState('');
+  const [reviewerId, setReviewerId] = useState('');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -162,7 +163,7 @@ export default function AwardApplications() {
           className="border p-2 text-slate-900"
           value={unit}
           onChange={(e) => setUnit(e.target.value)}
-          placeholder="Để trống: hồ sơ tôi tạo; mã đơn vị: Manager"
+          placeholder="Mã đơn vị: hàng chờ đơn vị / Hội đồng"
         />
         <button
           disabled={busy}
@@ -231,9 +232,82 @@ export default function AwardApplications() {
               </button>
             </div>
           )}
-          {detail.status === 'COUNCIL_PENDING' && (
-            <p>Đã chuyển Hội đồng. Chức năng Hội đồng xét duyệt là bước mở rộng chưa triển khai.</p>
+          {(detail.canCouncil || (applicant && detail.status === 'NEED_CORRECTION')) && (
+            <div className="space-y-2">
+              <p>
+                Kết luận chỉ là đề nghị. RecordsOfficer cần quyết định và file quyết định để ghi
+                nhận khen thưởng.
+              </p>
+              <textarea
+                aria-label="Ý kiến hoặc nội dung bổ sung"
+                className="border p-2 text-slate-900 w-full"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Ý kiến / bổ sung / căn cứ kết luận (ít nhất 5 ký tự)"
+              />
+              {roles.includes('COUNCIL') && (
+                <input
+                  aria-label="Mã người xét"
+                  type="number"
+                  className="border p-2 text-slate-900"
+                  value={reviewerId}
+                  onChange={(e) => setReviewerId(e.target.value)}
+                  placeholder="Mã Hội đồng được phân công"
+                />
+              )}
+              {(detail.status === 'NEED_CORRECTION'
+                ? applicant
+                  ? [['resubmit', 'Gửi bổ sung qua đơn vị']]
+                  : []
+                : ['COUNCIL_PENDING', 'UNDER_REVIEW'].includes(detail.status) &&
+                    roles.includes('COUNCIL')
+                  ? [
+                      ['assign', 'Phân công'],
+                      ['comment', 'Ghi ý kiến'],
+                      ['request-correction', 'Yêu cầu bổ sung'],
+                      ['recommend', 'Đề nghị khen thưởng'],
+                      ['not-recommend', 'Không đề nghị'],
+                    ]
+                  : []
+              ).map(([action, label]) => (
+                <button
+                  key={action}
+                  className="border rounded p-2 mr-2"
+                  disabled={
+                    busy ||
+                    reason.trim().length < 5 ||
+                    (action === 'assign' && !reviewerId) ||
+                    (!['assign', 'resubmit'].includes(action) && !detail.canReview)
+                  }
+                  onClick={() =>
+                    run(async () => {
+                      await api.transition(detail.application_id, action, {
+                        version: Number(detail.version),
+                        reason,
+                        ...(action === 'assign' ? { reviewerId: Number(reviewerId) } : {}),
+                      });
+                      await refresh(detail.application_id);
+                      setReason('');
+                    })
+                  }
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           )}
+          <h3>Phân công và ý kiến</h3>
+          {(detail.reviews || []).map((r) => (
+            <p key={r.review_id}>
+              Người xét #{r.reviewer_id} — giao bởi #{r.assigned_by}
+            </p>
+          ))}
+          {(detail.comments || []).map((c) => (
+            <p key={c.comment_id}>
+              #{c.actor_id} — {c.action}: {c.content}
+            </p>
+          ))}
+
           <h3>Lịch sử</h3>
           <ul>
             {detail.histories.map((h) => (

@@ -41,3 +41,6 @@ router.post(
   handle((r) => service.transition(r.params.id, r.body, r.user, "forward")),
 );
 export default router;
+for (const action of ['assign','comment','request-correction','resubmit','recommend','not-recommend']) {
+  router.post('/award-applications/:id/'+action,handle(r=>service.review(r.params.id,r.body,r.user,action)));
+}

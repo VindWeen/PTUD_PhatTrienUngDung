@@ -4,10 +4,10 @@ import { GraduationCap, Home, User, Cpu, LogOut, Building2, Award, Bell, BookOpe
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
-  { to: '/award-applications', icon: Award, label: 'Hồ sơ đề nghị', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER'] },
+  { to: '/award-applications', icon: Award, label: 'Hồ sơ đề nghị', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'COUNCIL'] },
   { to: '/kpi', icon: Award, label: 'Mục tiêu / KPI', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'] },
   { to: '/reports', icon: Award, label: 'Báo cáo / CSV', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
-  { to: '/notifications', icon: Bell, label: 'Thông báo', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
+  { to: '/notifications', icon: Bell, label: 'Thông báo', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'COUNCIL', 'ADMIN'] },
   { to: '/awards', icon: Award, label: 'Khen thưởng', roles: ['RECORDS_OFFICER'] },
   { to: '/admin', icon: User, label: 'Quản trị', roles: ['ADMIN'] },
   { to: '/me/dashboard', icon: Home, label: 'Trang chủ', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
