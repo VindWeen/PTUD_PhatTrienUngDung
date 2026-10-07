@@ -77,7 +77,7 @@ export async function retrieveRelevantChunks(
   let sql = `
     SELECT c.chunk_id, c.version_id, c.article_no, c.clause_no, c.page_no,
            c.content, c.chunk_hash,
-           v.version_number, v.effective_from::text as effective_from,
+           v.source_url, v.version_number, v.effective_from::text as effective_from,
            v.effective_to::text as effective_to,
            d.document_code, d.title as document_title,
            e.embedding_vector
@@ -129,6 +129,7 @@ export async function retrieveRelevantChunks(
       scoredChunks.push({
         chunkId: Number(row.chunk_id),
         versionId: Number(row.version_id),
+        sourceUrl: row.source_url,
         articleNo: row.article_no,
         clauseNo: row.clause_no,
         pageNo: row.page_no,

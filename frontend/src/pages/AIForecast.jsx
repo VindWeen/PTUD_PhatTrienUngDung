@@ -40,6 +40,8 @@ export default function AIForecast() {
   const [asOfDate, setAsOfDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [provider, setProvider] = useState('mock');
   const [availableCriteria, setAvailableCriteria] = useState([]);
+  const [criteriaError, setCriteriaError] = useState(null);
+  const [loadingCriteria, setLoadingCriteria] = useState(true);
   const [selectedCriteriaIds, setSelectedCriteriaIds] = useState([]);
 
   // Live Evaluation State
@@ -86,29 +88,13 @@ export default function AIForecast() {
         const res = await aiEvaluationApi.listCriteria({ limit: 50 });
         const items = res?.items || res?.data || (Array.isArray(res) ? res : []);
         if (isMounted) {
-          if (items.length > 0) {
-            setAvailableCriteria(items);
-            // Select first 2-3 criteria by default
-            setSelectedCriteriaIds(items.slice(0, 3).map((c) => c.criteria_id || c.criterionId || c.id));
-          } else {
-            // Fallback default criteria
-            const fallback = [
-              { criteria_id: 1, code: 'CSTĐCS-01', name: 'Chiến sĩ thi đua cơ sở (Đạt danh hiệu liên tục)' },
-              { criteria_id: 2, code: 'NCKH-01', name: 'Đề tài nghiên cứu khoa học cấp Trường/Tỉnh' },
-            ];
-            setAvailableCriteria(fallback);
-            setSelectedCriteriaIds([1]);
-          }
+          setAvailableCriteria(items);
+          setSelectedCriteriaIds(items.slice(0, 3).map(c => c.criteria_version_id));
         }
-      } catch {
-        if (isMounted) {
-          const fallback = [
-            { criteria_id: 1, code: 'CSTĐCS-01', name: 'Chiến sĩ thi đua cơ sở (Đạt danh hiệu liên tục)' },
-            { criteria_id: 2, code: 'NCKH-01', name: 'Đề tài nghiên cứu khoa học cấp Trường/Tỉnh' },
-          ];
-          setAvailableCriteria(fallback);
-          setSelectedCriteriaIds([1]);
-        }
+      } catch (err) {
+        if (isMounted) setCriteriaError(err);
+      } finally {
+        if (isMounted) setLoadingCriteria(false);
       }
     }
     loadCriteria();
@@ -150,6 +136,7 @@ export default function AIForecast() {
   // Run Evaluation
   const handleRunEvaluation = async (e) => {
     e?.preventDefault();
+    if (loadingCriteria || criteriaError || !selectedCriteriaIds.length) return;
     if (!subjectId) {
       setEvalError(new Error('Vui lòng nhập mã chủ thể thẩm định'));
       return;
@@ -221,6 +208,9 @@ export default function AIForecast() {
     try {
       setEvaluating(true);
       const fullRun = await aiEvaluationApi.getEvaluationRun(runId);
+      setExplanations({});
+      setStaleInfo(null);
+      setRagError(null);
       setCurrentRun(fullRun);
       setActiveTab('live');
       // Automatically check stale status
@@ -249,7 +239,7 @@ export default function AIForecast() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="inline-flex p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 self-start">
+        <div className="inline-flex flex-wrap max-w-full p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 self-start">
           <button
             type="button"
             onClick={() => setActiveTab('live')}
@@ -385,13 +375,16 @@ export default function AIForecast() {
                   onChange={(e) => setProvider(e.target.value)}
                   className="soft-input w-full text-xs"
                 >
-                  <option value="mock">Engine Xác định (Deterministic Safe)</option>
+                  <option value="mock">Mô phỏng provider (không gọi LLM thật)</option>
                   <option value="groq">Groq (Llama 3.3 70B Versatile)</option>
                   <option value="openrouter">OpenRouter (Free Tier)</option>
                 </select>
               </div>
             </div>
 
+            {loadingCriteria && <LoadingState message="Đang tải tiêu chí..." />}
+            {criteriaError && <p role="alert">Không tải được tiêu chí. Kiểm tra kết nối và tải lại trang.</p>}
+            {!loadingCriteria && !criteriaError && !availableCriteria.length && <p role="status">Chưa có tiêu chí xác nhận. Liên hệ cán bộ quản lý quy chế.</p>}
             {/* Criteria Selection */}
             <div>
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">
@@ -399,7 +392,7 @@ export default function AIForecast() {
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-48 overflow-y-auto p-1">
                 {availableCriteria.map((c) => {
-                  const id = c.criteria_id || c.criterionId || c.id;
+                  const id = c.criteria_version_id;
                   const isChecked = selectedCriteriaIds.includes(id);
                   return (
                     <label
@@ -418,7 +411,7 @@ export default function AIForecast() {
                       />
                       <div className="flex-1 min-w-0">
                         <span className="font-bold text-slate-900 dark:text-slate-100 block truncate">
-                          {c.code || c.criterionCode}
+                          {c.criterion_code}
                         </span>
                         <span className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
                           {c.name || c.criterionName}
@@ -434,7 +427,7 @@ export default function AIForecast() {
             <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="submit"
-                disabled={evaluating}
+                disabled={evaluating || loadingCriteria || !!criteriaError || !selectedCriteriaIds.length}
                 className="soft-btn-primary text-xs px-6 py-2.5 font-semibold"
               >
                 {evaluating ? (
@@ -473,7 +466,7 @@ export default function AIForecast() {
                     ) : (
                       <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300 flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" />
-                        DỮ LIỆU ĐỒNG NHẤT
+                        {staleInfo?.isStale === false ? 'DỮ LIỆU ĐỒNG NHẤT' : 'CHƯA KIỂM TRA DỮ LIỆU ĐỔI'}
                       </span>
                     )}
                   </div>
@@ -651,6 +644,9 @@ export default function AIForecast() {
                               {explanation.explanationText}
                             </p>
 
+                            {explanation.isMock && <p role="status">Mô phỏng hoặc dự phòng; không phải LLM thật.</p>}
+                            {!explanation.isSufficientData && <p role="alert">Chưa đủ căn cứ kiểm chứng. Bổ sung nguồn xác nhận hoặc yêu cầu Hội đồng rà soát.</p>}
+                            {explanation.providerError && <p role="alert">Provider lỗi hoặc hết quota. Thử lại sau hoặc chuyển provider; kết quả tiêu chí vẫn được giữ.</p>}
                             {/* Citations List */}
                             {explanation.citations && explanation.citations.length > 0 && (
                               <div className="space-y-1.5 pt-2 border-t border-indigo-100 dark:border-indigo-900/60">
@@ -670,6 +666,8 @@ export default function AIForecast() {
                                         <span>
                                           {c.documentCode} — {c.articleNo || ''} {c.clauseNo || ''} (Trang {c.pageNo ?? 'N/A'})
                                         </span>
+                                        {c.sourceUrl && /^https?:\/\//i.test(c.sourceUrl) && <a className="block underline" href={c.sourceUrl} target="_blank" rel="noopener noreferrer">Mở tài liệu nguồn — phiên bản {c.versionNumber}</a>}
+                                        {!c.sourceUrl && <span className="block">Chưa có link nguồn; yêu cầu cán bộ cung cấp tài liệu gốc.</span>}
                                         {c.chunkHash && (
                                           <code className="block text-[9px] text-slate-400 mt-0.5 truncate">
                                             SHA-256: {c.chunkHash}

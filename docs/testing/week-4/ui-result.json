@@ -1,0 +1,11 @@
+{
+  "synthetic": true,
+  "states": [
+    "loading",
+    "criteria-error",
+    "quota",
+    "missing-data"
+  ],
+  "mobileWidth": 390,
+  "horizontalOverflow": false
+}

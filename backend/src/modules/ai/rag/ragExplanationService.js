@@ -34,6 +34,8 @@ export function verifyAndExtractCitations(aiResponse, availableChunks = []) {
     if (chunk) {
       validCitations.push({
         chunkId: chunk.chunkId,
+        versionId: chunk.versionId,
+        sourceUrl: chunk.sourceUrl,
         documentCode: chunk.documentCode,
         versionNumber: chunk.versionNumber,
         articleNo: chunk.articleNo,
@@ -152,39 +154,31 @@ HÃY GIẢI THÍCH KẾT QUẢ TRÊN DỰA TRÊN CÁC TRÍCH ĐOẠN ĐÃ CHO V�
       chunkHash: retrieval.chunks[0].chunkHash,
       version: PROMPT_VERSION,
     });
-  } catch (err) {
+  } catch {
     // Giữ kết quả khi provider lỗi (Nghiệm thu W4-Q3)
     const fallbackCitations = retrieval.chunks.map((c) => `[CHUNK_ID: ${c.chunkId}] ${c.articleNo || ''} ${c.clauseNo || ''}`).join(', ');
-    const fallbackText = `[THÔNG BÁO: AI PROVIDER GẶP SỰ CỐ / RATE LIMIT - ${err.message}]. Kết quả thẩm định tiêu chí có cấu trúc từ hệ thống vẫn được bảo toàn nguyên vẹn. Căn cứ theo trích đoạn quy chế ${fallbackCitations}, hồ sơ cần được Hội đồng rà soát trực tiếp.`;
+    const fallbackText = `[THÔNG BÁO: AI PROVIDER GẶP SỰ CỐ / RATE LIMIT]. Kết quả thẩm định tiêu chí có cấu trúc từ hệ thống vẫn được bảo toàn nguyên vẹn. Căn cứ theo trích đoạn quy chế ${fallbackCitations}, hồ sơ cần được Hội đồng rà soát trực tiếp.`;
     completion = {
       content: fallbackText,
       model: model || 'resilient-fallback',
       provider: forcedProvider || 'mock',
       isMock: true,
+      providerError: 'PROVIDER_UNAVAILABLE',
     };
   }
 
   // 5. Kiểm tra và trích xuất Citations hợp lệ
   const citations = verifyAndExtractCitations(completion.content, retrieval.chunks);
 
-  // Nếu LLM không gắn citation nào, tự động ghép trích đoạn tương đồng cao nhất làm căn cứ truy ngược
-  if (citations.length === 0 && retrieval.chunks.length > 0) {
-    const top = retrieval.chunks[0];
-    citations.push({
-      chunkId: top.chunkId,
-      documentCode: top.documentCode,
-      versionNumber: top.versionNumber,
-      articleNo: top.articleNo,
-      clauseNo: top.clauseNo,
-      pageNo: top.pageNo,
-      chunkHash: top.chunkHash,
-    });
-  }
+  // Never invent a citation for an uncited answer.
+  const ids = [...completion.content.matchAll(/\[CHUNK_ID:\s*(\d+)\]/gi)].map(m => Number(m[1]));
+  const verified = citations.length > 0 && ids.every(id => citations.some(c => Number(c.chunkId) === id));
 
   const result = {
-    isSufficientData: true,
-    explanationText: completion.content,
-    citations,
+    isSufficientData: verified,
+    explanationText: verified ? completion.content : 'Chưa đủ dữ liệu căn cứ kiểm chứng: câu trả lời thiếu citation hoặc chứa mã nguồn không hợp lệ. Yêu cầu Hội đồng rà soát.',
+    citations: verified ? citations : [],
+    providerError: completion.providerError || null,
     model: completion.model,
     provider: completion.provider,
     isMock: Boolean(completion.isMock),
@@ -206,7 +200,7 @@ HÃY GIẢI THÍCH KẾT QUẢ TRÊN DỰA TRÊN CÁC TRÍCH ĐOẠN ĐÃ CHO V�
       provider: result.provider,
       promptVersion: PROMPT_VERSION,
       retrievalVersion: RETRIEVAL_VERSION,
-      isSufficientData: true,
+      isSufficientData: result.isSufficientData,
     });
   }
 

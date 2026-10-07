@@ -2,6 +2,7 @@ import aiService from './aiService.js';
 import * as ragRetrievalService from './rag/ragRetrievalService.js';
 import * as ragExplanationService from './rag/ragExplanationService.js';
 import { z } from 'zod';
+import { ValidationError } from '../../utils/errors.js';
 
 const ok = (res, data, status = 200) =>
   res.status(status).json({ success: true, ...(data === undefined ? {} : { data }) });
@@ -151,7 +152,11 @@ export async function explainEvaluation(req, res, next) {
   try {
     const payload = explainSchema.parse(req.body);
     if (payload.runId) {
-      await aiService.getEvaluationRun(payload.runId, req.user);
+      const run = await aiService.getEvaluationRun(payload.runId, req.user);
+      const stored = run.criterionResults.find(c => c.criterionId === payload.criterionResult.criterionId);
+      if (!stored) throw new ValidationError('Tiêu chí không thuộc phiên đánh giá');
+      payload.criterionResult = stored;
+      payload.asOfDate = run.inputSnapshot.asOfDate;
     }
     const result = await ragExplanationService.explainEvaluationResult({
       ...payload,
