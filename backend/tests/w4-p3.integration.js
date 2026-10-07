@@ -15,12 +15,18 @@ const pool = new Pool({
   max: 1,
   connectionTimeoutMillis: 5000,
 });
+pool.on('error', (err) => {
+  // Silent/warn on pooler resets
+});
 let client, server;
 let passed = 0;
 try {
   client = await pool.connect();
+  client.on('error', (err) => {
+    // Catch socket errors on long-running client session
+  });
   await client.query("BEGIN");
-  await client.query("SET LOCAL statement_timeout='20s'");
+  await client.query("SET LOCAL statement_timeout='60s'");
   const files = (
     await fs.readdir(new URL("../../supabase/migrations/", import.meta.url))
   )

@@ -13,8 +13,10 @@ export function hashSha256(content) {
  */
 export function buildInputSnapshot({
   subject,
-  criterion,
-  documentVersion,
+  criterion = null,
+  documentVersion = null,
+  criteria = [],
+  documentVersions = [],
   records = [],
   asOfDate,
   rules = null,
@@ -39,34 +41,57 @@ export function buildInputSnapshot({
     }))
     .sort((a, b) => a.id - b.id);
 
+  const mapCriterion = (c) => {
+    if (!c) return null;
+    return {
+      criterionId: Number(c.criteriaVersionId || c.criterionId || c.id || 0),
+      criterionCode: c.criterionCode || c.code || '',
+      criterionName: c.name || c.criterionName || '',
+      targetType: c.targetType || c.target_type || 'INDIVIDUAL',
+      minThreshold: c.minThreshold !== undefined && c.minThreshold !== null ? Number(c.minThreshold) : null,
+      unitMetric: c.unitMetric || c.unit_metric || null,
+      isConfirmed: Boolean(c.isConfirmed ?? c.is_confirmed),
+      versionId: Number(c.versionId || c.version_id || 0),
+      rules: rules || c.rules || null,
+    };
+  };
+
+  const mapDocVersion = (d) => {
+    if (!d) return null;
+    return {
+      versionId: Number(d.versionId || d.version_id || 0),
+      versionNumber: d.versionNumber || d.version_number || '1.0',
+      sha256Hash: d.sha256Hash || d.sha256_hash || '',
+      isConfirmed: Boolean(d.isConfirmed ?? d.is_confirmed),
+      lhuApplicationStatus: d.lhuApplicationStatus || d.lhu_application_status || 'CONFIRMED_LHU_POLICY',
+      effectiveFrom: d.effectiveFrom || d.effective_from || null,
+      effectiveTo: d.effectiveTo || d.effective_to || null,
+    };
+  };
+
+  const primaryCrit = criterion || (criteria.length > 0 ? criteria[0] : {});
+  const primaryDoc = documentVersion || (documentVersions.length > 0 ? documentVersions[0] : {});
+
+  const allCriteria = (criteria.length > 0 ? criteria : (criterion ? [criterion] : []))
+    .map(mapCriterion)
+    .filter(Boolean);
+
+  const allDocVersions = (documentVersions.length > 0 ? documentVersions : (documentVersion ? [documentVersion] : []))
+    .map(mapDocVersion)
+    .filter(Boolean);
+
   const snapshot = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     snapshotDate: snapshotDate || new Date().toISOString(),
     asOfDate: asOfDate || new Date().toISOString().slice(0, 10),
     subject: {
       subjectType: subject.subjectType,
       subjectId: Number(subject.subjectId),
     },
-    criterion: {
-      criterionId: Number(criterion.criteriaVersionId || criterion.criterionId || criterion.id || 0),
-      criterionCode: criterion.criterionCode || criterion.code || '',
-      criterionName: criterion.name || criterion.criterionName || '',
-      targetType: criterion.targetType || criterion.target_type || 'INDIVIDUAL',
-      minThreshold: criterion.minThreshold !== undefined && criterion.minThreshold !== null ? Number(criterion.minThreshold) : null,
-      unitMetric: criterion.unitMetric || criterion.unit_metric || null,
-      isConfirmed: Boolean(criterion.isConfirmed ?? criterion.is_confirmed),
-      versionId: Number(criterion.versionId || criterion.version_id || 0),
-      rules: rules || null,
-    },
-    documentVersion: {
-      versionId: Number(documentVersion.versionId || documentVersion.version_id || 0),
-      versionNumber: documentVersion.versionNumber || documentVersion.version_number || '1.0',
-      sha256Hash: documentVersion.sha256Hash || documentVersion.sha256_hash || '',
-      isConfirmed: Boolean(documentVersion.isConfirmed ?? documentVersion.is_confirmed),
-      lhuApplicationStatus: documentVersion.lhuApplicationStatus || documentVersion.lhu_application_status || 'CONFIRMED_LHU_POLICY',
-      effectiveFrom: documentVersion.effectiveFrom || documentVersion.effective_from || null,
-      effectiveTo: documentVersion.effectiveTo || documentVersion.effective_to || null,
-    },
+    criterion: mapCriterion(primaryCrit) || {},
+    documentVersion: mapDocVersion(primaryDoc) || {},
+    criteria: allCriteria,
+    documentVersions: allDocVersions,
     records: normalizedRecords,
   };
 
@@ -75,6 +100,8 @@ export function buildInputSnapshot({
     subject: snapshot.subject,
     criterion: snapshot.criterion,
     documentVersion: snapshot.documentVersion,
+    criteria: snapshot.criteria,
+    documentVersions: snapshot.documentVersions,
     records: snapshot.records,
     asOfDate: snapshot.asOfDate,
   };

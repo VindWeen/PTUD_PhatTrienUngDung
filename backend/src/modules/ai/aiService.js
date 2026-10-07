@@ -420,11 +420,16 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
 
     // 4. Tạo input snapshot & SHA-256 hash
     const primaryCrit = criteriaList[0] || {};
-    const primaryDoc = (await this.regulations.findVersionById(client, primaryCrit.version_id)) || {};
+    const docVersions = await Promise.all(
+      criteriaList.map((c) => this.regulations.findVersionById(client, c.version_id))
+    );
+    const primaryDoc = docVersions[0] || {};
     const { snapshot, inputHash } = buildInputSnapshot({
       subject: { subjectType, subjectId },
       criterion: primaryCrit,
       documentVersion: primaryDoc,
+      criteria: criteriaList,
+      documentVersions: docVersions,
       records,
       asOfDate,
       rules,
@@ -582,6 +587,8 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
       subject: run.targetSubject,
       criterion: savedSnapshot.criterion || {},
       documentVersion: savedSnapshot.documentVersion || {},
+      criteria: savedSnapshot.criteria || [],
+      documentVersions: savedSnapshot.documentVersions || [],
       records: currentRecords,
       asOfDate: savedSnapshot.asOfDate,
       rules: savedSnapshot.criterion?.rules || null,
