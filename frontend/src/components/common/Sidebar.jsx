@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
   { to: '/award-applications', icon: Award, label: 'Hồ sơ đề nghị', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER'] },
-  { to: '/kpi', icon: Award, label: 'Mục tiêu / KPI', roles: ['LECTURER', 'UNIT_REPRESENTATIVE'] },
+  { to: '/kpi', icon: Award, label: 'Mục tiêu / KPI', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'] },
   { to: '/reports', icon: Award, label: 'Báo cáo / CSV', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
   { to: '/notifications', icon: Bell, label: 'Thông báo', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
   { to: '/awards', icon: Award, label: 'Khen thưởng', roles: ['RECORDS_OFFICER'] },

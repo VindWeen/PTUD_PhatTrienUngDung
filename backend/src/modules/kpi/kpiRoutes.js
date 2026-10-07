@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticate } from "../../middlewares/authenticate.js";
 import * as service from "./kpiService.js";
+import * as external from './externalService.js';
 import * as recommendations from './recommendationService.js';
 import { csvTemplate } from "./kpiSchemas.js";
 const router = Router();
@@ -17,6 +18,10 @@ const handle =
       next(e);
     }
   };
+router.get('/kpi/external', handle(req => external.list(req.user)));
+router.post('/kpi/external/mappings', handle(req => external.mapping(req.user,req.body),201));
+router.post('/kpi/external/runs', handle(req => external.sync(req.user,req.body),201));
+router.post('/kpi/external/records/:id/draft', handle(req => external.draft(req.user,req.params.id,req.body),201));
 router.get("/kpi/template.csv", (req, res) =>
   res
     .set("Cache-Control", "no-store")

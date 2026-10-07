@@ -8,6 +8,10 @@ function api(method, url, data, params) {
   return request({ method, url: `/kpi${url}`, data, params });
 }
 export const kpiApi = {
+  external: () => api('GET', '/external'),
+  externalMapping: data => api('POST', '/external/mappings',data),
+  externalRun: data => api('POST', '/external/runs',data),
+  externalDraft: (id,data) => api('POST', `/external/records/${id}/draft`,data),
   recommendations: (runId) => api('GET', '/recommendations', undefined, {runId}),
   generateRecommendations: (data) => api('POST', '/recommendations', data),
   recommendationDecision: (id, data) => api('POST', `/recommendations/${id}/decision`, data),

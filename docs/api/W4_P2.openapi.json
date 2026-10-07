@@ -1,0 +1,371 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "W4-P2 simulated KPI connector",
+    "version": "W4-P2-v1",
+    "description": "Simulation only. Not integrated with a real external system. Source contract is supplementary to W3-Q4 AI evaluation contract."
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "paths": {
+    "/kpi/external": {
+      "get": {
+        "summary": "ADMIN logs; lecturer own source revisions",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          },
+          "400": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          },
+          "401": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          },
+          "403": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          },
+          "409": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          }
+        }
+      }
+    },
+    "/kpi/external/mappings": {
+      "post": {
+        "summary": "ADMIN immutable employee code mapping",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "employeeId",
+                  "lecturerId"
+                ],
+                "properties": {
+                  "employeeId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "lecturerId": {
+                    "oneOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      {
+                        "type": "string",
+                        "pattern": "^[1-9][0-9]*$"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          },
+          "400": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          },
+          "401": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          },
+          "403": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          },
+          "409": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          }
+        }
+      }
+    },
+    "/kpi/external/runs": {
+      "post": {
+        "summary": "ADMIN pull or retry; inspect returned run status",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "retryOf": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          },
+          "400": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          },
+          "401": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          },
+          "403": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          },
+          "409": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          }
+        }
+      }
+    },
+    "/kpi/external/records/{id}/draft": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "oneOf": [
+              {
+                "type": "integer",
+                "minimum": 1
+              },
+              {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              }
+            ]
+          }
+        }
+      ],
+      "post": {
+        "summary": "Owner confirms separate DRAFT; never updates VERIFIED",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "version",
+                  "achievementTypeId"
+                ],
+                "properties": {
+                  "version": {
+                    "oneOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      {
+                        "type": "string",
+                        "pattern": "^[1-9][0-9]*$"
+                      }
+                    ]
+                  },
+                  "achievementTypeId": {
+                    "oneOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      {
+                        "type": "string",
+                        "pattern": "^[1-9][0-9]*$"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          },
+          "400": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          },
+          "401": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          },
+          "403": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          },
+          "409": {
+            "description": "Existing success/error envelope; see EXTERNAL_KPI_W4_P2.md"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "SourceRecord": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "externalId",
+          "employeeId",
+          "status",
+          "version",
+          "isSimulation",
+          "code",
+          "title",
+          "measureUnit",
+          "periodStart",
+          "periodEnd",
+          "target",
+          "actual",
+          "sourceNote"
+        ],
+        "properties": {
+          "externalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "employeeId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "FINAL"
+            ]
+          },
+          "version": {
+            "oneOf": [
+              {
+                "type": "integer",
+                "minimum": 1
+              },
+              {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              }
+            ]
+          },
+          "isSimulation": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "title": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 255
+          },
+          "measureUnit": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "periodStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "periodEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "target": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000000000
+          },
+          "actual": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000000000
+          },
+          "plan": {
+            "type": "string",
+            "maxLength": 4000,
+            "default": ""
+          },
+          "sourceNote": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        }
+      },
+      "SourceEnvelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "contractVersion",
+          "isSimulation",
+          "items"
+        ],
+        "properties": {
+          "contractVersion": {
+            "type": "string",
+            "enum": [
+              "W4-P2-v1"
+            ]
+          },
+          "isSimulation": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "items": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "$ref": "#/components/schemas/SourceRecord"
+            }
+          }
+        }
+      }
+    }
+  }
+}
