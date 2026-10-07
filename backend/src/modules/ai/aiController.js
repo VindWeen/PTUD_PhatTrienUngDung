@@ -28,6 +28,7 @@ const evaluateStructuredSchema = z.object({
   kpiGoalId: z.coerce.number().int().positive().optional(),
   asOfDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   provider: z.enum(['groq', 'openrouter', 'mock']).optional(),
+  forcedProvider: z.enum(['groq', 'openrouter', 'mock']).optional(),
   model: z.string().optional(),
 }).strict();
 
@@ -57,7 +58,7 @@ export async function evaluateStructured(req, res, next) {
     const result = await aiService.evaluateStructured(
       {
         ...payload,
-        forcedProvider: payload.provider,
+        forcedProvider: payload.forcedProvider || payload.provider,
       },
       req.user
     );
@@ -149,6 +150,9 @@ const explainSchema = z.object({
 export async function explainEvaluation(req, res, next) {
   try {
     const payload = explainSchema.parse(req.body);
+    if (payload.runId) {
+      await aiService.getEvaluationRun(payload.runId, req.user);
+    }
     const result = await ragExplanationService.explainEvaluationResult({
       ...payload,
       forcedProvider: payload.provider,
@@ -158,4 +162,15 @@ export async function explainEvaluation(req, res, next) {
     next(err);
   }
 }
+
+export async function checkEvaluationStale(req, res, next) {
+  try {
+    const runId = req.params.runId;
+    const result = await aiService.checkEvaluationStale(runId, req.user);
+    ok(res, result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 

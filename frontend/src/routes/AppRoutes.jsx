@@ -46,7 +46,7 @@ export default function AppRoutes() {
           <Route path="reports" element={<RequireRole roles={APP_ROLES}><Reports /></RequireRole>} />
           <Route path="me/dashboard" element={<RequireRole roles={APP_ROLES}><Dashboard /></RequireRole>} />
           <Route path="me/profile" element={<RequireRole roles={PROFILE_ROLES}><ProfilePortfolio /></RequireRole>} />
-          <Route path="me/ai-forecast" element={<RequireRole roles={PROFILE_ROLES}><AIForecast /></RequireRole>} />
+          <Route path="me/ai-forecast" element={<RequireRole roles={APP_ROLES}><AIForecast /></RequireRole>} />
           <Route path="organizations" element={<RequireRole roles={APP_ROLES}><Organizations /></RequireRole>} />
           <Route path="achievements" element={<RequireRole roles={APP_ROLES}><Achievements /></RequireRole>} />
           <Route path="regulations" element={<RequireRole roles={APP_ROLES}><Regulations /></RequireRole>} />

@@ -141,15 +141,28 @@ ${chunkSnippets}
 
 HÃY GIẢI THÍCH KẾT QUẢ TRÊN DỰA TRÊN CÁC TRÍCH ĐOẠN ĐÃ CHO VÀ KÈM MÃ [CHUNK_ID: <id>]:`;
 
-  // 4. Gọi LLM Provider (Groq / OpenRouter / Mock)
-  const completion = await aiService.completeWithRetry({
-    prompt: userPrompt,
-    systemPrompt,
-    model,
-    forcedProvider,
-    chunkHash: retrieval.chunks[0].chunkHash,
-    version: PROMPT_VERSION,
-  });
+  // 4. Gọi LLM Provider (Groq / OpenRouter / Mock) - Bảo toàn kết quả khi provider lỗi
+  let completion;
+  try {
+    completion = await aiService.completeWithRetry({
+      prompt: userPrompt,
+      systemPrompt,
+      model,
+      forcedProvider,
+      chunkHash: retrieval.chunks[0].chunkHash,
+      version: PROMPT_VERSION,
+    });
+  } catch (err) {
+    // Giữ kết quả khi provider lỗi (Nghiệm thu W4-Q3)
+    const fallbackCitations = retrieval.chunks.map((c) => `[CHUNK_ID: ${c.chunkId}] ${c.articleNo || ''} ${c.clauseNo || ''}`).join(', ');
+    const fallbackText = `[THÔNG BÁO: AI PROVIDER GẶP SỰ CỐ / RATE LIMIT - ${err.message}]. Kết quả thẩm định tiêu chí có cấu trúc từ hệ thống vẫn được bảo toàn nguyên vẹn. Căn cứ theo trích đoạn quy chế ${fallbackCitations}, hồ sơ cần được Hội đồng rà soát trực tiếp.`;
+    completion = {
+      content: fallbackText,
+      model: model || 'resilient-fallback',
+      provider: forcedProvider || 'mock',
+      isMock: true,
+    };
+  }
 
   // 5. Kiểm tra và trích xuất Citations hợp lệ
   const citations = verifyAndExtractCitations(completion.content, retrieval.chunks);

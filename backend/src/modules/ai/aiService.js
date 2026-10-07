@@ -477,11 +477,132 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
   }
 
   async listEvaluations(filters = {}, user, client = null) {
-    const { subjectType, subjectId } = filters;
-    if (subjectId) {
-      await this.authorizeSubjectAccess(user, subjectType || 'LECTURER', subjectId, client);
+    if (!user) throw new ForbiddenError('Yêu cầu xác thực tài khoản');
+    const roles = await getActiveRoles(user.userId);
+    const roleCodes = roles.map((r) => (typeof r === 'string' ? r : r.Code || r.code));
+    const db = client ? client.query.bind(client) : query;
+
+    if (roleCodes.includes('ADMIN') || roleCodes.includes('RECORDS_OFFICER')) {
+      const { subjectType, subjectId } = filters;
+      if (subjectId) {
+        await this.authorizeSubjectAccess(user, subjectType || 'LECTURER', subjectId, client);
+      }
+      return this.evaluationRepo.listEvaluationRuns(client, filters);
     }
-    return this.evaluationRepo.listEvaluationRuns(client, filters);
+
+    if (filters.subjectId) {
+      await this.authorizeSubjectAccess(user, filters.subjectType || 'LECTURER', filters.subjectId, client);
+      return this.evaluationRepo.listEvaluationRuns(client, filters);
+    }
+
+    const lecRes = await db('SELECT lecturer_id FROM app.lecturers WHERE user_id = $1', [user.userId]);
+    const lecturerId = lecRes.rows[0]?.lecturer_id;
+    if (lecturerId) {
+      return this.evaluationRepo.listEvaluationRuns(client, {
+        ...filters,
+        subjectType: 'LECTURER',
+        subjectId: lecturerId,
+      });
+    }
+
+    return [];
+  }
+
+  async checkEvaluationStale(runId, user, client = null) {
+    if (!runId) throw new ValidationError('runId là bắt buộc');
+    const run = await this.evaluationRepo.getEvaluationRunById(client, runId);
+    if (!run) throw new NotFoundError(`Không tìm thấy phiên đánh giá #${runId}`);
+    await this.authorizeSubjectAccess(user, run.targetSubject.subjectType, run.targetSubject.subjectId, client);
+
+    const db = client ? client.query.bind(client) : query;
+    const { subjectType, subjectId } = run.targetSubject;
+
+    // Lấy lại các records hiện tại của chủ thể
+    const achSql = `
+      SELECT a.achievement_id AS id,
+             'ACHIEVEMENT' AS type,
+             a.lecturer_id, a.unit_id,
+             COALESCE(a.recognition_year, EXTRACT(YEAR FROM a.achievement_date)::int) AS year,
+             a.status,
+             a.replaces_achievement_id AS "replacesRecordId",
+             (
+               SELECT json_agg(json_build_object(
+                 'id', ef.evidence_file_id,
+                 'sha256', ef.sha256_hash,
+                 'name', ef.original_file_name
+               ))
+               FROM app.evidences e
+               JOIN app.evidence_files ef ON ef.evidence_id = e.evidence_id
+               WHERE e.achievement_id = a.achievement_id AND e.is_removed = FALSE
+             ) AS files
+      FROM app.achievements a
+      WHERE ${subjectType === 'LECTURER' ? 'a.lecturer_id = $1' : 'a.unit_id = $1'}
+        AND a.status IN ('VERIFIED', 'RECORDED', 'REVOKED', 'CANCELLED')
+    `;
+    const achRes = await db(achSql, [subjectId]);
+
+    const awardSql = `
+      SELECT r.record_id AS id,
+             'AWARD_RECORD' AS type,
+             r.lecturer_id, r.unit_id,
+             r.recognition_year AS year,
+             r.status,
+             r.replaces_award_record_id AS "replacesRecordId",
+             (
+               SELECT json_agg(json_build_object(
+                 'id', adf.decision_file_id,
+                 'sha256', adf.sha256_hash,
+                 'name', adf.original_file_name
+               ))
+               FROM app.award_decision_files adf
+               WHERE adf.decision_id = r.decision_id
+             ) AS files
+      FROM app.award_records r
+      WHERE ${subjectType === 'LECTURER' ? 'r.lecturer_id = $1' : 'r.unit_id = $1'}
+        AND r.status IN ('RECORDED', 'REVOKED')
+    `;
+    const awardRes = await db(awardSql, [subjectId]);
+
+    const mapRow = (r) => ({
+      id: Number(r.id),
+      type: r.type,
+      subjectId: Number(subjectType === 'LECTURER' ? r.lecturer_id : r.unit_id),
+      year: Number(r.year),
+      status: r.status,
+      replacesRecordId: r.replacesRecordId ? Number(r.replacesRecordId) : null,
+      file: Array.isArray(r.files) && r.files[0] ? r.files[0] : null,
+      evidenceFiles: Array.isArray(r.files) ? r.files : [],
+      hasEvidence: Array.isArray(r.files) && r.files.length > 0,
+    });
+
+    const currentRecords = [...achRes.rows.map(mapRow), ...awardRes.rows.map(mapRow)];
+    const savedSnapshot = run.inputSnapshot || {};
+
+    const { inputHash: currentHash } = buildInputSnapshot({
+      subject: run.targetSubject,
+      criterion: savedSnapshot.criterion || {},
+      documentVersion: savedSnapshot.documentVersion || {},
+      records: currentRecords,
+      asOfDate: savedSnapshot.asOfDate,
+      rules: savedSnapshot.criterion?.rules || null,
+    });
+
+    const isStale = currentHash !== run.inputHash;
+    if (isStale !== run.isStale) {
+      await this.evaluationRepo.markRunStale(client, runId, isStale);
+    }
+
+    return {
+      runId,
+      isStale,
+      savedHash: run.inputHash,
+      currentHash,
+      totalSavedRecords: savedSnapshot.records?.length || 0,
+      totalCurrentRecords: currentRecords.length,
+      reason: isStale
+        ? 'Dữ liệu hồ sơ thành tích/khen thưởng của chủ thể đã thay đổi kể từ phiên đánh giá này'
+        : 'Dữ liệu hồ sơ vẫn đồng nhất với thời điểm đánh giá',
+    };
   }
 }
 

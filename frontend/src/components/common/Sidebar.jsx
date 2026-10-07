@@ -14,7 +14,7 @@ const navItems = [
   { to: '/achievements', icon: Award, label: 'Thành tích', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
   { to: '/regulations', icon: BookOpen, label: 'Kho quy định', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
   { to: '/me/profile', icon: User, label: 'Hồ sơ năng lực', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER'] },
-  { to: '/me/ai-forecast', icon: Cpu, label: 'Phân tích & Dự báo AI', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER'] },
+  { to: '/me/ai-forecast', icon: Cpu, label: 'Phân tích & Thẩm định AI', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
   { to: '/organizations', icon: Building2, label: 'Tổ chức', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
 ];
 

@@ -18,36 +18,10 @@ export function buildInputSnapshot({
   records = [],
   asOfDate,
   rules = null,
+  snapshotDate = null,
 }) {
-  const snapshot = {
-    schemaVersion: 1,
-    snapshotDate: new Date().toISOString(),
-    asOfDate: asOfDate || new Date().toISOString().slice(0, 10),
-    subject: {
-      subjectType: subject.subjectType,
-      subjectId: Number(subject.subjectId),
-    },
-    criterion: {
-      criterionId: Number(criterion.criteriaVersionId || criterion.criterionId),
-      criterionCode: criterion.criterionCode,
-      criterionName: criterion.name || criterion.criterionName,
-      targetType: criterion.targetType || criterion.target_type,
-      minThreshold: criterion.minThreshold !== undefined ? Number(criterion.minThreshold) : null,
-      unitMetric: criterion.unitMetric || criterion.unit_metric || null,
-      isConfirmed: Boolean(criterion.isConfirmed ?? criterion.is_confirmed),
-      versionId: Number(criterion.versionId || criterion.version_id),
-      rules: rules || null,
-    },
-    documentVersion: {
-      versionId: Number(documentVersion.versionId || documentVersion.version_id),
-      versionNumber: documentVersion.versionNumber || documentVersion.version_number,
-      sha256Hash: documentVersion.sha256Hash || documentVersion.sha256_hash,
-      isConfirmed: Boolean(documentVersion.isConfirmed ?? documentVersion.is_confirmed),
-      lhuApplicationStatus: documentVersion.lhuApplicationStatus || documentVersion.lhu_application_status,
-      effectiveFrom: documentVersion.effectiveFrom || documentVersion.effective_from,
-      effectiveTo: documentVersion.effectiveTo || documentVersion.effective_to || null,
-    },
-    records: records.map((r) => ({
+  const normalizedRecords = records
+    .map((r) => ({
       id: Number(r.id || r.achievementId || r.recordId),
       type: r.type || (r.recordId ? 'AWARD_RECORD' : 'ACHIEVEMENT'),
       subjectId: Number(r.subjectId || r.lecturerId || r.unitId),
@@ -62,10 +36,49 @@ export function buildInputSnapshot({
           }
         : null,
       hasEvidence: Boolean(r.file || (r.evidenceFiles && r.evidenceFiles.length > 0) || r.hasEvidence),
-    })),
+    }))
+    .sort((a, b) => a.id - b.id);
+
+  const snapshot = {
+    schemaVersion: 1,
+    snapshotDate: snapshotDate || new Date().toISOString(),
+    asOfDate: asOfDate || new Date().toISOString().slice(0, 10),
+    subject: {
+      subjectType: subject.subjectType,
+      subjectId: Number(subject.subjectId),
+    },
+    criterion: {
+      criterionId: Number(criterion.criteriaVersionId || criterion.criterionId || criterion.id || 0),
+      criterionCode: criterion.criterionCode || criterion.code || '',
+      criterionName: criterion.name || criterion.criterionName || '',
+      targetType: criterion.targetType || criterion.target_type || 'INDIVIDUAL',
+      minThreshold: criterion.minThreshold !== undefined && criterion.minThreshold !== null ? Number(criterion.minThreshold) : null,
+      unitMetric: criterion.unitMetric || criterion.unit_metric || null,
+      isConfirmed: Boolean(criterion.isConfirmed ?? criterion.is_confirmed),
+      versionId: Number(criterion.versionId || criterion.version_id || 0),
+      rules: rules || null,
+    },
+    documentVersion: {
+      versionId: Number(documentVersion.versionId || documentVersion.version_id || 0),
+      versionNumber: documentVersion.versionNumber || documentVersion.version_number || '1.0',
+      sha256Hash: documentVersion.sha256Hash || documentVersion.sha256_hash || '',
+      isConfirmed: Boolean(documentVersion.isConfirmed ?? documentVersion.is_confirmed),
+      lhuApplicationStatus: documentVersion.lhuApplicationStatus || documentVersion.lhu_application_status || 'CONFIRMED_LHU_POLICY',
+      effectiveFrom: documentVersion.effectiveFrom || documentVersion.effective_from || null,
+      effectiveTo: documentVersion.effectiveTo || documentVersion.effective_to || null,
+    },
+    records: normalizedRecords,
   };
 
-  const inputHash = hashSha256(JSON.stringify(snapshot));
+  // Tính inputHash dựa trên toàn bộ dữ liệu nội dung của input (không phụ thuộc thời gian tạo snapshotDate)
+  const dataToHash = {
+    subject: snapshot.subject,
+    criterion: snapshot.criterion,
+    documentVersion: snapshot.documentVersion,
+    records: snapshot.records,
+    asOfDate: snapshot.asOfDate,
+  };
+  const inputHash = hashSha256(JSON.stringify(dataToHash));
   return { snapshot, inputHash };
 }
 

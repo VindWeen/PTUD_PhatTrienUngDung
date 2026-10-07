@@ -13,6 +13,7 @@ router.post('/ai/evaluate-criterion', aiController.evaluateCriterion);
 // W4-Q1 Structured Criteria Evaluation & History endpoints
 router.post('/ai/evaluations/structured', aiController.evaluateStructured);
 router.get('/ai/evaluations/:runId', aiController.getEvaluationRun);
+router.get('/ai/evaluations/:runId/stale-check', aiController.checkEvaluationStale);
 router.get('/ai/evaluations', aiController.listEvaluationRuns);
 
 // W4-Q2 RAG & Explanation with Citations endpoints
