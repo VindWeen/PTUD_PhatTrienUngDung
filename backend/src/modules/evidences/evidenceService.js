@@ -5,6 +5,7 @@ import {
   UnauthorizedError,
   OutOfScopeError,
   ConflictError,
+  NotFoundError,
 } from '../../utils/errors.js';
 import { recordAuditLog } from '../audit/auditService.js';
 import { isUnitInUserScope, getActiveRoles } from '../auth/authRepository.js';
@@ -62,6 +63,13 @@ export class EvidenceService {
    * Kiểm tra quyền truy cập/chỉnh sửa của người dùng đối với hồ sơ thành tích
    */
   async _assertCanModifyAchievement(achievement, user) {
+    if (!user || !user.userId) {
+      throw new UnauthorizedError('Yêu cầu xác thực tài khoản');
+    }
+    if (!achievement) {
+      throw new NotFoundError('Hồ sơ thành tích không tồn tại');
+    }
+
     // Kiểm tra trạng thái hồ sơ: Chỉ DRAFT và NEED_CORRECTION được phép thêm/sửa minh chứng (VERIFIED khóa sửa/file)
     const allowedStatuses = ['DRAFT', 'NEED_CORRECTION'];
     if (!allowedStatuses.includes(achievement.status)) {
@@ -100,13 +108,21 @@ export class EvidenceService {
    * Kiểm tra quyền xem của người dùng đối với hồ sơ thành tích
    */
   async _assertCanViewAchievement(achievement, user) {
+    if (!user || !user.userId) {
+      throw new UnauthorizedError('Yêu cầu xác thực tài khoản để xem hoặc tải minh chứng');
+    }
+    if (!achievement) {
+      throw new NotFoundError('Hồ sơ thành tích không tồn tại');
+    }
+
     // Hỗ trợ kiểm thử đơn vị hồi quy legacy synthetic nếu không có id thực thể
-    if (!achievement.achievementId && !achievement.status && (user?.roles || []).includes('RECORDS_OFFICER') && !achievement.strictScope) {
+    if (!achievement.achievementId && !achievement.status && (await this._getUserRoles(user)).includes('RECORDS_OFFICER') && !achievement.strictScope) {
       return true;
     }
 
     const lecturerUserId = achievement.lecturer?.userId || achievement.lecturerUserId;
     const unitId = achievement.unitId || achievement.organizationUnitId;
+    const contextUnitId = achievement.contextUnitId || unitId;
 
     // Giảng viên chủ hồ sơ
     if (lecturerUserId && lecturerUserId === user?.userId) {
@@ -121,17 +137,17 @@ export class EvidenceService {
       }
     }
 
-    // Manager hoặc RecordsOfficer: Phải kiểm tra phân quyền & phạm vi Scope từ DB (chỉ khi có contextUnitId)
-    if (achievement.contextUnitId && user?.userId) {
+    // Manager hoặc RecordsOfficer: Phải kiểm tra phân quyền & phạm vi Scope từ DB (khi có contextUnitId)
+    if (contextUnitId && user?.userId) {
       const roles = await this._getUserRoles(user);
 
       if (roles.includes('MANAGER')) {
-        const inScope = await this.scopeChecker(user.userId, achievement.contextUnitId, 'MANAGER');
+        const inScope = await this.scopeChecker(user.userId, contextUnitId, 'MANAGER');
         if (inScope) return true;
       }
 
       if (roles.includes('RECORDS_OFFICER')) {
-        const inScope = await this.scopeChecker(user.userId, achievement.contextUnitId, 'RECORDS_OFFICER');
+        const inScope = await this.scopeChecker(user.userId, contextUnitId, 'RECORDS_OFFICER');
         if (inScope) return true;
       }
     }
@@ -148,7 +164,7 @@ export class EvidenceService {
     }
 
     // 1. Kiểm tra tồn tại hồ sơ thành tích
-    const achievement = await achievementRepository.findAchievementById(achievementId);
+    const achievement = await this.achievementRepo.findAchievementById(achievementId);
     if (!achievement) {
       throw new ValidationError(`Hồ sơ thành tích #${achievementId} không tồn tại`, {
         achievementId: ['Hồ sơ thành tích không tìm thấy'],
@@ -180,7 +196,7 @@ export class EvidenceService {
       await client.query('BEGIN');
 
       // Tạo bản ghi danh mục minh chứng (app.evidences)
-      const evidenceRecord = await evidenceRepository.createEvidenceRecord(
+      const evidenceRecord = await this.evidenceRepo.createEvidenceRecord(
         {
           achievementId,
           title: validatedBody.title,
@@ -191,7 +207,7 @@ export class EvidenceService {
       );
 
       // Tạo bản ghi tệp tin phiên bản 1 (app.evidence_files)
-      const fileRecord = await evidenceRepository.createEvidenceFileRecord(
+      const fileRecord = await this.evidenceRepo.createEvidenceFileRecord(
         {
           evidenceId: evidenceRecord.evidenceId,
           versionNo: 1,
@@ -252,7 +268,7 @@ export class EvidenceService {
     }
 
     // 1. Kiểm tra tồn tại danh mục minh chứng
-    const evidence = await evidenceRepository.findEvidenceById(evidenceId);
+    const evidence = await this.evidenceRepo.findEvidenceById(evidenceId);
     if (!evidence || evidence.isRemoved) {
       throw new ValidationError(`Minh chứng #${evidenceId} không tồn tại hoặc đã bị xóa`, {
         evidenceId: ['Minh chứng không tìm thấy'],
@@ -260,14 +276,17 @@ export class EvidenceService {
     }
 
     // 2. Lấy thông tin thành tích để kiểm tra quyền và trạng thái
-    const achievement = await achievementRepository.findAchievementById(evidence.achievementId);
+    const achievement = await this.achievementRepo.findAchievementById(evidence.achievementId);
+    if (!achievement) {
+      throw new ValidationError(`Hồ sơ thành tích #${evidence.achievementId} không tồn tại`);
+    }
     await this._assertCanModifyAchievement(achievement, user);
 
     // 3. Validate tệp tin mới
     const fileMeta = validateUploadedFile(file);
 
     // 4. Xác định version_no tiếp theo
-    const currentMaxVersion = await evidenceRepository.getLatestVersionNo(evidenceId);
+    const currentMaxVersion = await this.evidenceRepo.getLatestVersionNo(evidenceId);
     const nextVersionNo = currentMaxVersion + 1;
 
     // 5. Chuẩn bị lưu trữ tệp vật lý
@@ -285,7 +304,7 @@ export class EvidenceService {
     try {
       await client.query('BEGIN');
 
-      const fileRecord = await evidenceRepository.createEvidenceFileRecord(
+      const fileRecord = await this.evidenceRepo.createEvidenceFileRecord(
         {
           evidenceId,
           versionNo: nextVersionNo,
@@ -337,12 +356,15 @@ export class EvidenceService {
       throw new UnauthorizedError('Yêu cầu đăng nhập để xóa minh chứng');
     }
 
-    const evidence = await evidenceRepository.findEvidenceById(evidenceId);
+    const evidence = await this.evidenceRepo.findEvidenceById(evidenceId);
     if (!evidence || evidence.isRemoved) {
       throw new ValidationError(`Minh chứng #${evidenceId} không tồn tại hoặc đã bị xóa`);
     }
 
-    const achievement = await achievementRepository.findAchievementById(evidence.achievementId);
+    const achievement = await this.achievementRepo.findAchievementById(evidence.achievementId);
+    if (!achievement) {
+      throw new ValidationError(`Hồ sơ thành tích #${evidence.achievementId} không tồn tại`);
+    }
     await this._assertCanModifyAchievement(achievement, user);
 
     const pool = getPool();
@@ -383,14 +405,14 @@ export class EvidenceService {
    * Lấy danh sách minh chứng của một hồ sơ thành tích
    */
   async getEvidencesByAchievementId({ achievementId, user }) {
-    const achievement = await achievementRepository.findAchievementById(achievementId);
+    const achievement = await this.achievementRepo.findAchievementById(achievementId);
     if (!achievement) {
       throw new ValidationError(`Hồ sơ thành tích #${achievementId} không tồn tại`);
     }
 
     await this._assertCanViewAchievement(achievement, user);
 
-    const evidences = await evidenceRepository.getEvidencesByAchievementId(achievementId);
+    const evidences = await this.evidenceRepo.getEvidencesByAchievementId(achievementId);
     return evidences.map((ev) => ({
       ...ev,
       latestDownloadUrl: ev.latestFileId
@@ -407,7 +429,7 @@ export class EvidenceService {
       throw new UnauthorizedError('Yêu cầu đăng nhập để tải tệp minh chứng');
     }
 
-    const fileDetail = await evidenceRepository.findEvidenceFileDetail(evidenceFileId);
+    const fileDetail = await this.evidenceRepo.findEvidenceFileDetail(evidenceFileId);
     if (!fileDetail) {
       throw new ValidationError(`Tệp tin minh chứng #${evidenceFileId} không tồn tại`, {
         evidenceFileId: ['Tệp tin không tìm thấy trong hệ thống'],
