@@ -165,9 +165,13 @@ export function evaluateStructuredCriterion({
   // 4. Kiểm tra cửa sổ hiệu lực của Văn bản quy định
   const docEffectiveFrom = documentVersion.effectiveFrom || documentVersion.effective_from;
   const docEffectiveTo = documentVersion.effectiveTo || documentVersion.effective_to;
+  // pg DATE is a local-midnight Date, not a UTC timestamp: preserve its calendar day.
+  const isoDay = value => value instanceof Date
+    ? `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`
+    : String(value).slice(0, 10);
   if (
-    (docEffectiveFrom && asOfDate < String(docEffectiveFrom).slice(0, 10)) ||
-    (docEffectiveTo && asOfDate > String(docEffectiveTo).slice(0, 10))
+    (docEffectiveFrom && asOfDate < isoDay(docEffectiveFrom)) ||
+    (docEffectiveTo && asOfDate > isoDay(docEffectiveTo))
   ) {
     issues.add('OUT_OF_EFFECTIVE_WINDOW');
   }

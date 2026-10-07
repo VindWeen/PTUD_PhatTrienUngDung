@@ -5,6 +5,9 @@
   "main": "src/server.js",
   "type": "module",
   "scripts": {
+    "test:w4-p1": "node --test tests/w4-p1.test.js",
+    "test:w4-p1:integration": "node tests/w4-p1.integration.js",
+    "test:w4-p1:real-provider": "node tests/w4-p1.real-provider.js",
     "test:w4-q3:integration": "node --test tests/w4-q3.integration.js",
     "test:w4-q2": "node --test tests/w4-q2.test.js",
     "test:w4-q2:integration": "node --test tests/w4-q2.integration.js",

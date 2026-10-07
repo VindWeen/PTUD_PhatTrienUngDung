@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticate } from "../../middlewares/authenticate.js";
 import * as service from "./kpiService.js";
+import * as recommendations from './recommendationService.js';
 import { csvTemplate } from "./kpiSchemas.js";
 const router = Router();
 router.use("/kpi", authenticate);
@@ -23,6 +24,9 @@ router.get("/kpi/template.csv", (req, res) =>
     .type("text/csv")
     .send("\uFEFF" + csvTemplate),
 );
+router.post('/kpi/recommendations', handle(req => recommendations.generate(req.user, req.body), 201));
+router.get('/kpi/recommendations', handle(req => recommendations.list(req.user, req.query.runId)));
+router.post('/kpi/recommendations/:id/decision', handle(req => recommendations.decide(req.user, req.params.id, req.body)));
 router.get(
   "/kpi/catalogs",
   handle((req) => service.catalogs(req.user)),

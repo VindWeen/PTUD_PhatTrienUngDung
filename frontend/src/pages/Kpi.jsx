@@ -21,6 +21,7 @@ import {
   Check,
 } from 'lucide-react';
 import { kpiApi } from '../services/kpiApi';
+import KpiRecommendations from '../components/KpiRecommendations';
 
 const empty = {
   code: '',
@@ -167,6 +168,7 @@ export default function Kpi() {
         </div>
       )}
 
+      <KpiRecommendations onAccepted={load} />
       {/* 2. Tab Navigation (Subject Switcher) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-700 pb-2">
         <div className="flex items-center gap-2">
