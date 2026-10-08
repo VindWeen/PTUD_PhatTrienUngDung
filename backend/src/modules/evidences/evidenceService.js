@@ -51,10 +51,10 @@ export class EvidenceService {
         if (Array.isArray(active)) {
           return active.map((r) => (typeof r === 'string' ? r : r.Code || r.code));
         }
-      } catch (err) {}
-    }
-    if (Array.isArray(user?.roles)) {
-      return user.roles.map((r) => (typeof r === 'string' ? r : r.code || r.Code));
+      } catch (err) {
+        // Role lookup failures must never resurrect stale roles from a JWT.
+        throw err;
+      }
     }
     return [];
   }

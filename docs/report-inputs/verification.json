@@ -1,0 +1,41 @@
+{
+  "task": "W5-P4",
+  "dateLocal": "2026-10-08",
+  "timezone": "Asia/Saigon",
+  "baselineCommit": "37a381e18dd6f07d63dcc55176f111a8f035b179",
+  "codeVersion": "baseline plus uncommitted W5-P4 evidenceService and regression diff; hashes in candidate-manifest.json",
+  "checks": [
+    {
+      "command": "node --test backend/tests/w5-q1.test.js backend/tests/w2-q2.test.js",
+      "phase": "before fix",
+      "exitCode": 0,
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "command": "node --test backend/tests/w5-p4.test.js backend/tests/w5-q1.test.js backend/tests/w2-q2.test.js",
+      "phase": "after fix",
+      "exitCode": 0,
+      "passed": 13,
+      "failed": 0,
+      "durationMs": 1759.3941,
+      "method": "Unit/DI regressions; some existing setup uses real DB. Not restored HTTP acceptance."
+    },
+    {
+      "command": "node backend/tests/w5-p3.integration.js",
+      "localEnv": "W5_P3_ENV_FILE=backend/.env; W5_P3_BACKUP_DIR=backups/w5p3_http",
+      "startedAt": "2026-10-08T15:53:30.264Z",
+      "finishedAt": "2026-10-08T15:53:47.727Z",
+      "method": "Real Supabase, random isolated migration/seed and restore schemas; finally cleanup, no cleanup failure reported",
+      "exitCode": 1,
+      "passedStages": ["migrateUp + seedDatabase", "5 seed-account HTTP password logins", "restore DDL"],
+      "failure": {"sqlstate": "42703", "message": "column verified_by of relation achievements does not exist"},
+      "notRun": ["restored storage hash acceptance", "restored HTTP owner download", "restored HTTP anonymous and outside-scope denial", "award decision restored HTTP download"],
+      "localOnlyEvidence": "output/w5-p4/restore-local.log and output/w5-p3/b8f8285c397a/result.json"
+    }
+  ],
+  "acceptance": "BLOCKED_Q3_RESTORE",
+  "remotePr": "NOT_VERIFIED; chat artifacts empty",
+  "aiAccuracyClaim": "NONE",
+  "externalKpiSource": "SIMULATED; not live institutional KPI"
+}

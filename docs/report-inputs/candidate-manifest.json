@@ -1,0 +1,300 @@
+{
+  "task": "W5-P4",
+  "status": "CANDIDATE_RESTORE_BLOCKED",
+  "baselineCommit": "37a381e18dd6f07d63dcc55176f111a8f035b179",
+  "codeVersion": "baselineCommit plus uncommitted W5-P4 diff; source and test hashes below",
+  "generatedAt": "2026-10-08T15:57:27.585Z",
+  "timezone": "Asia/Saigon",
+  "limitations": [
+    "No verified remote PR",
+    "Historical ERD, fixtures and mockups retain their labels",
+    "Manifest excludes itself; not a release acceptance certificate"
+  ],
+  "entries": [
+    {
+      "path": "Page_Design/Dashboard Quản lý Thành tích - Soft UI (Dark Mode).png",
+      "bytes": 330530,
+      "sha256": "2722092b3b0c4fbc2d74a7499bdd8ce0a1baf40e33f1726c996efe45f40d89e1"
+    },
+    {
+      "path": "Page_Design/Dashboard Quản lý Thành tích - Soft UI.png",
+      "bytes": 449786,
+      "sha256": "336a6a6e106806c77943f7a0b8d19f6c9cd59e3f3095ad5e7b2d367a1378d25c"
+    },
+    {
+      "path": "Page_Design/Hồ sơ Năng lực Điện tử - Soft UI (Dark Mode).png",
+      "bytes": 293271,
+      "sha256": "acacc7d7d4d6ce5432370d538c1c556b4f51f91ccec5f71ac75a477ebf4490ad"
+    },
+    {
+      "path": "Page_Design/Hồ sơ Năng lực Điện tử - Soft UI.png",
+      "bytes": 362953,
+      "sha256": "2b91a8b4175c2293c68f9e0811965d8ba4728237ed9b3740ddf869baa0b1b59c"
+    },
+    {
+      "path": "Page_Design/Mobile Dashboard Quản lý Thành tích.png",
+      "bytes": 160918,
+      "sha256": "7ba4c8abd6a72b1e8a7e2167289381db9852dc6bdc28cfd4e96514a5f9c6ae4e"
+    },
+    {
+      "path": "Page_Design/Mobile Hồ sơ Năng lực Điện tử.png",
+      "bytes": 199287,
+      "sha256": "1c4cf58bea8a9b57b903ec3a5df2e02d7326e8bc3a9a3d12dff97e89da679f3c"
+    },
+    {
+      "path": "Page_Design/Mobile Phân tích & Dự báo AI.png",
+      "bytes": 177582,
+      "sha256": "cfcbc377f7e9d618e40639df5cdfea187a6eaef523a3fee5a59d9326c0358b8e"
+    },
+    {
+      "path": "Page_Design/Phân tích & Dự báo AI - Soft UI (Dark Mode).png",
+      "bytes": 293916,
+      "sha256": "3fd963cfaa8b6737a008ccc6c3f34b5bece0228781f104094ad67fdef71e21ca"
+    },
+    {
+      "path": "Page_Design/Phân tích & Dự báo AI - Soft UI.png",
+      "bytes": 444479,
+      "sha256": "0abf5af81603857ff7e5ed0d09a52d29484c271542f5176c13c206a54242182b"
+    },
+    {
+      "path": "backend/src/modules/achievements/achievementService.js",
+      "bytes": 43580,
+      "sha256": "95ea6d89c1db20456bc9974d4df8b8e641d062867a383a879baf3dfd059598b0"
+    },
+    {
+      "path": "backend/src/modules/awards/applicationService.js",
+      "bytes": 21108,
+      "sha256": "bbab33d6768790fdab08fbf1dc7b2e94e68adfa3f6e3642091cb40746b7ee2b7"
+    },
+    {
+      "path": "backend/src/modules/evidences/evidenceService.js",
+      "bytes": 16926,
+      "sha256": "f68ee1d44c80dda0bf367e36be485d7b9295257bf855bd7777cd35b8c26a7af1"
+    },
+    {
+      "path": "backend/tests/w5-p3.integration.js",
+      "bytes": 5345,
+      "sha256": "140e394f66fe894a03689a4dd01641ae45783e967038a168163227cebc2b225f"
+    },
+    {
+      "path": "backend/tests/w5-p4.test.js",
+      "bytes": 1230,
+      "sha256": "9e20b9972bc5eb6cdf95f47c1030c3963f90ab946bbda6166b24d8f4bce59b2e"
+    },
+    {
+      "path": "database/migrations/.gitkeep",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "database/migrations/001_create_schema_migrations.sql",
+      "bytes": 606,
+      "sha256": "2dcb8b1e7d6c45150e480782592d1d6a3ef8bce6761a3073772b19c56f5eba17"
+    },
+    {
+      "path": "database/migrations/002_create_identity_tables.sql",
+      "bytes": 3741,
+      "sha256": "6a1c813e1efcb4390819da80660dd0e42f808bbdb1be3845e47ca5edf10eaaa1"
+    },
+    {
+      "path": "database/migrations/003_create_organization_tables.sql",
+      "bytes": 3606,
+      "sha256": "eef35bfcab603b9a0f13931e81f48862afc360f884f5e0a23f0340734ac3e6b6"
+    },
+    {
+      "path": "database/migrations/004_create_lecturers_and_catalogs.sql",
+      "bytes": 5455,
+      "sha256": "011bbf1052ee2c713cd0cb2e9c8d361ab5d8485d6b37fcff1d490d55eef033fc"
+    },
+    {
+      "path": "database/migrations/005_create_achievement_tables.sql",
+      "bytes": 5014,
+      "sha256": "a622e01c579b19547edcffe8bbb9d78cc26727782c82b7cefd68355f655aace0"
+    },
+    {
+      "path": "database/migrations/006_create_evidence_and_verification_tables.sql",
+      "bytes": 4157,
+      "sha256": "4c5755c6b62ca1b8195363857b8c3473b835087b14ccd937ad9e0538ae6b08ba"
+    },
+    {
+      "path": "database/migrations/007_create_award_tables.sql",
+      "bytes": 7401,
+      "sha256": "f1cb2a61486fbfdc7fbfd00f1c3556549e68bf3012769c672523a38d83b36c2a"
+    },
+    {
+      "path": "database/migrations/008_create_system_tables.sql",
+      "bytes": 2372,
+      "sha256": "4b50d3e46748a94121303221273ce79e4a073f7e596a0315ab8c3039c4f9d4d4"
+    },
+    {
+      "path": "docs/DEMO_SCRIPT.md",
+      "bytes": 3355,
+      "sha256": "618facec110e8eb5a7088f62f9e9f1b0da310f549933e49b39e2a9c0e7f4c2fe"
+    },
+    {
+      "path": "docs/PROJECT_DEVELOPMENT_BLUEPRINT.md",
+      "bytes": 34089,
+      "sha256": "554869df0cf56982635b3c5cb7526db3b0b586921cff87edc6a5e824b0783283"
+    },
+    {
+      "path": "docs/USER_GUIDE.md",
+      "bytes": 5755,
+      "sha256": "910768d61468da8fb7ba8e913d3d3e0317f0cb6ce7f3c533e5747d7e1dc975ce"
+    },
+    {
+      "path": "docs/ai/recommender-eval/README.md",
+      "bytes": 6621,
+      "sha256": "402ab2145ac35c5d2d0b1969844c2afffa6931ec32bbd39f30d6387969460559"
+    },
+    {
+      "path": "docs/ai/recommender-eval/results.json",
+      "bytes": 15719,
+      "sha256": "cb5c4ba3a6a747d90eac1832a074f60a88a7a484827a3235630dd10ce040a1be"
+    },
+    {
+      "path": "docs/api/WORKFLOW_W3_Q1.md",
+      "bytes": 4358,
+      "sha256": "14f40d9d0c8b3bee6f253099eb050ebe821ebf3d2236e8dfdc222a66cb053949"
+    },
+    {
+      "path": "docs/api/openapi.json",
+      "bytes": 50516,
+      "sha256": "12b4781e0c4c7956ae02809cee0480d1521a4bca655128937151dc1b22d9e005"
+    },
+    {
+      "path": "docs/database/DATA_DICTIONARY.md",
+      "bytes": 33942,
+      "sha256": "94472714d051c55e0707e640182e29bf72cac70528f93f1e9ecf0d8af37db573"
+    },
+    {
+      "path": "docs/database/ERD.md",
+      "bytes": 17680,
+      "sha256": "ca54a79f0fa7e20920470bee6ee2c429b2c62169617a30fdfeded5db5be878a1"
+    },
+    {
+      "path": "docs/database/SCHEMA_DDL.sql",
+      "bytes": 17128,
+      "sha256": "6b3ad10b1695094c2569e18c98f8eddebff594b0390f1fea5298b5699f3884f0"
+    },
+    {
+      "path": "docs/report-inputs/ASSETS.md",
+      "bytes": 1766,
+      "sha256": "695cda4dfbfc654942d1b57c19ad0c4e18740ddafa67f6e2934e686300ec6afc"
+    },
+    {
+      "path": "docs/report-inputs/CHECKLIST.md",
+      "bytes": 2847,
+      "sha256": "92c167b51d26b429256d73a22e45a85db84e648af37e202eb53473024800cbf6"
+    },
+    {
+      "path": "docs/report-inputs/CONTRIBUTIONS.md",
+      "bytes": 2807,
+      "sha256": "fef5918724ecc54805886c6c250facda633cada471bb8f66e76c64fee71a272d"
+    },
+    {
+      "path": "docs/report-inputs/PR_REVIEW.md",
+      "bytes": 3411,
+      "sha256": "853f86c58fa475bbd00fcfbd10c48d377e51ff6e77a951ba301f519041ab931e"
+    },
+    {
+      "path": "docs/report-inputs/README.md",
+      "bytes": 2459,
+      "sha256": "81a04ac356189008d187d4fc31060b44d3400e6d991aa405f2e6b86481890e46"
+    },
+    {
+      "path": "docs/report-inputs/REPORT_AND_SLIDES.md",
+      "bytes": 3374,
+      "sha256": "b7b7b98781c1e20b833f5a1d5e2026f4cb8fc982860734ab2cc6525060446957"
+    },
+    {
+      "path": "docs/report-inputs/verification.json",
+      "bytes": 1913,
+      "sha256": "64dc2a85d3a55a11895a2a0a1a9e1ea2ebeaa7f2a5d7d75ba06d17498dc58a2d"
+    },
+    {
+      "path": "docs/testing/w5-p1/load-result.json",
+      "bytes": 11940,
+      "sha256": "41bfbdf36ef224ff543cbace29b2227e2db44bfee769cb14b17c4d6874754cfe"
+    },
+    {
+      "path": "docs/testing/w5-p1/overlapping-load-result.json",
+      "bytes": 12041,
+      "sha256": "743d96850fd143f19546d3b023946167888bcec35ca84805d1324e34c33170e8"
+    },
+    {
+      "path": "docs/testing/week-4/media/desktop-quota.png",
+      "bytes": 211647,
+      "sha256": "a89da777c2e15e74c99e47c461439ae0e11f3105acb19b258b63c1de8a0dfb45"
+    },
+    {
+      "path": "docs/testing/week-4/media/mobile-error.png",
+      "bytes": 107344,
+      "sha256": "07986aa533063e1fde3e5165d7197a1060e5168184969da97e1afd4ee6b6adc6"
+    },
+    {
+      "path": "docs/testing/week-4/media/mobile-loading.png",
+      "bytes": 105094,
+      "sha256": "0346ec76c0324dba27adb2a02c4b17962881a057a481d0191c846e14aa707079"
+    },
+    {
+      "path": "docs/testing/week-4/media/mobile-quota.png",
+      "bytes": 198186,
+      "sha256": "63e3409134772ae02511aaab155cb0c90272d2d17fe759acb2b9530b1798ce98"
+    },
+    {
+      "path": "docs/testing/week-4/ui-result.json",
+      "bytes": 164,
+      "sha256": "07359690c046a14e5ec9d91af3923f143dd06a5fbc2fde1678d6431b73410309"
+    },
+    {
+      "path": "docs/weekly/WEEK_05_W5_P3.md",
+      "bytes": 8097,
+      "sha256": "997d119ad77db565da438737d682e3304b6dba83f3024611fd7fa4840d66b263"
+    },
+    {
+      "path": "docs/weekly/WEEK_05_W5_P4.md",
+      "bytes": 3035,
+      "sha256": "b9105ad1f0da73f3269b4a1dea11710fe5af5f4c231cfd592cd20444ec6d3ec1"
+    },
+    {
+      "path": "docs/weekly/WEEK_05_W5_Q1.md",
+      "bytes": 7167,
+      "sha256": "abdd306e372383db18dd1df041151ded2c9f575eb95464a47a1bfabcf91d278a"
+    },
+    {
+      "path": "docs/weekly/WEEK_05_W5_Q3.md",
+      "bytes": 12342,
+      "sha256": "ad8192d8739600dfea939c3aaa95e8e85249bd7c8e4674e0cf14fb78bcd3a7aa"
+    },
+    {
+      "path": "docs/weekly/images/W2_P4_ACHIEVEMENTS_FIXTURE.png",
+      "bytes": 37626,
+      "sha256": "10c46feeb58d263c4b2c1076b6881b06f4cfb672b55deaab2c5bd4477ba103d8"
+    },
+    {
+      "path": "docs/weekly/images/W2_P4_SNAPSHOT_FIXTURE.png",
+      "bytes": 42287,
+      "sha256": "b2d8d0b4fd582ab90c77cc9fedc71b916833f68ce2a1f57de79cec77c484be60"
+    },
+    {
+      "path": "docs/weekly/images/W2_P4_TEST_REPORT.png",
+      "bytes": 103796,
+      "sha256": "8be34a8ca8a7e7c11781f6ec47cfb1f37cddb354e523f4b745483fce10a9ab0f"
+    },
+    {
+      "path": "scripts/backup.mjs",
+      "bytes": 23828,
+      "sha256": "4d454bfbf4cafa4e1397adb4f75e78a1718977a0dfc771bc84c56e0411934c4c"
+    },
+    {
+      "path": "scripts/restore.mjs",
+      "bytes": 21741,
+      "sha256": "59aa57b1554c4c673e911204c211750ae327429ecc8e112fe6730e2c35b3da07"
+    },
+    {
+      "path": "scripts/w5-p4-freeze.mjs",
+      "bytes": 2582,
+      "sha256": "68c6c26236e71f04e9b7126af51d8183e4d3e8cdabd16246112e52032847e149"
+    }
+  ]
+}
