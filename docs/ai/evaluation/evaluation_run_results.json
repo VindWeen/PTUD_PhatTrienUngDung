@@ -1,0 +1,1417 @@
+{
+  "evaluatedAt": "2026-10-07T16:37:27.320Z",
+  "datasetMetadata": {
+    "datasetName": "PTUD_LHU_HOLDOUT_TEST_SET_W5_Q2",
+    "totalCases": 32,
+    "peerReviewer": "Nguyễn Hữu Phước (W4-P4/W5)",
+    "labelAuthority": "CONFIRMED_BY_PEER_REVIEWER"
+  },
+  "preAgreedThresholds": {
+    "minCriterionAccuracy": 0.95,
+    "maxFalseEligibleRate": 0,
+    "minMissingDataHandling": 1,
+    "minCitationPrecision": 0.9
+  },
+  "evaluatorOnly": {
+    "totalCases": 32,
+    "correctCount": 32,
+    "accuracy": 1,
+    "falseEligibleCount": 0,
+    "falseEligibleRate": 0,
+    "missingDataHandledCount": 15,
+    "missingDataTotalExpected": 15,
+    "missingDataHandlingRate": 1,
+    "totalLatencyMs": 3.254000000000001,
+    "avgLatencyMs": 0.102,
+    "totalTokens": 0,
+    "casesDetail": [
+      {
+        "caseId": "HOLDOUT-01",
+        "groupId": "GRP-01",
+        "title": "Giảng viên có bài báo khoa học chuẩn ISI/Scopus đạt tiêu chuẩn nghiên cứu khoa học",
+        "expected": "ELIGIBLE",
+        "predicted": "ELIGIBLE",
+        "expectedIsSatisfied": true,
+        "predictedIsSatisfied": true,
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [],
+        "expectedIssues": [],
+        "latencyMs": 1.28,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-02",
+        "groupId": "GRP-01",
+        "title": "Giảng viên hoàn thành xuất sắc nhiệm vụ giảng dạy năm học 2025-2026",
+        "expected": "ELIGIBLE",
+        "predicted": "ELIGIBLE",
+        "expectedIsSatisfied": true,
+        "predictedIsSatisfied": true,
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [],
+        "expectedIssues": [],
+        "latencyMs": 0.177,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-03",
+        "groupId": "GRP-01",
+        "title": "Cán bộ đạt sáng kiến cải tiến kỹ thuật cấp cơ sở được công nhận",
+        "expected": "ELIGIBLE",
+        "predicted": "ELIGIBLE",
+        "expectedIsSatisfied": true,
+        "predictedIsSatisfied": true,
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [],
+        "expectedIssues": [],
+        "latencyMs": 0.106,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-04",
+        "groupId": "GRP-01",
+        "title": "Tập thể Khoa CNTT hoàn thành xuất sắc nhiệm vụ năm học",
+        "expected": "ELIGIBLE",
+        "predicted": "ELIGIBLE",
+        "expectedIsSatisfied": true,
+        "predictedIsSatisfied": true,
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [],
+        "expectedIssues": [],
+        "latencyMs": 0.084,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-05",
+        "groupId": "GRP-02",
+        "title": "Giảng viên đạt CSTĐ cơ sở 3 năm liên tiếp (2023, 2024, 2025)",
+        "expected": "ELIGIBLE",
+        "predicted": "ELIGIBLE",
+        "expectedIsSatisfied": true,
+        "predictedIsSatisfied": true,
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [],
+        "expectedIssues": [],
+        "latencyMs": 0.171,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-06",
+        "groupId": "GRP-02",
+        "title": "Giảng viên hoàn thành tốt nhiệm vụ 4 năm liên tiếp (2022-2025)",
+        "expected": "ELIGIBLE",
+        "predicted": "ELIGIBLE",
+        "expectedIsSatisfied": true,
+        "predictedIsSatisfied": true,
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [],
+        "expectedIssues": [],
+        "latencyMs": 0.128,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-07",
+        "groupId": "GRP-02",
+        "title": "Tập thể đạt danh hiệu Đơn vị tiên tiến 3 năm liên tiếp (2023-2025)",
+        "expected": "ELIGIBLE",
+        "predicted": "ELIGIBLE",
+        "expectedIsSatisfied": true,
+        "predictedIsSatisfied": true,
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [],
+        "expectedIssues": [],
+        "latencyMs": 0.12,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-08",
+        "groupId": "GRP-02",
+        "title": "Giảng viên có 2 năm liên tiếp có đề tài nghiên cứu cấp Tỉnh/Bộ",
+        "expected": "ELIGIBLE",
+        "predicted": "ELIGIBLE",
+        "expectedIsSatisfied": true,
+        "predictedIsSatisfied": true,
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [],
+        "expectedIssues": [],
+        "latencyMs": 0.068,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-09",
+        "groupId": "GRP-03",
+        "title": "Đứt chuỗi năm: Đạt 2022, 2024, 2025 (Thiếu năm 2023)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "YEAR_GAP"
+        ],
+        "expectedIssues": [
+          "YEAR_GAP"
+        ],
+        "latencyMs": 0.081,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-10",
+        "groupId": "GRP-03",
+        "title": "Đứt chuỗi năm: Đạt 2020 và 2025 (Khoảng trống 4 năm)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "YEAR_GAP"
+        ],
+        "expectedIssues": [
+          "YEAR_GAP"
+        ],
+        "latencyMs": 0.092,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-11",
+        "groupId": "GRP-03",
+        "title": "Tập thể đứt chuỗi năm: Đạt 2021, 2022, 2025 (Thiếu 2023, 2024)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "YEAR_GAP"
+        ],
+        "expectedIssues": [
+          "YEAR_GAP"
+        ],
+        "latencyMs": 0.055,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-12",
+        "groupId": "GRP-03",
+        "title": "Đứt chuỗi xen kẽ: 2021, 2023, 2025 (Chỉ đạt các năm lẻ)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "YEAR_GAP"
+        ],
+        "expectedIssues": [
+          "YEAR_GAP"
+        ],
+        "latencyMs": 0.043,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-13",
+        "groupId": "GRP-04",
+        "title": "Thiếu hoàn toàn tệp tin minh chứng đính kèm (file: null)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "MISSING_DATA"
+        ],
+        "expectedIssues": [
+          "MISSING_DATA"
+        ],
+        "latencyMs": 0.043,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-14",
+        "groupId": "GRP-04",
+        "title": "Tệp tin minh chứng có mã băm SHA-256 bị can thiệp (tampered hash không đúng định dạng 64 hex)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "MISSING_DATA"
+        ],
+        "expectedIssues": [
+          "MISSING_DATA"
+        ],
+        "latencyMs": 0.038,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-15",
+        "groupId": "GRP-04",
+        "title": "Hồ sơ bị khuyết năm thành tích (year: null)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "MISSING_DATA"
+        ],
+        "expectedIssues": [
+          "MISSING_DATA"
+        ],
+        "latencyMs": 0.035,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-16",
+        "groupId": "GRP-04",
+        "title": "Hồ sơ 3 năm nhưng năm giữa bị thiếu file minh chứng",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "MISSING_DATA",
+          "YEAR_GAP"
+        ],
+        "expectedIssues": [
+          "MISSING_DATA",
+          "YEAR_GAP"
+        ],
+        "latencyMs": 0.04,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-17",
+        "groupId": "GRP-05",
+        "title": "Trùng năm: 3 bài báo đều xuất bản trong năm 2025, tiêu chí yêu cầu 3 năm riêng biệt",
+        "expected": "INELIGIBLE",
+        "predicted": "INELIGIBLE",
+        "expectedIsSatisfied": false,
+        "predictedIsSatisfied": false,
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "BELOW_THRESHOLD",
+          "DUPLICATE_YEAR"
+        ],
+        "expectedIssues": [
+          "DUPLICATE_YEAR",
+          "BELOW_THRESHOLD"
+        ],
+        "latencyMs": 0.042,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-18",
+        "groupId": "GRP-05",
+        "title": "Trùng năm: 2 bản ghi năm 2024, 1 bản ghi năm 2025 (yêu cầu 3 năm liên tiếp)",
+        "expected": "INELIGIBLE",
+        "predicted": "INELIGIBLE",
+        "expectedIsSatisfied": false,
+        "predictedIsSatisfied": false,
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "BELOW_THRESHOLD",
+          "DUPLICATE_YEAR"
+        ],
+        "expectedIssues": [
+          "DUPLICATE_YEAR",
+          "BELOW_THRESHOLD"
+        ],
+        "latencyMs": 0.054,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-19",
+        "groupId": "GRP-05",
+        "title": "Trùng năm và đứt chuỗi đồng thời: 2022, 2022, 2025",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "BELOW_THRESHOLD",
+          "DUPLICATE_YEAR",
+          "YEAR_GAP"
+        ],
+        "expectedIssues": [
+          "DUPLICATE_YEAR",
+          "YEAR_GAP",
+          "BELOW_THRESHOLD"
+        ],
+        "latencyMs": 0.048,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-20",
+        "groupId": "GRP-05",
+        "title": "Tập thể có nhiều khen thưởng trong cùng một năm (2024, 2024)",
+        "expected": "INELIGIBLE",
+        "predicted": "INELIGIBLE",
+        "expectedIsSatisfied": false,
+        "predictedIsSatisfied": false,
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "BELOW_THRESHOLD",
+          "DUPLICATE_YEAR"
+        ],
+        "expectedIssues": [
+          "DUPLICATE_YEAR",
+          "BELOW_THRESHOLD"
+        ],
+        "latencyMs": 0.039,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-21",
+        "groupId": "GRP-06",
+        "title": "Hồ sơ thành tích đã bị thu hồi (status: REVOKED) không được tính",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "REVOKED_SOURCE"
+        ],
+        "expectedIssues": [
+          "REVOKED_SOURCE"
+        ],
+        "latencyMs": 0.033,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-22",
+        "groupId": "GRP-06",
+        "title": "Chuỗi 3 năm có năm cuối bị thu hồi (2023, 2024, 2025 REVOKED)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "REVOKED_SOURCE"
+        ],
+        "expectedIssues": [
+          "REVOKED_SOURCE"
+        ],
+        "latencyMs": 0.039,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-23",
+        "groupId": "GRP-06",
+        "title": "Bản ghi bị thay thế và bản ghi thay thế mới cùng tồn tại (Replaced Record Resolution)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "REVOKED_SOURCE"
+        ],
+        "expectedIssues": [
+          "REVOKED_SOURCE"
+        ],
+        "latencyMs": 0.05,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-24",
+        "groupId": "GRP-06",
+        "title": "Hồ sơ ở trạng thái CANCELLED do người dùng hủy",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "REVOKED_SOURCE"
+        ],
+        "expectedIssues": [
+          "REVOKED_SOURCE"
+        ],
+        "latencyMs": 0.033,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-25",
+        "groupId": "GRP-07",
+        "title": "Văn bản quy định chưa được phê duyệt LHU (is_confirmed: false, INTERNAL_CRITERIA_UNCONFIRMED)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "MISSING_DATA",
+          "UNAPPROVED_DOCUMENT"
+        ],
+        "expectedIssues": [
+          "UNAPPROVED_DOCUMENT"
+        ],
+        "latencyMs": 0.035,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-26",
+        "groupId": "GRP-07",
+        "title": "Tiêu chí chưa được phê duyệt (criterion is_confirmed: false) dù văn bản cha đã duyệt",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "MISSING_DATA",
+          "UNAPPROVED_CRITERION"
+        ],
+        "expectedIssues": [
+          "UNAPPROVED_CRITERION"
+        ],
+        "latencyMs": 0.033,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-27",
+        "groupId": "GRP-07",
+        "title": "Nguồn tiêu chí mô phỏng (SIMULATION_ONLY - W1-P4-SIMULATION) gắn nhãn mô phỏng",
+        "expected": "SIMULATION_ONLY",
+        "predicted": "SIMULATION_ONLY",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "MISSING_DATA",
+          "SIMULATED_KPI",
+          "UNAPPROVED_CRITERION",
+          "UNAPPROVED_DOCUMENT"
+        ],
+        "expectedIssues": [
+          "UNAPPROVED_DOCUMENT",
+          "UNAPPROVED_CRITERION",
+          "SIMULATED_KPI"
+        ],
+        "latencyMs": 0.049,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-28",
+        "groupId": "GRP-07",
+        "title": "Cả văn bản và tiêu chí đều chưa duyệt (Full Unapproved Policy)",
+        "expected": "SIMULATION_ONLY",
+        "predicted": "SIMULATION_ONLY",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "MISSING_DATA",
+          "SIMULATED_KPI",
+          "UNAPPROVED_CRITERION",
+          "UNAPPROVED_DOCUMENT"
+        ],
+        "expectedIssues": [
+          "UNAPPROVED_DOCUMENT",
+          "UNAPPROVED_CRITERION",
+          "SIMULATED_KPI"
+        ],
+        "latencyMs": 0.034,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-29",
+        "groupId": "GRP-08",
+        "title": "Sai chủ thể: Hồ sơ mang subjectId của người khác (199 thay vì 125)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "WRONG_SUBJECT"
+        ],
+        "expectedIssues": [
+          "WRONG_SUBJECT"
+        ],
+        "latencyMs": 0.047,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-30",
+        "groupId": "GRP-08",
+        "title": "Thẩm định ngoài khung thời gian hiệu lực văn bản (asOfDate 2020 trước effectiveFrom 2024)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "MISSING_DATA",
+          "OUT_OF_EFFECTIVE_WINDOW"
+        ],
+        "expectedIssues": [
+          "OUT_OF_EFFECTIVE_WINDOW"
+        ],
+        "latencyMs": 0.051,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-31",
+        "groupId": "GRP-08",
+        "title": "Thẩm định sau khi văn bản đã hết hiệu lực (effectiveTo 2025, asOfDate 2027)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "MISSING_DATA",
+          "OUT_OF_EFFECTIVE_WINDOW"
+        ],
+        "expectedIssues": [
+          "OUT_OF_EFFECTIVE_WINDOW"
+        ],
+        "latencyMs": 0.055,
+        "tokensUsed": 0
+      },
+      {
+        "caseId": "HOLDOUT-32",
+        "groupId": "GRP-08",
+        "title": "Hồ sơ tập thể nhưng input đưa vào là ID cá nhân của giảng viên",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "predictedIsSatisfied": "UNCONFIRMED",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "issuesFound": [
+          "WRONG_SUBJECT"
+        ],
+        "expectedIssues": [
+          "WRONG_SUBJECT"
+        ],
+        "latencyMs": 0.051,
+        "tokensUsed": 0
+      }
+    ]
+  },
+  "evaluatorRag": {
+    "totalCases": 32,
+    "correctCount": 32,
+    "accuracy": 1,
+    "falseEligibleCount": 0,
+    "falseEligibleRate": 0,
+    "missingDataHandledCount": 15,
+    "missingDataTotalExpected": 15,
+    "missingDataHandlingRate": 1,
+    "citationMatchedCount": 10,
+    "citationTotalExpected": 40,
+    "citationRecall": 0.25,
+    "citationPrecision": 1,
+    "totalLatencyMs": 3572.122,
+    "avgLatencyMs": 111.629,
+    "totalTokens": 8500,
+    "avgTokensPerCase": 266,
+    "casesDetail": [
+      {
+        "caseId": "HOLDOUT-01",
+        "groupId": "GRP-01",
+        "title": "Giảng viên có bài báo khoa học chuẩn ISI/Scopus đạt tiêu chuẩn nghiên cứu khoa học",
+        "expected": "ELIGIBLE",
+        "predicted": "ELIGIBLE",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": true,
+        "citationsFound": [
+          {
+            "chunkId": 2,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 4",
+            "clauseNo": "Khoản 1",
+            "pageNo": 14,
+            "chunkHash": "3c7d9c7b0df525cd3de867d95a189a6d6e89e3a4566cad58746914829ab40937"
+          }
+        ],
+        "expectedCitations": [
+          1,
+          2
+        ],
+        "latencyMs": 170.727,
+        "tokensUsed": 430
+      },
+      {
+        "caseId": "HOLDOUT-02",
+        "groupId": "GRP-01",
+        "title": "Giảng viên hoàn thành xuất sắc nhiệm vụ giảng dạy năm học 2025-2026",
+        "expected": "ELIGIBLE",
+        "predicted": "ELIGIBLE",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": true,
+        "citationsFound": [
+          {
+            "chunkId": 2,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 4",
+            "clauseNo": "Khoản 1",
+            "pageNo": 14,
+            "chunkHash": "3c7d9c7b0df525cd3de867d95a189a6d6e89e3a4566cad58746914829ab40937"
+          }
+        ],
+        "expectedCitations": [
+          1,
+          3
+        ],
+        "latencyMs": 155.802,
+        "tokensUsed": 430
+      },
+      {
+        "caseId": "HOLDOUT-03",
+        "groupId": "GRP-01",
+        "title": "Cán bộ đạt sáng kiến cải tiến kỹ thuật cấp cơ sở được công nhận",
+        "expected": "ELIGIBLE",
+        "predicted": "ELIGIBLE",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": true,
+        "citationsFound": [
+          {
+            "chunkId": 1,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 3",
+            "clauseNo": "Khoản 1",
+            "pageNo": 14,
+            "chunkHash": "8297a99119c53d6e209d6cb2a9b3c4ae4438c3251b68802836deec2e50f575f5"
+          }
+        ],
+        "expectedCitations": [
+          2
+        ],
+        "latencyMs": 155.636,
+        "tokensUsed": 430
+      },
+      {
+        "caseId": "HOLDOUT-04",
+        "groupId": "GRP-01",
+        "title": "Tập thể Khoa CNTT hoàn thành xuất sắc nhiệm vụ năm học",
+        "expected": "ELIGIBLE",
+        "predicted": "ELIGIBLE",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": true,
+        "citationsFound": [
+          {
+            "chunkId": 2,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 4",
+            "clauseNo": "Khoản 1",
+            "pageNo": 14,
+            "chunkHash": "3c7d9c7b0df525cd3de867d95a189a6d6e89e3a4566cad58746914829ab40937"
+          }
+        ],
+        "expectedCitations": [
+          1,
+          2
+        ],
+        "latencyMs": 156.271,
+        "tokensUsed": 430
+      },
+      {
+        "caseId": "HOLDOUT-05",
+        "groupId": "GRP-02",
+        "title": "Giảng viên đạt CSTĐ cơ sở 3 năm liên tiếp (2023, 2024, 2025)",
+        "expected": "ELIGIBLE",
+        "predicted": "ELIGIBLE",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": true,
+        "citationsFound": [
+          {
+            "chunkId": 2,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 4",
+            "clauseNo": "Khoản 1",
+            "pageNo": 14,
+            "chunkHash": "3c7d9c7b0df525cd3de867d95a189a6d6e89e3a4566cad58746914829ab40937"
+          }
+        ],
+        "expectedCitations": [
+          2,
+          3
+        ],
+        "latencyMs": 155.781,
+        "tokensUsed": 430
+      },
+      {
+        "caseId": "HOLDOUT-06",
+        "groupId": "GRP-02",
+        "title": "Giảng viên hoàn thành tốt nhiệm vụ 4 năm liên tiếp (2022-2025)",
+        "expected": "ELIGIBLE",
+        "predicted": "ELIGIBLE",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": true,
+        "citationsFound": [
+          {
+            "chunkId": 2,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 4",
+            "clauseNo": "Khoản 1",
+            "pageNo": 14,
+            "chunkHash": "3c7d9c7b0df525cd3de867d95a189a6d6e89e3a4566cad58746914829ab40937"
+          },
+          {
+            "chunkId": 4,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 4",
+            "clauseNo": "Khoản 4",
+            "pageNo": 15,
+            "chunkHash": "033e8eaa5e9b3e63be5579dd5593aa59abe0a263faeab5be194c34882c4a2880"
+          }
+        ],
+        "expectedCitations": [
+          1,
+          2
+        ],
+        "latencyMs": 157.21,
+        "tokensUsed": 430
+      },
+      {
+        "caseId": "HOLDOUT-07",
+        "groupId": "GRP-02",
+        "title": "Tập thể đạt danh hiệu Đơn vị tiên tiến 3 năm liên tiếp (2023-2025)",
+        "expected": "ELIGIBLE",
+        "predicted": "ELIGIBLE",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": true,
+        "citationsFound": [
+          {
+            "chunkId": 2,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 4",
+            "clauseNo": "Khoản 1",
+            "pageNo": 14,
+            "chunkHash": "3c7d9c7b0df525cd3de867d95a189a6d6e89e3a4566cad58746914829ab40937"
+          }
+        ],
+        "expectedCitations": [
+          1,
+          2
+        ],
+        "latencyMs": 156.394,
+        "tokensUsed": 430
+      },
+      {
+        "caseId": "HOLDOUT-08",
+        "groupId": "GRP-02",
+        "title": "Giảng viên có 2 năm liên tiếp có đề tài nghiên cứu cấp Tỉnh/Bộ",
+        "expected": "ELIGIBLE",
+        "predicted": "ELIGIBLE",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": true,
+        "citationsFound": [
+          {
+            "chunkId": 2,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 4",
+            "clauseNo": "Khoản 1",
+            "pageNo": 14,
+            "chunkHash": "3c7d9c7b0df525cd3de867d95a189a6d6e89e3a4566cad58746914829ab40937"
+          },
+          {
+            "chunkId": 4,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 4",
+            "clauseNo": "Khoản 4",
+            "pageNo": 15,
+            "chunkHash": "033e8eaa5e9b3e63be5579dd5593aa59abe0a263faeab5be194c34882c4a2880"
+          }
+        ],
+        "expectedCitations": [
+          2
+        ],
+        "latencyMs": 155.921,
+        "tokensUsed": 430
+      },
+      {
+        "caseId": "HOLDOUT-09",
+        "groupId": "GRP-03",
+        "title": "Đứt chuỗi năm: Đạt 2022, 2024, 2025 (Thiếu năm 2023)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": false,
+        "citationsFound": [],
+        "expectedCitations": [
+          2
+        ],
+        "latencyMs": 91.571,
+        "tokensUsed": 120
+      },
+      {
+        "caseId": "HOLDOUT-10",
+        "groupId": "GRP-03",
+        "title": "Đứt chuỗi năm: Đạt 2020 và 2025 (Khoảng trống 4 năm)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": true,
+        "citationsFound": [
+          {
+            "chunkId": 4,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 4",
+            "clauseNo": "Khoản 4",
+            "pageNo": 15,
+            "chunkHash": "033e8eaa5e9b3e63be5579dd5593aa59abe0a263faeab5be194c34882c4a2880"
+          }
+        ],
+        "expectedCitations": [
+          2
+        ],
+        "latencyMs": 155.989,
+        "tokensUsed": 430
+      },
+      {
+        "caseId": "HOLDOUT-11",
+        "groupId": "GRP-03",
+        "title": "Tập thể đứt chuỗi năm: Đạt 2021, 2022, 2025 (Thiếu 2023, 2024)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": false,
+        "citationsFound": [],
+        "expectedCitations": [
+          1,
+          2
+        ],
+        "latencyMs": 92.036,
+        "tokensUsed": 120
+      },
+      {
+        "caseId": "HOLDOUT-12",
+        "groupId": "GRP-03",
+        "title": "Đứt chuỗi xen kẽ: 2021, 2023, 2025 (Chỉ đạt các năm lẻ)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": false,
+        "citationsFound": [],
+        "expectedCitations": [
+          2
+        ],
+        "latencyMs": 93.545,
+        "tokensUsed": 120
+      },
+      {
+        "caseId": "HOLDOUT-13",
+        "groupId": "GRP-04",
+        "title": "Thiếu hoàn toàn tệp tin minh chứng đính kèm (file: null)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": false,
+        "citationsFound": [],
+        "expectedCitations": [
+          1,
+          2
+        ],
+        "latencyMs": 91.412,
+        "tokensUsed": 120
+      },
+      {
+        "caseId": "HOLDOUT-14",
+        "groupId": "GRP-04",
+        "title": "Tệp tin minh chứng có mã băm SHA-256 bị can thiệp (tampered hash không đúng định dạng 64 hex)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": true,
+        "citationsFound": [
+          {
+            "chunkId": 3,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 4",
+            "clauseNo": "Khoản 3",
+            "pageNo": 15,
+            "chunkHash": "34b01065dd867826fc16971b62f372aa6e052e5462c31baf0dd55cc0af0af6df"
+          }
+        ],
+        "expectedCitations": [
+          2
+        ],
+        "latencyMs": 143.77,
+        "tokensUsed": 430
+      },
+      {
+        "caseId": "HOLDOUT-15",
+        "groupId": "GRP-04",
+        "title": "Hồ sơ bị khuyết năm thành tích (year: null)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": true,
+        "citationsFound": [
+          {
+            "chunkId": 3,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 4",
+            "clauseNo": "Khoản 3",
+            "pageNo": 15,
+            "chunkHash": "34b01065dd867826fc16971b62f372aa6e052e5462c31baf0dd55cc0af0af6df"
+          }
+        ],
+        "expectedCitations": [
+          3
+        ],
+        "latencyMs": 155.854,
+        "tokensUsed": 430
+      },
+      {
+        "caseId": "HOLDOUT-16",
+        "groupId": "GRP-04",
+        "title": "Hồ sơ 3 năm nhưng năm giữa bị thiếu file minh chứng",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": false,
+        "citationsFound": [],
+        "expectedCitations": [
+          2
+        ],
+        "latencyMs": 91.096,
+        "tokensUsed": 120
+      },
+      {
+        "caseId": "HOLDOUT-17",
+        "groupId": "GRP-05",
+        "title": "Trùng năm: 3 bài báo đều xuất bản trong năm 2025, tiêu chí yêu cầu 3 năm riêng biệt",
+        "expected": "INELIGIBLE",
+        "predicted": "INELIGIBLE",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": true,
+        "citationsFound": [
+          {
+            "chunkId": 2,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 4",
+            "clauseNo": "Khoản 1",
+            "pageNo": 14,
+            "chunkHash": "3c7d9c7b0df525cd3de867d95a189a6d6e89e3a4566cad58746914829ab40937"
+          },
+          {
+            "chunkId": 3,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 4",
+            "clauseNo": "Khoản 3",
+            "pageNo": 15,
+            "chunkHash": "34b01065dd867826fc16971b62f372aa6e052e5462c31baf0dd55cc0af0af6df"
+          }
+        ],
+        "expectedCitations": [
+          2
+        ],
+        "latencyMs": 146.243,
+        "tokensUsed": 430
+      },
+      {
+        "caseId": "HOLDOUT-18",
+        "groupId": "GRP-05",
+        "title": "Trùng năm: 2 bản ghi năm 2024, 1 bản ghi năm 2025 (yêu cầu 3 năm liên tiếp)",
+        "expected": "INELIGIBLE",
+        "predicted": "INELIGIBLE",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": false,
+        "citationsFound": [],
+        "expectedCitations": [
+          2
+        ],
+        "latencyMs": 93.385,
+        "tokensUsed": 120
+      },
+      {
+        "caseId": "HOLDOUT-19",
+        "groupId": "GRP-05",
+        "title": "Trùng năm và đứt chuỗi đồng thời: 2022, 2022, 2025",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": false,
+        "citationsFound": [],
+        "expectedCitations": [
+          2
+        ],
+        "latencyMs": 93.649,
+        "tokensUsed": 120
+      },
+      {
+        "caseId": "HOLDOUT-20",
+        "groupId": "GRP-05",
+        "title": "Tập thể có nhiều khen thưởng trong cùng một năm (2024, 2024)",
+        "expected": "INELIGIBLE",
+        "predicted": "INELIGIBLE",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": true,
+        "citationsFound": [
+          {
+            "chunkId": 1,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 3",
+            "clauseNo": "Khoản 1",
+            "pageNo": 14,
+            "chunkHash": "8297a99119c53d6e209d6cb2a9b3c4ae4438c3251b68802836deec2e50f575f5"
+          }
+        ],
+        "expectedCitations": [
+          1,
+          2
+        ],
+        "latencyMs": 155.401,
+        "tokensUsed": 430
+      },
+      {
+        "caseId": "HOLDOUT-21",
+        "groupId": "GRP-06",
+        "title": "Hồ sơ thành tích đã bị thu hồi (status: REVOKED) không được tính",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": false,
+        "citationsFound": [],
+        "expectedCitations": [
+          1
+        ],
+        "latencyMs": 90.654,
+        "tokensUsed": 120
+      },
+      {
+        "caseId": "HOLDOUT-22",
+        "groupId": "GRP-06",
+        "title": "Chuỗi 3 năm có năm cuối bị thu hồi (2023, 2024, 2025 REVOKED)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": false,
+        "citationsFound": [],
+        "expectedCitations": [
+          1,
+          2
+        ],
+        "latencyMs": 92.658,
+        "tokensUsed": 120
+      },
+      {
+        "caseId": "HOLDOUT-23",
+        "groupId": "GRP-06",
+        "title": "Bản ghi bị thay thế và bản ghi thay thế mới cùng tồn tại (Replaced Record Resolution)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": false,
+        "citationsFound": [],
+        "expectedCitations": [
+          1
+        ],
+        "latencyMs": 92.111,
+        "tokensUsed": 120
+      },
+      {
+        "caseId": "HOLDOUT-24",
+        "groupId": "GRP-06",
+        "title": "Hồ sơ ở trạng thái CANCELLED do người dùng hủy",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": true,
+        "citationsFound": [
+          {
+            "chunkId": 2,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 4",
+            "clauseNo": "Khoản 1",
+            "pageNo": 14,
+            "chunkHash": "3c7d9c7b0df525cd3de867d95a189a6d6e89e3a4566cad58746914829ab40937"
+          },
+          {
+            "chunkId": 3,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 4",
+            "clauseNo": "Khoản 3",
+            "pageNo": 15,
+            "chunkHash": "34b01065dd867826fc16971b62f372aa6e052e5462c31baf0dd55cc0af0af6df"
+          },
+          {
+            "chunkId": 1,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 3",
+            "clauseNo": "Khoản 1",
+            "pageNo": 14,
+            "chunkHash": "8297a99119c53d6e209d6cb2a9b3c4ae4438c3251b68802836deec2e50f575f5"
+          }
+        ],
+        "expectedCitations": [
+          1
+        ],
+        "latencyMs": 145.57,
+        "tokensUsed": 430
+      },
+      {
+        "caseId": "HOLDOUT-25",
+        "groupId": "GRP-07",
+        "title": "Văn bản quy định chưa được phê duyệt LHU (is_confirmed: false, INTERNAL_CRITERIA_UNCONFIRMED)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": false,
+        "citationsFound": [],
+        "expectedCitations": [],
+        "latencyMs": 0.059,
+        "tokensUsed": 45
+      },
+      {
+        "caseId": "HOLDOUT-26",
+        "groupId": "GRP-07",
+        "title": "Tiêu chí chưa được phê duyệt (criterion is_confirmed: false) dù văn bản cha đã duyệt",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": false,
+        "citationsFound": [],
+        "expectedCitations": [],
+        "latencyMs": 0.017,
+        "tokensUsed": 45
+      },
+      {
+        "caseId": "HOLDOUT-27",
+        "groupId": "GRP-07",
+        "title": "Nguồn tiêu chí mô phỏng (SIMULATION_ONLY - W1-P4-SIMULATION) gắn nhãn mô phỏng",
+        "expected": "SIMULATION_ONLY",
+        "predicted": "SIMULATION_ONLY",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": false,
+        "citationsFound": [],
+        "expectedCitations": [
+          10
+        ],
+        "latencyMs": 0.015,
+        "tokensUsed": 45
+      },
+      {
+        "caseId": "HOLDOUT-28",
+        "groupId": "GRP-07",
+        "title": "Cả văn bản và tiêu chí đều chưa duyệt (Full Unapproved Policy)",
+        "expected": "SIMULATION_ONLY",
+        "predicted": "SIMULATION_ONLY",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": false,
+        "citationsFound": [],
+        "expectedCitations": [
+          13
+        ],
+        "latencyMs": 0.023,
+        "tokensUsed": 45
+      },
+      {
+        "caseId": "HOLDOUT-29",
+        "groupId": "GRP-08",
+        "title": "Sai chủ thể: Hồ sơ mang subjectId của người khác (199 thay vì 125)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": false,
+        "citationsFound": [],
+        "expectedCitations": [
+          1
+        ],
+        "latencyMs": 90.638,
+        "tokensUsed": 120
+      },
+      {
+        "caseId": "HOLDOUT-30",
+        "groupId": "GRP-08",
+        "title": "Thẩm định ngoài khung thời gian hiệu lực văn bản (asOfDate 2020 trước effectiveFrom 2024)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": false,
+        "citationsFound": [],
+        "expectedCitations": [
+          4
+        ],
+        "latencyMs": 89.587,
+        "tokensUsed": 120
+      },
+      {
+        "caseId": "HOLDOUT-31",
+        "groupId": "GRP-08",
+        "title": "Thẩm định sau khi văn bản đã hết hiệu lực (effectiveTo 2025, asOfDate 2027)",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": true,
+        "citationsFound": [
+          {
+            "chunkId": 2,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 4",
+            "clauseNo": "Khoản 1",
+            "pageNo": 14,
+            "chunkHash": "3c7d9c7b0df525cd3de867d95a189a6d6e89e3a4566cad58746914829ab40937"
+          }
+        ],
+        "expectedCitations": [
+          4
+        ],
+        "latencyMs": 147.547,
+        "tokensUsed": 430
+      },
+      {
+        "caseId": "HOLDOUT-32",
+        "groupId": "GRP-08",
+        "title": "Hồ sơ tập thể nhưng input đưa vào là ID cá nhân của giảng viên",
+        "expected": "NEEDS_HUMAN_REVIEW",
+        "predicted": "NEEDS_HUMAN_REVIEW",
+        "isCorrect": true,
+        "isFalseEligible": false,
+        "isSufficientData": true,
+        "citationsFound": [
+          {
+            "chunkId": 4,
+            "versionId": 1,
+            "sourceUrl": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/5/06-qh.signed.pdf",
+            "documentCode": "VN-LAW-002",
+            "versionNumber": "06/2026/QH16, 23/04/2026",
+            "articleNo": "Điều 4",
+            "clauseNo": "Khoản 4",
+            "pageNo": 15,
+            "chunkHash": "033e8eaa5e9b3e63be5579dd5593aa59abe0a263faeab5be194c34882c4a2880"
+          }
+        ],
+        "expectedCitations": [
+          1
+        ],
+        "latencyMs": 155.55,
+        "tokensUsed": 430
+      }
+    ]
+  }
+}

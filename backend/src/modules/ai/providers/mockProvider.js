@@ -21,7 +21,11 @@ export class MockAiProvider extends AiProvider {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Phân tích câu hỏi để sinh câu trả lời mock có tính logic
+    const chunkMatches = [...new Set([...prompt.matchAll(/\[CHUNK_ID:\s*(\d+)\]/gi)].map(m => Number(m[1])))];
     let content = `[MOCK-AI-OUTPUT] Phân tích dựa trên trích đoạn quy định đã cung cấp:\n`;
+    if (chunkMatches.length > 0) {
+      content += `- Căn cứ theo các trích đoạn quy chế viện dẫn: ${chunkMatches.map(id => `[CHUNK_ID: ${id}]`).join(', ')}.\n`;
+    }
     content += `- Provider mô phỏng không xác minh điều kiện hay tính phù hợp của hồ sơ.\n`;
     content += `- Cần người có thẩm quyền đối chiếu nguồn, phiên bản và minh chứng; không kết luận đủ điều kiện.\n`;
     content += `(Lưu ý: Đây là kết quả tạo bởi Mock Provider phục vụ kiểm thử đơn vị nội bộ, không thay thế cho gọi AI API thật)`;

@@ -1,0 +1,2186 @@
+{
+  "schemaVersion": 2,
+  "datasetName": "PTUD_LHU_HOLDOUT_TEST_SET_W5_Q2",
+  "totalCases": 32,
+  "createdAt": "2026-10-07T23:30:00+07:00",
+  "labelAuthority": "CONFIRMED_BY_PEER_REVIEWER",
+  "peerReviewer": "Nguyễn Hữu Phước (W4-P4/W5)",
+  "primaryAuthor": "Tạ Trần Vinh Quang (W5-Q2)",
+  "purpose": "Đánh giá Validator và Nguồn truy xuất trên tập giữ lại (Holdout Test Set) độc lập, so sánh Evaluator-Only vs Evaluator+RAG",
+  "notice": "Tập dữ liệu giữ lại độc lập (unseen holdout set), không dùng để tinh chỉnh prompt hay luật trước khi test. Ngưỡng nghiệm thu được chốt trước khi chạy.",
+  "groups": [
+    {
+      "id": "GRP-01",
+      "name": "Đạt chuẩn tiêu chí đơn năm (Single-year Eligible)"
+    },
+    {
+      "id": "GRP-02",
+      "name": "Đạt chuẩn chuỗi nhiều năm liên tiếp (Multi-year Consecutive Eligible)"
+    },
+    {
+      "id": "GRP-03",
+      "name": "Đứt chuỗi năm hoặc gián đoạn (Consecutive Year Gap / Interruption)"
+    },
+    {
+      "id": "GRP-04",
+      "name": "Thiếu minh chứng hoặc tệp tin không hợp lệ (Missing / Invalid Evidence)"
+    },
+    {
+      "id": "GRP-05",
+      "name": "Trùng lặp năm hoặc trùng lặp bản ghi (Duplicate Year / Records)"
+    },
+    {
+      "id": "GRP-06",
+      "name": "Hồ sơ bị thu hồi hoặc thay thế (Revoked / Replaced Records)"
+    },
+    {
+      "id": "GRP-07",
+      "name": "Văn bản hoặc Tiêu chí mô phỏng / chưa duyệt (Unconfirmed / Simulation Policy)"
+    },
+    {
+      "id": "GRP-08",
+      "name": "Sai chủ thể hoặc Ngoài thời hạn hiệu lực (Subject Mismatch / Out of Window)"
+    }
+  ],
+  "cases": [
+    {
+      "id": "HOLDOUT-01",
+      "groupId": "GRP-01",
+      "title": "Giảng viên có bài báo khoa học chuẩn ISI/Scopus đạt tiêu chuẩn nghiên cứu khoa học",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 101
+      },
+      "criterion": {
+        "criterionId": 101,
+        "criterionCode": "NCKH-BAI-BAO-01",
+        "name": "Căn cứ xét tặng danh hiệu thi đua: bài báo khoa học quốc tế uy tín",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 1,
+        "unitMetric": "bài báo",
+        "isConfirmed": true,
+        "rules": {
+          "minimumDistinctYears": 1
+        }
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1001,
+          "type": "ACHIEVEMENT",
+          "subjectId": 101,
+          "year": 2026,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5001,
+            "originalFileName": "paper_scopus_q1_2026.pdf",
+            "sha256": "a1b2c3d4e5f60123456789abcdef0123456789abcdef0123456789abcdef0123"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "ELIGIBLE",
+        "expectedIsSatisfied": true,
+        "expectedIssues": [],
+        "expectedCitations": [
+          1,
+          2
+        ],
+        "basis": "Khoản 1 Điều 4 VN-LAW-002 (Căn cứ thi đua: có thành tích được xác nhận qua minh chứng hợp lệ)",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-02",
+      "groupId": "GRP-01",
+      "title": "Giảng viên hoàn thành xuất sắc nhiệm vụ giảng dạy năm học 2025-2026",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 102
+      },
+      "criterion": {
+        "criterionId": 102,
+        "criterionCode": "GD-HOAN-THANH-01",
+        "name": "Tiêu chuẩn danh hiệu thi đua: hoàn thành tốt nhiệm vụ công tác năm học",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 1,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {
+          "minimumDistinctYears": 1
+        }
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1002,
+          "type": "ACHIEVEMENT",
+          "subjectId": 102,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5002,
+            "originalFileName": "danh_gia_vien_chuc_2025.pdf",
+            "sha256": "b2c3d4e5f60123456789abcdef0123456789abcdef0123456789abcdef0123a1"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "ELIGIBLE",
+        "expectedIsSatisfied": true,
+        "expectedIssues": [],
+        "expectedCitations": [
+          1,
+          3
+        ],
+        "basis": "Khoản 1 Điều 3 VN-LAW-002 và Điều 4 VN-LAW-002",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-03",
+      "groupId": "GRP-01",
+      "title": "Cán bộ đạt sáng kiến cải tiến kỹ thuật cấp cơ sở được công nhận",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 103
+      },
+      "criterion": {
+        "criterionId": 103,
+        "criterionCode": "SK-CO-SO-01",
+        "name": "Nguyên tắc khen thưởng sáng kiến cải tiến kỹ thuật cấp cơ sở",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 1,
+        "unitMetric": "sáng kiến",
+        "isConfirmed": true,
+        "rules": {}
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1003,
+          "type": "ACHIEVEMENT",
+          "subjectId": 103,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5003,
+            "originalFileName": "quyet_dinh_sang_kien_2025.pdf",
+            "sha256": "c3d4e5f60123456789abcdef0123456789abcdef0123456789abcdef0123a1b2"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "ELIGIBLE",
+        "expectedIsSatisfied": true,
+        "expectedIssues": [],
+        "expectedCitations": [
+          2
+        ],
+        "basis": "Điều 4 Khoản 1 VN-LAW-002",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-04",
+      "groupId": "GRP-01",
+      "title": "Tập thể Khoa CNTT hoàn thành xuất sắc nhiệm vụ năm học",
+      "subject": {
+        "subjectType": "UNIT",
+        "subjectId": 2
+      },
+      "criterion": {
+        "criterionId": 104,
+        "criterionCode": "TT-XUAT-SAC-01",
+        "name": "Căn cứ xét tặng danh hiệu thi đua tập thể hoàn thành xuất sắc nhiệm vụ",
+        "targetType": "COLLECTIVE",
+        "minThreshold": 1,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {
+          "minimumDistinctYears": 1
+        }
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1004,
+          "type": "AWARD_RECORD",
+          "subjectId": 2,
+          "year": 2025,
+          "status": "RECORDED",
+          "file": {
+            "id": 5004,
+            "originalFileName": "qd_khen_thuong_tap_the_2025.pdf",
+            "sha256": "d4e5f60123456789abcdef0123456789abcdef0123456789abcdef0123a1b2c3"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "ELIGIBLE",
+        "expectedIsSatisfied": true,
+        "expectedIssues": [],
+        "expectedCitations": [
+          1,
+          2
+        ],
+        "basis": "Điều 3 & 4 VN-LAW-002 xét danh hiệu tập thể",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-05",
+      "groupId": "GRP-02",
+      "title": "Giảng viên đạt CSTĐ cơ sở 3 năm liên tiếp (2023, 2024, 2025)",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 105
+      },
+      "criterion": {
+        "criterionId": 105,
+        "criterionCode": "CSTD-3Y-CONSECUTIVE",
+        "name": "Căn cứ xét tặng danh hiệu thi đua CSTĐ cơ sở 03 năm liên tục",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 3,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true
+        }
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1005,
+          "type": "ACHIEVEMENT",
+          "subjectId": 105,
+          "year": 2023,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5005,
+            "sha256": "e5f60123456789abcdef0123456789abcdef0123456789abcdef0123a1b2c3d4",
+            "originalFileName": "cstd_2023.pdf"
+          }
+        },
+        {
+          "id": 1006,
+          "type": "ACHIEVEMENT",
+          "subjectId": 105,
+          "year": 2024,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5006,
+            "sha256": "f60123456789abcdef0123456789abcdef0123456789abcdef0123a1b2c3d4e5",
+            "originalFileName": "cstd_2024.pdf"
+          }
+        },
+        {
+          "id": 1007,
+          "type": "ACHIEVEMENT",
+          "subjectId": 105,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5007,
+            "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123a1b2c3d4e5f6",
+            "originalFileName": "cstd_2025.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "ELIGIBLE",
+        "expectedIsSatisfied": true,
+        "expectedIssues": [],
+        "expectedCitations": [
+          2,
+          3
+        ],
+        "basis": "Điều 4 VN-LAW-002: Đạt liên tiếp 3 năm đủ điều kiện đề xuất CSTĐ cấp Bộ/Tỉnh",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-06",
+      "groupId": "GRP-02",
+      "title": "Giảng viên hoàn thành tốt nhiệm vụ 4 năm liên tiếp (2022-2025)",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 106
+      },
+      "criterion": {
+        "criterionId": 106,
+        "criterionCode": "LĐTT-4Y-CONSECUTIVE",
+        "name": "Tiêu chuẩn danh hiệu thi đua hoàn thành nhiệm vụ 4 năm liên tục",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 4,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {
+          "minimumDistinctYears": 4,
+          "requireConsecutive": true
+        }
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1008,
+          "type": "ACHIEVEMENT",
+          "subjectId": 106,
+          "year": 2022,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5008,
+            "sha256": "123456789abcdef0123456789abcdef0123456789abcdef0123a1b2c3d4e5f60",
+            "originalFileName": "ldtt_2022.pdf"
+          }
+        },
+        {
+          "id": 1009,
+          "type": "ACHIEVEMENT",
+          "subjectId": 106,
+          "year": 2023,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5009,
+            "sha256": "23456789abcdef0123456789abcdef0123456789abcdef0123a1b2c3d4e5f601",
+            "originalFileName": "ldtt_2023.pdf"
+          }
+        },
+        {
+          "id": 1010,
+          "type": "ACHIEVEMENT",
+          "subjectId": 106,
+          "year": 2024,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5010,
+            "sha256": "3456789abcdef0123456789abcdef0123456789abcdef0123a1b2c3d4e5f6012",
+            "originalFileName": "ldtt_2024.pdf"
+          }
+        },
+        {
+          "id": 1011,
+          "type": "ACHIEVEMENT",
+          "subjectId": 106,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5011,
+            "sha256": "456789abcdef0123456789abcdef0123456789abcdef0123a1b2c3d4e5f60123",
+            "originalFileName": "ldtt_2025.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "ELIGIBLE",
+        "expectedIsSatisfied": true,
+        "expectedIssues": [],
+        "expectedCitations": [
+          1,
+          2
+        ],
+        "basis": "Khoản 1 Điều 3 VN-LAW-002",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-07",
+      "groupId": "GRP-02",
+      "title": "Tập thể đạt danh hiệu Đơn vị tiên tiến 3 năm liên tiếp (2023-2025)",
+      "subject": {
+        "subjectType": "UNIT",
+        "subjectId": 3
+      },
+      "criterion": {
+        "criterionId": 107,
+        "criterionCode": "TT-TIEN-TIEN-3Y",
+        "name": "Căn cứ xét tặng danh hiệu thi đua: Tập thể Lao động Tiên tiến 03 năm",
+        "targetType": "COLLECTIVE",
+        "minThreshold": 3,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true
+        }
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1012,
+          "type": "AWARD_RECORD",
+          "subjectId": 3,
+          "year": 2023,
+          "status": "RECORDED",
+          "file": {
+            "id": 5012,
+            "sha256": "56789abcdef0123456789abcdef0123456789abcdef0123a1b2c3d4e5f601234",
+            "originalFileName": "tltt_2023.pdf"
+          }
+        },
+        {
+          "id": 1013,
+          "type": "AWARD_RECORD",
+          "subjectId": 3,
+          "year": 2024,
+          "status": "RECORDED",
+          "file": {
+            "id": 5013,
+            "sha256": "6789abcdef0123456789abcdef0123456789abcdef0123a1b2c3d4e5f6012345",
+            "originalFileName": "tltt_2024.pdf"
+          }
+        },
+        {
+          "id": 1014,
+          "type": "AWARD_RECORD",
+          "subjectId": 3,
+          "year": 2025,
+          "status": "RECORDED",
+          "file": {
+            "id": 5014,
+            "sha256": "789abcdef0123456789abcdef0123456789abcdef0123a1b2c3d4e5f60123456",
+            "originalFileName": "tltt_2025.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "ELIGIBLE",
+        "expectedIsSatisfied": true,
+        "expectedIssues": [],
+        "expectedCitations": [
+          1,
+          2
+        ],
+        "basis": "Khoản 1 Điều 4 VN-LAW-002 danh hiệu tập thể tiên tiến",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-08",
+      "groupId": "GRP-02",
+      "title": "Giảng viên có 2 năm liên tiếp có đề tài nghiên cứu cấp Tỉnh/Bộ",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 107
+      },
+      "criterion": {
+        "criterionId": 108,
+        "criterionCode": "NCKH-DE-TAI-2Y",
+        "name": "Tiêu chuẩn danh hiệu thi đua: đề tài nghiên cứu cấp Tỉnh/Bộ 02 năm liên tiếp",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 2,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {
+          "minimumDistinctYears": 2,
+          "requireConsecutive": true
+        }
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1015,
+          "type": "ACHIEVEMENT",
+          "subjectId": 107,
+          "year": 2024,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5015,
+            "sha256": "89abcdef0123456789abcdef0123456789abcdef0123a1b2c3d4e5f601234567",
+            "originalFileName": "nghiem_thu_2024.pdf"
+          }
+        },
+        {
+          "id": 1016,
+          "type": "ACHIEVEMENT",
+          "subjectId": 107,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5016,
+            "sha256": "9abcdef0123456789abcdef0123456789abcdef0123a1b2c3d4e5f6012345678",
+            "originalFileName": "nghiem_thu_2025.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "ELIGIBLE",
+        "expectedIsSatisfied": true,
+        "expectedIssues": [],
+        "expectedCitations": [
+          2
+        ],
+        "basis": "Khoản 1 Điều 4 VN-LAW-002 đề tài NCKH nghiệm thu đạt",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-09",
+      "groupId": "GRP-03",
+      "title": "Đứt chuỗi năm: Đạt 2022, 2024, 2025 (Thiếu năm 2023)",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 108
+      },
+      "criterion": {
+        "criterionId": 109,
+        "criterionCode": "CSTD-3Y-GAP-01",
+        "name": "Đạt CSTĐ 03 năm liên tục",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 3,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true
+        }
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1017,
+          "type": "ACHIEVEMENT",
+          "subjectId": 108,
+          "year": 2022,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5017,
+            "sha256": "abcdef0123456789abcdef0123456789abcdef0123a1b2c3d4e5f60123456789",
+            "originalFileName": "cstd_2022.pdf"
+          }
+        },
+        {
+          "id": 1018,
+          "type": "ACHIEVEMENT",
+          "subjectId": 108,
+          "year": 2024,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5018,
+            "sha256": "bcdef0123456789abcdef0123456789abcdef0123a1b2c3d4e5f60123456789a",
+            "originalFileName": "cstd_2024.pdf"
+          }
+        },
+        {
+          "id": 1019,
+          "type": "ACHIEVEMENT",
+          "subjectId": 108,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5019,
+            "sha256": "cdef0123456789abcdef0123456789abcdef0123a1b2c3d4e5f60123456789ab",
+            "originalFileName": "cstd_2025.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "YEAR_GAP"
+        ],
+        "expectedCitations": [
+          2
+        ],
+        "basis": "Khoản 1 Điều 4 VN-LAW-002: Yêu cầu liên tục, phát hiện gián đoạn năm 2023",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-10",
+      "groupId": "GRP-03",
+      "title": "Đứt chuỗi năm: Đạt 2020 và 2025 (Khoảng trống 4 năm)",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 109
+      },
+      "criterion": {
+        "criterionId": 110,
+        "criterionCode": "CSTD-2Y-GAP-02",
+        "name": "Đạt danh hiệu 02 năm liên tiếp",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 2,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {
+          "minimumDistinctYears": 2,
+          "requireConsecutive": true
+        }
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1020,
+          "type": "ACHIEVEMENT",
+          "subjectId": 109,
+          "year": 2020,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5020,
+            "sha256": "def0123456789abcdef0123456789abcdef0123a1b2c3d4e5f60123456789abc",
+            "originalFileName": "f2020.pdf"
+          }
+        },
+        {
+          "id": 1021,
+          "type": "ACHIEVEMENT",
+          "subjectId": 109,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5021,
+            "sha256": "ef0123456789abcdef0123456789abcdef0123a1b2c3d4e5f60123456789abcd",
+            "originalFileName": "f2025.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "YEAR_GAP"
+        ],
+        "expectedCitations": [
+          2
+        ],
+        "basis": "Khoản 1 Điều 4 VN-LAW-002: Đứt quãng 4 năm, không thể xét CSTĐ liên tục",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-11",
+      "groupId": "GRP-03",
+      "title": "Tập thể đứt chuỗi năm: Đạt 2021, 2022, 2025 (Thiếu 2023, 2024)",
+      "subject": {
+        "subjectType": "UNIT",
+        "subjectId": 4
+      },
+      "criterion": {
+        "criterionId": 111,
+        "criterionCode": "TT-GAP-03",
+        "name": "Tập thể tiên tiến 03 năm liên tục",
+        "targetType": "COLLECTIVE",
+        "minThreshold": 3,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true
+        }
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1022,
+          "type": "AWARD_RECORD",
+          "subjectId": 4,
+          "year": 2021,
+          "status": "RECORDED",
+          "file": {
+            "id": 5022,
+            "sha256": "f0123456789abcdef0123456789abcdef0123a1b2c3d4e5f60123456789abcde",
+            "originalFileName": "tt_2021.pdf"
+          }
+        },
+        {
+          "id": 1023,
+          "type": "AWARD_RECORD",
+          "subjectId": 4,
+          "year": 2022,
+          "status": "RECORDED",
+          "file": {
+            "id": 5023,
+            "sha256": "0123456789abcdef0123456789abcdef0123a1b2c3d4e5f60123456789abcdef",
+            "originalFileName": "tt_2022.pdf"
+          }
+        },
+        {
+          "id": 1024,
+          "type": "AWARD_RECORD",
+          "subjectId": 4,
+          "year": 2025,
+          "status": "RECORDED",
+          "file": {
+            "id": 5024,
+            "sha256": "123456789abcdef0123456789abcdef0123a1b2c3d4e5f60123456789abcdef0",
+            "originalFileName": "tt_2025.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "YEAR_GAP"
+        ],
+        "expectedCitations": [
+          1,
+          2
+        ],
+        "basis": "Khoản 1 Điều 4 VN-LAW-002",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-12",
+      "groupId": "GRP-03",
+      "title": "Đứt chuỗi xen kẽ: 2021, 2023, 2025 (Chỉ đạt các năm lẻ)",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 110
+      },
+      "criterion": {
+        "criterionId": 112,
+        "criterionCode": "CSTD-3Y-GAP-04",
+        "name": "Đạt 03 năm liên tục",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 3,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true
+        }
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1025,
+          "type": "ACHIEVEMENT",
+          "subjectId": 110,
+          "year": 2021,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5025,
+            "sha256": "23456789abcdef0123456789abcdef0123a1b2c3d4e5f60123456789abcdef01",
+            "originalFileName": "c2021.pdf"
+          }
+        },
+        {
+          "id": 1026,
+          "type": "ACHIEVEMENT",
+          "subjectId": 110,
+          "year": 2023,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5026,
+            "sha256": "3456789abcdef0123456789abcdef0123a1b2c3d4e5f60123456789abcdef012",
+            "originalFileName": "c2023.pdf"
+          }
+        },
+        {
+          "id": 1027,
+          "type": "ACHIEVEMENT",
+          "subjectId": 110,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5027,
+            "sha256": "456789abcdef0123456789abcdef0123a1b2c3d4e5f60123456789abcdef0123",
+            "originalFileName": "c2025.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "YEAR_GAP"
+        ],
+        "expectedCitations": [
+          2
+        ],
+        "basis": "Khoản 1 Điều 4 VN-LAW-002",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-13",
+      "groupId": "GRP-04",
+      "title": "Thiếu hoàn toàn tệp tin minh chứng đính kèm (file: null)",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 111
+      },
+      "criterion": {
+        "criterionId": 113,
+        "criterionCode": "NCKH-EVIDENCE-MISSING",
+        "name": "Công bố bài báo khoa học",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 1,
+        "unitMetric": "bài báo",
+        "isConfirmed": true,
+        "rules": {}
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1028,
+          "type": "ACHIEVEMENT",
+          "subjectId": 111,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": null
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "MISSING_DATA"
+        ],
+        "expectedCitations": [
+          1,
+          2
+        ],
+        "basis": "Quy tắc liêm chính: Thiếu chứng cứ không mặc định không đạt mà yêu cầu người rà soát bổ sung",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-14",
+      "groupId": "GRP-04",
+      "title": "Tệp tin minh chứng có mã băm SHA-256 bị can thiệp (tampered hash không đúng định dạng 64 hex)",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 112
+      },
+      "criterion": {
+        "criterionId": 114,
+        "criterionCode": "SK-HASH-TAMPERED",
+        "name": "Sáng kiến cải tiến có chứng nhận",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 1,
+        "unitMetric": "sáng kiến",
+        "isConfirmed": true,
+        "rules": {}
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1029,
+          "type": "ACHIEVEMENT",
+          "subjectId": 112,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5029,
+            "sha256": "INVALID_TAMPERED_HASH_SHORT",
+            "originalFileName": "tampered.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "MISSING_DATA"
+        ],
+        "expectedCitations": [
+          2
+        ],
+        "basis": "Khoản 1 Điều 4 VN-LAW-002: Tính toàn vẹn minh chứng số bị vi phạm",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-15",
+      "groupId": "GRP-04",
+      "title": "Hồ sơ bị khuyết năm thành tích (year: null)",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 113
+      },
+      "criterion": {
+        "criterionId": 115,
+        "criterionCode": "YEAR-MISSING-01",
+        "name": "Thành tích có ghi nhận năm",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 1,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {}
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1030,
+          "type": "ACHIEVEMENT",
+          "subjectId": 113,
+          "year": null,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5030,
+            "sha256": "56789abcdef0123456789abcdef0123a1b2c3d4e5f60123456789abcdef01234",
+            "originalFileName": "no_year.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "MISSING_DATA"
+        ],
+        "expectedCitations": [
+          3
+        ],
+        "basis": "Khoản 3 Điều 4 VN-LAW-002: Không tự điền năm xét thưởng khi dữ liệu khuyết",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-16",
+      "groupId": "GRP-04",
+      "title": "Hồ sơ 3 năm nhưng năm giữa bị thiếu file minh chứng",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 114
+      },
+      "criterion": {
+        "criterionId": 116,
+        "criterionCode": "CSTD-3Y-MID-MISSING",
+        "name": "CSTĐ 03 năm liên tục",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 3,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true
+        }
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1031,
+          "type": "ACHIEVEMENT",
+          "subjectId": 114,
+          "year": 2023,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5031,
+            "sha256": "6789abcdef0123456789abcdef0123a1b2c3d4e5f60123456789abcdef012345",
+            "originalFileName": "2023.pdf"
+          }
+        },
+        {
+          "id": 1032,
+          "type": "ACHIEVEMENT",
+          "subjectId": 114,
+          "year": 2024,
+          "status": "VERIFIED",
+          "file": null
+        },
+        {
+          "id": 1033,
+          "type": "ACHIEVEMENT",
+          "subjectId": 114,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5033,
+            "sha256": "789abcdef0123456789abcdef0123a1b2c3d4e5f60123456789abcdef0123456",
+            "originalFileName": "2025.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "MISSING_DATA",
+          "YEAR_GAP"
+        ],
+        "expectedCitations": [
+          2
+        ],
+        "basis": "Khoản 1 Điều 4 VN-LAW-002: Thiếu file năm 2024 làm đứt chuỗi năm",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-17",
+      "groupId": "GRP-05",
+      "title": "Trùng năm: 3 bài báo đều xuất bản trong năm 2025, tiêu chí yêu cầu 3 năm riêng biệt",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 115
+      },
+      "criterion": {
+        "criterionId": 117,
+        "criterionCode": "CSTD-DUP-YEAR-01",
+        "name": "Đạt thành tích trong 03 năm riêng biệt",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 3,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {
+          "minimumDistinctYears": 3
+        }
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1034,
+          "type": "ACHIEVEMENT",
+          "subjectId": 115,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5034,
+            "sha256": "89abcdef0123456789abcdef0123a1b2c3d4e5f60123456789abcdef01234567",
+            "originalFileName": "p1.pdf"
+          }
+        },
+        {
+          "id": 1035,
+          "type": "ACHIEVEMENT",
+          "subjectId": 115,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5035,
+            "sha256": "9abcdef0123456789abcdef0123a1b2c3d4e5f60123456789abcdef012345678",
+            "originalFileName": "p2.pdf"
+          }
+        },
+        {
+          "id": 1036,
+          "type": "ACHIEVEMENT",
+          "subjectId": 115,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5036,
+            "sha256": "abcdef0123456789abcdef0123a1b2c3d4e5f60123456789abcdef0123456789",
+            "originalFileName": "p3.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "INELIGIBLE",
+        "expectedIsSatisfied": false,
+        "expectedIssues": [
+          "DUPLICATE_YEAR",
+          "BELOW_THRESHOLD"
+        ],
+        "expectedCitations": [
+          2
+        ],
+        "basis": "Khoản 1 Điều 4 VN-LAW-002: Chỉ tính 1 năm phân biệt, dưới ngưỡng 3 năm",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-18",
+      "groupId": "GRP-05",
+      "title": "Trùng năm: 2 bản ghi năm 2024, 1 bản ghi năm 2025 (yêu cầu 3 năm liên tiếp)",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 116
+      },
+      "criterion": {
+        "criterionId": 118,
+        "criterionCode": "CSTD-DUP-YEAR-02",
+        "name": "Đạt 03 năm liên tiếp",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 3,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true
+        }
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1037,
+          "type": "ACHIEVEMENT",
+          "subjectId": 116,
+          "year": 2024,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5037,
+            "sha256": "bcdef0123456789abcdef0123a1b2c3d4e5f60123456789abcdef0123456789a",
+            "originalFileName": "rec1.pdf"
+          }
+        },
+        {
+          "id": 1038,
+          "type": "ACHIEVEMENT",
+          "subjectId": 116,
+          "year": 2024,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5038,
+            "sha256": "cdef0123456789abcdef0123a1b2c3d4e5f60123456789abcdef0123456789ab",
+            "originalFileName": "rec2.pdf"
+          }
+        },
+        {
+          "id": 1039,
+          "type": "ACHIEVEMENT",
+          "subjectId": 116,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5039,
+            "sha256": "def0123456789abcdef0123a1b2c3d4e5f60123456789abcdef0123456789abc",
+            "originalFileName": "rec3.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "INELIGIBLE",
+        "expectedIsSatisfied": false,
+        "expectedIssues": [
+          "DUPLICATE_YEAR",
+          "BELOW_THRESHOLD"
+        ],
+        "expectedCitations": [
+          2
+        ],
+        "basis": "Khoản 1 Điều 4 VN-LAW-002",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-19",
+      "groupId": "GRP-05",
+      "title": "Trùng năm và đứt chuỗi đồng thời: 2022, 2022, 2025",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 117
+      },
+      "criterion": {
+        "criterionId": 119,
+        "criterionCode": "CSTD-DUP-GAP-03",
+        "name": "Đạt 03 năm liên tục",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 3,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true
+        }
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1040,
+          "type": "ACHIEVEMENT",
+          "subjectId": 117,
+          "year": 2022,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5040,
+            "sha256": "ef0123456789abcdef0123a1b2c3d4e5f60123456789abcdef0123456789abcd",
+            "originalFileName": "a22_1.pdf"
+          }
+        },
+        {
+          "id": 1041,
+          "type": "ACHIEVEMENT",
+          "subjectId": 117,
+          "year": 2022,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5041,
+            "sha256": "f0123456789abcdef0123a1b2c3d4e5f60123456789abcdef0123456789abcde",
+            "originalFileName": "a22_2.pdf"
+          }
+        },
+        {
+          "id": 1042,
+          "type": "ACHIEVEMENT",
+          "subjectId": 117,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5042,
+            "sha256": "0123456789abcdef0123a1b2c3d4e5f60123456789abcdef0123456789abcdef",
+            "originalFileName": "a25.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "DUPLICATE_YEAR",
+          "YEAR_GAP",
+          "BELOW_THRESHOLD"
+        ],
+        "expectedCitations": [
+          2
+        ],
+        "basis": "Khoản 1 Điều 4 VN-LAW-002",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-20",
+      "groupId": "GRP-05",
+      "title": "Tập thể có nhiều khen thưởng trong cùng một năm (2024, 2024)",
+      "subject": {
+        "subjectType": "UNIT",
+        "subjectId": 5
+      },
+      "criterion": {
+        "criterionId": 120,
+        "criterionCode": "TT-DUP-YEAR-04",
+        "name": "Khen thưởng trong 02 năm riêng biệt",
+        "targetType": "COLLECTIVE",
+        "minThreshold": 2,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {
+          "minimumDistinctYears": 2
+        }
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1043,
+          "type": "AWARD_RECORD",
+          "subjectId": 5,
+          "year": 2024,
+          "status": "RECORDED",
+          "file": {
+            "id": 5043,
+            "sha256": "123456789abcdef0123a1b2c3d4e5f60123456789abcdef0123456789abcdef0",
+            "originalFileName": "tt24_1.pdf"
+          }
+        },
+        {
+          "id": 1044,
+          "type": "AWARD_RECORD",
+          "subjectId": 5,
+          "year": 2024,
+          "status": "RECORDED",
+          "file": {
+            "id": 5044,
+            "sha256": "23456789abcdef0123a1b2c3d4e5f60123456789abcdef0123456789abcdef01",
+            "originalFileName": "tt24_2.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "INELIGIBLE",
+        "expectedIsSatisfied": false,
+        "expectedIssues": [
+          "DUPLICATE_YEAR",
+          "BELOW_THRESHOLD"
+        ],
+        "expectedCitations": [
+          1,
+          2
+        ],
+        "basis": "Khoản 1 Điều 4 VN-LAW-002",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-21",
+      "groupId": "GRP-06",
+      "title": "Hồ sơ thành tích đã bị thu hồi (status: REVOKED) không được tính",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 118
+      },
+      "criterion": {
+        "criterionId": 121,
+        "criterionCode": "REVOKED-CHECK-01",
+        "name": "Có 01 thành tích hợp lệ",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 1,
+        "unitMetric": "thành tích",
+        "isConfirmed": true,
+        "rules": {}
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1045,
+          "type": "ACHIEVEMENT",
+          "subjectId": 118,
+          "year": 2025,
+          "status": "REVOKED",
+          "file": {
+            "id": 5045,
+            "sha256": "3456789abcdef0123a1b2c3d4e5f60123456789abcdef0123456789abcdef012",
+            "originalFileName": "revoked.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "REVOKED_SOURCE"
+        ],
+        "expectedCitations": [
+          1
+        ],
+        "basis": "Khoản 1 Điều 3 VN-LAW-002: Hồ sơ thu hồi mất hiệu lực khen thưởng",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-22",
+      "groupId": "GRP-06",
+      "title": "Chuỗi 3 năm có năm cuối bị thu hồi (2023, 2024, 2025 REVOKED)",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 119
+      },
+      "criterion": {
+        "criterionId": 122,
+        "criterionCode": "CSTD-REVOKED-3Y",
+        "name": "CSTĐ 03 năm liên tục",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 3,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {
+          "minimumDistinctYears": 3,
+          "requireConsecutive": true
+        }
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1046,
+          "type": "ACHIEVEMENT",
+          "subjectId": 119,
+          "year": 2023,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5046,
+            "sha256": "456789abcdef0123a1b2c3d4e5f60123456789abcdef0123456789abcdef0123",
+            "originalFileName": "23.pdf"
+          }
+        },
+        {
+          "id": 1047,
+          "type": "ACHIEVEMENT",
+          "subjectId": 119,
+          "year": 2024,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5047,
+            "sha256": "56789abcdef0123a1b2c3d4e5f60123456789abcdef0123456789abcdef01234",
+            "originalFileName": "24.pdf"
+          }
+        },
+        {
+          "id": 1048,
+          "type": "ACHIEVEMENT",
+          "subjectId": 119,
+          "year": 2025,
+          "status": "REVOKED",
+          "file": {
+            "id": 5048,
+            "sha256": "6789abcdef0123a1b2c3d4e5f60123456789abcdef0123456789abcdef012345",
+            "originalFileName": "25_revoked.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "REVOKED_SOURCE"
+        ],
+        "expectedCitations": [
+          1,
+          2
+        ],
+        "basis": "Điều 3 & 4 VN-LAW-002",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-23",
+      "groupId": "GRP-06",
+      "title": "Bản ghi bị thay thế và bản ghi thay thế mới cùng tồn tại (Replaced Record Resolution)",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 120
+      },
+      "criterion": {
+        "criterionId": 123,
+        "criterionCode": "REPLACEMENT-01",
+        "name": "Hoàn thành nhiệm vụ năm 2025",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 1,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {}
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1049,
+          "type": "ACHIEVEMENT",
+          "subjectId": 120,
+          "year": 2025,
+          "status": "REVOKED",
+          "file": {
+            "id": 5049,
+            "sha256": "789abcdef0123a1b2c3d4e5f60123456789abcdef0123456789abcdef0123456",
+            "originalFileName": "v1_err.pdf"
+          }
+        },
+        {
+          "id": 1050,
+          "type": "ACHIEVEMENT",
+          "subjectId": 120,
+          "year": 2025,
+          "status": "VERIFIED",
+          "replacesRecordId": 1049,
+          "file": {
+            "id": 5050,
+            "sha256": "89abcdef0123a1b2c3d4e5f60123456789abcdef0123456789abcdef01234567",
+            "originalFileName": "v2_fixed.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "REVOKED_SOURCE"
+        ],
+        "expectedCitations": [
+          1
+        ],
+        "basis": "Khoản 1 Điều 3 VN-LAW-002: Bản ghi thay thế giải quyết lỗi nhưng cần thẩm định viên đối soát bản thay thế",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-24",
+      "groupId": "GRP-06",
+      "title": "Hồ sơ ở trạng thái CANCELLED do người dùng hủy",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 121
+      },
+      "criterion": {
+        "criterionId": 124,
+        "criterionCode": "CANCELLED-01",
+        "name": "Thành tích được xác nhận",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 1,
+        "unitMetric": "hồ sơ",
+        "isConfirmed": true,
+        "rules": {}
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1051,
+          "type": "ACHIEVEMENT",
+          "subjectId": 121,
+          "year": 2025,
+          "status": "CANCELLED",
+          "file": {
+            "id": 5051,
+            "sha256": "9abcdef0123a1b2c3d4e5f60123456789abcdef0123456789abcdef012345678",
+            "originalFileName": "canc.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "REVOKED_SOURCE"
+        ],
+        "expectedCitations": [
+          1
+        ],
+        "basis": "Khoản 1 Điều 3 VN-LAW-002",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-25",
+      "groupId": "GRP-07",
+      "title": "Văn bản quy định chưa được phê duyệt LHU (is_confirmed: false, INTERNAL_CRITERIA_UNCONFIRMED)",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 122
+      },
+      "criterion": {
+        "criterionId": 125,
+        "criterionCode": "UNAPPROVED-DOC-01",
+        "name": "Tiêu chí theo dự thảo",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 1,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {}
+      },
+      "documentVersion": {
+        "versionId": 2,
+        "documentCode": "VN-EDU-001",
+        "versionNumber": "07/2026/TT-BGDĐT",
+        "isConfirmed": false,
+        "lhuApplicationStatus": "INTERNAL_CRITERIA_UNCONFIRMED",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1052,
+          "type": "ACHIEVEMENT",
+          "subjectId": 122,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5052,
+            "sha256": "abcdef0123a1b2c3d4e5f60123456789abcdef0123456789abcdef0123456789a",
+            "originalFileName": "doc.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "UNAPPROVED_DOCUMENT"
+        ],
+        "expectedCitations": [],
+        "basis": "Nguyên tắc bảo vệ: Văn bản chưa được Hội đồng LHU phê duyệt áp dụng không được dùng để ra kết luận chính thức",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-26",
+      "groupId": "GRP-07",
+      "title": "Tiêu chí chưa được phê duyệt (criterion is_confirmed: false) dù văn bản cha đã duyệt",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 123
+      },
+      "criterion": {
+        "criterionId": 126,
+        "criterionCode": "UNAPPROVED-CRIT-02",
+        "name": "Tiêu chuẩn dự thảo chưa được duyệt",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 1,
+        "unitMetric": "năm",
+        "isConfirmed": false,
+        "rules": {}
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1053,
+          "type": "ACHIEVEMENT",
+          "subjectId": 123,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5053,
+            "sha256": "bcdef0123a1b2c3d4e5f60123456789abcdef0123456789abcdef0123456789ab",
+            "originalFileName": "crit.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "UNAPPROVED_CRITERION"
+        ],
+        "expectedCitations": [],
+        "basis": "Tiêu chuẩn chưa có hiệu lực chính thức tại LHU",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-27",
+      "groupId": "GRP-07",
+      "title": "Nguồn tiêu chí mô phỏng (SIMULATION_ONLY - W1-P4-SIMULATION) gắn nhãn mô phỏng",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 124
+      },
+      "criterion": {
+        "criteriaVersionId": 1,
+        "criterionCode": "SIM-KPI-01",
+        "name": "Chuẩn bị 02 bản ghi giáo trình có minh chứng trước hạn demo",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 2,
+        "unitMetric": "giáo trình",
+        "isConfirmed": false,
+        "rules": {
+          "isSimulation": true
+        }
+      },
+      "documentVersion": {
+        "versionId": 3,
+        "documentCode": "W1-P4-SIMULATION",
+        "versionNumber": "bb6eb73-W1-P4",
+        "isConfirmed": false,
+        "lhuApplicationStatus": "SIMULATION_ONLY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1054,
+          "type": "ACHIEVEMENT",
+          "subjectId": 124,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5054,
+            "sha256": "cdef0123a1b2c3d4e5f60123456789abcdef0123456789abcdef0123456789abc",
+            "originalFileName": "sim1.pdf"
+          }
+        },
+        {
+          "id": 1055,
+          "type": "ACHIEVEMENT",
+          "subjectId": 124,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5055,
+            "sha256": "def0123a1b2c3d4e5f60123456789abcdef0123456789abcdef0123456789abcd",
+            "originalFileName": "sim2.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "SIMULATION_ONLY",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "UNAPPROVED_DOCUMENT",
+          "UNAPPROVED_CRITERION",
+          "SIMULATED_KPI"
+        ],
+        "expectedCitations": [
+          10
+        ],
+        "basis": "Nguồn KPI mô phỏng W1-P4 không tự biến thành chính thức",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-28",
+      "groupId": "GRP-07",
+      "title": "Cả văn bản và tiêu chí đều chưa duyệt (Full Unapproved Policy)",
+      "subject": {
+        "subjectType": "UNIT",
+        "subjectId": 6
+      },
+      "criterion": {
+        "criterionId": 128,
+        "criterionCode": "SIM-COLLECTIVE-UNAPPROVED",
+        "name": "Tiêu chí tập thể chưa duyệt",
+        "targetType": "COLLECTIVE",
+        "minThreshold": 1,
+        "unitMetric": "đơn vị",
+        "isConfirmed": false,
+        "rules": {
+          "isSimulation": true
+        }
+      },
+      "documentVersion": {
+        "versionId": 3,
+        "documentCode": "W1-P4-SIMULATION",
+        "versionNumber": "bb6eb73-W1-P4",
+        "isConfirmed": false,
+        "lhuApplicationStatus": "SIMULATION_ONLY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1056,
+          "type": "AWARD_RECORD",
+          "subjectId": 6,
+          "year": 2025,
+          "status": "RECORDED",
+          "file": {
+            "id": 5056,
+            "sha256": "ef0123a1b2c3d4e5f60123456789abcdef0123456789abcdef0123456789abcde",
+            "originalFileName": "sim_unit.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "SIMULATION_ONLY",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "UNAPPROVED_DOCUMENT",
+          "UNAPPROVED_CRITERION",
+          "SIMULATED_KPI"
+        ],
+        "expectedCitations": [
+          13
+        ],
+        "basis": "Quy chế mô phỏng",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-29",
+      "groupId": "GRP-08",
+      "title": "Sai chủ thể: Hồ sơ mang subjectId của người khác (199 thay vì 125)",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 125
+      },
+      "criterion": {
+        "criterionId": 129,
+        "criterionCode": "WRONG-SUBJ-01",
+        "name": "Thành tích giảng viên chính chủ",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 1,
+        "unitMetric": "thành tích",
+        "isConfirmed": true,
+        "rules": {}
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1057,
+          "type": "ACHIEVEMENT",
+          "subjectId": 199,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5057,
+            "sha256": "f0123a1b2c3d4e5f60123456789abcdef0123456789abcdef0123456789abcdef",
+            "originalFileName": "wrong.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "WRONG_SUBJECT"
+        ],
+        "expectedCitations": [
+          1
+        ],
+        "basis": "Khoản 1 Điều 3 VN-LAW-002: Sai chủ thể thành tích",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-30",
+      "groupId": "GRP-08",
+      "title": "Thẩm định ngoài khung thời gian hiệu lực văn bản (asOfDate 2020 trước effectiveFrom 2024)",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 126
+      },
+      "criterion": {
+        "criterionId": 130,
+        "criterionCode": "OUT-OF-WINDOW-01",
+        "name": "Hiệu lực văn bản",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 1,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {}
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": "2028-12-31"
+      },
+      "asOfDate": "2020-05-01",
+      "records": [
+        {
+          "id": 1058,
+          "type": "ACHIEVEMENT",
+          "subjectId": 126,
+          "year": 2020,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5058,
+            "sha256": "0123a1b2c3d4e5f60123456789abcdef0123456789abcdef0123456789abcdef0",
+            "originalFileName": "old.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "OUT_OF_EFFECTIVE_WINDOW"
+        ],
+        "expectedCitations": [
+          4
+        ],
+        "basis": "Khoản 4 Điều 4 VN-LAW-002: Quy định chuyển tiếp và thời điểm áp dụng",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-31",
+      "groupId": "GRP-08",
+      "title": "Thẩm định sau khi văn bản đã hết hiệu lực (effectiveTo 2025, asOfDate 2027)",
+      "subject": {
+        "subjectType": "LECTURER",
+        "subjectId": 127
+      },
+      "criterion": {
+        "criterionId": 131,
+        "criterionCode": "OUT-OF-WINDOW-02",
+        "name": "Hiệu lực văn bản đã hết",
+        "targetType": "INDIVIDUAL",
+        "minThreshold": 1,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {}
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2020-01-01",
+        "effectiveTo": "2025-12-31"
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1059,
+          "type": "ACHIEVEMENT",
+          "subjectId": 127,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5059,
+            "sha256": "123a1b2c3d4e5f60123456789abcdef0123456789abcdef0123456789abcdef01",
+            "originalFileName": "expired.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "OUT_OF_EFFECTIVE_WINDOW"
+        ],
+        "expectedCitations": [
+          4
+        ],
+        "basis": "Khoản 4 Điều 4 VN-LAW-002",
+        "verifiedByPeer": true
+      }
+    },
+    {
+      "id": "HOLDOUT-32",
+      "groupId": "GRP-08",
+      "title": "Hồ sơ tập thể nhưng input đưa vào là ID cá nhân của giảng viên",
+      "subject": {
+        "subjectType": "UNIT",
+        "subjectId": 7
+      },
+      "criterion": {
+        "criterionId": 132,
+        "criterionCode": "COLLECTIVE-MISMATCH-01",
+        "name": "Tiêu chuẩn tập thể",
+        "targetType": "COLLECTIVE",
+        "minThreshold": 1,
+        "unitMetric": "năm",
+        "isConfirmed": true,
+        "rules": {}
+      },
+      "documentVersion": {
+        "versionId": 1,
+        "documentCode": "VN-LAW-002",
+        "versionNumber": "06/2026/QH16",
+        "isConfirmed": true,
+        "lhuApplicationStatus": "CONFIRMED_LHU_POLICY",
+        "effectiveFrom": "2024-01-01",
+        "effectiveTo": null
+      },
+      "asOfDate": "2026-10-07",
+      "records": [
+        {
+          "id": 1060,
+          "type": "ACHIEVEMENT",
+          "subjectId": 999,
+          "year": 2025,
+          "status": "VERIFIED",
+          "file": {
+            "id": 5060,
+            "sha256": "23a1b2c3d4e5f60123456789abcdef0123456789abcdef0123456789abcdef012",
+            "originalFileName": "wrong_unit.pdf"
+          }
+        }
+      ],
+      "groundTruth": {
+        "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+        "expectedIsSatisfied": "UNCONFIRMED",
+        "expectedIssues": [
+          "WRONG_SUBJECT"
+        ],
+        "expectedCitations": [
+          1
+        ],
+        "basis": "Khoản 1 Điều 3 VN-LAW-002: Sai chủ thể đơn vị",
+        "verifiedByPeer": true
+      }
+    }
+  ]
+}
