@@ -1,0 +1,36 @@
+{
+  "synthetic": true,
+  "loading": true,
+  "checks": [
+    {
+      "width": 390,
+      "states": [
+        "error",
+        "retry",
+        "empty",
+        "populated-20-rows"
+      ],
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "states": [
+        "error",
+        "retry",
+        "empty",
+        "populated-20-rows"
+      ],
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "states": [
+        "error",
+        "retry",
+        "empty",
+        "populated-20-rows"
+      ],
+      "overflow": false
+    }
+  ]
+}

@@ -276,8 +276,6 @@ export async function listAchievements({ filters = {}, limit = 10, offset = 0, s
 
   // 1. Đếm tổng số bản ghi
   const countSql = `SELECT COUNT(*) AS total FROM app.achievements a ${whereSql}`;
-  const countRes = await query(countSql, params);
-  const total = Number(countRes.rows[0]?.total || 0);
 
   // 2. Lấy dữ liệu trang
   const listSql = `
@@ -312,12 +310,17 @@ export async function listAchievements({ filters = {}, limit = 10, offset = 0, s
     LEFT JOIN app.achievement_types at ON a.achievement_type_id = at.achievement_type_id
     LEFT JOIN app.academic_years ay ON a.academic_year_id = ay.academic_year_id
     ${whereSql}
-    ORDER BY ${sortCol} ${order}
+    ORDER BY ${sortCol} ${order}, a.achievement_id ${order}
     LIMIT $${paramIdx++} OFFSET $${paramIdx++}
   `;
 
   const listParams = [...params, limit, offset];
-  const listRes = await query(listSql, listParams);
+  // Independent read queries: avoid another network round trip in the critical path.
+  const [countRes, listRes] = await Promise.all([
+    query(countSql, params),
+    query(listSql, listParams),
+  ]);
+  const total = Number(countRes.rows[0]?.total || 0);
 
   return {
     items: listRes.rows.map((r) => ({

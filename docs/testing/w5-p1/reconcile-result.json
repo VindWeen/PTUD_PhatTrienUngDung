@@ -1,0 +1,25 @@
+{
+  "startedAt": "2026-10-08T14:56:08.579Z",
+  "mode": "reconcile",
+  "synthetic": true,
+  "integration": "real Express + PostgreSQL via pg",
+  "concurrency": 10,
+  "machine": {
+    "os": "Windows_NT",
+    "release": "10.0.22621",
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz",
+    "logicalCpus": 12,
+    "ramGiB": 16,
+    "node": "v20.20.1"
+  },
+  "measurements": [],
+  "dataset": {
+    "lecturers": 100,
+    "units": 10,
+    "achievements": 5000,
+    "years": 7
+  },
+  "reconciliation": "PASS: roles, totals, valid counts, distinct years, all paginated IDs, CSV escaping",
+  "status": "PASS",
+  "finishedAt": "2026-10-08T15:04:00.021Z"
+}

@@ -1,0 +1,61 @@
+{
+  "startedAt": "2026-10-08T15:08:34.717Z",
+  "mode": "browser",
+  "synthetic": true,
+  "integration": "real Express + PostgreSQL via pg",
+  "concurrency": 10,
+  "machine": {
+    "os": "Windows_NT",
+    "release": "10.0.22621",
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz",
+    "logicalCpus": 12,
+    "ramGiB": 16,
+    "node": "v20.20.1"
+  },
+  "measurements": [],
+  "dataset": {
+    "lecturers": 100,
+    "units": 10,
+    "achievements": 5000,
+    "years": 7
+  },
+  "browser": [
+    {
+      "user": 1,
+      "total": 5000,
+      "realLogin": true,
+      "realReport": true,
+      "horizontalOverflow": false
+    },
+    {
+      "user": 2,
+      "total": 650,
+      "realLogin": true,
+      "realReport": true,
+      "horizontalOverflow": false
+    },
+    {
+      "user": 3,
+      "total": 150,
+      "realLogin": true,
+      "realReport": true,
+      "horizontalOverflow": false
+    },
+    {
+      "user": 4,
+      "total": 650,
+      "realLogin": true,
+      "realReport": true,
+      "horizontalOverflow": false
+    },
+    {
+      "user": 6,
+      "total": 50,
+      "realLogin": true,
+      "realReport": true,
+      "horizontalOverflow": false
+    }
+  ],
+  "status": "PASS",
+  "finishedAt": "2026-10-08T15:09:23.098Z"
+}
