@@ -289,7 +289,7 @@ export async function importCsv(user, raw, commit = false) {
         "SELECT lecturer_id FROM app.lecturers WHERE lecturer_id=$1 FOR UPDATE",
         [s.lecturer_id],
       );
-    const seen = new Set();
+    const seen = new Map();
     const rows = [];
     for (const e of entries) {
       if (e.error) {
@@ -302,40 +302,40 @@ export async function importCsv(user, raw, commit = false) {
         e.goal.periodEnd,
       ]);
       if (seen.has(key)) {
-        rows.push({ ...e, status: "DUPLICATE", message: "Trùng trong CSV" });
+        const identical = seen.get(key) === JSON.stringify([e.goal, e.result]);
+        rows.push({ ...e, status: identical ? "DUPLICATE" : "INVALID", message: identical ? "Trùng trong CSV" : "Cùng mã/kỳ nhưng khác nội dung trong CSV" });
         continue;
       }
-      seen.add(key);
+      seen.set(key, JSON.stringify([e.goal, e.result]));
       const g = await repo.findDuplicate(client, s, e.goal);
       if (g) {
         const existing = (
-          await client.query("SELECT 1 FROM app.kpi_results WHERE goal_id=$1", [
+          await client.query("SELECT actual, evidence_note, source_note FROM app.kpi_results WHERE goal_id=$1", [
             g.goal_id,
           ])
-        ).rows.length;
-        if (!e.result || existing) {
-          rows.push({ ...e, status: "DUPLICATE", goalId: g.goal_id });
-          continue;
-        }
-        if (g.status !== "ACCEPTED") {
-          rows.push({
-            ...e,
-            status: "INVALID",
-            message: "Chấp nhận mục tiêu trước khi import kết quả",
-          });
-          continue;
-        }
+        ).rows[0];
         const matches =
           g.title === e.goal.title &&
           g.measure_unit === e.goal.measureUnit &&
           Number(g.target) === e.goal.target &&
-          g.plan === e.goal.plan;
+          g.plan === e.goal.plan && g.source_note === e.goal.sourceNote;
         if (!matches) {
           rows.push({
             ...e,
             status: "INVALID",
             message: "Dữ liệu mục tiêu khác mục tiêu đã chấp nhận",
           });
+          continue;
+        }
+        if (!e.result || existing) {
+          const sameResult = !e.result || (Number(existing.actual) === e.result.actual &&
+            existing.evidence_note === e.result.evidenceNote && existing.source_note === e.result.sourceNote);
+          rows.push({ ...e, status: sameResult ? "DUPLICATE" : "INVALID", goalId: g.goal_id,
+            ...(!sameResult ? { message: "Kết quả CSV khác bản đã nhập; không ghi đè" } : {}) });
+          continue;
+        }
+        if (g.status !== "ACCEPTED") {
+          rows.push({ ...e, status: "INVALID", message: "Chấp nhận mục tiêu trước khi import kết quả" });
           continue;
         }
         rows.push({ ...e, status: "READY_RESULT", goalId: g.goal_id });

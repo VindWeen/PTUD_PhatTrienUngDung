@@ -101,6 +101,24 @@ try {
   const own=await call('/external');
   check(own.records.length,1);check(own.runs.length,0);
   const r=own.records[0];
+  // W5-P2 reconcile the same labelled source values through the independent CSV path.
+  const columns=['code','title','measureUnit','periodStart','periodEnd','target','plan','sourceNote','actual','evidenceNote'];
+  const csvFor=(withResult=false)=>columns.join(',')+'\r\n'+columns.map(key=>{
+    const value=key==='actual' ? (withResult ? simulationRecord.actual : '') :
+      key==='evidenceNote' ? (withResult ? 'MO PHONG CSV reconciliation only' : '') : simulationRecord[key];
+    return '"'+String(value).replaceAll('"','""')+'"';
+  }).join(',')+'\r\n';
+  const csv=csvFor();
+  check((await call('/import/preview','POST',{csv})).rows[0].status,'READY_GOAL');
+  check((await call('/import/commit','POST',{csv})).imported,1);
+  check((await call('/import/commit','POST',{csv})).duplicates,1);
+  const csvGoal=(await call('/goals')).items.find(g=>g.code===simulationRecord.code);
+  await call(`/goals/${csvGoal.goal_id}/accept`,'POST',{version:csvGoal.version});
+  check((await call('/import/commit','POST',{csv:csvFor(true)})).imported,1);
+  const reconciled=(await exec('SELECT g.target,g.measure_unit,r.actual FROM app.kpi_goals g JOIN app.kpi_results r USING(goal_id) WHERE g.goal_id=$1',[csvGoal.goal_id])).rows[0];
+  check(Number(reconciled.target),r.payload.target);check(Number(reconciled.actual),r.payload.actual);
+  check(reconciled.measure_unit,r.payload.measureUnit);
+  check((await exec('SELECT status FROM app.external_kpi_records WHERE record_id=$1',[r.record_id])).rows[0].status,'READY');
   await call(`/external/records/${r.record_id}/draft`,'POST',{version:999,achievementTypeId:1},1,409);
   await call(`/external/records/${r.record_id}/draft`,'POST',{version:r.version,achievementTypeId:1},2,403);
   const a=await call(`/external/records/${r.record_id}/draft`,'POST',{version:r.version,achievementTypeId:1},1,201);
@@ -126,6 +144,20 @@ try {
   await call(`/external/records/${q.record_id}/draft`,'POST',{version:q.version,achievementTypeId:1},1,409);
   const awardsBefore=(await exec('SELECT count(*)::int n FROM app.award_records')).rows[0].n;
   check(awardsBefore,0);
+  // W5-P2: absence is not a deletion event in W4-P2-v1. Preserve all revisions.
+  const recordsBefore=(await exec('SELECT * FROM app.external_kpi_records ORDER BY record_id')).rows;
+  rows=[];
+  check((await call('/external/runs','POST',{},3,201)).summary,{imported:0,duplicates:0,quarantined:0,conflicts:0});
+  check((await exec('SELECT * FROM app.external_kpi_records ORDER BY record_id')).rows,recordsBefore);
+  // Explicit deletion is unsupported: reject the entire batch, no partial import.
+  rows=[{...simulationRecord,externalId:'SIM-MUST-NOT-IMPORT'}, {...simulationRecord,status:'DELETED',version:3}];
+  const deletion=await call('/external/runs','POST',{},3,201);
+  check(deletion.status,'FAILED');check(deletion.error,'SOURCE_CONTRACT_INVALID');
+  check((await exec('SELECT * FROM app.external_kpi_records ORDER BY record_id')).rows,recordsBefore);
+  // Duplicate entries within one upstream response keep one revision and two outcomes.
+  rows=[{...simulationRecord,externalId:'SIM-BATCH-DUP'}, {...simulationRecord,externalId:'SIM-BATCH-DUP'}];
+  check((await call('/external/runs','POST',{},3,201)).summary,{imported:1,duplicates:1,quarantined:0,conflicts:0});
+  check((await exec("SELECT count(*)::int n FROM app.external_kpi_records WHERE external_id='SIM-BATCH-DUP'")).rows[0].n,1);
   await exec("UPDATE app.user_roles SET revoked_at=NOW() WHERE user_id=3");
   await call('/external/runs','POST',{},3,403);
   await exec("UPDATE app.user_roles SET revoked_at=NULL WHERE user_id=3");

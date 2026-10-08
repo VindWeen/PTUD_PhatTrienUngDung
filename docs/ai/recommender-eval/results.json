@@ -1,0 +1,567 @@
+{
+  "protocol": "W5-P2-v1",
+  "datasetSha256": "ea437e0ab9d80f9e30c469f94763b8957c25b656f294d04f5e756fd0c2838644",
+  "dataLabel": "MO PHONG: offline synthetic records; confirmed flags are fixture flags, not policy approval",
+  "labelAuthority": "Inherited Q2 conclusion labels; recommendation mapping is W5-P2 author-derived, pending independent confirmation",
+  "model": "deterministic-evaluator-v1 + buildCandidate; no LLM",
+  "provider": null,
+  "isLiveProviderEvidence": false,
+  "holdoutStatus": "Reused Q2 holdout, previously evaluated by Q2; not an unseen test of the whole system",
+  "total": 32,
+  "positives": 3,
+  "negatives": 29,
+  "correct": 32,
+  "conclusionCorrect": 32,
+  "falseSuggestions": 0,
+  "missedSuggestions": 0,
+  "groundedSuggestions": 3,
+  "targetPreservedSuggestions": 3,
+  "grounded": 32,
+  "failures": [],
+  "rows": [
+    {
+      "id": "HOLDOUT-01",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "ELIGIBLE",
+      "actualConclusion": "ELIGIBLE",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.5482000000000085,
+      "issues": []
+    },
+    {
+      "id": "HOLDOUT-02",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "ELIGIBLE",
+      "actualConclusion": "ELIGIBLE",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.0648000000000053,
+      "issues": []
+    },
+    {
+      "id": "HOLDOUT-03",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "ELIGIBLE",
+      "actualConclusion": "ELIGIBLE",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.03319999999999368,
+      "issues": []
+    },
+    {
+      "id": "HOLDOUT-04",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "ELIGIBLE",
+      "actualConclusion": "ELIGIBLE",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.02200000000000557,
+      "issues": []
+    },
+    {
+      "id": "HOLDOUT-05",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "ELIGIBLE",
+      "actualConclusion": "ELIGIBLE",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.039199999999993906,
+      "issues": []
+    },
+    {
+      "id": "HOLDOUT-06",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "ELIGIBLE",
+      "actualConclusion": "ELIGIBLE",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.02590000000000714,
+      "issues": []
+    },
+    {
+      "id": "HOLDOUT-07",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "ELIGIBLE",
+      "actualConclusion": "ELIGIBLE",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.11739999999998929,
+      "issues": []
+    },
+    {
+      "id": "HOLDOUT-08",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "ELIGIBLE",
+      "actualConclusion": "ELIGIBLE",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.02719999999999345,
+      "issues": []
+    },
+    {
+      "id": "HOLDOUT-09",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+      "actualConclusion": "NEEDS_HUMAN_REVIEW",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.024299999999996658,
+      "issues": [
+        "YEAR_GAP"
+      ]
+    },
+    {
+      "id": "HOLDOUT-10",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+      "actualConclusion": "NEEDS_HUMAN_REVIEW",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.019700000000000273,
+      "issues": [
+        "YEAR_GAP"
+      ]
+    },
+    {
+      "id": "HOLDOUT-11",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+      "actualConclusion": "NEEDS_HUMAN_REVIEW",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.1676999999999964,
+      "issues": [
+        "YEAR_GAP"
+      ]
+    },
+    {
+      "id": "HOLDOUT-12",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+      "actualConclusion": "NEEDS_HUMAN_REVIEW",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.05079999999999529,
+      "issues": [
+        "YEAR_GAP"
+      ]
+    },
+    {
+      "id": "HOLDOUT-13",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+      "actualConclusion": "NEEDS_HUMAN_REVIEW",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.026700000000005275,
+      "issues": [
+        "MISSING_DATA"
+      ]
+    },
+    {
+      "id": "HOLDOUT-14",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+      "actualConclusion": "NEEDS_HUMAN_REVIEW",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.017399999999994975,
+      "issues": [
+        "MISSING_DATA"
+      ]
+    },
+    {
+      "id": "HOLDOUT-15",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+      "actualConclusion": "NEEDS_HUMAN_REVIEW",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.015399999999999636,
+      "issues": [
+        "MISSING_DATA"
+      ]
+    },
+    {
+      "id": "HOLDOUT-16",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+      "actualConclusion": "NEEDS_HUMAN_REVIEW",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.03629999999999711,
+      "issues": [
+        "MISSING_DATA",
+        "YEAR_GAP"
+      ]
+    },
+    {
+      "id": "HOLDOUT-17",
+      "expectedRecommendation": true,
+      "actualRecommendation": true,
+      "correct": true,
+      "expectedConclusion": "INELIGIBLE",
+      "actualConclusion": "INELIGIBLE",
+      "conclusionCorrect": true,
+      "target": 3,
+      "actualRecorded": 1,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 15.231099999999998,
+      "issues": [
+        "BELOW_THRESHOLD",
+        "DUPLICATE_YEAR"
+      ]
+    },
+    {
+      "id": "HOLDOUT-18",
+      "expectedRecommendation": true,
+      "actualRecommendation": true,
+      "correct": true,
+      "expectedConclusion": "INELIGIBLE",
+      "actualConclusion": "INELIGIBLE",
+      "conclusionCorrect": true,
+      "target": 3,
+      "actualRecorded": 2,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.2441000000000031,
+      "issues": [
+        "BELOW_THRESHOLD",
+        "DUPLICATE_YEAR"
+      ]
+    },
+    {
+      "id": "HOLDOUT-19",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+      "actualConclusion": "NEEDS_HUMAN_REVIEW",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.026800000000008595,
+      "issues": [
+        "BELOW_THRESHOLD",
+        "DUPLICATE_YEAR",
+        "YEAR_GAP"
+      ]
+    },
+    {
+      "id": "HOLDOUT-20",
+      "expectedRecommendation": true,
+      "actualRecommendation": true,
+      "correct": true,
+      "expectedConclusion": "INELIGIBLE",
+      "actualConclusion": "INELIGIBLE",
+      "conclusionCorrect": true,
+      "target": 2,
+      "actualRecorded": 1,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.11809999999999832,
+      "issues": [
+        "BELOW_THRESHOLD",
+        "DUPLICATE_YEAR"
+      ]
+    },
+    {
+      "id": "HOLDOUT-21",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+      "actualConclusion": "NEEDS_HUMAN_REVIEW",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.015399999999999636,
+      "issues": [
+        "REVOKED_SOURCE"
+      ]
+    },
+    {
+      "id": "HOLDOUT-22",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+      "actualConclusion": "NEEDS_HUMAN_REVIEW",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.013900000000006685,
+      "issues": [
+        "REVOKED_SOURCE"
+      ]
+    },
+    {
+      "id": "HOLDOUT-23",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+      "actualConclusion": "NEEDS_HUMAN_REVIEW",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.021000000000015007,
+      "issues": [
+        "REVOKED_SOURCE"
+      ]
+    },
+    {
+      "id": "HOLDOUT-24",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+      "actualConclusion": "NEEDS_HUMAN_REVIEW",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.00929999999999609,
+      "issues": [
+        "REVOKED_SOURCE"
+      ]
+    },
+    {
+      "id": "HOLDOUT-25",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+      "actualConclusion": "NEEDS_HUMAN_REVIEW",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.009900000000016007,
+      "issues": [
+        "MISSING_DATA",
+        "UNAPPROVED_DOCUMENT"
+      ]
+    },
+    {
+      "id": "HOLDOUT-26",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+      "actualConclusion": "NEEDS_HUMAN_REVIEW",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.008800000000007913,
+      "issues": [
+        "MISSING_DATA",
+        "UNAPPROVED_CRITERION"
+      ]
+    },
+    {
+      "id": "HOLDOUT-27",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "SIMULATION_ONLY",
+      "actualConclusion": "SIMULATION_ONLY",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.02770000000001005,
+      "issues": [
+        "MISSING_DATA",
+        "SIMULATED_KPI",
+        "UNAPPROVED_CRITERION",
+        "UNAPPROVED_DOCUMENT"
+      ]
+    },
+    {
+      "id": "HOLDOUT-28",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "SIMULATION_ONLY",
+      "actualConclusion": "SIMULATION_ONLY",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.009799999999984266,
+      "issues": [
+        "MISSING_DATA",
+        "SIMULATED_KPI",
+        "UNAPPROVED_CRITERION",
+        "UNAPPROVED_DOCUMENT"
+      ]
+    },
+    {
+      "id": "HOLDOUT-29",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+      "actualConclusion": "NEEDS_HUMAN_REVIEW",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.010499999999979082,
+      "issues": [
+        "WRONG_SUBJECT"
+      ]
+    },
+    {
+      "id": "HOLDOUT-30",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+      "actualConclusion": "NEEDS_HUMAN_REVIEW",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.00909999999998945,
+      "issues": [
+        "MISSING_DATA",
+        "OUT_OF_EFFECTIVE_WINDOW"
+      ]
+    },
+    {
+      "id": "HOLDOUT-31",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+      "actualConclusion": "NEEDS_HUMAN_REVIEW",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.009799999999984266,
+      "issues": [
+        "MISSING_DATA",
+        "OUT_OF_EFFECTIVE_WINDOW"
+      ]
+    },
+    {
+      "id": "HOLDOUT-32",
+      "expectedRecommendation": false,
+      "actualRecommendation": false,
+      "correct": true,
+      "expectedConclusion": "NEEDS_HUMAN_REVIEW",
+      "actualConclusion": "NEEDS_HUMAN_REVIEW",
+      "conclusionCorrect": true,
+      "target": null,
+      "actualRecorded": null,
+      "grounded": true,
+      "targetPreserved": true,
+      "latencyMs": 0.007800000000003138,
+      "issues": [
+        "WRONG_SUBJECT"
+      ]
+    }
+  ]
+}

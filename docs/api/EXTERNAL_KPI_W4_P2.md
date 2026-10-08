@@ -50,3 +50,8 @@ UI `/kpi` có phần nguồn mô phỏng: tải logs, ADMIN mapping/pull/retry, 
 6. `npm --prefix backend run test:w4-p2` và `npm --prefix backend run test:w4-p2:integration` chạy cả trường hợp nguồn version 2, giữ nguyên VERIFIED và tạo DRAFT riêng. Integration dùng Express HTTP + mock HTTP + pg/Supabase thật, migrations/seed trong schema random và outer rollback. Cần DB có quyền DDL và mạng.
 
 Giới hạn: chưa tích hợp nhà cung cấp thật; chưa có xác nhận hợp đồng của họ. Một cấu hình nguồn mô phỏng cố định, chưa phân trang/đa nguồn/lịch sync. Process dừng đột ngột có thể để run RUNNING, cần vận hành đối soát trước retry; chưa có worker phục hồi. UI giới hạn lịch sử nêu trên, chưa tự động refresh/pagination. Integration dùng một kết nối và savepoint nên không chứng minh tải song song. Không gửi dữ liệu đến AI.
+## W5-P2 — đối soát và sự kiện xóa
+
+Xem [protocol W5-P2](../ai/recommender-eval/PROTOCOL.md). Hợp đồng W4-P2-v1 không có tombstone: một item vắng khỏi response không xóa staging/achievement; status DELETED bị từ chối cả batch với FAILED/SOURCE_CONTRACT_INVALID. Chưa triển khai đồng bộ xóa từ nguồn thật khi chưa có hợp đồng xác nhận.
+
+CSV `/api/v1/kpi/import/preview` trả INVALID khi cùng mã/kỳ nhưng khác nội dung goal/result; `/import/commit` trả 400 và rollback cả batch. Chỉ nội dung khớp mới trả DUPLICATE, không dùng CSV như lệnh sửa/ghi đè. Connector và CSV là hai luồng riêng: staging revision không tự tạo KPI goal/result và nhập CSV không tự đánh dấu revision DRAFTED.

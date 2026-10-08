@@ -91,7 +91,13 @@ export class GroqProvider extends AiProvider {
       throw new AiProviderUnavailableError('groq', `HTTP ${response.status}: ${errorText}`);
     }
 
-    const data = await response.json();
+    let data;
+    try { data = await response.json(); }
+    catch { throw new AiProviderUnavailableError('groq', 'JSON phản hồi không hợp lệ'); }
+    if (typeof data?.choices?.[0]?.message?.content !== 'string' || !data.choices[0].message.content.trim())
+      throw new AiProviderUnavailableError('groq', 'Thiếu nội dung phản hồi');
+    const actualModel = data.model || selectedModel;
+    validateFreeModel('groq', actualModel);
     const choice = data.choices?.[0];
     const content = choice?.message?.content || '';
     const usage = {
@@ -103,13 +109,15 @@ export class GroqProvider extends AiProvider {
     // Logging an toàn không bí mật
     if (config.NODE_ENV !== 'test') {
       console.log(
-        `🤖 [AI Log - Groq] Model: ${selectedModel} | Tokens: ${usage.totalTokens} | Latency: ${latencyMs}ms | Time: ${new Date().toISOString()}`
+        `🤖 [AI Log - Groq] Model: ${actualModel} | Tokens: ${usage.totalTokens} | Latency: ${latencyMs}ms | Time: ${new Date().toISOString()}`
       );
     }
 
     return {
       content,
-      model: selectedModel,
+      model: actualModel,
+      requestedModel: selectedModel,
+      modelReportedByProvider: Boolean(data.model),
       provider: 'groq',
       usage,
       timestamp: new Date().toISOString(),

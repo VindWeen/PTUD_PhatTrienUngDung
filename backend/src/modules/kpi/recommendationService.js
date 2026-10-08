@@ -63,8 +63,13 @@ export function buildCandidate(c) {
   const year = Number(today.slice(0, 4));
   const requiresYearReview =
     Boolean(c.yearRequirement) || /năm|year/i.test(unitMetric);
+  const requiredCalendarYears = requiresYearReview
+    ? (/năm|year/i.test(unitMetric)
+      ? Math.max(Math.ceil(targetMin), Number(c.minimumDistinctYears) || 0)
+      : Number(c.minimumDistinctYears) || Math.ceil(targetMin))
+    : 0;
   const periodStart = requiresYearReview ? `${year + 1}-01-01` : today;
-  const endYear = requiresYearReview ? year + Math.ceil(targetMin) : year + 1;
+  const endYear = requiresYearReview ? year + requiredCalendarYears : year + 1;
   const periodEnd = endYear <= 2100 ? `${endYear}-12-31` : null;
   return {
     criterionId: c.criterionId,
@@ -77,6 +82,7 @@ export function buildCandidate(c) {
     legalReferences: c.legalReferences,
     explanation: c.aiAnalysis,
     requiresYearReview,
+    requiredCalendarYears,
     assumptions: [
       "Chỉ tiêu là tổng yêu cầu, không phải số còn thiếu.",
       "Kế hoạch không xác nhận thành tích hoặc tự trao thưởng.",
@@ -99,10 +105,10 @@ export function validatePeriod(c, fields) {
     if (
       !fields.periodStart.endsWith("-01-01") ||
       !fields.periodEnd.endsWith("-12-31") ||
-      years < Math.ceil(c.target)
+      years < (c.requiredCalendarYears || Math.ceil(c.target))
     )
       throw new ValidationError(
-        `Giữ nguyên điều kiện ${c.target} ${c.measureUnit}: kế hoạch phải phủ ít nhất ${Math.ceil(c.target)} năm lịch đầy đủ. Không suy ra đủ điều kiện khen thưởng.`,
+        `Giữ nguyên điều kiện ${c.target} ${c.measureUnit}: kế hoạch phải phủ ít nhất ${c.requiredCalendarYears || Math.ceil(c.target)} năm lịch đầy đủ. Không suy ra đủ điều kiện khen thưởng.`,
       );
   }
 }
@@ -196,6 +202,7 @@ export async function generate(user, raw) {
           ...c,
           yearRequirement:
             rules?.minimumDistinctYears || rules?.requireConsecutive,
+          minimumDistinctYears: rules?.minimumDistinctYears,
         }),
       )
       .filter(Boolean)
@@ -214,6 +221,7 @@ export async function generate(user, raw) {
   const prepared = [];
   for (const c of candidates) {
     const completion = await ai.completeWithRetry({
+      requireRealProvider: true,
       forcedProvider: p.provider,
       version: `W4-P1-v1-${p.provider || ai.providerName}`,
       chunkHash: createHash("sha256").update(JSON.stringify(c)).digest("hex"),
@@ -248,6 +256,8 @@ export async function generate(user, raw) {
     const evidence = {
       provider: completion.provider,
       model: completion.model,
+      requestedModel: completion.requestedModel,
+      modelReportedByProvider: completion.modelReportedByProvider,
       isMock: false,
       usage: completion.usage,
       latencyMs: completion.latencyMs,
@@ -326,7 +336,13 @@ export async function decide(user, rawId, raw) {
           ...p.edits,
           sourceNote: `AI W4-P1; run ${r.run_id}; tiêu chí ${c.criterionCode}; ${JSON.stringify(c.legalReferences)}; ${c.explanation}`,
         });
-        validatePeriod(c, fields);
+        const savedRules = run.inputSnapshot?.criterion?.rules;
+        validatePeriod({
+          ...c,
+          requiresYearReview: c.requiresYearReview || Boolean(savedRules?.minimumDistinctYears || savedRules?.requireConsecutive),
+          requiredCalendarYears: Math.max(c.requiredCalendarYears || 0, Number(savedRules?.minimumDistinctYears) || 0,
+            /năm|year/i.test(c.measureUnit) ? Math.ceil(c.target) : 0) || undefined,
+        }, fields);
         goal = await repo.createGoal(client, user.userId, s, fields, "MANUAL");
         goal = (
           await client.query(

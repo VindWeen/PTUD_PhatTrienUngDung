@@ -138,6 +138,18 @@ try {
   });
   await call("/recommendations", "POST", { runId }, 1, 400);
   check((await exec("SELECT count(*)::int n FROM app.kpi_goals")).rows[0].n, 0);
+  // W5-P2 fault injection is contract evidence only, never live-provider evidence.
+  const recommendationsBefore=(await exec('SELECT count(*)::int n FROM app.kpi_recommendations')).rows[0].n;
+  for (const content of ['{bad', '{"plan":"Trao thưởng theo Điều 9"}', '{"plan":"Chuẩn bị hồ sơ.","target":999}']) {
+    ai.completeWithRetry=async()=>({provider:'groq',model:'STUB-NOT-REAL',content});
+    await call('/recommendations','POST',{runId},1,400);
+    check((await exec('SELECT count(*)::int n FROM app.kpi_recommendations')).rows[0].n,recommendationsBefore);
+  }
+  for (const [ErrorClass,status] of [[(await import('../src/modules/ai/aiErrors.js')).AiRateLimitError,429],[(await import('../src/modules/ai/aiErrors.js')).AiTimeoutError,504]]) {
+    ai.completeWithRetry=async()=>{throw new ErrorClass(7);};
+    await call('/recommendations','POST',{runId},1,status);
+    check((await exec('SELECT count(*)::int n FROM app.kpi_recommendations')).rows[0].n,recommendationsBefore);
+  }
   ai.completeWithRetry = realProvider
     ? originalComplete
     : async () => ({
@@ -156,6 +168,8 @@ try {
   if (realProvider) {
     check(r.provider_evidence.isMock, false);
     check(r.provider_evidence.cached, false);
+    check(r.provider_evidence.modelReportedByProvider, true);
+    assert.ok(r.provider_evidence.model);
   }
   check((await exec("SELECT count(*)::int n FROM app.kpi_goals")).rows[0].n, 0);
   await call(

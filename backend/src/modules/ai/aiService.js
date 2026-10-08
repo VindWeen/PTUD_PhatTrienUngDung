@@ -4,7 +4,7 @@ import { OpenRouterProvider } from './providers/openrouterProvider.js';
 import { MockAiProvider } from './providers/mockProvider.js';
 import { validateFreeModel } from './aiProviderInterface.js';
 import aiCache from './aiCache.js';
-import { AiRateLimitError, AiTimeoutError } from './aiErrors.js';
+import { AiRateLimitError, AiTimeoutError, AiProviderUnavailableError } from './aiErrors.js';
 import { ValidationError, NotFoundError } from '../../utils/errors.js';
 import * as regulationRepo from '../regulations/regulationRepository.js';
 import * as evaluationRepo from './evaluationRepository.js';
@@ -42,18 +42,24 @@ export class AiService {
     return this.mockProvider;
   }
 
-  async completeWithRetry({ prompt, systemPrompt, model, forcedProvider, chunkHash = '', version = '1.0' }) {
+  async completeWithRetry({ prompt, systemPrompt, model, forcedProvider, chunkHash = '', version = '1.0', requireRealProvider = false }) {
     const targetProvider = forcedProvider || this.providerName;
     if (model) {
       validateFreeModel(targetProvider, model);
     }
+    if (requireRealProvider && !(
+      (targetProvider === 'groq' && this.groqProvider.apiKey) ||
+      (targetProvider === 'openrouter' && this.openrouterProvider.apiKey)
+    )) throw new AiProviderUnavailableError(targetProvider, 'Cần key server-only; không dùng mock fallback');
     const provider = this.getProvider(forcedProvider);
+    // Validate defaults before cache lookup; cache must never bypass the free-model gate.
+    validateFreeModel(provider.name, model || provider.defaultModel);
     const cacheKey = aiCache.generateKey({
       model: model || provider.defaultModel,
       prompt,
       systemPrompt,
       chunkHash,
-      version,
+      version: `${provider.name}:${version}`,
     });
 
     // 1. Kiểm tra Cache

@@ -92,7 +92,13 @@ export class OpenRouterProvider extends AiProvider {
       throw new AiProviderUnavailableError('openrouter', `HTTP ${response.status}: ${errorText}`);
     }
 
-    const data = await response.json();
+    let data;
+    try { data = await response.json(); }
+    catch { throw new AiProviderUnavailableError('openrouter', 'JSON phản hồi không hợp lệ'); }
+    if (typeof data?.choices?.[0]?.message?.content !== 'string' || !data.choices[0].message.content.trim())
+      throw new AiProviderUnavailableError('openrouter', 'Thiếu nội dung phản hồi');
+    const actualModel = data.model || selectedModel;
+    validateFreeModel('openrouter', actualModel);
     const choice = data.choices?.[0];
     const content = choice?.message?.content || '';
     const usage = {
@@ -103,13 +109,15 @@ export class OpenRouterProvider extends AiProvider {
 
     if (config.NODE_ENV !== 'test') {
       console.log(
-        `🤖 [AI Log - OpenRouter] Model: ${selectedModel} | Tokens: ${usage.totalTokens} | Latency: ${latencyMs}ms | Time: ${new Date().toISOString()}`
+        `🤖 [AI Log - OpenRouter] Model: ${actualModel} | Tokens: ${usage.totalTokens} | Latency: ${latencyMs}ms | Time: ${new Date().toISOString()}`
       );
     }
 
     return {
       content,
-      model: selectedModel,
+      model: actualModel,
+      requestedModel: selectedModel,
+      modelReportedByProvider: Boolean(data.model),
       provider: 'openrouter',
       usage,
       timestamp: new Date().toISOString(),

@@ -310,6 +310,15 @@ try {
   );
   check((await call("/import/commit", "POST", { csv })).imported, 1);
   check((await call("/import/commit", "POST", { csv })).duplicates, 1);
+  // W5-P2: same identity with changed content is a conflict, not a silent duplicate.
+  const changedCsv = csv.replace(',2,Ke hoach', ',3,Ke hoach');
+  check((await call('/import/preview','POST',{csv:changedCsv})).rows[0].status,'INVALID');
+  await call('/import/commit','POST',{csv:changedCsv},1,400);
+  const mixedCsv = csv.replace('CSV-KPI','W5-ATOMIC') + changedCsv.split('\r\n')[1] + '\r\n';
+  await call('/import/commit','POST',{csv:mixedCsv},1,400);
+  check((await exec("SELECT count(*)::int n FROM app.kpi_goals WHERE code='W5-ATOMIC'")).rows[0].n,0);
+  const sameBatchConflict = csv.replace('CSV-KPI','W5-INBATCH') + csv.split('\r\n')[1].replace('CSV-KPI','W5-INBATCH').replace(',2,Ke hoach',',3,Ke hoach') + '\r\n';
+  await call('/import/commit','POST',{csv:sameBatchConflict},1,400);
   const repeated = csv + csv.split("\r\n")[1] + "\r\n";
   check(
     (await call("/import/preview", "POST", { csv: repeated })).duplicates,
@@ -335,6 +344,10 @@ try {
     (await call("/import/commit", "POST", { csv: resultCsv })).duplicates,
     1,
   );
+  const changedResult = resultCsv.replace('MO PHONG,4,','MO PHONG,5,');
+  check((await call('/import/preview','POST',{csv:changedResult})).rows[0].status,'INVALID');
+  await call('/import/commit','POST',{csv:changedResult},1,400);
+  check(Number((await exec('SELECT actual FROM app.kpi_results WHERE goal_id=$1',[cg.goal_id])).rows[0].actual),4);
   check(
     (await call("/goals")).items.find((x) => x.goal_id === cg.goal_id).result
       .source,

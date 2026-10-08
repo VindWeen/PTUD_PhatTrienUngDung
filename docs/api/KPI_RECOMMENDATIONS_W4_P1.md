@@ -43,3 +43,10 @@ Sửa nhỏ bắt buộc khi tích hợp: `criteriaEvaluator.js` chuẩn hóa `D
 5. `npm --prefix backend run test:w4-p1:real-provider`: chạy Express + evaluator + Supabase thật + LLM thật với dữ liệu **MO PHONG** trong schema rollback. Lưu bằng chứng metadata an toàn vào `docs/testing/W4_P1_REAL_PROVIDER_EVIDENCE.json` chỉ khi đạt; không lưu key/token/hồ sơ thật. Chưa có key thì exit 1 BLOCKED, không tuyên bố gọi thật. Test DB thường stub provider và không phải bằng chứng LLM.
 
 Hiện chưa thể nghiệm thu đầy đủ: thiếu GROQ_API_KEY/OPENROUTER_API_KEY local. Không thiếu mã phụ thuộc W3-P2/Q3/Q4/W4-Q1. Chưa kiểm tra trình duyệt trực quan; lint/build không thay thế browser QA. Gợi ý commit, chưa commit/push/merge: `feat(W4-P1): suggest grounded KPIs and persist accepted plans linked to evaluation runs`.
+## W5-P2 — kiểm chứng và thay đổi hợp đồng bổ sung
+
+Xem [protocol/giới hạn W5-P2](../ai/recommender-eval/PROTOCOL.md) và [kết quả chạy](../ai/recommender-eval/README.md).
+
+POST /recommendations: thiếu key của provider thật trả 503 `AI_PROVIDER_UNAVAILABLE` trước cache; không gọi mock fallback. JSON HTTP response hỏng/thiếu content trả lỗi provider 503; JSON plan sai hợp đồng vẫn 400. 429/504 giữ mã lỗi cũ, không ghi recommendation/goal khi thất bại.
+
+Payload bổ sung `requiredCalendarYears` để giữ riêng số năm từ rules.minimumDistinctYears, không biến số lượng bài thành số năm. `validatePeriod` dùng số năm này; lịch sử cũ chưa có trường được kiểm tra lại minimumDistinctYears từ snapshot run, hoặc target nếu snapshot không có rule năm. provider_evidence bổ sung requestedModel/modelReportedByProvider; model lấy từ response nếu có và kiểm tra model miễn phí. Cờ false nghĩa model chỉ là model yêu cầu, chưa được upstream báo lại.
