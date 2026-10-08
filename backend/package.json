@@ -5,6 +5,10 @@
   "main": "src/server.js",
   "type": "module",
   "scripts": {
+    "test:w5-q3": "node --test tests/w5-q3.test.js",
+    "backup": "node ../scripts/backup.mjs",
+    "restore": "node ../scripts/restore.mjs",
+    "pre-demo-check": "node ../scripts/pre-demo-check.mjs",
     "test:w5-q2": "node --test tests/w5-q2.test.js",
     "test:w5-q2:eval": "node ../scripts/w5-q2-eval.mjs",
     "test:w5-q1": "node --test tests/w5-q1.test.js",

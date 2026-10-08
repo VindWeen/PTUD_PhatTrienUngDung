@@ -40,7 +40,13 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(16).default('ptud_lhu_super_secret_refresh_key_2026_dev_only'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
 
+  // Cấu hình Cookie & CORS cho triển khai Web/Demo
+  COOKIE_SECURE: z.preprocess((val) => val === 'true' || val === true || val === '1', z.boolean()).optional(),
+  COOKIE_SAME_SITE: z.enum(['lax', 'strict', 'none']).optional(),
+  COOKIE_DOMAIN: z.string().optional(),
+
   // Storage
+  STORAGE_DIR: z.string().optional(),
   UPLOAD_DIR: z.string().default('../storage/evidences'),
   MAX_FILE_SIZE_BYTES: z.coerce.number().int().default(10485760),
 

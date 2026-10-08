@@ -14,3 +14,6 @@ backend/storage/*
 !backend/storage/.gitkeep
 outputs/
 .npm-cache/
+backups/*
+!backups/.gitkeep
+

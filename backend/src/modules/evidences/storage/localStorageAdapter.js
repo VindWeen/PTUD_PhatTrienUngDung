@@ -8,7 +8,22 @@ import { ValidationError } from '../../../utils/errors.js';
  */
 export class LocalStorageAdapter {
   constructor(baseDir) {
-    this.baseDir = baseDir || process.env.STORAGE_DIR || path.resolve(process.cwd(), 'storage/private/evidences');
+    if (baseDir) {
+      this.baseDir = baseDir;
+    } else if (process.env.STORAGE_DIR) {
+      this.baseDir = path.resolve(process.env.STORAGE_DIR);
+    } else {
+      const cwdPath = path.resolve(process.cwd(), 'storage/private/evidences');
+      const backendSubPath = path.resolve(process.cwd(), 'backend/storage/private/evidences');
+      if (fs.existsSync(cwdPath)) {
+        this.baseDir = cwdPath;
+      } else if (fs.existsSync(backendSubPath)) {
+        this.baseDir = backendSubPath;
+      } else {
+        this.baseDir = cwdPath;
+      }
+    }
+
     // Đảm bảo thư mục lưu trữ private tồn tại
     try {
       if (!fs.existsSync(this.baseDir)) {

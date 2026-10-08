@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-10-08T13:13:30.043Z",
+  "durationMs": 1310,
+  "database": {
+    "serverVersion": "PostgreSQL 17.11 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 15.2.0, 64-bit",
+    "latencyMs": 641,
+    "totalBytes": 23123635,
+    "totalFormatted": "22.05 MB",
+    "appSchemaBytes": 3227648,
+    "appSchemaFormatted": "3.08 MB",
+    "freeTierPercentage": "4.41%",
+    "freeTierLimitFormatted": "500 MB"
+  },
+  "storage": {
+    "directory": "C:\\DriveD\\EverythingElse\\LHU\\PTUD_PhatTrienUngDung\\backend\\storage\\private\\evidences",
+    "fileCount": 16,
+    "totalBytes": 722,
+    "formattedSize": "722 B",
+    "supabaseStorageQuotaUsed": "0 B"
+  },
+  "security": {
+    "adr001PostgrestIsolated": true,
+    "tableCount": 51,
+    "expectedTables": 51
+  },
+  "demoReadiness": {
+    "status": "READY",
+    "autoPauseRiskMitigated": true,
+    "noPaidServiceDependency": true
+  }
+}

@@ -16,26 +16,36 @@ const changePasswordSchema = z.object({
 });
 
 /**
- * Cấu hình Cookie chuẩn HttpOnly
+ * Cấu hình Cookie chuẩn HttpOnly hỗ trợ linh hoạt cho cả môi trường Local và Deployed Demo
  */
-function setRefreshCookie(res, token, rememberMe = false) {
-  const maxAge = (rememberMe ? 30 : 7) * 24 * 60 * 60 * 1000;
-  res.cookie('ptud_refresh_token', token, {
+export function getCookieOptions(rememberMe = false) {
+  const isSecure = config.COOKIE_SECURE !== undefined
+    ? config.COOKIE_SECURE
+    : config.NODE_ENV === 'production';
+  const sameSite = config.COOKIE_SAME_SITE || 'lax';
+  const options = {
     httpOnly: true,
-    secure: config.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: isSecure,
+    sameSite,
     path: '/',
-    maxAge,
-  });
+  };
+  if (config.COOKIE_DOMAIN) {
+    options.domain = config.COOKIE_DOMAIN;
+  }
+  if (rememberMe !== undefined && rememberMe !== null) {
+    options.maxAge = (rememberMe ? 30 : 7) * 24 * 60 * 60 * 1000;
+  }
+  return options;
+}
+
+function setRefreshCookie(res, token, rememberMe = false) {
+  res.cookie('ptud_refresh_token', token, getCookieOptions(rememberMe));
 }
 
 function clearRefreshCookie(res) {
-  res.clearCookie('ptud_refresh_token', {
-    httpOnly: true,
-    secure: config.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-  });
+  const options = getCookieOptions(false);
+  delete options.maxAge;
+  res.clearCookie('ptud_refresh_token', options);
 }
 
 /**
