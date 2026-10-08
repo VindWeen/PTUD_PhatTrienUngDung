@@ -38,9 +38,9 @@
   - Backend: `npm run dev` (lắng nghe cổng 5000)
   - Frontend: `npm run dev` (lắng nghe cổng 5173)
 - [ ] **Đăng nhập thử tài khoản demo:**
-  - `an.nv` / `MatKhau123!` (Giảng viên)
-  - `bich.tt` / `MatKhau123!` (Quản lý đơn vị FIT)
-  - `duc.pm` / `MatKhau123!` (Quản trị viên hệ thống)
+  - `an.nv` / `demo1234` (Giảng viên)
+  - `bich.tt` / `demo1234` (Quản lý đơn vị FIT)
+  - `duc.pm` / `demo1234` (Quản trị viên hệ thống)
 
 ---
 
@@ -183,3 +183,8 @@ node ../scripts/restore.mjs --backup-dir=../backups/backup_20261008130615 --targ
 | Bảo vệ DB làm việc | Không restore đè schema `app` chính | Safety Guard chặn ngay lập tức nếu trỏ đè | **ĐẠT (100%)** |
 | Tách biệt DB & File | File private không nằm trong DB dump | DB dump chỉ chứa metadata (text paths & hashes) | **ĐẠT (100%)** |
 | Chi phí vận hành | Giới hạn gói Free, không tự bật dịch vụ trả phí | 22.2 MB / 500 MB DB, 0 B Supabase Storage | **ĐẠT (100%)** |
+
+
+## Cập nhật W5-P3
+
+Mật khẩu seed đúng là demo1234 (đã sửa ở trên). Xem GETTING_STARTED.md để cài sạch. Restore thử nghiệm W5-P3 ngày 08/10/2026 thất bại 42703 do DDL từ migrations thiếu achievements.verified_by có trong dữ liệu DB nguồn. Báo cáo Q3 trước đây không thay thế lần kiểm hiện tại. Không nghiệm thu tải file sau restore cho đến khi restore chạy được và HTTP kiểm quyền/hash PASS. Schema mặc định app_restore_test bị DROP khi restore: dùng tên riêng cho từng lượt, không chạy đè lượt người khác. Kho file quyết định có thể khác kho minh chứng, cần sao lưu cả hai nếu triển khai sử dụng.

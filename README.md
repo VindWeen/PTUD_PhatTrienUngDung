@@ -1,68 +1,70 @@
 # Quản lý Hồ sơ Thành tích Số & Khen thưởng LHU
 
-Bản khởi đầu giao diện được sao chép có chọn lọc từ `PTUD`, để tiếp tục phát triển độc lập. Phạm vi hiện tại bám theo ba nhóm thiết kế trong `Page_Design`.
+React/Vite/Tailwind → Express REST `/api/v1` → Supabase PostgreSQL qua `pg` theo ADR-001. Auth do Express quản lý; file private trên ổ đĩa server, DB chỉ giữ metadata. Bản đầu là UI demo; bản hiện tại đã tích hợp API. Kế hoạch SQL Server cũ được thay bằng Supabase.
 
-## Khởi chạy
+## Cài trên máy mới
 
-Yêu cầu Node.js 20.19+ hoặc 22.12+ và npm.
+Yêu cầu Git, Node.js 20.19+ hoặc 22.12+, npm và Supabase project **demo riêng, không có dữ liệu cần giữ**. Lệnh PowerShell, bắt đầu tại thư mục muốn clone:
 
-```bash
-cd frontend
+```powershell
+git clone https://github.com/VindWeen/PTUD_PhatTrienUngDung.git
+cd PTUD_PhatTrienUngDung
+Copy-Item backend/.env.example backend/.env
+cd backend
 npm ci
-npm run dev
+cd ../frontend
+npm ci
+cd ..
 ```
 
-Mở địa chỉ Vite hiển thị trong terminal (mặc định http://localhost:5173). Nếu cổng đang được dùng, Vite sẽ chọn cổng kế tiếp. Không cần backend, database, tài khoản thật hay file `.env`. Lần đầu ứng dụng mở form đăng nhập demo tại `/login`: nhập email hợp lệ và mật khẩu bất kỳ từ 6 ký tự (ví dụ `demo@example.com` / `demo123`).
+Điền `backend/.env` theo [hướng dẫn cài sạch](docs/deployment/GETTING_STARTED.md): URL DB, JWT secrets riêng và storage tuyệt đối. Backend ưu tiên `backend/.env`, chỉ fallback root `.env` khi file đó không tồn tại. Biến môi trường tiến trình ưu tiên hơn file. Không đưa secrets vào frontend/Git.
 
-```bash
+```powershell
+cd backend
+npm run migrate
+npm run migrate:status
+# CHỈ chạy trên DB demo mới: seed.sql có TRUNCATE, xóa dữ liệu cũ.
+npm run seed
+npm start
+```
+
+Giữ terminal backend mở. Terminal thứ hai tại root:
+
+```powershell
+Set-Content frontend/.env.local "VITE_DATA_SOURCE=api`nVITE_API_URL=/api/v1"
+cd frontend
+npm run dev -- --strictPort
+```
+
+Mở [đăng nhập](http://localhost:5173/login). Tài khoản seed: `an.nv` (giảng viên), `bich.tt` (quản lý + giảng viên), `duc.pm` (admin), `cuong.lh` (đại diện + giảng viên), `records.demo` (văn thư). Mật khẩu mẫu chung **`demo1234`**, chỉ cho demo riêng. Seed chưa có tài khoản Hội đồng. Không đăng nhập bằng email tùy ý như bản UI đầu.
+
+```powershell
+Invoke-RestMethod http://localhost:5000/api/v1/health
+Invoke-RestMethod http://localhost:5000/api/v1/health/readiness
+```
+
+Readiness phải có DB `UP`; tải được trang đăng nhập chưa chứng minh DB hoạt động. `VITE_DATA_SOURCE=fixture` chỉ dùng phát triển, không nghiệm thu tích hợp. Vite proxy chỉ chạy ở dev; hosting build tĩnh cần reverse proxy `/api/v1` hoặc `VITE_API_URL` tuyệt đối trước build.
+
+## Sử dụng và bàn giao
+
+- [Hướng dẫn theo vai trò](docs/USER_GUIDE.md), [demo 12–15 phút](docs/DEMO_SCRIPT.md).
+- [Cài đặt, TLS, free API và xử lý lỗi](docs/deployment/GETTING_STARTED.md).
+- [Triển khai](docs/deployment/DEPLOYMENT_GUIDE.md), [backup/restore W5-Q3](docs/deployment/RUNBOOK_DEMO_BACKUP_RESTORE.md).
+- [Kết quả và tự kiểm tra W5-P3](docs/weekly/WEEK_05_W5_P3.md).
+- [Blueprint/ADR-001](docs/PROJECT_DEVELOPMENT_BLUEPRINT.md), [hợp đồng API](docs/api/openapi.json).
+
+AI chỉ tham khảo với nguồn/tiêu chí đã xác nhận, không tự quyết định trao thưởng. KPI mock/CSV thử nghiệm phải gắn nhãn mô phỏng. Provider free cần key server-only và quota; không bảo đảm luôn sẵn sàng. W5-P1 còn p95 dashboard vượt 2 giây.
+
+## Kiểm tra
+
+```powershell
+cd frontend
 npm run build
 npm run lint
+cd ../backend
+npm run test:w5-p1
+# DB demo có quyền tạo/xóa schema; không chạy production.
+node tests/w5-p3.integration.js
 ```
 
-## Giao diện đã có
-
-| Đường dẫn | Nội dung |
-| --- | --- |
-| `/login` | Đăng nhập/đăng ký mô phỏng, hiệu ứng mây trượt và loader sách từ LacHong |
-| `/` | Dashboard quản lý thành tích; chuyển dữ liệu mẫu cá nhân/đơn vị |
-| `/profile` | Hồ sơ năng lực, các tab thành tích và giao diện minh chứng |
-| `/ai-forecast` | Phân tích & Dự báo AI, biểu đồ radar và gợi ý KPI |
-
-Phân tích và Dự báo AI nằm chung một trang như thiết kế. Có menu desktop/mobile, chế độ sáng/tối được lưu riêng trên trình duyệt và trang 404.
-
-## Cấu trúc
-
-```text
-PTUD_PhatTrienUngDung/
-├── frontend/
-│   └── src/
-│       ├── components/common/  # Menu, thông báo
-│       ├── data/               # Dữ liệu dashboard mẫu
-│       ├── hooks/              # Theme
-│       ├── layouts/            # Layout dùng chung
-│       ├── pages/              # Ba trang chính và trang 404
-│       ├── routes/             # Khai báo đường dẫn
-│       └── services/           # Chừa chỗ tích hợp API
-├── backend/src/                # Khung config, middlewares, modules, utils
-├── database/                   # Khung migrations, scripts, seed
-├── storage/                    # Chừa chỗ lưu minh chứng
-├── docs/                       # Phạm vi và kế hoạch phát triển
-├── Page_Design/                # Thiết kế tham khảo đã có
-└── PROJECT_DEVELOPMENT_BLUEPRINT.md
-```
-
-Backend, database và storage mới là khung thư mục, chưa có chức năng chạy. Dữ liệu hiển thị là dữ liệu mẫu; không gửi yêu cầu API. Xuất PDF/Excel, lưu minh chứng và phân tích AI thật chưa được triển khai. Các thao tác mẫu trên trang chỉ thay đổi trạng thái giao diện, không lưu dữ liệu nghiệp vụ.
-
-Form đăng nhập/đăng ký được tái sử dụng riêng từ LacHong. Không sao chép các trang kê khai, thẩm định, sổ khen thưởng, quản trị, báo cáo hoặc lịch sử Git của bản gốc. Repository: https://github.com/VindWeen/PTUD_PhatTrienUngDung.
-
-Xem [phạm vi phát triển](docs/DEVELOPMENT.md). Blueprint đã có là định hướng dài hạn, không phải danh sách tính năng đã hoàn thành.
-
-## Form đăng nhập từ LacHong
-
-- Giữ nền mây SVG, logo, chuyển form hai chiều, loader sách lật trang và phóng lớn, công tắc ngày/đêm.
-- CSS giới hạn trong `.ptud-auth`; dùng chung theme PTUD, không cần Supabase hay thư viện animation mới.
-- Đăng nhập là mô phỏng, không xác minh tài khoản. Đăng ký/quên mật khẩu không gửi email hay tạo tài khoản.
-- Chỉ lưu cờ `ptud-demo-session` trong sessionStorage, hoặc localStorage khi chọn ghi nhớ; không lưu email/mật khẩu.
-- Menu có nút đăng xuất để xóa phiên demo và quay lại form. Đây không phải cơ chế bảo mật cho dữ liệu thật.
-- Có bố cục mobile/tablet và hỗ trợ giảm chuyển động theo cài đặt trình duyệt.
-
+Lệnh cuối migrate/seed schema ngẫu nhiên, đăng nhập thật rồi dọn schema. Kiểm restore HTTP cần `W5_P3_BACKUP_DIR` theo hướng dẫn W5-P3; chưa cấp thì ghi `NOT_RUN`. `npm test` có fallback mock nên PASS không thay thế bằng chứng Supabase thật.

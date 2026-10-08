@@ -34,7 +34,7 @@ Hệ thống được thiết kế theo kiến trúc 3 tầng chuẩn mực (Thr
   |  - An toàn: Helmet, Rate-limit, Correlation ID, Strict CORS           |
   +-------------------+-------------------------------+-------------------+
                       |                               |
-                      | TLS (pg Pooler 5432/6543)     | Local File I/O
+                      | TLS (session 5432 / transaction 6543)     | Local File I/O
                       v                               v
   +---------------------------------------+   +---------------------------+
   |          DATABASE SUPABASE            |   |   KHO FILE PRIVATE (FS)   |
@@ -91,7 +91,7 @@ VITE_DATA_SOURCE=api
 1. **Cổng 5432 (Direct Connection):**
    - Định dạng: `postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres?sslmode=require`
    - Phù hợp với mạng hỗ trợ IPv6 hoặc các tiến trình batch, chạy script migration/dump.
-2. **Cổng 6543 (Session/Transaction Pooler Supavisor):**
+2. **Cổng 6543 (Transaction Pooler Supavisor):**
    - Định dạng: `postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres?sslmode=require`
    - Phù hợp với mọi mạng IPv4 (đặc biệt là mạng cáp quang, Wi-Fi trường học và các nền tảng serverless).
    - Tối ưu hóa số lượng kết nối đồng thời mà không làm quá tải RAM của PostgreSQL Free Tier.
@@ -168,3 +168,12 @@ Theo Quyết định Kiến trúc **ADR-001**:
 | `npm run test:w5-q3` | Chạy 7 ca kiểm thử tích hợp tự động W5-Q3 | `backend/tests/w5-q3.test.js` |
 | `npm run migrate` | Áp dụng các bản cập nhật CSDL mới nhất | `database/scripts/migrate.js` |
 | `npm test` | Kiểm tra hồi quy toàn diện hệ thống | `backend/tests/runner.js` |
+
+
+## Lưu ý nghiệm thu W5-P3 (08/10/2026)
+
+Session pooler dùng cổng 5432, transaction pooler dùng 6543; chọn đúng chuỗi Connect từ Supabase. TLS hiện rejectUnauthorized=false, chưa xác minh CA. Dùng GETTING_STARTED.md và README cập nhật cho máy mới.
+
+Backup native exporter tái tạo DDL từ migrations, không phải schema introspection đầy đủ. Lần cài thử W5-P3 restore backup DB hiện tại thất bại 42703: dữ liệu có achievements.verified_by nhưng DDL migrations thiếu cột. Không coi backup success là restore success. Chưa nghiệm thu tải HTTP sau restore; xem WEEK_05_W5_P3.md. Không thêm/xóa cột DB chung để làm test pass.
+
+RESTORE_DB_SCHEMA trong profile không tự đổi query app.* của Express. Chỉ kiểm adapter/hash chưa chứng minh quyền HTTP trên DB restored. Runner W5-P3 có kiểm HTTP riêng, dùng schema ngẫu nhiên để không đè app_restore_test của người khác. Ngoài kho minh chứng, cần kiểm riêng kho quyết định trao tặng nếu nằm ở đường dẫn khác.
