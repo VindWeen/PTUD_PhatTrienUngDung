@@ -5,11 +5,12 @@ import { randomBytes } from 'node:crypto';
 import { Pool, getDbPoolConfig, setPool } from '../src/config/database.js';
 import { generateAccessToken } from '../src/utils/crypto.js';
 import app from '../src/app.js';
+assert.ok(process.env.W6_UI_ONLY !== '1' || process.env.W6_UI === '1', 'W6_UI_ONLY requires W6_UI=1');
 
 const schema = `w3p1_test_${randomBytes(6).toString('hex')}`;
 assert.match(schema, /^w3p1_test_[a-f0-9]{12}$/);
 const rewrite = sql => sql.replace(/\bapp\b/g, schema);
-const pool = new Pool({ ...getDbPoolConfig(), max: 1, connectionTimeoutMillis: 5000 });
+const pool = new Pool({ ...getDbPoolConfig(), max: 1, connectionTimeoutMillis: process.env.W6_UI === '1' ? 15000 : 5000 });
 let client, server, passed = 0;
 const check = (actual, expected) => { assert.deepEqual(actual, expected); passed++; };
 // A small RFC4180 reader so CSV reconciliation does not depend on exporter implementation.
@@ -32,10 +33,24 @@ try {
   const files = (await fs.readdir(new URL('../../supabase/migrations/', import.meta.url))).filter(n => n.endsWith('.sql')).sort();
   for (const name of files) await client.query(rewrite(await fs.readFile(new URL(`../../supabase/migrations/${name}`, import.meta.url), 'utf8')));
   await client.query(rewrite(await fs.readFile(new URL('../../supabase/seed.sql', import.meta.url), 'utf8')));
+  let tx = 0;
+  let transactionQueue = Promise.resolve();
   const adapted = {
-    query: (sql, values) => client.query(rewrite(sql), values), release() {},
+    query: (sql, values) => client.query(rewrite(sql), values),
   };
-  setPool({ query: adapted.query, connect: async () => adapted });
+  setPool({ query: adapted.query, connect: async () => {
+    const previous = transactionQueue;
+    let release;
+    transactionQueue = new Promise(resolve => { release = resolve; });
+    await previous;
+    const savepoint = `ui_tx_${++tx}`;
+    return { query: (sql, values) => {
+      if (sql === 'BEGIN') return client.query(`SAVEPOINT ${savepoint}`);
+      if (sql === 'COMMIT') return client.query(`RELEASE SAVEPOINT ${savepoint}`);
+      if (sql === 'ROLLBACK') return client.query(`ROLLBACK TO SAVEPOINT ${savepoint}`);
+      return adapted.query(sql, values);
+    }, release };
+  } });
   const exec = (sql, params) => client.query(rewrite(sql), params);
   // Existing W2 subject/catalog conventions: lecturer 1, context 2, collective unit 2.
   const achievements = [
@@ -66,6 +81,20 @@ try {
     const body = await response.json(); return body.data;
   }
   const full = await call('/reports');
+  const catalogs = await call('/achievements/catalogs', 1);
+  check(catalogs.length > 0, true);
+  check(catalogs.every(t => t.code && t.name && t.applicable_subject_type), true);
+  await exec('UPDATE app.achievement_types SET is_active=FALSE WHERE achievement_type_id=2');
+  check((await call('/achievements/catalogs', 1)).some(t => String(t.achievement_type_id) === '2'), false);
+  await exec('UPDATE app.achievement_types SET is_active=TRUE WHERE achievement_type_id=2');
+  await call('/achievements/catalogs', null, 401);
+  if (process.env.W6_UI === '1') {
+    const { verifyFinalUi } = await import('../../scripts/w6-p1-ui.mjs');
+    await exec('SAVEPOINT final_ui');
+    try { await verifyFinalUi({ base, exec }); }
+    finally { await exec('ROLLBACK TO SAVEPOINT final_ui'); }
+  }
+  if (process.env.W6_UI_ONLY !== '1') {
   check(full.total, 12);
   check(typeof full.items[0].id, 'string');
   check(typeof full.items[0].context_unit_id, 'string');
@@ -132,6 +161,7 @@ try {
   check((await call('/reports?subjectType=UNIT', 4)).total, 0);
   await exec('UPDATE app.user_roles SET revoked_at=NOW() WHERE user_id=5');
   await call('/reports', 5, 403);
+  await call('/achievements/catalogs', 5, 403);
   check((await call('/reports', 3)).total, 12);
   await exec("UPDATE app.users SET status='INACTIVE' WHERE user_id=3");
   await call('/reports', 3, 401);
@@ -144,6 +174,7 @@ try {
   check(legacy.total, 1); check(legacy.items[0].type_id, null);
   check(legacy.summary[0].valid_count, 1);
   console.log(`W3-P1 integration: ${passed} assertions PASS (Express + Supabase, synthetic fixture, rollback)`);
+  }
 } finally {
   if (server) await new Promise(resolve => server.close(resolve));
   if (client) { await client.query('ROLLBACK'); client.release(); }

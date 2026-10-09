@@ -1,0 +1,37 @@
+{
+  "openapi": "3.0.3",
+  "info": { "title": "W6-P1 Achievement catalog read", "version": "1.0.0" },
+  "servers": [{ "url": "/api/v1" }],
+  "paths": {
+    "/achievements/catalogs": {
+      "get": {
+        "summary": "Read active achievement catalog metadata",
+        "description": "Requires a current DB role: LECTURER, UNIT_REPRESENTATIVE, MANAGER, RECORDS_OFFICER or ADMIN. Does not grant catalog mutations. Cache-Control: no-store.",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Active catalog metadata",
+            "content": { "application/json": { "schema": {
+              "type": "object", "required": ["success", "data"],
+              "properties": {
+                "success": { "type": "boolean", "enum": [true] },
+                "data": { "type": "array", "items": {
+                  "type": "object", "required": ["achievement_type_id", "code", "name", "applicable_subject_type"],
+                  "properties": {
+                    "achievement_type_id": { "type": "string", "pattern": "^[0-9]+$" },
+                    "code": { "type": "string" }, "name": { "type": "string" },
+                    "applicable_subject_type": { "type": "string", "enum": ["LECTURER", "UNIT", "BOTH"] }
+                  }
+                } }
+              }
+            } } }
+          },
+          "401": { "description": "Missing/invalid session or inactive account" },
+          "403": { "description": "No current permitted DB role" },
+          "500": { "description": "Database or internal error; no JWT role fallback" }
+        }
+      }
+    }
+  },
+  "components": { "securitySchemes": { "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" } } }
+}

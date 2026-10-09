@@ -443,7 +443,7 @@ export default function Reports({ dashboard = false }) {
                 {/* 5. Data Table */}
                 <div className="bg-white dark:bg-slate-800/80 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm overflow-hidden">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
+                    <table className="w-full min-w-[760px] text-left text-xs">
                       <thead>
                         <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-700 font-semibold text-slate-600 dark:text-slate-400">
                           <th className="p-3.5">Nguồn / ID</th>

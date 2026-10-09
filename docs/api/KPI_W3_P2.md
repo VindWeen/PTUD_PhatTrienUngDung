@@ -46,6 +46,8 @@ UTF-8/BOM, LF hoặc CRLF; hỗ trợ quoted comma/newline/doubled quote. 1–50
 
 Preview status: READY_GOAL, READY_RESULT, DUPLICATE, INVALID. Commit có bất kỳ INVALID nào trả 400, không ghi dòng nào. Bỏ qua DUPLICATE trong file/DB; ghi READY thành IMPORTED; trả `{rows,imported,duplicates}`. Lặp lại cùng CSV không sinh thêm kết quả. Không dùng tên giảng viên để ghép, không nhận owner ID trong file. Client gửi nguyên CSV để backend kiểm tra lại, không nhận rows/status do client phê chuẩn. UI vô hiệu hóa commit khi preview có lỗi và hủy preview khi nội dung thay đổi.
 
+W6-P1: UI tô xanh READY_GOAL/READY_RESULT/IMPORTED, trung tính DUPLICATE và đỏ INVALID theo hợp đồng trên. Thanh hoàn thành dùng actual/target; 0% có độ rộng 0, trên 100% giữ số thực và giới hạn thanh ở 100%. Lỗi tải mẫu CSV hiển thị trong vùng alert của trang. Không đổi API, quyền hay trạng thái nghiệp vụ; nguồn ngoài tiếp tục gắn nhãn MÔ PHỎNG.
+
 ## Tự kiểm tra
 
 1. Backend: cấu hình .env local (không commit), `npm --prefix backend run migrate` để áp migration 17 lên DB đích khi triển khai; `npm --prefix backend start`. Task chỉ chạy migration trong schema test rollback, chưa thay DB chung.

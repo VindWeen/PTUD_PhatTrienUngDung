@@ -57,7 +57,7 @@ export const achievementsApi = {
           { achievement_type_id: 2, code: 'RESEARCH_PATENT', name: 'Bằng độc quyền sáng chế / Giải pháp hữu ích' },
           { achievement_type_id: 3, code: 'TEACHING_CURRICULUM', name: 'Biên soạn giáo trình / Tài liệu giảng dạy' },
         ])
-      : request({ method: 'GET', url: '/admin/achievement-types' }),
+      : request({ method: 'GET', url: '/achievements/catalogs' }),
 };
 
 export default achievementsApi;

@@ -7,6 +7,9 @@ const router = express.Router();
 
 router.use(authenticate);
 
+// Read active catalog metadata without granting access to Admin catalog mutations.
+router.get('/achievements/catalogs', controller.catalogs);
+
 // 1. Tra cứu danh sách phân trang và lọc thành tích
 router.get('/achievements', controller.list);
 

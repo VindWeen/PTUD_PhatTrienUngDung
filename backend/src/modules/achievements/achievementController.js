@@ -15,6 +15,13 @@ import {
 const ok = (res, data, status = 200) =>
   res.status(status).json({ success: true, ...(data === undefined ? {} : { data }) });
 
+export async function catalogs(req, res, next) {
+  try {
+    res.set('Cache-Control', 'no-store');
+    ok(res, await achievementService.listCatalogs(req.user));
+  } catch (error) { next(error); }
+}
+
 export async function list(req, res, next) {
   try {
     const query = listAchievementsQuerySchema.parse(req.query);
@@ -164,6 +171,7 @@ export async function getSubmissions(req, res, next) {
 }
 
 export default {
+  catalogs,
   list,
   getById,
   create,

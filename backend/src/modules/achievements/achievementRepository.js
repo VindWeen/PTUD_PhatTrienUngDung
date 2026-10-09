@@ -1,5 +1,10 @@
 import { query } from '../../utils/dbHelper.js';
 
+export async function listActiveTypes() {
+  const { rows } = await query('SELECT achievement_type_id,code,name,applicable_subject_type FROM app.achievement_types WHERE is_active ORDER BY name');
+  return rows;
+}
+
 export async function findLecturerByUserId(userId) {
   const result = await query(
     `SELECT l.lecturer_id AS "lecturerId", l.user_id AS "userId", l.employee_code AS "employeeCode",
@@ -657,6 +662,7 @@ export async function listSubmissions(achievementId) {
 }
 
 export default {
+  listActiveTypes,
   findLecturerByUserId,
   findActiveRepresentative,
   listUserRepresentedUnitIds,

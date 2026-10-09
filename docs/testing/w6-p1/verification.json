@@ -1,0 +1,134 @@
+{
+  "task": "W6-P1",
+  "date": "2026-10-09",
+  "timezone": "Asia/Saigon",
+  "baseline": "afd237763d903f990fc1b84f9aab9c1489eac404",
+  "unitTests": 21,
+  "reportAssertions": 133,
+  "kpiAssertions": 96,
+  "connectorAssertions": 67,
+  "build": "PASS",
+  "lint": "PASS",
+  "ui": {
+    "task": "W6-P1",
+    "integration": "real Express/pg/Supabase; isolated synthetic data; rollback",
+    "checks": [
+      {
+        "width": 390,
+        "page": "reports",
+        "overflow": false,
+        "csvDownload": "PASS"
+      },
+      {
+        "width": 768,
+        "page": "reports",
+        "overflow": false,
+        "csvDownload": "PASS"
+      },
+      {
+        "width": 1440,
+        "page": "reports",
+        "overflow": false,
+        "csvDownload": "PASS"
+      },
+      {
+        "width": 390,
+        "page": "kpi",
+        "zeroProgress": "PASS",
+        "simulationLabel": true,
+        "sourceApi": "PASS",
+        "templateDownload": "PASS",
+        "overflow": false
+      },
+      {
+        "width": 768,
+        "page": "kpi",
+        "zeroProgress": "PASS",
+        "simulationLabel": true,
+        "sourceApi": "PASS",
+        "templateDownload": "PASS",
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "page": "kpi",
+        "zeroProgress": "PASS",
+        "simulationLabel": true,
+        "sourceApi": "PASS",
+        "templateDownload": "PASS",
+        "overflow": false
+      },
+      {
+        "sourceDraftLink": "PASS",
+        "templateFailure": "PASS (only negative response simulated)"
+      }
+    ],
+    "errors": []
+  },
+  "uiExitCode": 0,
+  "temporarySchemaCleanup": "PASS (outer rollback and pg_namespace assertion)",
+  "operationalDataAcceptance": "NOT VERIFIED: awaiting restored live demo",
+  "remotePullRequests": "NOT VERIFIED: SEC_E_NO_CREDENTIALS",
+  "photos": [
+    {
+      "path": "output/w6-p1/ui/kpi-1440.png",
+      "sha256": "eb7475412d50361bc14bbdc057b4f9ad6378d06e3fd08203741050019b678009",
+      "bytes": 186480
+    },
+    {
+      "path": "output/w6-p1/ui/kpi-390.png",
+      "sha256": "30f550783223f83f46a6001a4f35f23ccc176985eae799853c4b7768309c6171",
+      "bytes": 164009
+    },
+    {
+      "path": "output/w6-p1/ui/kpi-768.png",
+      "sha256": "5580f20c2c02a98b05e3ab874d585c014f7fcf99b294fa8d2867a24997e6b0b0",
+      "bytes": 176872
+    },
+    {
+      "path": "output/w6-p1/ui/reports-1440.png",
+      "sha256": "5f0e8981b0bab764a8ca25a03d427110a1abb192eab272619e505db1c5931e4a",
+      "bytes": 308875
+    },
+    {
+      "path": "output/w6-p1/ui/reports-390.png",
+      "sha256": "f02a9a688ae979c1938eee505fd4c04da9c4d0d2473ba9427e7caad07cfdf5f6",
+      "bytes": 213984
+    },
+    {
+      "path": "output/w6-p1/ui/reports-768.png",
+      "sha256": "50b32073f85025e3aac55a7a7fd17508fe10df41f9945ced87ae279c292ce8e4",
+      "bytes": 302180
+    }
+  ],
+  "logs": [
+    {
+      "path": "output/w6-p1/unit.log",
+      "sha256": "a387c921f43b385b736d3f4a78ec3c21b09567e5dca378684daf708515bcb390"
+    },
+    {
+      "path": "output/w6-p1/reports-integration.log",
+      "sha256": "f9b3edf4c2620c134ce2836606d4b54f6d87f83065892ad21e074ab8cd58d641"
+    },
+    {
+      "path": "output/w6-p1/kpi-integration.log",
+      "sha256": "d825c4b795ae79804868726127a371003eb96725bd083c1c52caf098eb9545e2"
+    },
+    {
+      "path": "output/w6-p1/connector-integration.log",
+      "sha256": "ce91540ec8e3f8a82d437d68104d72e71fda329ad731d5ba68aad0e6bd9d1a50"
+    },
+    {
+      "path": "output/w6-p1/ui-e2e.log",
+      "sha256": "e49953f9d5ff7fe9a802acc9c4e9c45c26c863c54c685518d6c9dc0615ab3043"
+    },
+    {
+      "path": "output/w6-p1/build.log",
+      "sha256": "b0898e222799292b735fa2143aefa5297d22c81e7808dc76de6468014555f71d"
+    },
+    {
+      "path": "output/w6-p1/lint.log",
+      "sha256": "1d8a72224c241a3ee2f815d899e8945f3957440a86ae725061239b8e595e196f"
+    }
+  ]
+}
