@@ -38,6 +38,15 @@ try {
     assert.ok((await r.json()).data.accessToken);
   }
   report.checks.push('5 real seed-account password logins');
+  if (process.env.W6_P2_UI === '1') {
+    const { verifyRoleUi } = await import('../../scripts/w6-p2-ui.mjs');
+    await verifyRoleUi({ base }).catch(error => {
+      // Print only source locations, never credentials, response bodies or tokens.
+      console.error('W6-P2 UI failure locations:', String(error.stack).split('\n').filter(line => /^\s+at /.test(line)).join('\n'));
+      throw error;
+    });
+    report.checks.push('W6-P2 six-role browser navigation and API authorization checks');
+  }
   if(process.env.W5_P3_BACKUP_DIR) {
     const { runRestore }=await import('../../scripts/restore.mjs');
     const restore=await runRestore({backupDir:process.env.W5_P3_BACKUP_DIR,targetSchema:restored,targetStorageDir:path.join(output,'restored')});

@@ -47,7 +47,8 @@ Readiness phải có DB `UP`; tải được trang đăng nhập chưa chứng m
 
 ## Sử dụng và bàn giao
 
-- [Hướng dẫn theo vai trò](docs/USER_GUIDE.md), [demo 12–15 phút](docs/DEMO_SCRIPT.md).
+- [Hướng dẫn theo vai trò](docs/USER_GUIDE.md), [demo đủ vai trò 20–25 phút](docs/DEMO_SCRIPT.md) (có bản rút gọn).
+- [Checklist tổng duyệt W6-P2](docs/testing/w6-p2/REHEARSAL_CHECKLIST.md): sáu vai trò, thuật ngữ, quyền sai và gate restore thật.
 - [Cài đặt, TLS, free API và xử lý lỗi](docs/deployment/GETTING_STARTED.md).
 - [Triển khai](docs/deployment/DEPLOYMENT_GUIDE.md), [backup/restore W5-Q3](docs/deployment/RUNBOOK_DEMO_BACKUP_RESTORE.md).
 - [Kết quả và tự kiểm tra W5-P3](docs/weekly/WEEK_05_W5_P3.md).
