@@ -82,7 +82,7 @@ describe('[W5-Q4-1] Holdout Benchmark — số liệu đủ căn cứ báo cáo'
 
 // ─── Suite 2: Phân loại lỗi chặn demo ───────────────────────────────────────
 describe('[W5-Q4-2] Phân loại lỗi chặn demo', () => {
-  it('[P1-SCHEMA-DRIFT] verified_by có trong achievementRepository nhưng không có trong migrations DDL', () => {
+  it('[P1-SCHEMA-DRIFT] verified_by có trong achievementRepository nhưng không có trong migrations DDL (đã fix bởi W6-Q1 migration 009)', () => {
     const repo = readText(
       'backend/src/modules/achievements/achievementRepository.js'
     );
@@ -90,7 +90,7 @@ describe('[W5-Q4-2] Phân loại lỗi chặn demo', () => {
       repo.includes('verified_by'),
       'achievementRepository.js phải tham chiếu cột verified_by'
     );
-    // Kiểm tra migrations 001-008 không định nghĩa verified_by
+    // Kiểm tra sau W6-Q1: migration 009 phải định nghĩa verified_by (fix P1 schema drift)
     const migDir = path.join(ROOT, 'database/migrations');
     const files = fs.readdirSync(migDir).filter(f => f.endsWith('.sql'));
     let foundInMigration = false;
@@ -101,10 +101,10 @@ describe('[W5-Q4-2] Phân loại lỗi chặn demo', () => {
         break;
       }
     }
-    // Đây là lỗi P1: cột tồn tại live nhưng vắng migrations DDL → restore thất bại 42703
+    // Sau W6-Q1: migration 009 đã thêm verified_by → P1 FIXED; test xác nhận fix có tác dụng
     assert.ok(
-      !foundInMigration,
-      '[XÁC NHẬN P1-DRIFT] verified_by vắng migrations DDL — đây là nguyên nhân lỗi 42703 khi restore'
+      foundInMigration,
+      '[P1-FIXED-W6Q1] verified_by phải có trong migrations DDL sau khi migration 009 được thêm bởi W6-Q1'
     );
   });
 

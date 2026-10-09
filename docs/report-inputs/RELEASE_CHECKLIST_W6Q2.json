@@ -1,0 +1,112 @@
+{
+  "_comment": "W6-Q2 Release Checklist — kiểm chứng cài đặt và khôi phục lần cuối. Không chứa key/secret thật.",
+  "generatedAt": "2026-10-09T00:00:00+07:00",
+  "generatedBy": "Tạ Trần Vinh Quang (W6-Q2)",
+  "branch": "w6-q2",
+  "codeCommit": "1638173 (tip w6-q1 — fix W6-Q1 P1 blockers)",
+  "dbVersion": "PostgreSQL via Supabase",
+  "lastMigration": "009_add_missing_columns_to_achievements.sql",
+  "migrationsApplied": ["001","002","003","004","005","006","007","008","009"],
+  "migration009Note": "ADD COLUMN IF NOT EXISTS verified_by, verified_at, submitted_at, version — schema drift fix W6-Q1",
+
+  "backupScriptVersion": "scripts/backup.mjs — W5-Q3",
+  "restoreScriptVersion": "scripts/restore.mjs — W5-Q3 + W6-Q1 P1-fix (containment check, fail-hard downloadCheck)",
+
+  "migrationChecks": {
+    "allPresent": true,
+    "count": 9,
+    "noDropTable": true,
+    "noTruncate": true,
+    "noSecrets": true,
+    "migration009Idempotent": true,
+    "migration009PostgreSQL": true
+  },
+
+  "backupChecks": {
+    "runBackupExported": true,
+    "backupManifestGenerated": true,
+    "storageManifestGenerated": true,
+    "sha256PerFile": true
+  },
+
+  "restoreChecks": {
+    "safetyGuardPresent": true,
+    "containmentCheckFixed_W6Q1": true,
+    "failHardDownloadCheck_W6Q1": true,
+    "runRestorePresent": true
+  },
+
+  "restoreIntegrationStatus": "NOT_RUN — RESTORE_TARGET_DB_URL không có trong CI; chạy thật cần DB test riêng biệt với migration 009 đã nạp",
+  "restoreIntegrationBlocker": "Cần RESTORE_TARGET_DB_URL trỏ DB test + migration 009 áp dụng trước khi restore integration có thể nghiệm thu",
+
+  "candidateManifestChecks": {
+    "fileExists": true,
+    "allEntriesHavePathBytesHash": true,
+    "hashLengthSha256": true,
+    "noSecretsInManifest": true,
+    "taskConsistentWithVerification": true,
+    "baselineCommitConsistent": true
+  },
+
+  "verificationChecks": {
+    "fileExists": true,
+    "aiAccuracyClaim": "NONE",
+    "kpiSource": "SIMULATED",
+    "restoreBlockerDocumented": true,
+    "acceptanceReflectsRealState": "BLOCKED_Q3_RESTORE"
+  },
+
+  "versionMatrix": {
+    "dbMigrationLast": "009",
+    "backupScriptDate": "W5-Q3",
+    "restoreScriptDate": "W5-Q3 + W6-Q1",
+    "codeBaseline": "w6-q1 tip (1638173)",
+    "frontendFramework": "React 18 + Vite 5 + Tailwind CSS 3",
+    "backendFramework": "Express 4.21.2",
+    "pgDriver": "pg 8.23.1",
+    "nodeRuntime": ">=18.0.0"
+  },
+
+  "deliverableReproducible": "PARTIAL — migrations + code reproducible; restore end-to-end blocked pending DB test env + migration 009",
+
+  "openItems": [
+    {
+      "item": "Restore integration thật với DB test",
+      "blocker": "RESTORE_TARGET_DB_URL không có trong CI",
+      "action": "Set env + chạy: node scripts/restore.mjs --target-schema=app_restore_test",
+      "owner": "Q3/Q4",
+      "deadline": "2026-10-21"
+    },
+    {
+      "item": "HTTP file download sau restore (owner / anonymous / outside-scope)",
+      "blocker": "Blocked by restore integration",
+      "action": "Unblock restore trước",
+      "owner": "Q3",
+      "deadline": "2026-10-21"
+    },
+    {
+      "item": "Smoke provider AI live",
+      "blocker": "Không có key trong CI",
+      "action": "Set OPENAI_API_KEY hoặc GROQ_API_KEY, chạy scripts/w5-q3-smoke-provider.mjs",
+      "owner": "Quang",
+      "deadline": "Trước demo 28/10"
+    },
+    {
+      "item": "URL PR remote xác minh (GitHub)",
+      "blocker": "Chưa có URL merge thật",
+      "action": "Kiểm tra https://github.com/VindWeen/PTUD_PhatTrienUngDung/pulls",
+      "owner": "Quang",
+      "deadline": "2026-10-25"
+    }
+  ],
+
+  "selfCheckCommands": [
+    "cd backend && npm run test:w6-q2",
+    "cd backend && npm run test:w6-q1",
+    "cd backend && npm run test:w5-q4",
+    "node scripts/restore.mjs --target-schema=app_restore_test (cần RESTORE_TARGET_DB_URL)"
+  ],
+
+  "_kpiNote": "Nguồn KPI: MÔ PHỎNG — không là số liệu thực từ hệ thống LHU live",
+  "_aiNote": "Không tuyên bố AI accuracy live; chỉ offline evaluator gate đã đo trong W5-Q2"
+}
