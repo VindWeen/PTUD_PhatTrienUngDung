@@ -69,7 +69,9 @@
     "test:w5-p2:eval": "node ../scripts/w5-p2-eval.mjs",
     "test:w5-q4": "node --test tests/w5-q4.test.js",
     "test:w6-q1": "node --test tests/w6-q1.test.js",
-    "test:w6-q2": "node --test tests/w6-q2.test.js"
+    "test:w6-q2": "node --test tests/w6-q2.test.js",
+    "test:w6-q3": "node --test tests/w6-q3.test.js",
+    "test:w6-q4": "node --test tests/w6-q4.test.js"
   },
   "keywords": [
     "express",

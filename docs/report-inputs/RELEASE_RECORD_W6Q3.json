@@ -1,0 +1,50 @@
+{
+  "_comment": "W6-Q3 Release Record — Demo cuối và tag bản phát hành. Không chứa key/secret thật.",
+  "generatedAt": "2026-10-09T00:00:00+07:00",
+  "generatedBy": "Tạ Trần Vinh Quang (W6-Q3)",
+  "tagName": "v0.6-demo-ptud",
+  "tagDescription": "Bản phát hành demo cuối PTUD W6 — 28/10/2026. Tích hợp Supabase thật, auth Express, file private, backup/restore, AI evaluator offline.",
+  "branch": "w6-q3",
+  "commitSHA": "afd2377",
+  "commitSHAFull": "afd237763d903f990fc1b84f9aab9c1489eac404",
+  "commitMessage": "feat(W6-Q2): kiem chung migration, backup/restore script, hash manifest, version matrix",
+  "tagNote": "Tag tạo sau khi tất cả test W6-Q1, W6-Q2, W6-Q3 PASS. Commit SHA này là HEAD của nhánh w6-q2 được merge/cherry-pick vào w6-q3. Tag chính thức tạo sau khi Quang xác nhận và gõ lệnh git tag.",
+  "tagCommand": "git tag -a v0.6-demo-ptud afd2377 -m 'Release demo cuoi PTUD W6 — 28/10/2026'",
+
+  "demoReadiness": {
+    "migration009Applied": true,
+    "allP1BlockersFixed": true,
+    "testSuitesPass": {
+      "w6q3": "PENDING_RUN",
+      "w6q2": "36/36 PASS",
+      "w6q1": "37/37 PASS",
+      "w5q4": "20/20 PASS",
+      "w5q2_holdout": "6/6 PASS",
+      "w5q3_demo": "7/7 PASS"
+    },
+    "restoreIntegration": "BLOCKED — cần RESTORE_TARGET_DB_URL trỏ DB test riêng",
+    "aiLiveProvider": "NOT_RUN — cần OPENAI_API_KEY hoặc GROQ_API_KEY trước demo",
+    "kpiSource": "SIMULATED — không phải số liệu LHU live"
+  },
+
+  "demoScenarioRef": "docs/DEMO_SCENARIO_W6Q3.md",
+  "knownLimitationsRef": "docs/report-inputs/KNOWN_LIMITATIONS_W6Q3.md",
+  "demoScriptRef": "docs/DEMO_SCRIPT.md",
+
+  "aiAccuracyClaim": "NONE — chỉ offline evaluator gate (W5-Q2); không tuyên bố LLM live",
+  "kpiSource": "SIMULATED — connector mô phỏng, không phải KPI LHU thật",
+
+  "releaseChecklist": {
+    "1_migrations_complete": "DONE — 001–009 present, no DROP/TRUNCATE, PostgreSQL syntax",
+    "2_p1_blockers_fixed": "DONE — verified_by migration, containment check, fail-hard download",
+    "3_demo_scenario_written": "DONE — docs/DEMO_SCENARIO_W6Q3.md",
+    "4_known_limitations_published": "DONE — docs/report-inputs/KNOWN_LIMITATIONS_W6Q3.md",
+    "5_test_suite_w6q3": "PENDING — chạy npm run test:w6-q3",
+    "6_restore_integration_live": "BLOCKED — cần DB test env",
+    "7_ai_live_smoke": "NOT_RUN — cần provider key",
+    "8_tag_created": "PENDING — tag tạo sau khi Quang xác nhận"
+  },
+
+  "_kpiNote": "Nguồn KPI: MÔ PHỎNG — không là số liệu thực từ hệ thống LHU live",
+  "_aiNote": "AI không tự ban hành quyết định khen thưởng. Con người xét duyệt sau khi AI gợi ý."
+}
