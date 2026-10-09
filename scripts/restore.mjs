@@ -128,8 +128,23 @@ function restorePrivateStorage(backupStorageDir, targetStorageDir) {
   const restoreResults = [];
 
   for (const item of manifest.files) {
-    const srcPath = path.join(backupStorageDir, item.storageKey);
-    const dstPath = path.join(targetStorageDir, item.storageKey);
+    // W6-Q1 P1-fix: containment check — chặn path traversal / absolute storageKey
+    const resolvedBackupRoot = path.resolve(backupStorageDir);
+    const resolvedTargetRoot = path.resolve(targetStorageDir);
+    const srcPath = path.resolve(backupStorageDir, item.storageKey);
+    const dstPath = path.resolve(targetStorageDir, item.storageKey);
+    if (!srcPath.startsWith(resolvedBackupRoot + path.sep) && srcPath !== resolvedBackupRoot) {
+      throw new Error(
+        `Chặn path traversal: storageKey "${item.storageKey}" thoát khỏi backup root. ` +
+        `Restore bị hủy để bảo vệ filesystem.`
+      );
+    }
+    if (!dstPath.startsWith(resolvedTargetRoot + path.sep) && dstPath !== resolvedTargetRoot) {
+      throw new Error(
+        `Chặn path traversal: storageKey "${item.storageKey}" thoát khỏi target root. ` +
+        `Restore bị hủy để bảo vệ filesystem.`
+      );
+    }
     const dstDir = path.dirname(dstPath);
 
     if (!fs.existsSync(dstDir)) {
@@ -434,6 +449,15 @@ export async function runRestore(cliOptions = {}) {
     // 5. Tải minh chứng & đối chiếu quyền
     console.log('\n🔎 BƯỚC 5: KIỂM THỬ TẢI MINH CHỨNG & TOÀN VẸN...');
     const downloadCheck = await verifyEvidenceDownload(pool, targetStorageDir, targetSchema);
+    // W6-Q1 P1-fix: fail hard khi bất kỳ file nào thiếu hoặc hash sai
+    if (!downloadCheck.allPassed) {
+      const failed = (downloadCheck.details || []).filter(r => !r.exists || !r.hashMatch);
+      throw new Error(
+        `Phát hiện ${failed.length} file minh chứng không hợp lệ sau restore (thiếu hoặc hash sai). ` +
+        `Chi tiết: ${failed.map(r => r.storageKey).join(', ')}. ` +
+        `Restore bị từ chối — không thể xác nhận tính toàn vẹn dữ liệu.`
+      );
+    }
 
     // 6. Cấp lại Secrets qua cấu hình môi trường
     console.log('\n🔑 BƯỚC 6: CẤP LẠI SECRETS CHO MÔI TRƯỜNG KHÔI PHỤC (RE-ISSUE SECRETS)...');
