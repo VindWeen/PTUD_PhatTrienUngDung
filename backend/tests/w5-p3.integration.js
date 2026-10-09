@@ -16,7 +16,7 @@ const { generateAccessToken } = await import('../src/utils/crypto.js');
 const { default: storage } = await import('../src/modules/evidences/storage/localStorageAdapter.js');
 const { migrateUp } = await import('../../database/scripts/migrate.js');
 const { seedDatabase } = await import('../../database/scripts/seed.js');
-const pool = new Pool({ ...getDbPoolConfig(), connectionTimeoutMillis:15000, statement_timeout:60000 });
+const pool = new Pool({ ...getDbPoolConfig(), ...(process.env.W6_P3_VIDEO === '1' ? { max: 3 } : {}), connectionTimeoutMillis:15000, statement_timeout:60000 });
 pool.on('error', () => {});
 let active = schema, server;
 const rewrite = sql => sql.replace(/\bapp\b/g, active);
@@ -38,6 +38,14 @@ try {
     assert.ok((await r.json()).data.accessToken);
   }
   report.checks.push('5 real seed-account password logins');
+  if (process.env.W6_P3_VIDEO === '1') {
+    const { recordDemo } = await import('../../scripts/w6-p3-video.mjs');
+    await recordDemo({ base, query: wrapper.query }).catch(error => {
+      console.error('W6-P3 failure locations:', String(error.stack).split('\n').filter(line => /^\s+at /.test(line)).join('\n'));
+      throw error;
+    });
+    report.checks.push('W6-P3 real browser video + application/council/recording workflow');
+  }
   if (process.env.W6_P2_UI === '1') {
     const { verifyRoleUi } = await import('../../scripts/w6-p2-ui.mjs');
     await verifyRoleUi({ base }).catch(error => {

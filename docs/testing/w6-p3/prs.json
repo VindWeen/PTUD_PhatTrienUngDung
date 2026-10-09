@@ -1,0 +1,42 @@
+{
+  "baselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+  "checkedAt": "2026-10-09T13:39:52.893Z",
+  "remoteProbe": {
+    "command": "git ls-remote origin 'refs/pull/*/head'",
+    "exitCode": 128,
+    "failure": "SEC_E_NO_CREDENTIALS"
+  },
+  "note": "Local merge subjects prove local history references, not current GitHub approval/merge state. No PR URLs invented for task commits.",
+  "prs": [
+    {
+      "number": 2,
+      "url": "https://github.com/VindWeen/PTUD_PhatTrienUngDung/pull/2",
+      "mergeCommit": "42619597361dba712023fa03d20ac0294fc61d4d",
+      "parentShas": [
+        "4e61b10764d129fc25c5ff7e8e260f88b82f98cf",
+        "5893dba99b93f499e3b9f502a15dc98cb777b315"
+      ],
+      "author": "VindWeen",
+      "tasks": [
+        "W1-Q3"
+      ],
+      "source": "LOCAL_GIT_MERGE_SUBJECT",
+      "liveReviewAndMergeStatus": "UNVERIFIED"
+    },
+    {
+      "number": 1,
+      "url": "https://github.com/VindWeen/PTUD_PhatTrienUngDung/pull/1",
+      "mergeCommit": "4e61b10764d129fc25c5ff7e8e260f88b82f98cf",
+      "parentShas": [
+        "43b31cfec41813ec71d9a02fd02bb24a60255aeb",
+        "ac0d0404606f9581b761638e0390533bf1b7d3cb"
+      ],
+      "author": "VindWeen",
+      "tasks": [
+        "W1-Q3"
+      ],
+      "source": "LOCAL_GIT_MERGE_SUBJECT",
+      "liveReviewAndMergeStatus": "UNVERIFIED"
+    }
+  ]
+}

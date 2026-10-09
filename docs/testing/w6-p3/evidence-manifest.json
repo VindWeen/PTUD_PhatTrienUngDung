@@ -1,0 +1,564 @@
+{
+  "task": "W6-P3",
+  "baselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+  "createdAt": "2026-10-09T13:39:52.893Z",
+  "runCommittedSha": null,
+  "recordingCodeBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+  "releaseTargetDate": "2026-10-28",
+  "releaseStatus": "PENDING_JOINT_REVIEW_AND_RESTORE",
+  "recordingStatus": "PASS",
+  "videoValidationStatus": "PASS",
+  "recordingSourceHashes": [
+    {
+      "path": "scripts/w6-p3-video.mjs",
+      "sha256": "dcfb9e6556c99420da4d34086f6e05c037ef9a0ef1ad71cd0ec93c5fd2e71091"
+    },
+    {
+      "path": "scripts/w6-p3-recorder.mjs",
+      "sha256": "8ddf5dd26e21671fe2b284d1466b2946781952abee759b8cf9eb803a9e73038e"
+    },
+    {
+      "path": "backend/tests/w5-p3.integration.js",
+      "sha256": "08150e75bcaac2a3117b5456d09755c2e2e6219adc91c58a5aec5e1c332b0aac"
+    },
+    {
+      "path": "frontend/src/services/awardsApi.js",
+      "sha256": "654160835e9561ac6573133e1d1189485b7e04a6ffbc0d04f541f7eebb7c7ee9"
+    },
+    {
+      "path": "frontend/src/pages/AwardApplications.jsx",
+      "sha256": "e665a02080b7cc33438dcaca34276a24e9245215f35c558bda7aa8147e803b8b"
+    },
+    {
+      "path": "frontend/src/pages/Awards.jsx",
+      "sha256": "8653b166b0f9fd179189e399d17abb06a45f3197c65b2ccb9abbef64d207a3dc"
+    },
+    {
+      "path": "frontend/src/pages/Achievements.jsx",
+      "sha256": "3e7c823c502a0788c577bf7a1b231aa6e59872a10d22752cceeef569a4ea5efc"
+    }
+  ],
+  "mediaPolicy": "Local ignored output; synthetic data only. No tokens/env/dumps exported. Copy the output folder with this manifest when handing off; clone alone has no video.",
+  "artifacts": [
+    {
+      "path": "output/w6-p3/build.log",
+      "task": "W6-P3",
+      "kind": "LOCAL_RUN_ARTIFACT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 746,
+      "sha256": "7cf33177e60c3b954662b0e97636225ff1de0ce73730b0177dcb5f67af99ba20"
+    },
+    {
+      "path": "output/w6-p3/demo.webm",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_VIDEO",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 15852561,
+      "sha256": "ad4757106b899d5cd28eb0c3841d11dc88ef8fbb64e59c995149cdc56543ec02"
+    },
+    {
+      "path": "output/w6-p3/dependency-tests.log",
+      "task": "W6-P3",
+      "kind": "LOCAL_RUN_ARTIFACT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 21821,
+      "sha256": "2951e11ca7c7a7e9bc07f25b977e7a15747bc4cea8217f640963201ed31e1214"
+    },
+    {
+      "path": "output/w6-p3/images/admin.png",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_SCREENSHOT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 66759,
+      "sha256": "b8d27d86defb3ac9c3c04ba03819c81828536bd3b44662109196da0f85e6de49"
+    },
+    {
+      "path": "output/w6-p3/images/collective-submitted.png",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_SCREENSHOT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 86129,
+      "sha256": "0d14530eedb9bf3765e1e42f0264789403614a8d628b768e9c18ae232716300d"
+    },
+    {
+      "path": "output/w6-p3/images/cycle.png",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_SCREENSHOT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 60412,
+      "sha256": "a850b306b3693039f74082190c427643e9dbb46964c64595fdd0c2ad9414fbc7"
+    },
+    {
+      "path": "output/w6-p3/images/forward.png",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_SCREENSHOT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 80643,
+      "sha256": "f7e69ff305eb4f7f28ca6e1d9dd72973640e24c84d03a21a45671d57d83a2560"
+    },
+    {
+      "path": "output/w6-p3/images/individual-submitted.png",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_SCREENSHOT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 87239,
+      "sha256": "e3462437c20ab1894af76d5935740730b8546c33e76feacfe7299d11399ab81e"
+    },
+    {
+      "path": "output/w6-p3/images/intro.png",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_SCREENSHOT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 118167,
+      "sha256": "04442d02d33936a5bea18f32cbba1abdc5f36ce915b112bcadebb0241376c5de"
+    },
+    {
+      "path": "output/w6-p3/images/missing-file.png",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_SCREENSHOT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 79840,
+      "sha256": "7c95d25a115cb24461e9a886b8d3dc0cefd3b04805eef2368507eb71c34402e6"
+    },
+    {
+      "path": "output/w6-p3/images/occ.png",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_SCREENSHOT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 91923,
+      "sha256": "a47dbf979de6dc007862d3f80885f2feee651526410b1d2fd37f9b8c48dabc5c"
+    },
+    {
+      "path": "output/w6-p3/images/proposal-submitted.png",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_SCREENSHOT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 86543,
+      "sha256": "3c20beda6daaaf2f2a74813d81a06ec6f5fb622c7ec13dbe95f17cbeb3df25d6"
+    },
+    {
+      "path": "output/w6-p3/images/recommended.png",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_SCREENSHOT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 92998,
+      "sha256": "7c80612b6d4ba2a70f35b3171be02d1fc29b962e4aeb01aa8bb28f45130df9f7"
+    },
+    {
+      "path": "output/w6-p3/images/recorded.png",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_SCREENSHOT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 82534,
+      "sha256": "f89107b0db855a18c858c85491fd34d82ca8e21342b142484828d2620e7f181d"
+    },
+    {
+      "path": "output/w6-p3/images/release-gates.png",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_SCREENSHOT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 84725,
+      "sha256": "de4976eb936b71ed8db04ab43929dfd601f18bcdf76b35eb872dab9fe2d1bc49"
+    },
+    {
+      "path": "output/w6-p3/images/reports.png",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_SCREENSHOT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 105279,
+      "sha256": "aa5b79e283c8f6e6746d6dfd9f6b384f2b60d35c3887ad786b10290f5d9b4679"
+    },
+    {
+      "path": "output/w6-p3/images/verified.png",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_SCREENSHOT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 66967,
+      "sha256": "edddc1f15f728ea80a4c702cb85c24f55f0d6a5e44687a6e9c19f94f227f2529"
+    },
+    {
+      "path": "output/w6-p3/images/wrong-role.png",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_SCREENSHOT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 28480,
+      "sha256": "a84e8ea415371453db7eed227209b7172a679d17fd20d53f5758d1d23a548a93"
+    },
+    {
+      "path": "output/w6-p3/lint.log",
+      "task": "W6-P3",
+      "kind": "LOCAL_RUN_ARTIFACT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 66,
+      "sha256": "1d8a72224c241a3ee2f815d899e8945f3957440a86ae725061239b8e595e196f"
+    },
+    {
+      "path": "output/w6-p3/playback-individual-submitted.png",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_SCREENSHOT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 313422,
+      "sha256": "2380647b2bbea1d422624d478bb2decd8fcff04aceb7ae64fbf1b6dc9c015877"
+    },
+    {
+      "path": "output/w6-p3/playback-recommended.png",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_SCREENSHOT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 409153,
+      "sha256": "fc951add3e84668e50d96636d89bd1b5d506aee5bff64c460ab2086e53f615fd"
+    },
+    {
+      "path": "output/w6-p3/playback-recorded.png",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_SCREENSHOT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 329319,
+      "sha256": "2d5c268e235508d6a5f7dee675a7d377911cef1cfb8cf29dbb0f3ff0a57f024f"
+    },
+    {
+      "path": "output/w6-p3/playback-release-gates.png",
+      "task": "W6-P3",
+      "kind": "REAL_BROWSER_SCREENSHOT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 335797,
+      "sha256": "7cf845afad230b59eb8a9850e2a2bd775e7e680b3d1760903c14b8db74e2a287"
+    },
+    {
+      "path": "output/w6-p3/recording-result.json",
+      "task": "W6-P3",
+      "kind": "LOCAL_RUN_ARTIFACT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 8082,
+      "sha256": "7424467a50dd585b5c286626cc1b1a78859ef48e64062ef4eec3aab3b24a0fc9"
+    },
+    {
+      "path": "output/w6-p3/recording.log",
+      "task": "W6-P3",
+      "kind": "LOCAL_RUN_ARTIFACT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 17806,
+      "sha256": "9361743012fdf01358d63b000a8879309232be391bb1340fc73b2cab5f1d5ffd"
+    },
+    {
+      "path": "output/w6-p3/reports-synthetic.csv",
+      "task": "W6-P3",
+      "kind": "LOCAL_RUN_ARTIFACT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 595,
+      "sha256": "b45483c9afc24b7fad8dc8e31dfb88f22201214d1db08c2ad6d484ce817cd87e"
+    },
+    {
+      "path": "output/w6-p3/synthetic-demo.pdf",
+      "task": "W6-P3",
+      "kind": "LOCAL_RUN_ARTIFACT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 611,
+      "sha256": "b85862f563a709fb023f6c215b26de9284d0230512de2c7e8ea62c97f390ec8c"
+    },
+    {
+      "path": "output/w6-p3/video-validation.json",
+      "task": "W6-P3",
+      "kind": "LOCAL_RUN_ARTIFACT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_RUN",
+      "bytes": 1013,
+      "sha256": "5fe40b33627ac8b15c3515ada9d6bf1a7cfd6feba6e1897d0fbf0b7d3fcfd11d"
+    },
+    {
+      "path": "docs/weekly/WEEK_06_W6_P2.md",
+      "task": "W6-P2",
+      "kind": "COMMITTED_DEPENDENCY_DOCUMENT",
+      "originCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "CURRENT_FILE",
+      "bytes": 7626,
+      "sha256": "1d64eeca910ce3fb5ed5b19fe370d148c360f6c6bde6983354b50f6f45181542"
+    },
+    {
+      "path": "docs/weekly/WEEK_06_W6_Q2.md",
+      "task": "W6-Q2",
+      "kind": "COMMITTED_DEPENDENCY_DOCUMENT",
+      "originCommit": "afd237763d903f990fc1b84f9aab9c1489eac404",
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "CURRENT_FILE",
+      "bytes": 5722,
+      "sha256": "c173711b7f5975a3d4d8d989d0a9680bd59e7a22581b28bbb2e52de276d283ad"
+    },
+    {
+      "path": "docs/weekly/WEEK_05_W5_Q4.md",
+      "task": "W5-Q4",
+      "kind": "COMMITTED_DEPENDENCY_DOCUMENT",
+      "originCommit": "d3986f0813590b3505c874a213e3548405f0d706",
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "CURRENT_FILE",
+      "bytes": 8713,
+      "sha256": "2d1318d2b08a1ef0ef4a28eaf0558c2913cef3d164ca89e78d29bbd8f30d4e23"
+    },
+    {
+      "path": "docs/testing/w6-p2/REHEARSAL_CHECKLIST.md",
+      "task": "W6-P2",
+      "kind": "COMMITTED_DEPENDENCY_DOCUMENT",
+      "originCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "CURRENT_FILE",
+      "bytes": 7821,
+      "sha256": "946e3380769f73507de34802b3a6b5dab1f25f3c9fd964ae75625590fbe683c3"
+    },
+    {
+      "path": "docs/USER_GUIDE.md",
+      "task": "W6-P2",
+      "kind": "COMMITTED_DEPENDENCY_DOCUMENT",
+      "originCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "CURRENT_FILE",
+      "bytes": 10143,
+      "sha256": "dc62712bdb5e076f27c6e155a2b89e9b25d56bd26a99080ec247ef42f0a22c63"
+    },
+    {
+      "path": "docs/report-inputs/RELEASE_CHECKLIST_W6Q2.json",
+      "task": "W6-Q2",
+      "kind": "COMMITTED_DEPENDENCY_DOCUMENT",
+      "originCommit": "afd237763d903f990fc1b84f9aab9c1489eac404",
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "CURRENT_FILE",
+      "bytes": 4232,
+      "sha256": "f68b861a2558f6edef660c91af3ecee46d84e1cae5addd6f55e254a03cf92bf1"
+    },
+    {
+      "path": "output/w6-p2/rehearsal-restore.log",
+      "task": "W6-P2",
+      "kind": "HISTORICAL_LOCAL_EVIDENCE",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "HISTORICAL_UNCOMMITTED_MEDIA; RUN_BASELINE_16ee566; DOCUMENTATION_COMMIT_2774075",
+      "bytes": 13254,
+      "sha256": "4fb91755ac2f16ffaf08cb8fbbd35f11e30caaea5354d2afd8e1cd41b44686b5"
+    },
+    {
+      "path": "output/w6-p2/ui-loaded-final.log",
+      "task": "W6-P2",
+      "kind": "HISTORICAL_LOCAL_EVIDENCE",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "HISTORICAL_UNCOMMITTED_MEDIA; RUN_BASELINE_16ee566; DOCUMENTATION_COMMIT_2774075",
+      "bytes": 12777,
+      "sha256": "025054fc3bb167312854b26e59810639316f85e22ddcca29c86a4f88e560af7c"
+    },
+    {
+      "path": "output/w6-p2/ui/result.json",
+      "task": "W6-P2",
+      "kind": "HISTORICAL_LOCAL_EVIDENCE",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "HISTORICAL_UNCOMMITTED_MEDIA; RUN_BASELINE_16ee566; DOCUMENTATION_COMMIT_2774075",
+      "bytes": 1152,
+      "sha256": "5ba96354f0aee76d41d98cfe76aa9acd54a52a8fb983cc92690a4dfcb335f961"
+    },
+    {
+      "path": "scripts/w6-p3-video.mjs",
+      "task": "W6-P3",
+      "kind": "CAPTURE_OR_EXPORT_SOURCE",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_SOURCE",
+      "bytes": 20605,
+      "sha256": "dcfb9e6556c99420da4d34086f6e05c037ef9a0ef1ad71cd0ec93c5fd2e71091"
+    },
+    {
+      "path": "scripts/w6-p3-recorder.mjs",
+      "task": "W6-P3",
+      "kind": "CAPTURE_OR_EXPORT_SOURCE",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_SOURCE",
+      "bytes": 3561,
+      "sha256": "8ddf5dd26e21671fe2b284d1466b2946781952abee759b8cf9eb803a9e73038e"
+    },
+    {
+      "path": "scripts/w6-p3-evidence.mjs",
+      "task": "W6-P3",
+      "kind": "CAPTURE_OR_EXPORT_SOURCE",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_SOURCE",
+      "bytes": 12599,
+      "sha256": "0bd834b1ac87f544feebea8045a98d1d7a0dbf0d5ce2356a4b95b70f16534faa"
+    },
+    {
+      "path": "backend/tests/w5-p3.integration.js",
+      "task": "W6-P3",
+      "kind": "CAPTURE_OR_EXPORT_SOURCE",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_SOURCE",
+      "bytes": 6339,
+      "sha256": "08150e75bcaac2a3117b5456d09755c2e2e6219adc91c58a5aec5e1c332b0aac"
+    },
+    {
+      "path": "docs/testing/w6-p3/commits.json",
+      "task": "W6-P3",
+      "kind": "EVIDENCE_INDEX_OR_REVIEW",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_DOCUMENT",
+      "bytes": 36574,
+      "sha256": "a537bc76c0c2c8490beb4b7a5d29af220d9a0bb68ded8960cdb0735b6ff99e77"
+    },
+    {
+      "path": "docs/testing/w6-p3/commits.csv",
+      "task": "W6-P3",
+      "kind": "EVIDENCE_INDEX_OR_REVIEW",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_DOCUMENT",
+      "bytes": 17393,
+      "sha256": "9aaf1b34950f959e7a7d2098ab049a258afae3d3b4f45df5b6bbaaa66d119e48"
+    },
+    {
+      "path": "docs/testing/w6-p3/prs.json",
+      "task": "W6-P3",
+      "kind": "EVIDENCE_INDEX_OR_REVIEW",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_DOCUMENT",
+      "bytes": 1338,
+      "sha256": "3769ee2c7868023e421f94332c2d3c18d69c20c471fbf1e401c1c1fb916d982d"
+    },
+    {
+      "path": "docs/testing/w6-p3/CONTRIBUTIONS.md",
+      "task": "W6-P3",
+      "kind": "EVIDENCE_INDEX_OR_REVIEW",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_DOCUMENT",
+      "bytes": 19335,
+      "sha256": "d53c0f199961db5262983d0b5401cfecb7d883eccb243bccbb4e25977ac7d79f"
+    },
+    {
+      "path": "docs/testing/w6-p3/TIMELINE.md",
+      "task": "W6-P3",
+      "kind": "EVIDENCE_INDEX_OR_REVIEW",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_DOCUMENT",
+      "bytes": 6854,
+      "sha256": "bb7a58b4e85e3fe1d3ac998efcc0ec19a786e33aa2305df638b44a8a8591ff91"
+    },
+    {
+      "path": "docs/testing/w6-p3/REVIEW_RELEASE.md",
+      "task": "W6-P3",
+      "kind": "EVIDENCE_INDEX_OR_REVIEW",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_DOCUMENT",
+      "bytes": 6524,
+      "sha256": "c833a7441a1e501bbae3078d31292755685b6f915c0d904890a383fbff5365d5"
+    },
+    {
+      "path": "docs/testing/w6-p3/README.md",
+      "task": "W6-P3",
+      "kind": "EVIDENCE_INDEX_OR_REVIEW",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_DOCUMENT",
+      "bytes": 5494,
+      "sha256": "94249ee622367f93362a1065dba8a0c1f2a722353ed853670b6f64cb9c88ab36"
+    },
+    {
+      "path": "docs/weekly/WEEK_06_W6_P3.md",
+      "task": "W6-P3",
+      "kind": "HANDOFF_REPORT",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_DOCUMENT",
+      "bytes": 9342,
+      "sha256": "4ba7b12b5c8904f8af625ddb953e479e26e07abef7c9c7ba559cef01889593b6"
+    },
+    {
+      "path": "docs/api/AWARDS_W2_P2.md",
+      "task": "W6-P3",
+      "kind": "API_USAGE_MULTIPART_ERRATUM",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_DOCUMENT",
+      "bytes": 6071,
+      "sha256": "2bcea975e72a666c657411566fb415112b4fb9aa849b97c7af178e1ac6f27a40"
+    },
+    {
+      "path": "scripts/w6-p3-verify-video.mjs",
+      "task": "W6-P3",
+      "kind": "VIDEO_DECODER_SOURCE",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_SOURCE",
+      "bytes": 2910,
+      "sha256": "bba641a7238e35b00c4eab367a6ed5e8d7cc9bee3b7d99922c81e64a26fb7643"
+    },
+    {
+      "path": "frontend/src/services/awardsApi.js",
+      "task": "W6-P3",
+      "kind": "NECESSARY_MULTIPART_UPLOAD_FIX",
+      "originCommit": null,
+      "inventoryBaselineCommit": "2774075b319964a9fd4839070a428bd4fe667a09",
+      "state": "UNCOMMITTED_W6_P3_SOURCE",
+      "bytes": 1003,
+      "sha256": "654160835e9561ac6573133e1d1189485b7e04a6ffbc0d04f541f7eebb7c7ee9"
+    }
+  ]
+}

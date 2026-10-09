@@ -49,6 +49,7 @@ Readiness phải có DB `UP`; tải được trang đăng nhập chưa chứng m
 
 - [Hướng dẫn theo vai trò](docs/USER_GUIDE.md), [demo đủ vai trò 20–25 phút](docs/DEMO_SCRIPT.md) (có bản rút gọn).
 - [Checklist tổng duyệt W6-P2](docs/testing/w6-p2/REHEARSAL_CHECKLIST.md): sáu vai trò, thuật ngữ, quyền sai và gate restore thật.
+- [Video và minh chứng hai người W6-P3](docs/testing/w6-p3/README.md): timeline task/SHA, bảng đóng góp, PR/test evidence và phiếu review release 28/10.
 - [Cài đặt, TLS, free API và xử lý lỗi](docs/deployment/GETTING_STARTED.md).
 - [Triển khai](docs/deployment/DEPLOYMENT_GUIDE.md), [backup/restore W5-Q3](docs/deployment/RUNBOOK_DEMO_BACKUP_RESTORE.md).
 - [Kết quả và tự kiểm tra W5-P3](docs/weekly/WEEK_05_W5_P3.md).

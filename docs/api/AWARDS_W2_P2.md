@@ -45,3 +45,7 @@ Nguồn migration chính là `supabase/migrations/20261005000014_w2_p2_award_dec
 6. Thu hồi có lý do, xem history, tạo bản thay thế; portfolio cá nhân thấy dữ liệu mới.
 
 UI hiện dùng nhập mã tham chiếu từ danh mục/hồ sơ; chưa có combobox tìm kiếm. Không có chỉnh sửa nháp tại chỗ; có thể tạo nháp mới. Chưa triển khai quyền đọc awards cho Lecturer/Manager/đại diện ở endpoint awards riêng; portfolio cá nhân tiếp tục có lịch sử. Phạm vi yêu cầu ghi nhận RecordsOfficer đã có.
+
+## Hồi quy video W6-P3
+
+UI upload quyết định phải gửi multipart/form-data với trường `file` và boundary do browser tạo, không kế thừa Content-Type application/json của apiClient. W6-P3 sửa riêng awardsApi.upload để byte file tới multer; endpoint/payload/quyền/trạng thái/kiểm file giữ nguyên. Video và recording-result ở docs/testing/w6-p3 ghi kết quả request multipart, upload 201, thiếu file 400, RECORDED và tải private đối chiếu SHA256/size. Kết quả này ở schema demo mới, không thay nghiệm thu file sau restore.
