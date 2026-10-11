@@ -91,7 +91,8 @@ try {
   await page.getByRole('heading', { name: 'Hồ sơ năng lực', exact: true }).waitFor();
   await skeleton().waitFor(); await noSkeleton();
   await page.getByRole('heading', { name: 'Thông tin hồ sơ cá nhân' }).waitFor();
-  assert.equal(await page.getByRole('button', { name: 'Xuất Excel', exact: true }).evaluate((element) => getComputedStyle(element).backgroundColor), 'rgb(0, 128, 128)');
+  assert.equal(await page.getByRole('button', { name: 'Xuất Excel', exact: true }).count(), 0, 'unfinished export actions stay hidden');
+  assert.ok(await page.locator('[data-page-header]').isVisible());
   console.log('PASS Profile skeleton -> real profile');
 
   const dashboardCalls = calls.get('/dashboard/summary');
@@ -106,7 +107,7 @@ try {
   console.log('PASS Achievements skeleton -> settled list');
   await revisitCached('/achievements', '/achievements');
   let beforeRefresh = calls.get('/achievements');
-  await page.getByTitle('Làm mới', { exact: true }).click(); await noSkeleton();
+  await page.getByRole('button', { name: 'Làm mới', exact: true }).click(); await noSkeleton();
   assert.equal(calls.get('/achievements'), beforeRefresh + 1);
 
   await go('/kpi'); await skeleton().waitFor();
@@ -136,6 +137,7 @@ try {
 
   await go('/award-applications'); await skeleton().waitFor();
   await page.getByText('Hồ sơ #1', { exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Tạo hồ sơ đề nghị', exact: true }).click();
   assert.ok(await page.locator('form.soft-card').count());
   await fs.mkdir(new URL('../output/playwright/', import.meta.url), { recursive: true });
   await page.screenshot({ path: fileURLToPath(new URL('../output/playwright/applications-light.png', import.meta.url)), fullPage: true });
@@ -169,7 +171,7 @@ try {
   await page.getByRole('button', { name: 'Lịch sử Phiên AI' }).click(); await noSkeleton();
   assert.equal(calls.get('/ai/evaluations'), historyCalls);
   beforeRefresh = calls.get('/ai/evaluations');
-  await page.getByRole('button', { name: 'Tải lại', exact: true }).click(); await noSkeleton();
+  await page.getByRole('button', { name: 'Làm mới', exact: true }).click(); await noSkeleton();
   assert.equal(calls.get('/ai/evaluations'), beforeRefresh + 1);
 
   await go('/reports'); await skeleton().waitFor();
@@ -182,11 +184,11 @@ try {
   assert.equal(calls.get('/reports'), beforeRefresh + 1);
 
   await go('/organizations');
-  await page.getByRole('heading', { name: 'Tổ chức & Tập thể' }).waitFor();
+  await page.getByRole('heading', { name: 'Tổ chức', exact: true }).waitFor();
   await page.getByRole('button', { name: /Khoa kiểm tra/ }).waitFor();
   assert.ok(await skeleton().isVisible(), 'unit list visible before unit profile finishes');
   await noSkeleton();
-  assert.equal(await page.getByRole('button', { name: 'Làm mới', exact: true }).evaluate((element) => getComputedStyle(element).backgroundColor), 'rgb(0, 128, 128)');
+  assert.ok(await page.locator('[data-page-header]').getByRole('button', { name: 'Làm mới', exact: true }).isVisible());
   const unitCalls = calls.get('/organizations');
   await page.getByRole('button', { name: 'Làm mới', exact: true }).click();
   await noSkeleton();
@@ -202,7 +204,7 @@ try {
   assert.equal(calls.get('/notifications'), beforeRefresh + 1);
   beforeRefresh = calls.get('/notifications');
   await page.evaluate(() => window.dispatchEvent(new Event('notifications-changed'))); await noSkeleton();
-  assert.equal(calls.get('/notifications'), beforeRefresh + 1);
+  assert.equal(calls.get('/notifications'), beforeRefresh + 2, 'page list and sidebar unread summary refresh together');
   console.log('PASS New page caches, manual refresh and notification events');
 
   // Invoke the real frontend client against intercepted responses to verify write invalidation.
@@ -233,6 +235,31 @@ try {
   await page.getByText('NCKH-01', { exact: true }).waitFor();
   assert.equal(await page.getByRole('alert').count(), 0);
   console.log('PASS AI error -> retry skeleton -> recovered criteria');
+  for (const path of ['/me/profile', '/achievements', '/kpi', '/award-applications', '/regulations', '/me/ai-forecast', '/reports', '/organizations', '/notifications']) {
+    await go(path);
+    const header = page.locator('[data-page-header]');
+    await header.waitFor();
+    assert.equal(await header.count(), 1, path + ' has one shared header');
+    assert.ok(await header.getByRole('button', { name: 'Làm mới', exact: true }).isVisible());
+    await noSkeleton();
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.ok(await header.evaluate(el => el.scrollWidth <= el.clientWidth + 1), path + ' header fits mobile');
+    for (const button of await header.getByRole('button').all()) {
+      const box = await button.boundingBox();
+      if (box) assert.ok(box.x >= 0 && box.x + box.width <= 390, path + ' header buttons stay within viewport');
+    }
+    if (path === '/me/ai-forecast') await header.screenshot({ path: fileURLToPath(new URL('../output/playwright/header-ai-mobile.png', import.meta.url)) });
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    if (path === '/kpi') await header.screenshot({ path: fileURLToPath(new URL('../output/playwright/header-kpi-desktop.png', import.meta.url)) });
+  }
+  await page.getByRole('button', { name: 'Chuyển sang chế độ tối', exact: true }).click();
+  await page.waitForFunction(() => document.documentElement.classList.contains('dark'));
+  await go('/me/dashboard'); await noSkeleton();
+  assert.equal(await page.locator('[data-page-header]').count(), 0, 'Home keeps its own layout');
+  assert.ok(await page.getByRole('button', { name: 'Chuyển sang chế độ sáng', exact: true }).isVisible());
+  await page.getByRole('button', { name: 'Chuyển sang chế độ sáng', exact: true }).click();
+  await page.waitForFunction(() => !document.documentElement.classList.contains('dark'));
+  console.log('PASS Shared headers, mobile layout and theme persistence; Home stays separate');
   assert.deepEqual(failures, []);
 } finally {
   await browser?.close();

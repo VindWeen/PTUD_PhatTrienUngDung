@@ -1,3 +1,5 @@
+import UnderlineTabs from '../components/common/UnderlineTabs';
+import PageHeader from '../components/common/PageHeader';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -10,7 +12,6 @@ import {
   Edit3,
   Trash2,
   CheckCircle2,
-  RotateCcw,
   Download,
   UploadCloud,
   FileSpreadsheet,
@@ -129,35 +130,31 @@ export default function Kpi() {
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12">
-      {/* 1. Header & Quick Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-slate-800/80 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-teal-50 text-[#008080] dark:bg-teal-950/50 dark:text-teal-400">
-            <Target className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-              Mục tiêu & Kế hoạch KPI Nội bộ
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-              Quản lý mục tiêu cá nhân và đơn vị đại diện (MANUAL / CSV) · Độc lập với quy trình xét duyệt chính thức
-            </p>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            setEditing(null);
-            setForm(empty);
-            setShowCreateForm((v) => !v);
-          }}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-[#008080] hover:bg-[#006666] text-white font-medium text-sm transition shadow-soft-sm active:scale-95 self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>{showCreateForm && !editing ? 'Đóng biểu mẫu' : 'Thiết lập KPI mới'}</span>
-        </button>
-      </div>
+      <PageHeader title="Mục tiêu / KPI" description="Thiết lập và theo dõi mục tiêu cá nhân, đơn vị; nhập mục tiêu bằng CSV." icon={Target} onRefresh={load} refreshing={busy || loading} primaryAction={{label: showCreateForm && !editing ? 'Đóng biểu mẫu' : 'Thiết lập KPI mới', onClick: () => {setEditing(null); setForm(empty); setShowCreateForm(v => !v);}}} tabs={<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <UnderlineTabs label="Đối tượng mục tiêu KPI" value={subjectType} onChange={id => {
+          setSubject(id); setEditing(null); setPreview(null); setResult(null); setDraft(null); setForm(empty);
+        }} items={[{id: 'LECTURER', label: 'Cá nhân tôi', icon: User}, {id: 'UNIT', label: 'Đơn vị tôi đại diện', icon: Building2}]} />
+        {subjectType === 'UNIT' && (
+            <select
+              value={unit}
+              onChange={(e) => {
+                setUnit(e.target.value);
+                setEditing(null);
+                setResult(null);
+                setDraft(null);
+                setForm(empty);
+              }}
+              className="px-3 py-2 text-sm bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+            >
+              <option value="">-- Chọn đơn vị đại diện --</option>
+              {catalogs.units.map((u) => (
+                <option key={u.unit_id} value={u.unit_id}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
+          )}
+      </div>} />
 
       {/* Alerts */}
       {error && (
@@ -179,83 +176,6 @@ export default function Kpi() {
           <span>{notice}</span>
         </div>
       )}
-
-      {/* 2. Tab Navigation (Subject Switcher) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-700 pb-2">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setSubject('LECTURER');
-              setEditing(null);
-              setPreview(null);
-              setResult(null);
-              setDraft(null);
-              setForm(empty);
-            }}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition ${
-              subjectType === 'LECTURER'
-                ? 'bg-teal-50 text-[#008080] dark:bg-teal-950/40 dark:text-teal-300 font-semibold shadow-soft-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <User className="w-4 h-4" />
-            <span>Cá nhân tôi</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setSubject('UNIT');
-              setEditing(null);
-              setPreview(null);
-              setResult(null);
-              setDraft(null);
-              setForm(empty);
-            }}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition ${
-              subjectType === 'UNIT'
-                ? 'bg-teal-50 text-[#008080] dark:bg-teal-950/40 dark:text-teal-300 font-semibold shadow-soft-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <Building2 className="w-4 h-4" />
-            <span>Đơn vị tôi đại diện</span>
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {subjectType === 'UNIT' && (
-            <select
-              value={unit}
-              onChange={(e) => {
-                setUnit(e.target.value);
-                setEditing(null);
-                setResult(null);
-                setDraft(null);
-                setForm(empty);
-              }}
-              className="px-3 py-2 text-sm bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-            >
-              <option value="">-- Chọn đơn vị đại diện --</option>
-              {catalogs.units.map((u) => (
-                <option key={u.unit_id} value={u.unit_id}>
-                  {u.name}
-                </option>
-              ))}
-            </select>
-          )}
-
-          <button
-            type="button"
-            disabled={busy || loading}
-            onClick={() => load()}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition border border-slate-200 dark:border-slate-700"
-          >
-            <RotateCcw className={`w-3.5 h-3.5 ${busy || loading ? 'animate-spin text-[#008080]' : ''}`} />
-            <span>Làm mới</span>
-          </button>
-        </div>
-      </div>
 
       {/* 3. Goal Creation / Edit Form Card */}
       {showCreateForm && (

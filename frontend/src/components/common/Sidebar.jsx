@@ -2,6 +2,12 @@ import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { GraduationCap, Home, User, Cpu, LogOut, Building2, Award, Bell, BookOpen, BarChart3, Target, ClipboardList } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import useNotifications from '../../hooks/useNotifications';
+
+function NotificationCountBadge({ count }) {
+  if (count <= 0) return null;
+  return <span aria-hidden="true" data-notification-badge className="pointer-events-none absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold leading-none text-white ring-2 ring-[#274b64]">{count > 99 ? '99+' : count}</span>;
+}
 
 const navItems = [
   { to: '/me/dashboard', icon: Home, label: 'Trang chủ', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
@@ -20,25 +26,42 @@ const navItems = [
 
 export default function Sidebar() {
   const { signOut, user } = useAuth();
+  const { unreadCount } = useNotifications(1, 5, true);
+  const accessibleLabel = (to, label) => to === '/notifications' && unreadCount > 0 ? `${label}: ${unreadCount} chưa đọc` : label;
   const roles = (user?.roles || []).map((role) => typeof role === 'string' ? role : role.code);
   const visibleItems = navItems.filter((item) => item.roles.some((role) => roles.includes(role)));
+  const desktopRowInsetClass = 'px-0 group-hover/sidebar:px-3 group-has-[:focus-visible]/sidebar:px-3 transition-[padding,background-color,color] duration-300 motion-reduce:transition-none';
+  const desktopLabelClass = 'min-w-0 flex-1 whitespace-nowrap text-left text-[15px] font-semibold leading-5 opacity-0 translate-x-2 transition-[opacity,transform] duration-200 group-hover/sidebar:opacity-100 group-hover/sidebar:translate-x-0 group-has-[:focus-visible]/sidebar:opacity-100 group-has-[:focus-visible]/sidebar:translate-x-0 motion-reduce:transition-none';
   const navLink = ({ to, icon: Icon, label }) => (
-    <NavLink key={to} to={to} title={label} aria-label={label}
-      className={({isActive}) => `w-11 h-11 rounded-2xl flex flex-col items-center justify-center group relative transition-colors ${isActive ? 'bg-white/20 text-white' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}>
-      <Icon className="w-5 h-5" />
-      <span className="hidden lg:block absolute left-16 px-3 py-2 rounded-xl bg-slate-900 text-white text-xs whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-focus-visible:opacity-100">{label}</span>
-      <span className="lg:hidden text-[9px] mt-1">{label}</span>
+    <NavLink key={to} to={to} title={label} aria-label={accessibleLabel(to, label)}
+      className={({isActive}) => `w-11 h-11 rounded-2xl flex flex-col items-center justify-center transition-colors ${isActive ? 'bg-white/20 text-white' : 'text-slate-200 hover:text-white hover:bg-white/10'}`}>
+      <span className="relative"><Icon className="w-5 h-5" />{to === '/notifications' && <NotificationCountBadge count={unreadCount} />}</span>
+      <span className="text-[9px] mt-1">{label}</span>
     </NavLink>
   );
   return <>
-    <aside className="hidden lg:flex fixed left-5 top-5 bottom-5 w-[76px] bg-gradient-to-b from-[#182b3d] via-[#274b64] to-[#365f79] dark:from-[#111c2a] dark:to-[#223e52] rounded-[32px] flex-col items-center py-6 z-30 shadow-soft-lg text-white">
-      <Link to="/me/dashboard" aria-label="Trang chủ LHU" className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center"><GraduationCap /></Link>
-      <nav aria-label="Menu chính" className="flex flex-col items-center gap-5 my-auto">{visibleItems.map(navLink)}</nav>
-      <button onClick={signOut} title="Đăng xuất" aria-label="Đăng xuất" className="p-3 text-slate-400 hover:text-white"><LogOut className="w-5 h-5" /></button>
+    <aside aria-label="Điều hướng desktop" className="group/sidebar hidden lg:flex fixed left-5 top-5 bottom-5 w-[76px] hover:w-[272px] has-[:focus-visible]:w-[272px] overflow-hidden bg-gradient-to-b from-[#182b3d] via-[#274b64] to-[#365f79] dark:from-[#111c2a] dark:to-[#223e52] rounded-[32px] flex-col items-start px-3.5 py-6 z-30 shadow-soft-lg text-white transition-[width] duration-300 ease-out motion-reduce:transition-none">
+      <Link to="/me/dashboard" aria-label="Trang chủ LHU" className={`flex h-12 w-full shrink-0 items-center gap-3 rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-teal-300 ${desktopRowInsetClass}`}>
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10"><GraduationCap /></span>
+        <span className={desktopLabelClass}><span className="block font-bold text-white">LHU</span><span className="block text-xs text-slate-300">Quản lý thành tích</span></span>
+      </Link>
+      <div className="my-4 min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <nav aria-label="Menu chính" className="flex min-h-full flex-col justify-center gap-3">
+          {visibleItems.map(({to, icon: Icon, label}) => <NavLink key={to} to={to} aria-label={accessibleLabel(to, label)}
+            className={({isActive}) => `flex h-12 w-full shrink-0 items-center gap-3 rounded-2xl ${desktopRowInsetClass} focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-teal-300 ${isActive ? 'bg-white/20 text-white' : 'text-slate-200 hover:text-white hover:bg-white/10'}`}>
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center"><span className="relative"><Icon className="h-5 w-5" />{to === '/notifications' && <NotificationCountBadge count={unreadCount} />}</span></span>
+            <span className={desktopLabelClass}>{to === '/me/ai-forecast' ? <><span className="block">Phân tích &</span><span className="block">Thẩm định AI</span></> : label}</span>
+          </NavLink>)}
+        </nav>
+      </div>
+      <button type="button" onClick={signOut} aria-label="Đăng xuất" className={`flex h-12 w-full shrink-0 items-center gap-3 rounded-2xl bg-red-500 text-white hover:bg-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-rose-300 ${desktopRowInsetClass}`}>
+        <span className="flex h-11 w-12 shrink-0 items-center justify-center"><LogOut className="h-5 w-5" /></span>
+        <span className={desktopLabelClass}>Đăng xuất</span>
+      </button>
     </aside>
     <nav aria-label="Menu di động" className="lg:hidden fixed bottom-3 left-3 right-3 min-h-16 bg-soft-sidebar/95 dark:bg-soft-sidebarDark/95 backdrop-blur-md rounded-full flex items-center justify-around px-2 py-2 z-40 shadow-soft-lg">
       {visibleItems.map(navLink)}
-      <button onClick={signOut} aria-label="Đăng xuất" className="flex flex-col items-center gap-1 px-2 py-2 text-slate-400 hover:text-white"><LogOut className="w-5 h-5" /><span className="text-[9px]">Đăng xuất</span></button>
+      <button onClick={signOut} aria-label="Đăng xuất" className="flex flex-col items-center gap-1 rounded-xl bg-red-500 px-2 py-2 text-white transition-colors hover:bg-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-rose-300"><LogOut className="w-5 h-5" /><span className="text-[9px]">Đăng xuất</span></button>
     </nav>
   </>;
 }

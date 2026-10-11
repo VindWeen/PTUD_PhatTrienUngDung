@@ -1,3 +1,5 @@
+import UnderlineTabs from '../components/common/UnderlineTabs';
+import PageHeader from '../components/common/PageHeader';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Award,
@@ -15,7 +17,6 @@ import {
   CheckCircle2,
   Clock,
   X,
-  RefreshCw,
   FileText,
   Download,
   UploadCloud,
@@ -470,63 +471,13 @@ export default function Achievements() {
 
   return (
     <div className="space-y-6">
-      {/* 1. Header & Quick Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-slate-800/80 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-teal-50 text-teal-600 dark:bg-teal-950/50 dark:text-teal-400">
-              <Award className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-                Hồ sơ Thành tích Khoa học & Đào tạo
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                Kê khai, theo dõi và quản lý thành tích cá nhân giảng viên và tập thể đơn vị
-              </p>
-            </div>
-          </div>
-        </div>
-        <button
-          onClick={openCreateModal}
-          disabled={!canCreate || catalogLoading || !types.length}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-[#008080] hover:bg-[#006666] text-white font-medium text-sm transition shadow-soft-sm disabled:opacity-50"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Kê khai Thành tích</span>
-        </button>
-      </div>
+      <PageHeader title="Thành tích" description="Kê khai, theo dõi và quản lý thành tích cá nhân và tập thể." icon={Award} onRefresh={loadData} refreshing={loading} primaryAction={canCreate ? {label: 'Kê khai Thành tích', onClick: openCreateModal, disabled: catalogLoading || !types.length} : null} tabs={<UnderlineTabs label="Danh sách thành tích" value={activeTab} onChange={setActiveTab} items={[
+        {id: 'ALL', label: 'Tất cả thành tích', icon: Award},
+        ...(canReview ? [{id: 'PENDING', label: 'Hàng chờ thẩm định', icon: Clock}] : []),
+      ]} />} />
 
       {catalogError && <ErrorState error={catalogError} onRetry={() => setCatalogRetry(value => value + 1)} />}
       {!catalogLoading && !catalogError && !types.length && <p className="text-sm text-amber-700">Chưa có loại thành tích đang hoạt động. Liên hệ quản trị viên bổ sung danh mục trước khi kê khai.</p>}
-
-      {/* Tab Navigation: Tất cả hồ sơ vs Hàng chờ thẩm định (W2-Q3) */}
-      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 pb-1">
-        <button
-          onClick={() => setActiveTab('ALL')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition ${
-            activeTab === 'ALL'
-              ? 'bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300 font-semibold shadow-soft-sm'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
-        >
-          <Award className="w-4 h-4" />
-          <span>Tất cả thành tích</span>
-        </button>
-        {canReview && (
-          <button
-            onClick={() => setActiveTab('PENDING')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition ${
-              activeTab === 'PENDING'
-                ? 'bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 font-semibold shadow-soft-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <Clock className="w-4 h-4 text-amber-600" />
-            <span>Hàng chờ thẩm định</span>
-          </button>
-        )}
-      </div>
 
       {/* 2. Bộ lọc & Tìm kiếm */}
       <div className="bg-white dark:bg-slate-800/80 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm flex flex-col md:flex-row gap-3">
@@ -577,13 +528,7 @@ export default function Achievements() {
             className="w-24 px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 focus:outline-none"
           />
 
-          <button
-            onClick={loadData}
-            title="Làm mới"
-            className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
+
         </div>
       </div>
 
@@ -1125,44 +1070,11 @@ export default function Achievements() {
             </div>
             {canAct(selectedAchievement, 'submit') && !evidencesLoading && !evidences.some(ev => ev.latestFileId) && <p className="mt-2 text-xs text-amber-700">Thêm ít nhất một tệp minh chứng trước khi nộp duyệt.</p>}
             {historyError && <div role="alert" className="mt-3 text-sm text-rose-700">{historyError} <button type="button" onClick={() => loadHistoryAndSubmissions(selectedAchievement.achievementId)} className="underline">Thử lại</button></div>}
-            <div className="mt-4 flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
-              <button
-                type="button"
-                onClick={() => setDetailTab('INFO')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition ${
-                  detailTab === 'INFO'
-                    ? 'bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300 font-semibold'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
-              >
-                <FileText className="w-3.5 h-3.5" />
-                <span>Thông tin & Minh chứng</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setDetailTab('HISTORIES')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition ${
-                  detailTab === 'HISTORIES'
-                    ? 'bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300 font-semibold'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
-              >
-                <History className="w-3.5 h-3.5" />
-                <span>Lịch sử thẩm định ({histories.length})</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setDetailTab('SUBMISSIONS')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition ${
-                  detailTab === 'SUBMISSIONS'
-                    ? 'bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300 font-semibold'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span>Lần nộp & Snapshot ({submissions.length})</span>
-              </button>
-            </div>
+            <div className="mt-4"><UnderlineTabs label="Chi tiết thành tích" value={detailTab} onChange={setDetailTab} items={[
+              {id: 'INFO', label: 'Thông tin & Minh chứng', icon: FileText},
+              {id: 'HISTORIES', label: `Lịch sử thẩm định (${histories.length})`, icon: History},
+              {id: 'SUBMISSIONS', label: `Lần nộp & Snapshot (${submissions.length})`, icon: Layers},
+            ]} /></div>
 
             {/* TAB CONTENT: 1. INFO & EVIDENCES */}
             {detailTab === 'INFO' && (

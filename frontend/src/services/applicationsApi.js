@@ -1,6 +1,6 @@
 import { request } from './request';
 export const applicationsApi = {
-  cycles: () => request({ url: '/award-cycles' }),
+  cycles: (fresh = false) => request({ url: '/award-cycles', fresh }),
   cycle: (data) => request({ method: 'POST', url: '/award-cycles', data }),
   create: (data) => request({ method: 'POST', url: '/award-applications', data }),
   list: (contextUnitId, fresh = false) =>

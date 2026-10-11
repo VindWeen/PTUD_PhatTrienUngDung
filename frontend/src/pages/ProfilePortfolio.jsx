@@ -1,10 +1,9 @@
+import UnderlineTabs from '../components/common/UnderlineTabs';
+import PageHeader from '../components/common/PageHeader';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FileText,
-  FileSpreadsheet,
-  Sun,
-  Moon,
   Medal,
   Award,
   Star,
@@ -21,13 +20,11 @@ import {
   KeyRound,
   X,
 } from 'lucide-react';
-import { useTheme } from '../hooks/useTheme';
 import { useAuth } from '../hooks/useDemoAuth';
 import { portfolioApi } from '../services/portfolioApi';
-import { EmptyState, ErrorState, PageSkeleton } from '../components/common/AsyncState';
+import { EmptyState, ErrorState, LoadingState } from '../components/common/AsyncState';
 
 export default function ProfilePortfolio() {
-  const { isDark, toggleTheme } = useTheme();
   const { changePassword } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('nckh');
@@ -81,14 +78,6 @@ export default function ProfilePortfolio() {
     { id: 'evidences', label: 'Minh chứng' },
   ];
 
-  const handleExportPDF = () => {
-    alert('Xuất PDF sẽ được bổ sung ở giai đoạn tiếp theo.');
-  };
-
-  const handleExportExcel = () => {
-    alert('Xuất Excel sẽ được bổ sung ở giai đoạn tiếp theo.');
-  };
-
   const handleChangePassword = async (e) => {
     e.preventDefault();
     setPasswordError(null);
@@ -123,26 +112,7 @@ export default function ProfilePortfolio() {
     }
   };
 
-  if (profileLoading) return <PageSkeleton title="Hồ sơ năng lực" label="Đang tải hồ sơ năng lực..." />;
-  if (profileError) return <ErrorState error={profileError} onRetry={loadProfile} />;
-  if (!profile) return <EmptyState message="Chưa có hồ sơ năng lực." />;
-
-  return (
-    <div className="space-y-7 animate-fadeIn">
-      {/* 1. Header Row */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Hồ sơ Năng lực & Thành tích
-          </h1>
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
-            Cập nhật lần cuối: {profile.updatedAt ? new Date(profile.updatedAt).toLocaleDateString('vi-VN') : 'Chưa xác định'}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {/* Đổi mật khẩu */}
-          <button
+  const pageHeader = (<PageHeader title="Hồ sơ năng lực" description={profile?.updatedAt ? `Cập nhật lần cuối: ${new Date(profile.updatedAt).toLocaleDateString('vi-VN')}` : 'Thông tin cá nhân, thành tích và minh chứng của bạn.'} icon={Medal} onRefresh={loadProfile} refreshing={profileLoading} secondaryActions={<button
             onClick={() => {
               setShowPasswordModal(true);
               setPasswordError(null);
@@ -151,40 +121,19 @@ export default function ProfilePortfolio() {
               setNewPassword('');
               setConfirmPassword('');
             }}
-            className="px-4 py-2.5 rounded-2xl bg-white dark:bg-soft-darkCard border border-brand-200 dark:border-brand-900/50 text-brand-600 dark:text-brand-400 font-semibold text-xs flex items-center gap-2 shadow-soft-sm hover:bg-brand-50 dark:hover:bg-brand-950/30 transition-all active:scale-95"
+            type="button" disabled={profileLoading}
+            className="soft-btn-secondary h-11 text-sm disabled:opacity-50"
           >
             <LockKeyhole className="w-4 h-4 text-brand-600 dark:text-brand-400" />
             <span>Đổi mật khẩu</span>
-          </button>
+          </button>} tabs={<UnderlineTabs label="Nội dung hồ sơ năng lực" items={tabs} value={activeTab} onChange={setActiveTab} />} />);
+  if (profileLoading) return <div className="space-y-6">{pageHeader}<LoadingState label="Đang tải hồ sơ năng lực..." layout="cards" /></div>;
+  if (profileError) return <div className="space-y-6">{pageHeader}<ErrorState error={profileError} onRetry={loadProfile} /></div>;
+  if (!profile) return <div className="space-y-6">{pageHeader}<EmptyState message="Chưa có hồ sơ năng lực." /></div>;
 
-          {/* Export PDF */}
-          <button
-            onClick={handleExportPDF}
-            className="px-4 py-2.5 rounded-2xl bg-white dark:bg-soft-darkCard border border-slate-200/80 dark:border-soft-darkBorder text-slate-700 dark:text-slate-200 font-semibold text-xs flex items-center gap-2 shadow-soft-sm hover:bg-slate-50 dark:hover:bg-soft-darkCardHover transition-all active:scale-95"
-          >
-            <FileText className="w-4 h-4 text-slate-500" />
-            <span>Xuất PDF</span>
-          </button>
-
-          {/* Export Excel */}
-          <button
-            onClick={handleExportExcel}
-            className="soft-btn-primary text-xs font-semibold"
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            <span>Xuất Excel</span>
-          </button>
-
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            title={isDark ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
-            className="p-2.5 rounded-2xl bg-white dark:bg-soft-darkCard border border-slate-200/80 dark:border-soft-darkBorder text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-soft-darkCardHover shadow-soft-sm transition-all"
-          >
-            {isDark ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-600" />}
-          </button>
-        </div>
-      </header>
+  return (
+    <div className="space-y-7 animate-fadeIn">
+      {pageHeader}
 
       <form onSubmit={handleProfileSave} className="soft-card p-5 sm:p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -287,24 +236,6 @@ export default function ProfilePortfolio() {
 
         {/* RIGHT COLUMN (8 cols): Tabs + Danh sách thành tích NCKH + Minh chứng số */}
         <div className="lg:col-span-8 space-y-6">
-          {/* Filter Tabs (Pill style as in design) */}
-          <div className="flex flex-wrap items-center gap-3">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                aria-pressed={activeTab === tab.id}
-                className={`px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-medium transition-all ${
-                  activeTab === tab.id
-                    ? 'bg-[#008080] text-white shadow-sm font-semibold'
-                    : 'bg-white dark:bg-soft-darkCard text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-soft-darkCardHover border border-slate-100 dark:border-soft-darkBorder shadow-soft-sm'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
           {/* Main Card: Danh sách thành tích NCKH */}
           <div className="soft-card p-6 sm:p-8">
             <div className="flex items-center justify-between mb-6">
@@ -607,5 +538,3 @@ export default function ProfilePortfolio() {
     </div>
   );
 }
-
-

@@ -1,3 +1,5 @@
+import UnderlineTabs from '../components/common/UnderlineTabs';
+import PageHeader from '../components/common/PageHeader';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   BookOpen,
@@ -14,13 +16,12 @@ import {
   Filter,
   Layers,
   FileCheck,
-  RefreshCw,
   Hash,
   ChevronRight,
 } from 'lucide-react';
 import { regulationsApi } from '../services/regulationsApi';
 import { useAuth } from '../context/AuthContext';
-import { PageSkeleton, LoadingState, ErrorState, EmptyState } from '../components/common/AsyncState';
+import { LoadingState, ErrorState, EmptyState } from '../components/common/AsyncState';
 
 const TYPE_LABELS = {
   LAW: { label: 'Luật Nhà nước', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300' },
@@ -242,61 +243,17 @@ export default function Regulations() {
     return true;
   });
 
-  if (loading && documents.length === 0) {
-    return (
-      <div className="p-6">
-        <PageSkeleton title="Kho quy định" label="Đang tải kho văn bản và tiêu chí quy định..." />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-6">
-        <ErrorState message={error} onRetry={fetchData} />
-      </div>
-    );
-  }
+  const pageHeader = (<PageHeader title="Kho quy định" description="Quản lý văn bản, phiên bản, trích đoạn và tiêu chí xét khen thưởng." icon={BookOpen} onRefresh={fetchData} refreshing={loading} primaryAction={isManagerOrAdmin ? {label: 'Thêm Văn bản mới', onClick: () => setShowDocModal(true)} : null} tabs={<UnderlineTabs label="Nội dung kho quy định" value={activeTab} onChange={setActiveTab} items={[
+        {id: 'documents', label: `Văn bản & Phiên bản (${documents.length})`, icon: FileText},
+        {id: 'chunks', label: 'Trích đoạn Tra cứu (Chunks)', icon: Layers},
+        {id: 'criteria', label: `Tiêu chí Khen thưởng (${criteria.length})`, icon: FileCheck},
+      ]} />} />);
+  if (loading && documents.length === 0) return <div className="space-y-6">{pageHeader}<LoadingState label="Đang tải kho văn bản và tiêu chí quy định..." /></div>;
+  if (error) return <div className="space-y-6">{pageHeader}<ErrorState message={error} onRetry={fetchData} /></div>;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-5 border-slate-200 dark:border-slate-800">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-blue-600/10 text-blue-600 rounded-xl dark:bg-blue-500/20">
-              <BookOpen className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                Kho Văn bản Quy định & Tiêu chí Khen thưởng
-              </h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                Quản lý các nguồn pháp lý gốc (Luật 06, Thông tư 07, Quy chế LHU), truy xuất đoạn trích dẫn (Chunks) và kiểm soát bộ tiêu chí xét thưởng
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {isManagerOrAdmin && (
-            <button
-              onClick={() => setShowDocModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition shadow-sm"
-            >
-              <Plus className="w-4 h-4" />
-              Thêm Văn bản mới
-            </button>
-          )}
-          <button
-            onClick={fetchData}
-            className="p-2 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300 transition"
-            title="Tải lại dữ liệu"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+    <div className="space-y-6">
+      {pageHeader}
 
       {/* Notice Banner */}
       <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
@@ -307,45 +264,6 @@ export default function Regulations() {
             Chỉ những phiên bản văn bản và tiêu chí được Hội đồng LHU thẩm định phê duyệt chính thức (<code>is_confirmed = true</code>) mới được cấp phép cho bộ phân tích AI và quy trình xét khen thưởng. Mọi dữ liệu mô phỏng đều được cô lập và gắn nhãn cảnh báo rõ ràng.
           </p>
         </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex border-b border-slate-200 dark:border-slate-800 gap-6">
-        <button
-          onClick={() => setActiveTab('documents')}
-          className={`pb-3 text-sm font-medium transition relative flex items-center gap-2 ${
-            activeTab === 'documents'
-              ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 font-semibold'
-              : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
-          }`}
-        >
-          <FileText className="w-4 h-4" />
-          Văn bản & Phiên bản ({documents.length})
-        </button>
-
-        <button
-          onClick={() => setActiveTab('chunks')}
-          className={`pb-3 text-sm font-medium transition relative flex items-center gap-2 ${
-            activeTab === 'chunks'
-              ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 font-semibold'
-              : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
-          }`}
-        >
-          <Layers className="w-4 h-4" />
-          Trích đoạn Tra cứu (Chunks)
-        </button>
-
-        <button
-          onClick={() => setActiveTab('criteria')}
-          className={`pb-3 text-sm font-medium transition relative flex items-center gap-2 ${
-            activeTab === 'criteria'
-              ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 font-semibold'
-              : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
-          }`}
-        >
-          <FileCheck className="w-4 h-4" />
-          Tiêu chí Khen thưởng ({criteria.length})
-        </button>
       </div>
 
       {/* TAB 1: Documents & Versions */}

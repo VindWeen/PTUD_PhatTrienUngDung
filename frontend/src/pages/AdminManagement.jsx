@@ -1,3 +1,6 @@
+import UnderlineTabs from '../components/common/UnderlineTabs';
+import PageHeader from '../components/common/PageHeader';
+import { ShieldCheck } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import apiClient from '../services/apiClient';
 import { USE_FIXTURES } from '../services/apiConfig';
@@ -61,10 +64,8 @@ export default function AdminManagement() {
       setNotice('Đã ngừng hoạt động / thu hồi; giữ lịch sử'); await load();
     } catch(e) { setError(e.message); } finally { setBusy(false); }
   }
-  return <main className="p-6 space-y-5 text-slate-800 dark:text-slate-100">
-    <h1 className="text-2xl font-bold">Quản trị tài khoản, phân công và danh mục</h1>
-    <p>Admin quản trị hệ thống. Quyền xác nhận cần vai trò Manager và phạm vi đang hiệu lực riêng.</p>
-    <div className="flex flex-wrap gap-2">{Object.entries(resources).map(([key,v]) => <button disabled={busy || loading} className={`px-3 py-2 rounded ${resource === key ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-900'}`} key={key} onClick={() => setResource(key)}>{v.label}</button>)}</div>
+  return <main className="space-y-5 text-slate-800 dark:text-slate-100">
+    <PageHeader title="Quản trị hệ thống" description="Quản lý tài khoản, phân công vai trò, phạm vi và danh mục." icon={ShieldCheck} onRefresh={load} refreshing={busy || loading} tabs={<UnderlineTabs label="Danh mục quản trị" value={resource} onChange={setResource} disabled={busy || loading} items={Object.entries(resources).map(([id, item]) => ({id, label: item.label}))} />} />
     {error && <p role="alert" className="text-red-600">{error}</p>}{notice && <p role="status">{notice}</p>}
     <form onSubmit={save} className="grid md:grid-cols-3 gap-4 p-4 rounded bg-white dark:bg-slate-800">
       {Object.entries(fields).map(([key,type]) => <label key={key} className="flex flex-col gap-1">{key === 'validTo' && resource === 'representatives' ? 'Hiệu lực đến (bắt buộc)' : labels[key]}

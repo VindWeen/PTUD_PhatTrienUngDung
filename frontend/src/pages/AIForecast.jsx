@@ -1,3 +1,5 @@
+import UnderlineTabs from '../components/common/UnderlineTabs';
+import PageHeader from '../components/common/PageHeader';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Cpu,
@@ -88,7 +90,7 @@ export default function AIForecast() {
     setCriteriaError(null);
     async function loadCriteria() {
       try {
-        const res = await aiEvaluationApi.listCriteria();
+        const res = await aiEvaluationApi.listCriteria({}, criteriaRevision > 0);
         const items = res?.items || res?.data || (Array.isArray(res) ? res : []);
         if (isMounted) {
           setAvailableCriteria(items);
@@ -228,53 +230,12 @@ export default function AIForecast() {
   const fixtureItem = fixtures.fixtures.find((f) => f.caseId === selectedFixtureCase);
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      {/* Header */}
-      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2.5 text-slate-900 dark:text-white">
-            <Cpu className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
-            Phân tích & Thẩm định Tiêu chí AI (W4-Q3)
-          </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Hệ thống thẩm định tiêu chí có cấu trúc, kiểm tra tính toàn vẹn hồ sơ, truy xuất trích dẫn RAG và quản lý lịch sử phiên đánh giá.
-          </p>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="inline-flex flex-wrap max-w-full p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 self-start">
-          <button
-            type="button"
-            onClick={() => setActiveTab('live')}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              activeTab === 'live' ? 'soft-tab-active' : 'soft-tab-inactive'
-            }`}
-          >
-            <Cpu className="w-3.5 h-3.5" />
-            Thẩm định Trực tiếp
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('history')}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              activeTab === 'history' ? 'soft-tab-active' : 'soft-tab-inactive'
-            }`}
-          >
-            <History className="w-3.5 h-3.5" />
-            Lịch sử Phiên AI
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('fixtures')}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              activeTab === 'fixtures' ? 'soft-tab-active' : 'soft-tab-inactive'
-            }`}
-          >
-            <FileCheck2 className="w-3.5 h-3.5" />
-            12 Hồ sơ Thử nghiệm (W3-Q4)
-          </button>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <PageHeader title="Phân tích & Thẩm định AI" description="Thẩm định tiêu chí, kiểm tra hồ sơ và truy xuất trích dẫn từ quy định." icon={Cpu} onRefresh={activeTab === 'fixtures' ? undefined : () => activeTab === 'history' ? loadHistory() : setCriteriaRevision(v => v + 1)} refreshing={activeTab === 'history' ? loadingHistory : loadingCriteria} tabs={<UnderlineTabs label="Nội dung phân tích AI" value={activeTab} onChange={setActiveTab} items={[
+        {id: 'live', label: 'Thẩm định Trực tiếp', icon: Cpu},
+        {id: 'history', label: 'Lịch sử Phiên AI', icon: History},
+        {id: 'fixtures', label: '12 Hồ sơ Thử nghiệm (W3-Q4)', icon: FileCheck2},
+      ]} />} />
 
       {/* Mandatory Disclaimer Banner */}
       <div
@@ -745,15 +706,7 @@ export default function AIForecast() {
                   <option value="LECTURER">Giảng viên (Cá nhân)</option>
                   <option value="UNIT">Đơn vị (Tập thể)</option>
                 </select>
-                <button
-                  type="button"
-                  onClick={loadHistory}
-                  disabled={loadingHistory}
-                  className="soft-btn-secondary text-xs px-3 py-1.5"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${loadingHistory ? 'animate-spin' : ''}`} />
-                  Tải lại
-                </button>
+
               </div>
             </div>
 

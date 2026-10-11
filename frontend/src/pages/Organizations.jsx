@@ -1,5 +1,6 @@
+import PageHeader from '../components/common/PageHeader';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Building2, RefreshCw, Trash2 } from 'lucide-react';
+import { Building2, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { EmptyState, ErrorState, LoadingState } from '../components/common/AsyncState';
 import { organizationsApi } from '../services/organizationsApi';
@@ -77,10 +78,7 @@ export default function Organizations() {
   };
 
   return <div className="space-y-6">
-    <header className="flex items-center justify-between">
-      <div><h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">Tổ chức & Tập thể</h1><p className="text-sm text-slate-500 mt-1">Hồ sơ đơn vị, đại diện và cơ cấu trực thuộc</p></div>
-      <div className="flex gap-2">{canManage && <button onClick={createUnit} className="px-4 py-2 rounded-xl bg-emerald-600 text-white">Tạo đơn vị</button>}<button onClick={load} className="soft-btn-primary flex items-center gap-2"><RefreshCw className="w-4 h-4" /> Làm mới</button></div>
-    </header>
+    <PageHeader title="Tổ chức" description="Hồ sơ đơn vị, đại diện và cơ cấu trực thuộc." icon={Building2} onRefresh={load} refreshing={loading || busy} primaryAction={canManage ? {label: 'Tạo đơn vị', onClick: createUnit, disabled: busy} : null} />
     {error && <ErrorState error={error} onRetry={() => setError(null)} />}
     <div className="grid lg:grid-cols-3 gap-6">
       <section className="soft-card p-5 space-y-2">

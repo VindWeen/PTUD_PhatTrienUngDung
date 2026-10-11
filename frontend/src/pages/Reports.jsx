@@ -1,7 +1,7 @@
+import PageHeader from '../components/common/PageHeader';
 import React, { useEffect, useState } from 'react';
 import {
   BarChart3,
-  Download,
   FileSpreadsheet,
   Filter,
   Search,
@@ -129,41 +129,7 @@ export default function Reports({ dashboard = false }) {
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12">
-      {/* 1. Header Card */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-slate-800/80 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-teal-50 text-[#008080] dark:bg-teal-950/50 dark:text-teal-400">
-            <BarChart3 className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-              {dashboard
-                ? `Tổng quan báo cáo · ${user?.displayName || 'Hồ sơ'}`
-                : 'Báo cáo & Thống kê Khoa học'}
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-              Dữ liệu phân quyền trực tiếp từ PostgreSQL Supabase · Đối soát thành tích VERIFIED và khen thưởng RECORDED
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-        <button type="button" disabled={loading} onClick={() => setReload((value) => value + 1)} className="soft-btn-secondary text-sm">
-          <RotateCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Làm mới
-        </button>
-        {canExport && (
-          <button
-            type="button"
-            disabled={exporting || loading}
-            onClick={download}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-[#008080] hover:bg-[#006666] text-white font-medium text-sm transition shadow-soft-sm active:scale-95 disabled:opacity-50 self-start sm:self-auto"
-          >
-            <Download className={`w-4 h-4 ${exporting ? 'animate-bounce' : ''}`} />
-            <span>{exporting ? 'Đang xuất CSV...' : 'Xuất Báo Cáo CSV'}</span>
-          </button>
-        )}
-        </div>
-      </div>
+      <PageHeader title={dashboard ? `Tổng quan báo cáo · ${user?.displayName || 'Hồ sơ'}` : 'Báo cáo / CSV'} description="Thống kê thành tích đã xác nhận và khen thưởng đã ghi nhận theo phạm vi của bạn." icon={BarChart3} onRefresh={() => setReload(value => value + 1)} refreshing={loading} exportAction={canExport ? {label: exporting ? 'Đang xuất CSV...' : 'Xuất Báo Cáo CSV', onClick: download, disabled: exporting || loading} : null} />
 
       {USE_FIXTURES ? (
         <div className="bg-amber-50 dark:bg-amber-950/40 p-4 rounded-2xl border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200">

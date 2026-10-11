@@ -34,8 +34,8 @@ export const aiEvaluationApi = {
   /**
    * Danh sách tiêu chí quy chế
    */
-  listCriteria: (params = {}) =>
-    request({ method: 'GET', url: '/regulations/criteria', params }),
+  listCriteria: (params = {}, fresh = false) =>
+    request({ method: 'GET', url: '/regulations/criteria', params, fresh }),
 };
 
 export default aiEvaluationApi;

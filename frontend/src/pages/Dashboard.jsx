@@ -1,3 +1,4 @@
+import { ThemeToggle } from '../components/common/PageHeader';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -82,10 +83,13 @@ export default function Dashboard() {
         </h1>
         <p className="mt-1 text-xs font-medium capitalize text-slate-400">{todayLabel}</p>
       </div>
+      <div className="flex w-full items-center gap-2 sm:w-auto">
       <label className="flex h-11 w-full items-center gap-2 rounded-2xl bg-white px-4 shadow-[0_8px_24px_rgba(55,78,107,0.05)] dark:bg-slate-900 sm:w-[290px]">
         <Search className="h-4 w-4 text-slate-300" />
         <input aria-label="Tìm kiếm thành tích" placeholder="Tìm kiếm thành tích..." className="w-full bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-300 dark:text-white" />
       </label>
+      <ThemeToggle />
+      </div>
     </header>
 
     <section className="grid gap-6 lg:grid-cols-12">

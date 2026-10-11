@@ -1,3 +1,5 @@
+import UnderlineTabs from '../components/common/UnderlineTabs';
+import PageHeader from '../components/common/PageHeader';
 import React, { useState } from 'react';
 import { LoadingState } from '../components/common/AsyncState';
 import {
@@ -10,7 +12,6 @@ import {
   XCircle,
   Award,
   ShieldAlert,
-  RotateCcw,
   ChevronLeft,
   ChevronRight,
   Filter,
@@ -85,7 +86,7 @@ export default function Notifications() {
   const [unread, setUnread] = useState(false);
   const [reading, setReading] = useState(null);
   const [writeError, setWriteError] = useState('');
-  const { result, error, busy, reload } = useNotifications(page, 20, unread);
+  const { result, error, busy, reload, unreadCount } = useNotifications(page, 20, unread);
 
   async function read(id) {
     setReading(id);
@@ -100,87 +101,15 @@ export default function Notifications() {
     }
   }
 
-  const unreadCount = result?.unreadCount ?? 0;
   const totalItems = result?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / 20));
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12">
-      {/* 1. Header Card */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-slate-800/80 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-teal-50 text-[#008080] dark:bg-teal-950/50 dark:text-teal-400">
-            <BellRing className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-              Trung tâm Thông báo
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-              Cập nhật tiến trình xét duyệt thành tích, khen thưởng và điều chỉnh hồ sơ
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          {unreadCount > 0 ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50">
-              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-              <span>{unreadCount} chưa đọc</span>
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
-              <CheckCheck className="w-3.5 h-3.5" />
-              <span>Đã đọc tất cả</span>
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* 2. Filter Navigation Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-700 pb-2">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setUnread(false);
-              setPage(1);
-            }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition ${
-              !unread
-                ? 'bg-teal-50 text-[#008080] dark:bg-teal-950/40 dark:text-teal-300 font-semibold shadow-soft-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <span>Tất cả thông báo</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setUnread(true);
-              setPage(1);
-            }}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition ${
-              unread
-                ? 'bg-teal-50 text-[#008080] dark:bg-teal-950/40 dark:text-teal-300 font-semibold shadow-soft-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <Filter className="w-3.5 h-3.5" />
-            <span>Chỉ chưa đọc {unreadCount > 0 && `(${unreadCount})`}</span>
-          </button>
-        </div>
-
-        <button
-          type="button"
-          onClick={reload}
-          disabled={busy}
-          className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition border border-slate-200 dark:border-slate-700 self-start sm:self-auto"
-        >
-          <RotateCcw className={`w-3.5 h-3.5 ${busy ? 'animate-spin text-[#008080]' : ''}`} />
-          <span>{busy ? 'Đang cập nhật...' : 'Làm mới'}</span>
-        </button>
-      </div>
+      <PageHeader title="Thông báo" description="Theo dõi tiến trình xét duyệt thành tích, khen thưởng và điều chỉnh hồ sơ." icon={BellRing} onRefresh={reload} refreshing={busy} badge={<span className="rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">{unreadCount > 0 ? `${unreadCount} chưa đọc` : 'Đã đọc tất cả'}</span>} tabs={<UnderlineTabs label="Lọc thông báo" value={unread ? 'unread' : 'all'} onChange={id => {setUnread(id === 'unread'); setPage(1);}} items={[
+        {id: 'all', label: 'Tất cả thông báo'},
+        {id: 'unread', label: `Chỉ chưa đọc${unreadCount > 0 ? ` (${unreadCount})` : ''}`, icon: Filter},
+      ]} />} />
 
       {/* Alerts */}
       {(error || writeError) && (

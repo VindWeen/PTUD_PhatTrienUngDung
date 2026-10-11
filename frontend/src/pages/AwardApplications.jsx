@@ -1,7 +1,8 @@
+import PageHeader from '../components/common/PageHeader';
 import React, { useEffect, useState } from 'react';
 import { applicationsApi as api } from '../services/applicationsApi';
 import { useAuth } from '../context/AuthContext';
-import { ClipboardList, RefreshCw, FileText, Plus } from 'lucide-react';
+import { ClipboardList, FileText, Plus } from 'lucide-react';
 import { LoadingState } from '../components/common/AsyncState';
 
 const fieldClass = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 dark:border-slate-700 dark:bg-slate-900/60 dark:text-white';
@@ -12,6 +13,7 @@ export default function AwardApplications() {
   const { user } = useAuth();
   const roles = (user?.roles || []).map((r) => (typeof r === 'string' ? r : r.code));
   const applicant = roles.some((r) => ['LECTURER', 'UNIT_REPRESENTATIVE'].includes(r));
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [form, setForm] = useState({ subjectType: 'LECTURER' });
   const [cycle, setCycle] = useState({});
   const [cycles, setCycles] = useState([]);
@@ -94,13 +96,16 @@ export default function AwardApplications() {
       setMessage('Đã tạo hồ sơ nháp. Hãy kiểm tra thông tin trước khi nộp xét duyệt.');
     });
   };
+  const reloadList = () => run(async () => {
+    setListLoading(true);
+    try {
+      const [out, periods] = await Promise.all([api.list(unit, true), api.cycles(true)]);
+      setItems(out.items || []); setListLoaded(true); setCycles(periods);
+    } finally { setListLoading(false); }
+  });
   return (
     <section className="award-applications space-y-6 animate-fadeIn pb-12 text-slate-800 dark:text-slate-100">
-      <header className="soft-card p-6 flex items-start gap-3">
-        <span className="rounded-2xl bg-teal-50 p-3 text-teal-600 dark:bg-teal-950/50 dark:text-teal-400"><ClipboardList className="h-6 w-6" /></span>
-        <div><h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Hồ sơ đề nghị khen thưởng</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Chuẩn bị hồ sơ, gửi đơn vị và theo dõi tiến trình xét duyệt của Hội đồng.</p></div>
-      </header>
+      <PageHeader title="Hồ sơ đề nghị" description="Chuẩn bị hồ sơ, gửi đơn vị và theo dõi tiến trình xét duyệt." icon={ClipboardList} onRefresh={reloadList} refreshing={busy || listLoading} primaryAction={applicant ? {label: showCreateForm ? 'Đóng biểu mẫu' : 'Tạo hồ sơ đề nghị', onClick: () => setShowCreateForm(v => !v), disabled: busy} : null} />
       {message && (
         <p role="status" className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
           {message}
@@ -134,7 +139,7 @@ export default function AwardApplications() {
           <button className={buttonClass} disabled={busy}>Mở kỳ</button>
         </form>
       )}
-      {applicant && (
+      {applicant && showCreateForm && (
         <form onSubmit={create} className="soft-card p-6 grid md:grid-cols-2 gap-4">
           <h2 className="md:col-span-2 flex items-center gap-2 text-lg font-bold"><FileText className="h-5 w-5 text-teal-600" /> Chuẩn bị hồ sơ mới</h2>
           <label className="space-y-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
@@ -184,17 +189,7 @@ export default function AwardApplications() {
           onChange={(e) => setUnit(e.target.value)}
           placeholder="Mã đơn vị: hàng chờ đơn vị / Hội đồng"
         />
-        <button
-          className={`${buttonClass} shrink-0`}
-          disabled={busy || listLoading}
-          onClick={() => run(async () => {
-            setListLoading(true);
-            try { setItems((await api.list(unit, true)).items || []); setListLoaded(true); }
-            finally { setListLoading(false); }
-          })}
-        >
-          <RefreshCw className="h-4 w-4" /> Làm mới
-        </button>
+
       </div>
       {listLoading && <LoadingState label="Đang tải hồ sơ đề nghị..." rows={3} />}
       {!listLoading && listLoaded && !items.length && <p className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-sm text-slate-500 dark:border-slate-700">Chưa có hồ sơ đề nghị trong danh sách này.</p>}
