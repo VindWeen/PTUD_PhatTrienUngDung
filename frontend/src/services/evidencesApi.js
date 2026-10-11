@@ -3,6 +3,12 @@ import { fixtureClient } from './fixtureClient.js';
 import apiClient from './apiClient.js';
 import { request } from './request.js';
 
+function validateEvidenceFile(file) {
+  if (!file) throw new Error('Vui lòng chọn tệp minh chứng.');
+  if (!/\.(pdf|jpe?g|png|docx)$/i.test(file.name)) throw new Error('Chỉ hỗ trợ PDF, JPG, PNG và DOCX.');
+  if (!file.size || file.size > 10 * 1024 * 1024) throw new Error('Tệp phải có nội dung và dung lượng không quá 10 MB.');
+}
+
 export const evidencesApi = {
   /**
    * Lấy danh sách minh chứng của một hồ sơ thành tích
@@ -21,6 +27,7 @@ export const evidencesApi = {
    * Thêm minh chứng mới kèm tệp tin ban đầu (v1)
    */
   async createEvidence(achievementId, { title, description, file }) {
+    validateEvidenceFile(file);
     if (USE_FIXTURES) {
       return fixtureClient.createEvidence(achievementId, { title, description, file });
     }
@@ -30,7 +37,7 @@ export const evidencesApi = {
     formData.append('file', file);
 
     const res = await apiClient.post(`/achievements/${achievementId}/evidences`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: { 'Content-Type': undefined },
     });
     return res.data?.data || res.data;
   },
@@ -39,6 +46,7 @@ export const evidencesApi = {
    * Tải lên phiên bản mới cho minh chứng (Thay file -> tăng version_no)
    */
   async uploadFileVersion(evidenceId, file) {
+    validateEvidenceFile(file);
     if (USE_FIXTURES) {
       return fixtureClient.uploadFileVersion(evidenceId, file);
     }
@@ -46,7 +54,7 @@ export const evidencesApi = {
     formData.append('file', file);
 
     const res = await apiClient.post(`/evidences/${evidenceId}/versions`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: { 'Content-Type': undefined },
     });
     return res.data?.data || res.data;
   },
@@ -68,11 +76,11 @@ export const evidencesApi = {
    * Tải về tệp tin minh chứng
    */
   async downloadEvidenceFile(evidenceFileId, originalFileName) {
-    const res = await apiClient.get(`/evidence-files/${evidenceFileId}/download`, {
+    const blob = await apiClient.get(`/evidence-files/${evidenceFileId}/download`, {
       responseType: 'blob',
     });
 
-    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.setAttribute('download', originalFileName || `evidence_file_${evidenceFileId}`);

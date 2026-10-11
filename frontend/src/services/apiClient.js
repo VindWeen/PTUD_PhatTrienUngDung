@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { API_BASE_URL } from './apiConfig.js';
 import { normalizeApiError } from './apiError.js';
+import { clearReadCache } from './readCache.js';
 
 let inMemoryAccessToken = null;
 let onAuthFailedCallback = null;
@@ -19,12 +20,14 @@ const processQueue = (error, token = null) => {
 };
 
 export const setAccessToken = (token) => {
+  if (token !== inMemoryAccessToken) clearReadCache();
   inMemoryAccessToken = token;
 };
 
 export const getAccessToken = () => inMemoryAccessToken;
 
 export const clearAccessToken = () => {
+  clearReadCache();
   inMemoryAccessToken = null;
 };
 
@@ -43,6 +46,7 @@ export const apiClient = axios.create({
 // Request Interceptor: Gắn Access Token từ bộ nhớ vào Header Bearer
 apiClient.interceptors.request.use(
   (config) => {
+    if (!['get', 'head', 'options'].includes((config.method || 'get').toLowerCase())) clearReadCache();
     if (inMemoryAccessToken && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${inMemoryAccessToken}`;
     }
@@ -53,9 +57,16 @@ apiClient.interceptors.request.use(
 
 // Response Interceptor: Tự động gọi Refresh Token khi gặp lỗi 401
 apiClient.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    if (!['get', 'head', 'options'].includes((response.config.method || 'get').toLowerCase())) clearReadCache();
+    return response.data;
+  },
   async (error) => {
     const originalRequest = error.config;
+
+    if (error.response?.data instanceof Blob && error.response.data.type.includes('json')) {
+      try { error.response.data = JSON.parse(await error.response.data.text()); } catch { /* Keep HTTP status if the error body is malformed. */ }
+    }
 
     const apiError = normalizeApiError(error);
 

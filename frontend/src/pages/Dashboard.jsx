@@ -58,26 +58,21 @@ export default function Dashboard() {
   const [hoveredEventDay, setHoveredEventDay] = useState(null);
   const [selectedEventDay, setSelectedEventDay] = useState(null);
 
-  const loadSummary = useCallback(async () => {
+  const loadSummary = useCallback(async (fresh = true) => {
     setLoading(true); setError(null);
-    try { setSummary(await portfolioApi.getDashboardSummary()); }
+    try { setSummary(await portfolioApi.getDashboardSummary(fresh)); }
     catch (loadError) { setSummary(null); setError(loadError); }
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { loadSummary(); }, [loadSummary]);
+  useEffect(() => { loadSummary(false); }, [loadSummary]);
 
   const todayLabel = useMemo(() => new Intl.DateTimeFormat('vi-VN', {
     day: '2-digit', month: 'long', year: 'numeric', weekday: 'long',
   }).format(new Date()), []);
 
-  if (loading) return <LoadingState label="Đang tải tổng quan..." />;
-  if (error) return <ErrorState error={error} onRetry={loadSummary} />;
-  if (!summary) return <EmptyState message="Chưa có dữ liệu tổng quan." />;
-
-  const researchCount = summary.categories?.RESEARCH || 0;
-  const awardCount = summary.awards?.RecordedCount || 0;
-  const pendingCount = summary.achievements?.PendingCount || 0;
+  const researchCount = summary?.categories?.RESEARCH || 0;
+  const awardCount = summary?.awards?.RecordedCount || 0;
 
   return <div className="animate-fadeIn space-y-6 pb-3">
     <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -113,9 +108,11 @@ export default function Dashboard() {
         <h2 className="text-base font-extrabold text-slate-700 dark:text-cyan-50">Khám sức khỏe thành tích (AI)</h2>
         <p className="mt-1 text-[10px] text-slate-500 dark:text-cyan-100/60">Các tham số cần được cải thiện!</p>
         <div className="mt-6 space-y-4">
+          {loading ? <LoadingState label="Đang tải tổng quan..." rows={1} /> : error ? <ErrorState error={error} onRetry={loadSummary} /> : !summary ? <EmptyState message="Chưa có dữ liệu tổng quan." /> : <>
           <ProgressMetric label="Nghiên cứu khoa học" value={`${Math.min(100, researchCount * 7)}%`} percent={researchCount * 7} color="bg-[#78a5d1]" />
           <ProgressMetric label="Giảng dạy" value="65%" percent={65} color="bg-[#96aa70]" />
           <ProgressMetric label="Dự báo CSTĐ Cơ sở" value={`${Math.min(100, awardCount * 28)}%`} percent={awardCount * 28} color="bg-[#e28b8c]" />
+          </>}
         </div>
       </div>
     </section>

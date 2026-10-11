@@ -4,6 +4,7 @@ import { recordAuditLog } from '../audit/auditService.js';
 import { notifyStatusChanged } from '../notifications/notificationService.js';
 import storage from '../evidences/storage/localStorageAdapter.js';
 import { withTransaction } from '../../utils/dbHelper.js';
+import { createPermissionResolver } from './achievementPermissions.js';
 import {
   NotFoundError,
   ForbiddenError,
@@ -36,10 +37,7 @@ export function createAchievementService(
         if (Array.isArray(active)) {
           return active.map((r) => (typeof r === 'string' ? r : r.Code || r.code));
         }
-      } catch (err) {}
-    }
-    if (Array.isArray(user?.roles)) {
-      return user.roles.map((r) => (typeof r === 'string' ? r : r.code || r.Code));
+      } catch (err) { throw err; }
     }
     return [];
   }
@@ -79,7 +77,10 @@ export function createAchievementService(
       // C. Nếu là Manager hoặc Records Officer: Thấy tất cả hồ sơ có ContextUnitId trong Scope
       if (isManager || isRecordsOfficer) {
         const scopes = await getActiveScopes(user.userId);
-        const scopedUnitIds = scopes.map((s) => s.unitId);
+        const applicableScopes = scopes.filter(s => ['MANAGER', 'RECORDS_OFFICER'].includes(s.roleCode) && roles.includes(s.roleCode));
+        const roots = applicableScopes.filter(s => s.includeDescendants).map(s => Number(s.unitId));
+        const descendants = roots.length ? await repo.listDescendantUnitIds(roots) : [];
+        const scopedUnitIds = [...new Set([...applicableScopes.map(s => Number(s.unitId)), ...descendants])];
         if (scopedUnitIds.length > 0) {
           // Bao gồm cả đơn vị con nếu includeDescendants
           orConditions.push(`a.context_unit_id = ANY(ARRAY[${scopedUnitIds.join(',')}]::bigint[])`);
@@ -108,8 +109,9 @@ export function createAchievementService(
       sortOrder: queryParams.sortOrder || 'desc',
     });
 
+    const decorate = createPermissionResolver(user, roles, { representative: repo.findActiveRepresentative, scope });
     return {
-      items,
+      items: await Promise.all(items.map(decorate)),
       pagination: {
         total,
         page,
@@ -125,29 +127,31 @@ export function createAchievementService(
       throw new NotFoundError(`Không tìm thấy hồ sơ thành tích với ID #${id}`);
     }
 
-    const roles = (await getActiveRoles(user.userId)).map((r) => r.Code);
+    const roles = await getUserRoles(user);
     const isAdmin = roles.includes('ADMIN');
 
+    const decorate = createPermissionResolver(user, roles, { representative: repo.findActiveRepresentative, scope });
+
     if (isAdmin) {
-      return achievement;
+      return decorate(achievement);
     }
 
     // 1. Kiểm tra chính chủ cá nhân
     if (achievement.subjectType === 'LECTURER' && achievement.lecturer?.userId === user.userId) {
-      return achievement;
+      return decorate(achievement);
     }
 
     // 2. Kiểm tra đại diện đơn vị tập thể
     if (achievement.subjectType === 'UNIT' && achievement.organizationUnitId) {
       const isRep = await repo.findActiveRepresentative(user.userId, achievement.organizationUnitId);
-      if (isRep) return achievement;
+      if (isRep) return decorate(achievement);
     }
 
     // 3. Kiểm tra phạm vi quản lý (MANAGER / RECORDS_OFFICER) theo ContextUnitId
     for (const roleCode of ['MANAGER', 'RECORDS_OFFICER']) {
       if (roles.includes(roleCode)) {
-        const inScope = await isUnitInUserScope(user.userId, achievement.contextUnitId, roleCode);
-        if (inScope) return achievement;
+        const inScope = await scope(user.userId, achievement.contextUnitId, roleCode);
+        if (inScope) return decorate(achievement);
       }
     }
 
@@ -438,6 +442,7 @@ export function createAchievementService(
       const note = payload.note || payload.submitNote || null;
       const snapshotData = {
         achievementId: id,
+        version: currentVersion,
         revisionNo,
         subjectType: locked.subjectType,
         lecturerId: locked.lecturer_id ? Number(locked.lecturer_id) : null,

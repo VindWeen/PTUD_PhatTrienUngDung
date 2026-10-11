@@ -50,8 +50,8 @@ export default function Achievements() {
   const { user } = useAuth();
   const userRoles = (user?.roles || []).map((r) => (typeof r === 'string' ? r : r.code));
   const isManager = userRoles.includes('MANAGER');
-  const isAdmin = userRoles.includes('ADMIN');
-  const canReview = isManager || isAdmin;
+  const canReview = isManager;
+  const canCreate = userRoles.some(role => ['LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'].includes(role));
 
   const [items, setItems] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, pageSize: 10, total: 0, totalPages: 1 });
@@ -70,6 +70,9 @@ export default function Achievements() {
   // Danh mục loại thành tích & đơn vị
   const [types, setTypes] = useState([]);
   const [units, setUnits] = useState([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState(null);
+  const [catalogRetry, setCatalogRetry] = useState(0);
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -92,6 +95,7 @@ export default function Achievements() {
   const [histories, setHistories] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState(null);
 
   // Workflow Action Modal (W2-Q3)
   const [actionModalOpen, setActionModalOpen] = useState(false);
@@ -99,6 +103,7 @@ export default function Achievements() {
   const [actionNote, setActionNote] = useState('');
   const [actionSubmitting, setActionSubmitting] = useState(false);
   const [actionError, setActionError] = useState(null);
+  const [actionConflict, setActionConflict] = useState(false);
   const [targetAchievement, setTargetAchievement] = useState(null);
 
   // Form Fields
@@ -116,7 +121,7 @@ export default function Achievements() {
     version: 1,
   });
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (fresh = true) => {
     setLoading(true);
     setError(null);
     try {
@@ -128,7 +133,7 @@ export default function Achievements() {
         status: effectiveStatus,
         search: searchQuery || undefined,
         recognitionYear: yearFilter || undefined,
-      });
+      }, fresh);
       setItems(res.items || []);
       if (res.pagination) {
         setPagination(res.pagination);
@@ -141,25 +146,29 @@ export default function Achievements() {
   }, [pagination.page, pagination.pageSize, subjectFilter, statusFilter, searchQuery, yearFilter, activeTab]);
 
   useEffect(() => {
-    loadData();
+    loadData(false);
   }, [loadData]);
 
   // Load danh mục loại thành tích và tổ chức
   useEffect(() => {
     async function fetchCatalogs() {
+      setCatalogLoading(true);
+      setCatalogError(null);
       try {
         const [typesData, unitsData] = await Promise.all([
-          achievementsApi.listAchievementTypes().catch(() => []),
-          organizationsApi.list().catch(() => []),
+          achievementsApi.listAchievementTypes(),
+          organizationsApi.list(),
         ]);
         setTypes(Array.isArray(typesData) ? typesData : []);
         setUnits(Array.isArray(unitsData) ? unitsData : []);
       } catch (err) {
-        console.error('Lỗi nạp danh mục:', err);
+        setCatalogError(err);
+      } finally {
+        setCatalogLoading(false);
       }
     }
     fetchCatalogs();
-  }, []);
+  }, [catalogRetry]);
 
   const openCreateModal = () => {
     setIsEditing(false);
@@ -181,6 +190,7 @@ export default function Achievements() {
   };
 
   const openEditModal = (ach) => {
+    setDetailModalOpen(false);
     setIsEditing(true);
     setSelectedAchievement(ach);
     setFormData({
@@ -216,26 +226,28 @@ export default function Achievements() {
 
   const isSelf = (ach) => {
     if (!user || !ach) return false;
+    if (ach.actions) return ach.actions.isSelf;
     const uid = user.userId || user.id;
-    return (
-      ach.createdByUserId === uid ||
-      ach.profileUserId === uid ||
-      ach.submittedByUserId === uid
-    );
+    return [ach.createdBy, ach.submittedBy, ach.lecturer?.userId, ach.lecturerUserId]
+      .some(id => id != null && String(id) === String(uid));
   };
+  const canAct = (ach, action) => Boolean(ach?.actions?.[action]);
 
   const loadHistoryAndSubmissions = async (achievementId) => {
     if (!achievementId) return;
     setHistoryLoading(true);
+    setHistoryError(null);
+    setHistories([]);
+    setSubmissions([]);
     try {
       const [histData, subData] = await Promise.all([
-        achievementsApi.getHistory(achievementId).catch(() => []),
-        achievementsApi.getSubmissions(achievementId).catch(() => []),
+        achievementsApi.getHistory(achievementId),
+        achievementsApi.getSubmissions(achievementId),
       ]);
-      setHistories(Array.isArray(histData) ? histData : []);
-      setSubmissions(Array.isArray(subData) ? subData : []);
+      setHistories(Array.isArray(histData) ? histData : histData?.histories || []);
+      setSubmissions(Array.isArray(subData) ? subData : subData?.submissions || []);
     } catch (err) {
-      console.error('Lỗi tải lịch sử / phiên bản:', err);
+      setHistoryError(err.message || 'Không thể tải lịch sử hồ sơ. Vui lòng thử lại.');
     } finally {
       setHistoryLoading(false);
     }
@@ -244,10 +256,12 @@ export default function Achievements() {
   const openDetailModal = async (ach) => {
     try {
       setDetailTab('INFO');
+      setEvidences([]);
       const detail = await achievementsApi.getById(ach.achievementId);
       setSelectedAchievement(detail);
       setDetailModalOpen(true);
       setEvidenceFormOpen(false);
+      setEvidenceFormData({ title: '', description: '', file: null });
       loadEvidences(detail.achievementId);
       loadHistoryAndSubmissions(detail.achievementId);
     } catch (err) {
@@ -260,6 +274,7 @@ export default function Achievements() {
     setActionType(type);
     setActionNote('');
     setActionError(null);
+    setActionConflict(false);
     setActionModalOpen(true);
   };
 
@@ -272,8 +287,8 @@ export default function Achievements() {
     try {
       const payload = { version: targetAchievement.version };
       if (['REQUEST_CORRECTION', 'REJECT', 'CANCEL', 'REVOKE'].includes(actionType)) {
-        if (!actionNote.trim()) {
-          throw new Error('Vui lòng nhập lý do thực hiện thao tác.');
+        if (actionNote.trim().length < 5) {
+          throw new Error('Vui lòng nhập lý do thực hiện thao tác, ít nhất 5 ký tự.');
         }
         payload.reason = actionNote.trim();
       } else if (actionType === 'SUBMIT') {
@@ -306,6 +321,11 @@ export default function Achievements() {
     } catch (err) {
       const msg = err.response?.data?.error?.message || err.message || 'Thao tác không thành công';
       setActionError(msg);
+      if (err.status === 409) {
+        setActionConflict(true);
+        setActionError(`${msg} Đóng hộp thao tác và chọn lại hồ sơ sau khi danh sách được cập nhật.`);
+        await loadData();
+      }
     } finally {
       setActionSubmitting(false);
     }
@@ -332,26 +352,35 @@ export default function Achievements() {
   };
 
   const handleUploadFileVersion = async (evidenceId, file) => {
-    if (!file) return;
+    if (!file || evidenceSubmitting) return;
+    setEvidenceSubmitting(true);
+    setEvidenceError(null);
     try {
       await evidencesApi.uploadFileVersion(evidenceId, file);
       if (selectedAchievement) {
         await loadEvidences(selectedAchievement.achievementId);
       }
     } catch (err) {
-      alert(err.response?.data?.error?.message || err.message || 'Không thể tải lên phiên bản mới');
+      setEvidenceError(err.message || 'Không thể tải lên phiên bản mới');
+    } finally {
+      setEvidenceSubmitting(false);
     }
   };
 
   const handleDeleteEvidence = async (evidenceId) => {
+    if (evidenceSubmitting) return;
     if (!window.confirm('Bạn có chắc chắn muốn xóa minh chứng này khỏi hồ sơ?')) return;
+    setEvidenceSubmitting(true);
+    setEvidenceError(null);
     try {
       await evidencesApi.deleteEvidence(evidenceId);
       if (selectedAchievement) {
         await loadEvidences(selectedAchievement.achievementId);
       }
     } catch (err) {
-      alert(err.response?.data?.error?.message || err.message || 'Không thể xóa minh chứng');
+      setEvidenceError(err.message || 'Không thể xóa minh chứng');
+    } finally {
+      setEvidenceSubmitting(false);
     }
   };
 
@@ -369,12 +398,13 @@ export default function Achievements() {
     setFormError(null);
 
     try {
+      let saved;
       if (formData.startDate && formData.endDate && formData.endDate < formData.startDate) {
         throw new Error('Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.');
       }
 
       if (isEditing && selectedAchievement) {
-        await achievementsApi.update(selectedAchievement.achievementId, {
+        saved = await achievementsApi.update(selectedAchievement.achievementId, {
           title: formData.title,
           description: formData.description,
           contributionRole: formData.contributionRole,
@@ -386,7 +416,7 @@ export default function Achievements() {
           version: formData.version,
         });
       } else {
-        await achievementsApi.create({
+        saved = await achievementsApi.create({
           subjectType: formData.subjectType,
           organizationUnitId: formData.subjectType === 'UNIT' ? Number(formData.organizationUnitId) : null,
           achievementTypeId: Number(formData.achievementTypeId),
@@ -401,7 +431,8 @@ export default function Achievements() {
       }
 
       setModalOpen(false);
-      loadData();
+      await loadData();
+      await openDetailModal(saved);
     } catch (err) {
       setFormError(err.message || 'Thao tác không thành công.');
     } finally {
@@ -429,9 +460,7 @@ export default function Achievements() {
       setLoading(true);
       const res = await achievementsApi.replace(ach.achievementId);
       await loadData();
-      if (res.data) {
-        openDetailModal(res.data);
-      }
+      await openDetailModal(res);
     } catch (err) {
       alert(err.response?.data?.error?.message || err.message || 'Lỗi khi tạo bản thay thế');
     } finally {
@@ -460,12 +489,16 @@ export default function Achievements() {
         </div>
         <button
           onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-[#008080] hover:bg-[#006666] text-white font-medium text-sm transition shadow-soft-sm"
+          disabled={!canCreate || catalogLoading || !types.length}
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-[#008080] hover:bg-[#006666] text-white font-medium text-sm transition shadow-soft-sm disabled:opacity-50"
         >
           <Plus className="w-4 h-4" />
           <span>Kê khai Thành tích</span>
         </button>
       </div>
+
+      {catalogError && <ErrorState error={catalogError} onRetry={() => setCatalogRetry(value => value + 1)} />}
+      {!catalogLoading && !catalogError && !types.length && <p className="text-sm text-amber-700">Chưa có loại thành tích đang hoạt động. Liên hệ quản trị viên bổ sung danh mục trước khi kê khai.</p>}
 
       {/* Tab Navigation: Tất cả hồ sơ vs Hàng chờ thẩm định (W2-Q3) */}
       <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 pb-1">
@@ -631,7 +664,7 @@ export default function Achievements() {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          {['DRAFT', 'NEED_CORRECTION'].includes(ach.status) && (
+                          {canAct(ach, 'edit') && (
                             <>
                               <button
                                 onClick={() => openEditModal(ach)}
@@ -640,16 +673,16 @@ export default function Achievements() {
                               >
                                 <Edit2 className="w-4 h-4" />
                               </button>
-                              <button
+                              {canAct(ach, 'submit') && <button
                                 onClick={() => openActionModal(ach, 'SUBMIT')}
                                 title="Nộp thẩm định (Yêu cầu có ít nhất 1 minh chứng)"
                                 className="p-1.5 rounded-lg text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/40 transition"
                               >
                                 <Send className="w-4 h-4" />
-                              </button>
+                              </button>}
                             </>
                           )}
-                          {ach.status === 'SUBMITTED' && isSelf(ach) && (
+                          {canAct(ach, 'cancel') && (
                             <button
                               onClick={() => openActionModal(ach, 'CANCEL')}
                               title="Hủy yêu cầu nộp hồ sơ"
@@ -658,7 +691,7 @@ export default function Achievements() {
                               <RotateCcw className="w-4 h-4" />
                             </button>
                           )}
-                          {ach.status === 'SUBMITTED' && canReview && !isSelf(ach) && (
+                          {canAct(ach, 'review') && (
                             <>
                               <button
                                 onClick={() => openActionModal(ach, 'VERIFY')}
@@ -688,7 +721,7 @@ export default function Achievements() {
                               <Lock className="w-4 h-4" />
                             </span>
                           )}
-                          {ach.status === 'VERIFIED' && canReview && (
+                          {canAct(ach, 'revoke') && (
                             <button
                               onClick={() => openActionModal(ach, 'REVOKE')}
                               title="Thu hồi quyết định xác nhận (Manager có thẩm quyền)"
@@ -697,7 +730,7 @@ export default function Achievements() {
                               <ShieldAlert className="w-4 h-4" />
                             </button>
                           )}
-                          {['REJECTED', 'CANCELLED', 'REVOKED'].includes(ach.status) && isSelf(ach) && (
+                          {canAct(ach, 'replace') && (
                             <button
                               onClick={() => handleCreateReplacement(ach)}
                               title="Tạo bản kê khai thay thế (Liên kết với hồ sơ đã kết thúc)"
@@ -706,7 +739,7 @@ export default function Achievements() {
                               <RotateCcw className="w-4 h-4" />
                             </button>
                           )}
-                          {ach.status === 'DRAFT' && (
+                          {canAct(ach, 'remove') && (
                             <button
                               onClick={() => handleDelete(ach)}
                               title="Xóa bản nháp"
@@ -1025,16 +1058,16 @@ export default function Achievements() {
                     <ShieldAlert className="w-4 h-4 text-amber-600 flex-shrink-0" />
                     <span><strong>Quy chế Liêm chính:</strong> Bạn là người kê khai/chủ hồ sơ này, bạn không được tự thẩm định (Anti-self-approval).</span>
                   </div>
-                  <button
+                  {canAct(selectedAchievement, 'cancel') && <button
                     onClick={() => openActionModal(selectedAchievement, 'CANCEL')}
                     className="px-3 py-1 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium flex items-center gap-1 flex-shrink-0 shadow-soft-sm"
                   >
                     <RotateCcw className="w-3.5 h-3.5" /> Hủy nộp
-                  </button>
+                  </button>}
                 </div>
               )}
 
-              {selectedAchievement.status === 'SUBMITTED' && canReview && !isSelf(selectedAchievement) && (
+              {canAct(selectedAchievement, 'review') && (
                 <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Thao tác thẩm định:</span>
                   <div className="flex items-center gap-2">
@@ -1060,7 +1093,7 @@ export default function Achievements() {
                 </div>
               )}
 
-              {['REJECTED', 'CANCELLED', 'REVOKED'].includes(selectedAchievement.status) && isSelf(selectedAchievement) && (
+              {canAct(selectedAchievement, 'replace') && (
                 <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800 text-xs flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <RotateCcw className="w-4 h-4 text-indigo-600 flex-shrink-0" />
@@ -1084,6 +1117,14 @@ export default function Achievements() {
             </div>
 
             {/* Modal Detail Tabs */}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {canAct(selectedAchievement, 'edit') && <button type="button" onClick={() => openEditModal(selectedAchievement)} className="px-3 py-2 rounded-xl bg-blue-50 text-blue-700 text-xs font-medium">Sửa hồ sơ</button>}
+              {canAct(selectedAchievement, 'submit') && <button type="button" disabled={evidencesLoading || evidenceSubmitting || Boolean(evidenceError) || !evidences.some(ev => ev.latestFileId)} onClick={() => openActionModal(selectedAchievement, 'SUBMIT')} className="px-3 py-2 rounded-xl bg-teal-600 text-white text-xs font-medium disabled:opacity-50">{selectedAchievement.status === 'NEED_CORRECTION' ? 'Gửi lại hồ sơ' : 'Nộp duyệt hồ sơ'}</button>}
+              {canAct(selectedAchievement, 'cancel') && !(selectedAchievement.status === 'SUBMITTED' && isSelf(selectedAchievement)) && <button type="button" onClick={() => openActionModal(selectedAchievement, 'CANCEL')} className="px-3 py-2 rounded-xl bg-amber-50 text-amber-700 text-xs font-medium">Hủy hồ sơ</button>}
+              {canAct(selectedAchievement, 'revoke') && <button type="button" onClick={() => openActionModal(selectedAchievement, 'REVOKE')} className="px-3 py-2 rounded-xl bg-purple-50 text-purple-700 text-xs font-medium">Thu hồi xác nhận</button>}
+            </div>
+            {canAct(selectedAchievement, 'submit') && !evidencesLoading && !evidences.some(ev => ev.latestFileId) && <p className="mt-2 text-xs text-amber-700">Thêm ít nhất một tệp minh chứng trước khi nộp duyệt.</p>}
+            {historyError && <div role="alert" className="mt-3 text-sm text-rose-700">{historyError} <button type="button" onClick={() => loadHistoryAndSubmissions(selectedAchievement.achievementId)} className="underline">Thử lại</button></div>}
             <div className="mt-4 flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
               <button
                 type="button"
@@ -1185,7 +1226,7 @@ export default function Achievements() {
                         Minh chứng số & Phiên bản tệp ({evidences.length})
                       </h4>
                     </div>
-                    {['DRAFT', 'NEED_CORRECTION'].includes(selectedAchievement.status) && (
+                    {canAct(selectedAchievement, 'manageEvidence') && (
                       <button
                         type="button"
                         onClick={() => setEvidenceFormOpen(!evidenceFormOpen)}
@@ -1307,7 +1348,7 @@ export default function Achievements() {
                               </button>
                             )}
 
-                            {['DRAFT', 'NEED_CORRECTION'].includes(selectedAchievement.status) && (
+                            {canAct(selectedAchievement, 'manageEvidence') && (
                               <>
                                 <label
                                   title="Thay tệp mới (tăng phiên bản)"
@@ -1317,17 +1358,20 @@ export default function Achievements() {
                                   <span>Thay file</span>
                                   <input
                                     type="file"
+                                    disabled={evidenceSubmitting}
                                     accept=".pdf,.jpg,.jpeg,.png,.docx"
                                     className="hidden"
                                     onChange={(e) => {
                                       const file = e.target.files?.[0];
                                       if (file) handleUploadFileVersion(ev.evidenceId, file);
+                                      e.target.value = '';
                                     }}
                                   />
                                 </label>
 
                                 <button
                                   type="button"
+                                  disabled={evidenceSubmitting}
                                   onClick={() => handleDeleteEvidence(ev.evidenceId)}
                                   title="Xóa minh chứng"
                                   className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-800 transition"
@@ -1378,7 +1422,7 @@ export default function Achievements() {
                           </span>
                         </div>
                         <div className="text-slate-700 dark:text-slate-300">
-                          Người thực hiện: <strong className="text-slate-900 dark:text-white">{h.actorName || `User #${h.actorId}`}</strong>
+                          Người thực hiện: <strong className="text-slate-900 dark:text-white">{h.actor?.displayName || h.actorName || `User #${h.actor?.userId ?? h.actorId}`}</strong>
                         </div>
                         {h.reason && (
                           <div className="mt-2 p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
@@ -1427,10 +1471,10 @@ export default function Achievements() {
                           </span>
                         </div>
 
-                        {snap.submitNote && (
+                        {(snap.note || snap.submitNote) && (
                           <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
                             <span className="font-semibold text-slate-800 dark:text-slate-200">Ghi chú nộp: </span>
-                            {snap.submitNote}
+                            {snap.note || snap.submitNote}
                           </div>
                         )}
 
@@ -1439,7 +1483,7 @@ export default function Achievements() {
                           <div><span className="text-slate-400">Tiêu đề:</span> <strong className="text-slate-800 dark:text-slate-200">{snap.title}</strong></div>
                           <div><span className="text-slate-400">Chủ thể:</span> <strong className="text-slate-800 dark:text-slate-200">{snap.subjectType}</strong></div>
                           <div><span className="text-slate-400">Năm ghi nhận:</span> <strong className="text-slate-800 dark:text-slate-200">{snap.recognitionYear}</strong></div>
-                          <div><span className="text-slate-400">Phiên bản lúc nộp:</span> <strong className="text-slate-800 dark:text-slate-200">v{snap.version}</strong></div>
+                          <div><span className="text-slate-400">Phiên bản lúc nộp:</span> <strong className="text-slate-800 dark:text-slate-200">{snap.version != null ? `v${snap.version}` : 'Chưa ghi nhận'}</strong></div>
                         </div>
 
                         {/* Frozen Evidence Files */}
@@ -1599,7 +1643,7 @@ export default function Achievements() {
                 </button>
                 <button
                   type="submit"
-                  disabled={actionSubmitting}
+                  disabled={actionSubmitting || actionConflict}
                   className={`px-4 py-2 rounded-xl font-medium text-white transition disabled:opacity-50 flex items-center gap-1.5 shadow-soft-sm ${
                     actionType === 'VERIFY'
                       ? 'bg-emerald-600 hover:bg-emerald-700'

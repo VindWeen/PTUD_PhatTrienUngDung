@@ -13,7 +13,10 @@ export async function findLecturerById(lecturerId) {
 
 export async function findLecturerByUserId(userId) {
   const result = await query(
-    `SELECT lecturer_id AS "lecturerId" FROM app.lecturers WHERE user_id = $1 AND is_active = TRUE`, [userId]);
+    `SELECT lecturer_id AS "lecturerId", user_id AS "userId", employee_code AS "employeeCode",
+            full_name AS "fullName", email, phone, title, degree, is_active AS "isActive",
+            updated_at AS "updatedAt", version
+       FROM app.lecturers WHERE user_id = $1 AND is_active = TRUE`, [userId]);
   return result.rows[0] || null;
 }
 

@@ -1,21 +1,21 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { GraduationCap, Home, User, Cpu, LogOut, Building2, Award, Bell, BookOpen } from 'lucide-react';
+import { GraduationCap, Home, User, Cpu, LogOut, Building2, Award, Bell, BookOpen, BarChart3, Target, ClipboardList } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
-  { to: '/award-applications', icon: Award, label: 'Hồ sơ đề nghị', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'COUNCIL'] },
-  { to: '/kpi', icon: Award, label: 'Mục tiêu / KPI', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'] },
-  { to: '/reports', icon: Award, label: 'Báo cáo / CSV', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
-  { to: '/notifications', icon: Bell, label: 'Thông báo', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'COUNCIL', 'ADMIN'] },
-  { to: '/awards', icon: Award, label: 'Khen thưởng', roles: ['RECORDS_OFFICER'] },
-  { to: '/admin', icon: User, label: 'Quản trị', roles: ['ADMIN'] },
   { to: '/me/dashboard', icon: Home, label: 'Trang chủ', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
-  { to: '/achievements', icon: Award, label: 'Thành tích', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
-  { to: '/regulations', icon: BookOpen, label: 'Kho quy định', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
   { to: '/me/profile', icon: User, label: 'Hồ sơ năng lực', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER'] },
+  { to: '/achievements', icon: Award, label: 'Thành tích', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
+  { to: '/kpi', icon: Target, label: 'Mục tiêu / KPI', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'] },
+  { to: '/award-applications', icon: ClipboardList, label: 'Hồ sơ đề nghị', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'COUNCIL'] },
+  { to: '/awards', icon: Award, label: 'Khen thưởng', roles: ['RECORDS_OFFICER'] },
+  { to: '/regulations', icon: BookOpen, label: 'Kho quy định', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
   { to: '/me/ai-forecast', icon: Cpu, label: 'Phân tích & Thẩm định AI', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
+  { to: '/reports', icon: BarChart3, label: 'Báo cáo / CSV', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
   { to: '/organizations', icon: Building2, label: 'Tổ chức', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
+  { to: '/notifications', icon: Bell, label: 'Thông báo', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'COUNCIL', 'ADMIN'] },
+  { to: '/admin', icon: User, label: 'Quản trị', roles: ['ADMIN'] },
 ];
 
 export default function Sidebar() {

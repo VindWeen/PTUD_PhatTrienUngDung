@@ -5,7 +5,7 @@ export default function ExternalKpi({types = []}) {
  const [employeeId,setEmployeeId] = useState(''), [lecturerId,setLecturerId] = useState(''), [type,setType] = useState('');
  async function act(fn) {
    setBusy(true); setError('');
-   try { await fn(); setData(await kpiApi.external()); } catch(e) {setError(e.message);} finally {setBusy(false);}
+   try { await fn(); setData(await kpiApi.external(true)); } catch(e) {setError(e.message);} finally {setBusy(false);}
  }
  return <section className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-3 text-sm text-slate-800 dark:text-slate-100 [&_button]:rounded-lg [&_button]:border [&_button]:px-3 [&_button]:py-2 [&_button]:m-1 [&_button]:bg-teal-50 [&_button]:text-teal-900 [&_button:disabled]:opacity-40 [&_input]:border [&_input]:rounded [&_input]:p-2 [&_input]:m-1 [&_input]:text-slate-900 [&_select]:border [&_select]:p-2 [&_select]:text-slate-900 [&_li]:my-2 [&_li]:break-words">
    <h2 className="font-semibold">Nguồn KPI MÔ PHỎNG — Import runs</h2>

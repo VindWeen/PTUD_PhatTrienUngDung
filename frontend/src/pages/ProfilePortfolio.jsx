@@ -24,7 +24,7 @@ import {
 import { useTheme } from '../hooks/useTheme';
 import { useAuth } from '../hooks/useDemoAuth';
 import { portfolioApi } from '../services/portfolioApi';
-import { EmptyState, ErrorState, LoadingState } from '../components/common/AsyncState';
+import { EmptyState, ErrorState, PageSkeleton } from '../components/common/AsyncState';
 
 export default function ProfilePortfolio() {
   const { isDark, toggleTheme } = useTheme();
@@ -46,11 +46,11 @@ export default function ProfilePortfolio() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileSaveMessage, setProfileSaveMessage] = useState('');
 
-  const loadProfile = useCallback(async () => {
+  const loadProfile = useCallback(async (fresh = true) => {
     setProfileLoading(true);
     setProfileError(null);
     try {
-      const data = await portfolioApi.getPersonalProfile();
+      const data = await portfolioApi.getPersonalProfile(fresh);
       setProfile(data);
       setProfileDraft({ phone: data.phone || '', title: data.title || '', degree: data.degree || '' });
     } catch (error) {
@@ -61,7 +61,7 @@ export default function ProfilePortfolio() {
     }
   }, []);
 
-  useEffect(() => { loadProfile(); }, [loadProfile]);
+  useEffect(() => { loadProfile(false); }, [loadProfile]);
 
   const handleProfileSave = async (event) => {
     event.preventDefault();
@@ -123,7 +123,7 @@ export default function ProfilePortfolio() {
     }
   };
 
-  if (profileLoading) return <LoadingState label="Đang tải hồ sơ năng lực..." />;
+  if (profileLoading) return <PageSkeleton title="Hồ sơ năng lực" label="Đang tải hồ sơ năng lực..." />;
   if (profileError) return <ErrorState error={profileError} onRetry={loadProfile} />;
   if (!profile) return <EmptyState message="Chưa có hồ sơ năng lực." />;
 
@@ -169,9 +169,9 @@ export default function ProfilePortfolio() {
           {/* Export Excel */}
           <button
             onClick={handleExportExcel}
-            className="px-4 py-2.5 rounded-2xl bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 font-semibold text-xs flex items-center gap-2 shadow-sm hover:bg-slate-700 dark:hover:bg-white transition-all active:scale-95"
+            className="soft-btn-primary text-xs font-semibold"
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
+            <FileSpreadsheet className="w-4 h-4" />
             <span>Xuất Excel</span>
           </button>
 
@@ -296,7 +296,7 @@ export default function ProfilePortfolio() {
                 aria-pressed={activeTab === tab.id}
                 className={`px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-medium transition-all ${
                   activeTab === tab.id
-                    ? 'bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm font-semibold'
+                    ? 'bg-[#008080] text-white shadow-sm font-semibold'
                     : 'bg-white dark:bg-soft-darkCard text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-soft-darkCardHover border border-slate-100 dark:border-soft-darkBorder shadow-soft-sm'
                 }`}
               >

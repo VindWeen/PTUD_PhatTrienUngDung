@@ -2,8 +2,8 @@ import { request } from './request.js';
 
 export const regulationsApi = {
   // Documents
-  listDocuments: (params = {}) =>
-    request({ method: 'GET', url: '/regulations', params }),
+  listDocuments: (params = {}, fresh = false) =>
+    request({ method: 'GET', url: '/regulations', params, fresh }),
 
   getDocumentById: (id) =>
     request({ method: 'GET', url: `/regulations/${id}` }),
@@ -29,8 +29,8 @@ export const regulationsApi = {
     request({ method: 'POST', url: `/regulations/versions/${versionId}/chunks`, data: { chunks } }),
 
   // Criteria
-  listCriteria: (params = {}) =>
-    request({ method: 'GET', url: '/regulations/criteria', params }),
+  listCriteria: (params = {}, fresh = false) =>
+    request({ method: 'GET', url: '/regulations/criteria', params, fresh }),
 
   createCriteria: (versionId, data) =>
     request({ method: 'POST', url: `/regulations/versions/${versionId}/criteria`, data }),

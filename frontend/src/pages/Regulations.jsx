@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { regulationsApi } from '../services/regulationsApi';
 import { useAuth } from '../context/AuthContext';
-import { LoadingState, ErrorState, EmptyState } from '../components/common/AsyncState';
+import { PageSkeleton, LoadingState, ErrorState, EmptyState } from '../components/common/AsyncState';
 
 const TYPE_LABELS = {
   LAW: { label: 'Luật Nhà nước', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300' },
@@ -46,6 +46,10 @@ export default function Regulations() {
   const [chunks, setChunks] = useState([]);
   const [criteria, setCriteria] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [documentLoading, setDocumentLoading] = useState(false);
+  const [documentRevision, setDocumentRevision] = useState(0);
+  const [chunksLoading, setChunksLoading] = useState(false);
+  const chunkSequence = React.useRef(0);
   const [error, setError] = useState(null);
   const [copiedHash, setCopiedHash] = useState(null);
   const [filterType, setFilterType] = useState('ALL');
@@ -75,36 +79,42 @@ export default function Regulations() {
     return ['ADMIN', 'SYSTEM_ADMIN', 'COUNCIL', 'MANAGER'].includes(code);
   });
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (fresh = true) => {
     setLoading(true);
     setError(null);
     try {
       const [docsRes, critRes] = await Promise.all([
-        regulationsApi.listDocuments(),
-        regulationsApi.listCriteria({ confirmedOnly: false }),
+        regulationsApi.listDocuments({}, fresh),
+        regulationsApi.listCriteria({ confirmedOnly: false }, fresh),
       ]);
-      setDocuments(docsRes.data || []);
-      setCriteria(critRes.data || []);
-
-      if (docsRes.data && docsRes.data.length > 0 && !selectedDoc) {
-        setSelectedDoc(docsRes.data[0]);
-      }
+      const docs = Array.isArray(docsRes) ? docsRes : docsRes.data || [];
+      setDocuments(docs);
+      setCriteria(Array.isArray(critRes) ? critRes : critRes.data || []);
+      setSelectedDoc((current) => docs.find((doc) => doc.document_id === current?.document_id) || docs[0] || null);
+      setDocumentRevision((revision) => revision + 1);
     } catch (err) {
       setError(err.message || 'Không thể tải danh mục văn bản quy chế');
     } finally {
       setLoading(false);
     }
-  }, [selectedDoc]);
+  }, []);
 
   useEffect(() => {
-    fetchData();
+    fetchData(false);
   }, [fetchData]);
 
   // Load versions and chunks when selectedDoc changes
   useEffect(() => {
+    let active = true;
+    setSelectedVersion(null);
+    setChunks([]);
+    chunkSequence.current += 1;
+    setChunksLoading(false);
     if (selectedDoc?.document_id) {
+      setDocumentLoading(true);
       regulationsApi.getDocumentById(selectedDoc.document_id).then((res) => {
-        const fullDoc = res.data;
+        if (!active) return;
+        const fullDoc = res;
         setSelectedDoc(fullDoc);
         if (fullDoc.versions && fullDoc.versions.length > 0) {
           const firstVer = fullDoc.versions[0];
@@ -114,17 +124,21 @@ export default function Regulations() {
           setSelectedVersion(null);
           setChunks([]);
         }
-      });
+      }).catch((err) => { if (active) setError(err.message); })
+        .finally(() => { if (active) setDocumentLoading(false); });
     }
-  }, [selectedDoc?.document_id]);
+    return () => { active = false; };
+  }, [selectedDoc?.document_id, documentRevision]);
 
   const loadChunks = async (versionId) => {
+    const sequence = ++chunkSequence.current;
+    setChunksLoading(true);
     try {
       const res = await regulationsApi.getChunks(versionId);
-      setChunks(res.data || []);
-    } catch {
-      setChunks([]);
-    }
+      if (sequence === chunkSequence.current) setChunks(res || []);
+    } catch (err) {
+      if (sequence === chunkSequence.current) { setChunks([]); setError(err.message); }
+    } finally { if (sequence === chunkSequence.current) setChunksLoading(false); }
   };
 
   const handleCopyHash = (hash) => {
@@ -144,7 +158,7 @@ export default function Regulations() {
       fetchData();
       if (selectedDoc?.document_id) {
         const res = await regulationsApi.getDocumentById(selectedDoc.document_id);
-        setSelectedDoc(res.data);
+        setSelectedDoc(res);
       }
     } catch (err) {
       alert(err.message || 'Lỗi thao tác phê duyệt phiên bản');
@@ -200,7 +214,7 @@ export default function Regulations() {
         contentForHash: '',
       });
       const res = await regulationsApi.getDocumentById(selectedDoc.document_id);
-      setSelectedDoc(res.data);
+      setSelectedDoc(res);
       fetchData();
     } catch (err) {
       alert(err.message || 'Lỗi tạo phiên bản quy chế mới');
@@ -231,7 +245,7 @@ export default function Regulations() {
   if (loading && documents.length === 0) {
     return (
       <div className="p-6">
-        <LoadingState message="Đang tải kho văn bản và tiêu chí quy định..." />
+        <PageSkeleton title="Kho quy định" label="Đang tải kho văn bản và tiêu chí quy định..." />
       </div>
     );
   }
@@ -396,7 +410,7 @@ export default function Regulations() {
 
           {/* Cột phải: Chi tiết Văn bản & Danh sách Phiên bản (Versions) */}
           <div className="lg:col-span-2 space-y-6">
-            {selectedDoc ? (
+            {documentLoading ? <LoadingState label="Đang tải phiên bản văn bản..." rows={3} /> : selectedDoc ? (
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 space-y-6">
                 <div>
                   <div className="flex items-center justify-between gap-4 mb-2">
@@ -573,7 +587,7 @@ export default function Regulations() {
           </div>
 
           <div className="space-y-3">
-            {filteredChunks.length === 0 ? (
+            {documentLoading || chunksLoading ? <LoadingState label="Đang tải trích đoạn văn bản..." rows={3} /> : filteredChunks.length === 0 ? (
               <EmptyState message="Không tìm thấy trích đoạn phù hợp" />
             ) : (
               filteredChunks.map((chunk) => (

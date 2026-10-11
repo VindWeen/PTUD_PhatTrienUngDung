@@ -114,6 +114,7 @@ try {
   await db("INSERT INTO app.user_roles (user_id, role_id) VALUES (2, (SELECT role_id FROM app.roles WHERE code='MANAGER')) ON CONFLICT DO NOTHING");
   await db("INSERT INTO app.user_unit_scopes (user_id, role_id, unit_id, include_descendants) VALUES (2, (SELECT role_id FROM app.roles WHERE code='MANAGER'), 1, true) ON CONFLICT DO NOTHING");
 
+  if (process.env.CORE_WORKFLOW_UI_ONLY !== '1') {
   console.log('--- Giai đoạn 1: Tạo DRAFT và Nộp lần 1 (Snapshot v1) ---');
   const createdAch = await call('POST', '/achievements', {
     subjectType: 'LECTURER',
@@ -129,6 +130,10 @@ try {
   // Tải lên tệp minh chứng v1
   const ev1 = await uploadEvidence(achId, 1, 'Chứng nhận bài báo v1', 'paper_v1.pdf', 'CONTENT_VERSION_1');
   check('Minh chứng v1 đã tạo', !!ev1.evidenceId, true);
+  const ownerDetail = await call('GET', `/achievements/${achId}`, null, 1, 200);
+  check('Owner được thêm minh chứng và nộp từ chi tiết', ownerDetail.data.actions.manageEvidence && ownerDetail.data.actions.submit, true);
+  const ownerList = await call('GET', '/achievements', null, 1, 200);
+  check('Danh sách trả quyền chủ hồ sơ đúng ID', ownerList.data.items.find(a => a.achievementId === achId).actions.submit, true);
 
   // Nộp lần 1 (SUBMIT)
   const submit1 = await call('POST', `/achievements/${achId}/submit`, {
@@ -137,12 +142,19 @@ try {
   }, 1, 200);
   check('Trạng thái chuyển sang SUBMITTED', submit1.data.status, 'SUBMITTED');
   check('Version tăng lên 2', submit1.data.version, 2);
+  const managerQueue = await call('GET', '/achievements?status=SUBMITTED', null, 2, 200);
+  check('Manager Khoa thấy hồ sơ Bộ môn con trong hàng chờ', managerQueue.data.items.some(a => a.achievementId === achId && a.actions.review), true);
+  const managerDetail = await call('GET', `/achievements/${achId}`, null, 2, 200);
+  check('Manager có quyền duyệt nhưng không thay file', [managerDetail.data.actions.review, managerDetail.data.actions.manageEvidence], [true, false]);
+  const submittedDetail = await call('GET', `/achievements/${achId}`, null, 1, 200);
+  check('Chủ hồ sơ không tự duyệt và không thay file sau nộp', [submittedDetail.data.actions.review, submittedDetail.data.actions.manageEvidence], [false, false]);
 
   // Kiểm tra snapshot v1 được tạo
   const subs1 = await call('GET', `/achievements/${achId}/submissions`, null, 1, 200);
   check('Có 1 submission được ghi nhận', subs1.data.submissions.length, 1);
   check('Revision là 1', subs1.data.submissions[0].revisionNo, 1);
   check('Đóng băng 1 file minh chứng', subs1.data.submissions[0].frozenFilesCount, 1);
+  check('Snapshot giữ version và ghi chú nộp', [subs1.data.submissions[0].snapshotData.version, subs1.data.submissions[0].snapshotData.note], [1, 'Kính gửi Trưởng khoa phê duyệt bài báo']);
 
   console.log('--- Giai đoạn 2: Manager yêu cầu bổ sung (NEED_CORRECTION) ---');
   // Thử yêu cầu bổ sung thiếu lý do (< 5 ký tự) -> Bị 400
@@ -274,6 +286,11 @@ try {
   const finalSubsRes = await call('GET', `/achievements/${achId}/submissions`, null, 1, 200);
   check('Danh sách submissions có đúng 2 lần nộp', finalSubsRes.data.submissions.length, 2);
 
+  }
+  if (process.env.CORE_WORKFLOW_UI === '1') {
+    const { verifyCoreWorkflowUi } = await import('../../scripts/core-workflow-ui.mjs');
+    await verifyCoreWorkflowUi({ base });
+  }
   console.log(`\n🎉 TOÀN BỘ ${results.length} KIỂM TRA TÍCH HỢP W3-Q1 HOÀN TOÀN ĐẠT!`);
 } catch (err) {
   console.error('❌ Lỗi kiểm thử tích hợp W3-Q1:', err);

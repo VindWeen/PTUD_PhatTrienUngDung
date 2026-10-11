@@ -31,7 +31,7 @@ export function createProfileService(repository = profileRepository) {
   async function getOwnProfile(userId) {
     const ref = await repository.findLecturerByUserId(userId);
     if (!ref) throw new NotFoundError('Tài khoản chưa có hồ sơ giảng viên');
-    return getProfile(ref.lecturerId);
+    return buildProfile(ref);
   }
 
   async function getProfile(lecturerId) {

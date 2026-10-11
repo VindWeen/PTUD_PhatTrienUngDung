@@ -3,8 +3,8 @@ import { fixtureClient, toDashboardSummary } from './fixtureClient.js';
 import { request } from './request.js';
 
 export const portfolioApi = {
-  getPersonalProfile() {
-    return USE_FIXTURES ? fixtureClient.getPersonalProfile() : request({ method: 'GET', url: '/me/profile' });
+  getPersonalProfile(fresh = false) {
+    return USE_FIXTURES ? fixtureClient.getPersonalProfile() : request({ method: 'GET', url: '/me/profile', fresh });
   },
   updatePersonalProfile(payload) {
     return USE_FIXTURES ? fixtureClient.updatePersonalProfile(payload) : request({ method: 'PATCH', url: '/me/profile', data: payload });
@@ -12,10 +12,10 @@ export const portfolioApi = {
   getUnitProfile(unitId) {
     return USE_FIXTURES ? fixtureClient.getUnitProfile(unitId) : request({ method: 'GET', url: `/units/${unitId}/profile` });
   },
-  async getDashboardSummary() {
+  async getDashboardSummary(fresh = false) {
     if (USE_FIXTURES) return fixtureClient.getDashboardSummary();
     try {
-      const res = await request({ method: 'GET', url: '/dashboard/summary' });
+      const res = await request({ method: 'GET', url: '/dashboard/summary', fresh });
       if (res && Array.isArray(res.summary)) {
         const achValid = res.summary.filter((s) => s.kind === 'ACHIEVEMENT').reduce((acc, cur) => acc + (cur.valid_count || 0), 0);
         const achTotal = res.summary.filter((s) => s.kind === 'ACHIEVEMENT').reduce((acc, cur) => acc + (cur.total || 0), 0);
@@ -38,7 +38,8 @@ export const portfolioApi = {
         };
       }
       return toDashboardSummary(res);
-    } catch {
+    } catch (error) {
+      if (error.status !== 404) throw error;
       return request({ method: 'GET', url: '/me/profile' }).then(toDashboardSummary);
     }
   },

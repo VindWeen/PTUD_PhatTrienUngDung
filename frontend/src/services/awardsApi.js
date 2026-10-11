@@ -1,7 +1,7 @@
 import { request } from './request';
 import apiClient from './apiClient';
 export const awardsApi = {
- list: contextUnitId => request({url:'/award-records',params:{contextUnitId}}),
+ list: (contextUnitId,fresh = false) => request({url:'/award-records',params:{contextUnitId},fresh}),
  detail: id => request({url:`/award-records/${id}`}),
  decision: data => request({method:'POST',url:'/award-decisions',data}),
  create: data => request({method:'POST',url:'/award-records',data}),

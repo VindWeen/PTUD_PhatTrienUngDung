@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { kpiApi } from '../services/kpiApi';
+import { Sparkles, History, Check, X, Target } from 'lucide-react';
+
+const fieldClass = 'soft-input w-full text-sm disabled:opacity-60';
+const statusLabels = { PENDING: 'Chờ bạn rà soát', ACCEPTED: 'Đã chấp nhận', REJECTED: 'Đã từ chối' };
 
 export default function KpiRecommendations({ onAccepted }) {
   const [runId, setRunId] = useState('');
@@ -42,16 +46,18 @@ export default function KpiRecommendations({ onAccepted }) {
     if (action === 'accept') await onAccepted();
   }
   return (
-    <section className="rounded-2xl border bg-white p-5 dark:bg-slate-900 space-y-3">
-      <h2 className="font-semibold">Gợi ý KPI bằng AI</h2>
-      <p className="text-sm">
-        Nhập run từ màn hình đánh giá AI. Chỉ tiêu và căn cứ lấy từ tiêu chí đã xác nhận. Chỉ tạo
-        KPI sau khi bạn chấp nhận.
-      </p>
-      <label className="block">
-        Run ID
+    <section className="soft-card p-6 space-y-5 text-slate-800 dark:text-slate-100">
+      <div className="flex items-start gap-3">
+        <span className="rounded-2xl bg-teal-50 p-3 text-[#008080] dark:bg-teal-950/40 dark:text-teal-400"><Sparkles className="h-5 w-5" /></span>
+        <div><h2 className="text-lg font-bold text-slate-900 dark:text-white">Gợi ý KPI bằng AI</h2>
+          <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Sử dụng mã phiên thẩm định ở trang AI để đề xuất mục tiêu từ tiêu chí đã xác nhận. Bạn rà soát và chấp nhận trước khi tạo KPI.</p></div>
+      </div>
+      <div className="flex flex-col lg:flex-row lg:items-end gap-3">
+      <label className="flex-1 space-y-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+        Mã phiên thẩm định AI
         <input
-          className="block w-full border rounded p-2 text-slate-900"
+          className={`${fieldClass} mt-1.5`}
+          placeholder="Nhập mã phiên đã thẩm định"
           value={runId}
           onChange={(e) => {
             setRunId(e.target.value);
@@ -67,12 +73,12 @@ export default function KpiRecommendations({ onAccepted }) {
             setItems(out.items);
           })
         }
-        className="border rounded p-2"
+        className="soft-btn-secondary text-xs whitespace-nowrap"
       >
-        Xem gợi ý đã lưu
-      </button>{' '}
+        <History className="h-4 w-4" /> Xem gợi ý đã lưu
+      </button>
       <button
-        disabled={busy}
+        disabled={busy || !runId.trim()}
         onClick={() =>
           act(async () => {
             const out = await kpiApi.generateRecommendations({ runId });
@@ -80,17 +86,17 @@ export default function KpiRecommendations({ onAccepted }) {
             setMessage(out.missingData || 'Đã tạo gợi ý; chưa tạo KPI.');
           })
         }
-        className="border rounded p-2"
+        className="soft-btn-primary text-xs whitespace-nowrap"
       >
-        Gọi AI tạo gợi ý
+        <Sparkles className="h-4 w-4" /> {busy ? 'Đang xử lý…' : 'Tạo gợi ý bằng AI'}
       </button>
-      {message && <p role="status">{message}</p>}
+      </div>
+      {message && <p role="status" className="rounded-xl border border-teal-200 bg-teal-50 p-3 text-sm text-teal-800 dark:border-teal-800 dark:bg-teal-950/30 dark:text-teal-200">{message}</p>}
       {items.map((r, index) => (
-        <article key={r.recommendation_id} className="border rounded p-4 space-y-2">
-          <h3 className="font-semibold">
-            {r.payload.title} — {r.status}
-          </h3>
-          <p>
+        <article key={r.recommendation_id} className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5 space-y-4 text-sm dark:border-slate-700 dark:bg-slate-800/40">
+          <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="flex items-center gap-2 font-bold"><Target className="h-4 w-4 text-teal-600" />{r.payload.title}</h3>
+            <span className="rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 dark:bg-teal-950/40 dark:text-teal-300">{statusLabels[r.status] || r.status}</span></div>
+          <p className="text-slate-600 dark:text-slate-300">
             Chỉ tiêu tổng: {r.payload.target} {r.payload.measureUnit}; đã ghi nhận:{' '}
             {r.payload.actualRecorded}. Ưu tiên: {r.payload.priority} (mặc định, bạn cần tự cân
             nhắc).
@@ -109,41 +115,44 @@ export default function KpiRecommendations({ onAccepted }) {
               nguyên; kế hoạch không xác nhận đủ điều kiện.
             </p>
           )}
-          <label className="block">
+          <label className="block space-y-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
             Sửa kế hoạch
             <textarea
               disabled={busy || r.status !== 'PENDING'}
-              className="block w-full border p-2 text-slate-900"
+              className={fieldClass}
+              rows={3}
               value={r.payload.plan}
               onChange={(e) => edit(index, 'plan', e.target.value)}
             />
           </label>
+          <div className="grid sm:grid-cols-2 gap-4">
           {['periodStart', 'periodEnd'].map((key, i) => (
-            <label className="inline-block mr-3" key={key}>
+            <label className="space-y-2 text-xs font-semibold text-slate-600 dark:text-slate-300" key={key}>
               {i === 0 ? 'Bắt đầu' : 'Thời hạn'}
               <input
                 disabled={busy || r.status !== 'PENDING'}
                 type="date"
-                className="block border p-2 text-slate-900"
+                className={fieldClass}
                 value={r.payload[key] || ''}
                 onChange={(e) => edit(index, key, e.target.value)}
               />
             </label>
           ))}
-          <div>
+          </div>
+          <div className="flex flex-wrap gap-3 pt-3 border-t border-slate-200 dark:border-slate-700">
             <button
-              className="border rounded p-2"
+              className="soft-btn-primary text-xs"
               disabled={busy || r.status !== 'PENDING'}
               onClick={() => act(() => decision(r, 'accept'))}
             >
-              Chấp nhận và tạo KPI
-            </button>{' '}
+              <Check className="h-4 w-4" /> Chấp nhận và tạo KPI
+            </button>
             <button
-              className="border rounded p-2"
+              className="soft-btn-secondary text-xs text-rose-600 dark:text-rose-400"
               disabled={busy || r.status !== 'PENDING'}
               onClick={() => act(() => decision(r, 'reject'))}
             >
-              Từ chối
+              <X className="h-4 w-4" /> Từ chối
             </button>
           </div>
         </article>

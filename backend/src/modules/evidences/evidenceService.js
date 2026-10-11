@@ -59,6 +59,18 @@ export class EvidenceService {
     return [];
   }
 
+  async _lockWritableAchievement(client, achievementId, user) {
+    // Submission uses the same row lock: uploaded files cannot change after its snapshot.
+    const locked = await this.achievementRepo.findAchievementForUpdate(client, achievementId);
+    if (!locked) throw new NotFoundError('Hồ sơ thành tích không tồn tại');
+    await this._assertCanModifyAchievement({
+      status: locked.status,
+      lecturerId: locked.lecturer_id,
+      lecturerUserId: locked.lecturerUserId != null ? Number(locked.lecturerUserId) : null,
+      unitId: locked.unit_id,
+    }, user);
+  }
+
   /**
    * Kiểm tra quyền truy cập/chỉnh sửa của người dùng đối với hồ sơ thành tích
    */
@@ -185,15 +197,14 @@ export class EvidenceService {
     const randomHex = crypto.randomBytes(4).toString('hex');
     const storageKey = `evidences/${year}/ach_${achievementId}_ev_${Date.now()}_v1_${randomHex}${fileMeta.fileExtension}`;
 
-    // Lưu file vào Private Storage trước
-    await this.storage.saveFile(storageKey, file.buffer);
-
     // 6. Thực hiện lưu vào CSDL trong Transaction
     const pool = getPool();
     const client = await pool.connect();
 
     try {
       await client.query('BEGIN');
+      await this._lockWritableAchievement(client, achievementId, user);
+      await this.storage.saveFile(storageKey, file.buffer);
 
       // Tạo bản ghi danh mục minh chứng (app.evidences)
       const evidenceRecord = await this.evidenceRepo.createEvidenceRecord(
@@ -286,16 +297,10 @@ export class EvidenceService {
     const fileMeta = validateUploadedFile(file);
 
     // 4. Xác định version_no tiếp theo
-    const currentMaxVersion = await this.evidenceRepo.getLatestVersionNo(evidenceId);
-    const nextVersionNo = currentMaxVersion + 1;
-
     // 5. Chuẩn bị lưu trữ tệp vật lý
     const year = new Date().getFullYear();
     const randomHex = crypto.randomBytes(4).toString('hex');
-    const storageKey = `evidences/${year}/ach_${evidence.achievementId}_ev_${evidenceId}_v${nextVersionNo}_${randomHex}${fileMeta.fileExtension}`;
-
-    // Lưu tệp vật lý
-    await this.storage.saveFile(storageKey, file.buffer);
+    let storageKey;
 
     // 6. Ghi CSDL trong Transaction
     const pool = getPool();
@@ -303,6 +308,12 @@ export class EvidenceService {
 
     try {
       await client.query('BEGIN');
+      await this._lockWritableAchievement(client, evidence.achievementId, user);
+      const currentEvidence = await this.evidenceRepo.findEvidenceById(evidenceId, client);
+      if (!currentEvidence || currentEvidence.isRemoved) throw new ConflictError('Minh chứng đã bị xóa. Vui lòng tải lại hồ sơ.');
+      const nextVersionNo = (await this.evidenceRepo.getLatestVersionNo(evidenceId, client)) + 1;
+      storageKey = `evidences/${year}/ach_${evidence.achievementId}_ev_${evidenceId}_v${nextVersionNo}_${randomHex}${fileMeta.fileExtension}`;
+      await this.storage.saveFile(storageKey, file.buffer);
 
       const fileRecord = await this.evidenceRepo.createEvidenceFileRecord(
         {
@@ -341,7 +352,7 @@ export class EvidenceService {
     } catch (dbErr) {
       await client.query('ROLLBACK');
       // Dọn file vật lý khi DB thất bại
-      await this.storage.deleteFile(storageKey);
+      if (storageKey) await this.storage.deleteFile(storageKey);
       throw dbErr;
     } finally {
       client.release();
@@ -371,6 +382,9 @@ export class EvidenceService {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+      await this._lockWritableAchievement(client, evidence.achievementId, user);
+      const currentEvidence = await this.evidenceRepo.findEvidenceById(evidenceId, client);
+      if (!currentEvidence || currentEvidence.isRemoved) throw new ConflictError('Minh chứng đã bị xóa. Vui lòng tải lại hồ sơ.');
       const deleted = await this.evidenceRepo.softDeleteEvidence(evidenceId, client);
 
       await this.auditRecorder({

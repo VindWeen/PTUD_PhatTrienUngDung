@@ -49,6 +49,16 @@ export async function listUserRepresentedUnitIds(userId) {
   return result.rows.map((r) => Number(r.unitId));
 }
 
+export async function listDescendantUnitIds(rootIds) {
+  const result = await query(`WITH RECURSIVE units AS (
+    SELECT unit_id FROM app.organization_units WHERE unit_id = ANY($1::bigint[]) AND is_active = TRUE
+    UNION
+    SELECT child.unit_id FROM app.organization_units child JOIN units parent ON child.parent_id = parent.unit_id
+    WHERE child.is_active = TRUE
+  ) SELECT unit_id FROM units`, [rootIds]);
+  return result.rows.map(row => Number(row.unit_id));
+}
+
 export async function findAchievementById(id, client = null) {
   const runQuery = client ? client.query.bind(client) : query;
   const result = await runQuery(
@@ -303,6 +313,9 @@ export async function listAchievements({ filters = {}, limit = 10, offset = 0, s
            a.academic_year_id AS "academicYearId",
            ay.code AS "academicYearCode",
            a.status AS "status",
+           a.created_by AS "createdBy",
+           a.submitted_by AS "submittedBy",
+           l.user_id AS "lecturerUserId",
            a.version AS "version",
            a.created_at AS "createdAt",
            a.updated_at AS "updatedAt",
@@ -348,6 +361,9 @@ export async function listAchievements({ filters = {}, limit = 10, offset = 0, s
       academicYearId: r.academicYearId ? Number(r.academicYearId) : null,
       academicYearCode: r.academicYearCode,
       status: r.status,
+      createdBy: r.createdBy != null ? Number(r.createdBy) : null,
+      submittedBy: r.submittedBy != null ? Number(r.submittedBy) : null,
+      lecturerUserId: r.lecturerUserId != null ? Number(r.lecturerUserId) : null,
       evidenceCount: Number(r.evidenceCount),
       latestRevisionNo: Number(r.latestRevisionNo),
       version: Number(r.version),
@@ -662,6 +678,7 @@ export async function listSubmissions(achievementId) {
 }
 
 export default {
+  listDescendantUnitIds,
   listActiveTypes,
   findLecturerByUserId,
   findActiveRepresentative,

@@ -16,8 +16,8 @@ export const aiEvaluationApi = {
   /**
    * Danh sách lịch sử các phiên đánh giá
    */
-  listEvaluationRuns: (params = {}) =>
-    request({ method: 'GET', url: '/ai/evaluations', params }),
+  listEvaluationRuns: (params = {}, fresh = false) =>
+    request({ method: 'GET', url: '/ai/evaluations', params, fresh }),
 
   /**
    * Kiểm tra tính stale của phiên đánh giá

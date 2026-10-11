@@ -19,7 +19,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { reportsApi } from '../services/reportsApi.js';
 import { USE_FIXTURES } from '../services/apiConfig.js';
-import { ErrorState, LoadingState } from '../components/common/AsyncState';
+import { ErrorState, LoadingState, Skeleton } from '../components/common/AsyncState';
 
 const initial = {
   kind: '',
@@ -69,10 +69,11 @@ export default function Reports({ dashboard = false }) {
   const [filters, setFilters] = useState(initial);
   const [page, setPage] = useState(1);
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!USE_FIXTURES);
   const [error, setError] = useState(null);
   const [exporting, setExporting] = useState(false);
   const [reload, setReload] = useState(0);
+  const handledReload = React.useRef(0);
 
   const roles = (user?.roles || []).map((r) => (typeof r === 'string' ? r : r.code));
   const canExport = roles.some((r) =>
@@ -84,8 +85,10 @@ export default function Reports({ dashboard = false }) {
     if (USE_FIXTURES) return undefined;
     setLoading(true);
     setError(null);
+    const fresh = reload !== handledReload.current;
+    handledReload.current = reload;
     reportsApi
-      .list({ ...clean(filters), page, pageSize: 20 }, dashboard)
+      .list({ ...clean(filters), page, pageSize: 20 }, dashboard, fresh)
       .then((result) => {
         if (current) setData(result);
       })
@@ -144,6 +147,10 @@ export default function Reports({ dashboard = false }) {
           </div>
         </div>
 
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+        <button type="button" disabled={loading} onClick={() => setReload((value) => value + 1)} className="soft-btn-secondary text-sm">
+          <RotateCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Làm mới
+        </button>
         {canExport && (
           <button
             type="button"
@@ -155,6 +162,7 @@ export default function Reports({ dashboard = false }) {
             <span>{exporting ? 'Đang xuất CSV...' : 'Xuất Báo Cáo CSV'}</span>
           </button>
         )}
+        </div>
       </div>
 
       {USE_FIXTURES ? (
@@ -172,7 +180,7 @@ export default function Reports({ dashboard = false }) {
       ) : (
         <>
           {/* 2. Metric Cards (Matching Dashboard soft pastel cards) */}
-          {data && (
+          {(
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 {
@@ -208,7 +216,7 @@ export default function Reports({ dashboard = false }) {
                   pillBg: 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300',
                 },
               ].map(({ kind, subject, title, icon: Icon, iconBox, pillBg }) => {
-                const s = data.summary?.find(
+                const s = data?.summary?.find(
                   (v) => v.kind === kind && v.subject_type === subject
                 );
                 return (
@@ -227,7 +235,7 @@ export default function Reports({ dashboard = false }) {
 
                     <div className="mt-3 flex items-baseline gap-2">
                       <span className="text-3xl font-extrabold text-slate-900 dark:text-white">
-                        {s?.valid_count || 0}
+                        {loading ? <Skeleton className="h-9 w-16" /> : data ? s?.valid_count || 0 : '—'}
                       </span>
                       <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                         Hợp lệ
@@ -236,9 +244,9 @@ export default function Reports({ dashboard = false }) {
 
                     <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                       <span className={`px-2 py-0.5 rounded-md font-semibold text-[11px] ${pillBg}`}>
-                        {s?.distinct_years || 0} năm ghi nhận
+                        {loading ? <Skeleton className="h-4 w-24" /> : data ? `${s?.distinct_years || 0} năm ghi nhận` : '—'}
                       </span>
-                      <span>Tổng: {s?.total || 0}</span>
+                      <span>{loading ? <Skeleton className="h-4 w-16" /> : data ? `Tổng: ${s?.total || 0}` : 'Tổng: —'}</span>
                     </div>
                   </div>
                 );

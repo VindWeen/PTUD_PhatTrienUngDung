@@ -42,6 +42,7 @@ export default function AIForecast() {
   const [availableCriteria, setAvailableCriteria] = useState([]);
   const [criteriaError, setCriteriaError] = useState(null);
   const [loadingCriteria, setLoadingCriteria] = useState(true);
+  const [criteriaRevision, setCriteriaRevision] = useState(0);
   const [selectedCriteriaIds, setSelectedCriteriaIds] = useState([]);
 
   // Live Evaluation State
@@ -83,9 +84,11 @@ export default function AIForecast() {
   // Load criteria list from backend
   useEffect(() => {
     let isMounted = true;
+    setLoadingCriteria(true);
+    setCriteriaError(null);
     async function loadCriteria() {
       try {
-        const res = await aiEvaluationApi.listCriteria({ limit: 50 });
+        const res = await aiEvaluationApi.listCriteria();
         const items = res?.items || res?.data || (Array.isArray(res) ? res : []);
         if (isMounted) {
           setAvailableCriteria(items);
@@ -101,16 +104,16 @@ export default function AIForecast() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [criteriaRevision]);
 
   // Fetch History Runs
-  const loadHistory = useCallback(async () => {
+  const loadHistory = useCallback(async (fresh = true) => {
     setLoadingHistory(true);
     setHistoryError(null);
     try {
       const params = {};
       if (historyFilterType) params.subjectType = historyFilterType;
-      const res = await aiEvaluationApi.listEvaluationRuns(params);
+      const res = await aiEvaluationApi.listEvaluationRuns(params, fresh);
       const runs = res?.items || res?.data || (Array.isArray(res) ? res : []);
       setHistoryRuns(runs);
     } catch (err) {
@@ -122,7 +125,7 @@ export default function AIForecast() {
 
   useEffect(() => {
     if (activeTab === 'history') {
-      loadHistory();
+      loadHistory(false);
     }
   }, [activeTab, loadHistory]);
 
@@ -311,7 +314,7 @@ export default function AIForecast() {
                     onClick={() => setSubjectType('LECTURER')}
                     className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition-all ${
                       subjectType === 'LECTURER'
-                        ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900'
+                        ? 'bg-[#008080] text-white border-[#008080]'
                         : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                     }`}
                   >
@@ -323,7 +326,7 @@ export default function AIForecast() {
                     onClick={() => setSubjectType('UNIT')}
                     className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition-all ${
                       subjectType === 'UNIT'
-                        ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900'
+                        ? 'bg-[#008080] text-white border-[#008080]'
                         : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                     }`}
                   >
@@ -382,8 +385,8 @@ export default function AIForecast() {
               </div>
             </div>
 
-            {loadingCriteria && <LoadingState message="Đang tải tiêu chí..." />}
-            {criteriaError && <p role="alert">Không tải được tiêu chí. Kiểm tra kết nối và tải lại trang.</p>}
+            {loadingCriteria && <LoadingState label="Đang tải tiêu chí..." layout="cards" rows={3} />}
+            {criteriaError && <ErrorState error={criteriaError} onRetry={() => setCriteriaRevision((value) => value + 1)} />}
             {!loadingCriteria && !criteriaError && !availableCriteria.length && <p role="status">Chưa có tiêu chí xác nhận. Liên hệ cán bộ quản lý quy chế.</p>}
             {/* Criteria Selection */}
             <div>
@@ -447,9 +450,10 @@ export default function AIForecast() {
 
           {/* Error Banner */}
           {evalError && <ErrorState error={evalError} onRetry={handleRunEvaluation} />}
+          {evaluating && <LoadingState label="Đang phân tích hồ sơ..." layout="cards" rows={3} />}
 
           {/* Evaluation Run Result Display */}
-          {currentRun && (
+          {!evaluating && currentRun && (
             <article className="soft-card p-6 space-y-6">
               {/* Header result info */}
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">

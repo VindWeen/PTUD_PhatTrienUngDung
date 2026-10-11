@@ -12,21 +12,29 @@ export default function Organizations() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const selectionSequence = React.useRef(0);
 
-  const load = useCallback(async () => {
+  const choose = useCallback(async (id, fresh = false) => {
+    const sequence = ++selectionSequence.current;
+    setBusy(true); setError(null);
+    try {
+      const profile = await organizationsApi.getProfile(id, fresh);
+      if (sequence === selectionSequence.current) setSelected(profile);
+    } catch (e) { if (sequence === selectionSequence.current) setError(e); }
+    finally { if (sequence === selectionSequence.current) setBusy(false); }
+  }, []);
+
+  const load = useCallback(async (fresh = true) => {
     setLoading(true); setError(null);
     try {
-      const list = await organizationsApi.list();
+      const list = await organizationsApi.list(fresh);
       setUnits(list || []);
-      if (list?.length) setSelected(await organizationsApi.getProfile(list[0].unitId));
+      setSelected(null);
+      setLoading(false);
+      if (list?.length) await choose(list[0].unitId, fresh);
     } catch (e) { setError(e); } finally { setLoading(false); }
-  }, []);
-  useEffect(() => { load(); }, [load]);
-
-  const choose = async (id) => {
-    setBusy(true); setError(null);
-    try { setSelected(await organizationsApi.getProfile(id)); } catch (e) { setError(e); } finally { setBusy(false); }
-  };
+  }, [choose]);
+  useEffect(() => { load(false); }, [load]);
   const remove = async () => {
     if (!selected || !window.confirm(`Xóa đơn vị ${selected.name}?`)) return;
     setBusy(true); setError(null);
@@ -68,10 +76,6 @@ export default function Organizations() {
     try { await organizationsApi.transferLecturer(lecturerId, { unitId: selected.unitId, effectiveAt: new Date().toISOString() }); setSelected(await organizationsApi.getProfile(selected.unitId)); } catch (e) { setError(e); } finally { setBusy(false); }
   };
 
-  if (loading) return <LoadingState label="Đang tải cơ cấu tổ chức..." />;
-  if (error && !units.length) return <ErrorState error={error} onRetry={load} />;
-  if (!units.length) return <EmptyState message="Chưa có đơn vị tổ chức." />;
-
   return <div className="space-y-6">
     <header className="flex items-center justify-between">
       <div><h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">Tổ chức & Tập thể</h1><p className="text-sm text-slate-500 mt-1">Hồ sơ đơn vị, đại diện và cơ cấu trực thuộc</p></div>
@@ -81,12 +85,14 @@ export default function Organizations() {
     <div className="grid lg:grid-cols-3 gap-6">
       <section className="soft-card p-5 space-y-2">
         <h2 className="font-bold mb-3">Danh sách đơn vị</h2>
+        {loading && <LoadingState label="Đang tải cơ cấu tổ chức..." rows={4} />}
+        {!loading && !units.length && !error && <EmptyState message="Chưa có đơn vị tổ chức." />}
         {units.map((unit) => <button key={unit.unitId} onClick={() => choose(unit.unitId)} className={`w-full text-left p-3 rounded-xl border ${selected?.unitId === unit.unitId ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30' : 'border-slate-200 dark:border-slate-700'}`}>
           <span className="flex items-center gap-2 font-semibold"><Building2 className="w-4 h-4" />{unit.name}</span><span className="text-xs text-slate-500">{unit.code} · {unit.type}</span>
         </button>)}
       </section>
       <section className="soft-card p-6 lg:col-span-2">
-        {busy ? <LoadingState label="Đang tải hồ sơ đơn vị..." /> : selected ? <div className="space-y-5">
+        {loading || busy ? <LoadingState label="Đang tải hồ sơ đơn vị..." /> : selected ? <div className="space-y-5">
           <div className="flex justify-between gap-3"><div><h2 className="text-xl font-bold">{selected.name}</h2><p className="text-sm text-slate-500">{selected.code} · {selected.type}</p></div>{canManage && <div className="flex flex-wrap justify-end gap-2"><button onClick={editUnit} className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800">Sửa</button><button onClick={remove} disabled={busy} className="px-3 py-2 rounded-xl text-rose-600 bg-rose-50 flex items-center gap-2"><Trash2 className="w-4 h-4" />Xóa</button></div>}</div>
           <p className="text-sm">{selected.description || 'Chưa có mô tả hồ sơ đơn vị.'}</p>
           <dl className="grid sm:grid-cols-2 gap-4 text-sm"><div><dt className="text-slate-500">Đơn vị cha</dt><dd className="font-semibold">{selected.parentUnit?.name || 'Không có'}</dd></div><div><dt className="text-slate-500">Số giảng viên hiện tại</dt><dd className="font-semibold">{selected.lecturersCount ?? 0}</dd></div><div><dt className="text-slate-500">Đại diện hiện tại</dt><dd className="font-semibold">{selected.representative?.displayName || 'Chưa phân công'}</dd></div><div><dt className="text-slate-500">Thành tích xác nhận</dt><dd className="font-semibold">{selected.stats?.verifiedAchievements ?? 0}</dd></div></dl>

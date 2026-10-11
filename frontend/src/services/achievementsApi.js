@@ -8,8 +8,8 @@ const fixtureWriteError = () =>
   );
 
 export const achievementsApi = {
-  list: (params = {}) =>
-    USE_FIXTURES ? fixtureClient.listAchievements(params) : request({ method: 'GET', url: '/achievements', params }),
+  list: (params = {}, fresh = false) =>
+    USE_FIXTURES ? fixtureClient.listAchievements(params) : request({ method: 'GET', url: '/achievements', params, fresh }),
 
   getById: (id) =>
     USE_FIXTURES ? fixtureClient.getAchievementById(id) : request({ method: 'GET', url: `/achievements/${id}` }),

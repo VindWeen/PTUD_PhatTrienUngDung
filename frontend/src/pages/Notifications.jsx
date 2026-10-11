@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { LoadingState } from '../components/common/AsyncState';
 import {
   BellRing,
   Check,
@@ -193,14 +194,7 @@ export default function Notifications() {
 
       {/* Loading Skeleton */}
       {busy && !result && (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-20 animate-pulse rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700"
-            />
-          ))}
-        </div>
+        <LoadingState label="Đang tải thông báo..." rows={3} />
       )}
 
       {/* Empty State */}

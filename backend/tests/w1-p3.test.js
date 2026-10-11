@@ -17,6 +17,22 @@ test('chặn sửa hồ sơ của người khác kể cả khi gọi thẳng ser
   await assert.rejects(() => service.updateProfile(1, 10, { version: 1 }), (error) => error.code === 'PROFILE_OWNER_REQUIRED');
 });
 
+test('hồ sơ cá nhân giữ đầy đủ thông tin và thống kê khi đọc trực tiếp theo user', async () => {
+  const lecturer = { lecturerId: 10, userId: 2, fullName: 'Giảng viên', email: 'lecturer@example.test', version: 3 };
+  const service = createProfileService({
+    findLecturerByUserId: async () => lecturer,
+    getWorkHistory: async () => [],
+    getTitlesAndHonors: async () => [{ awardRecordId: 7 }],
+    getProfileStats: async () => ({ verifiedAchievements: 4 }),
+  });
+  const profile = await service.getOwnProfile(2);
+  assert.equal(profile.fullName, lecturer.fullName);
+  assert.equal(profile.email, lecturer.email);
+  assert.equal(profile.version, 3);
+  assert.equal(profile.titlesAndHonors[0].awardRecordId, 7);
+  assert.equal(profile.stats.verifiedAchievements, 4);
+});
+
 test('chặn chọn đơn vị con làm cha', async () => {
   const service = createOrganizationService({
     findUnit: async () => ({ unitId: 1 }),

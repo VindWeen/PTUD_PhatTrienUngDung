@@ -122,5 +122,6 @@ export const queryCriteriaSchema = z.object({
   asOfDate: dateString.optional(),
   versionId: z.coerce.number().int().positive().optional(),
   targetType: targetTypeEnum.optional(),
-  confirmedOnly: z.coerce.boolean().optional().default(true), // Mặc định chỉ trả về tiêu chí đã duyệt
+  confirmedOnly: z.preprocess((value) => value === 'true' ? true : value === 'false' ? false : value,
+    z.boolean().optional().default(true)), // Parse query strings without treating "false" as true.
 }).strict();
