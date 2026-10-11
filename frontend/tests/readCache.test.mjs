@@ -54,7 +54,7 @@ test('a response started before manual refresh cannot overwrite its replacement'
 });
 
 test('each page, filter and pagination has an isolated cache key', () => {
-  for (const url of ['/achievements', '/achievements/1/history', '/kpi/goals', '/kpi/catalogs', '/kpi/recommendations', '/award-cycles', '/award-applications', '/reports', '/notifications', '/ai/evaluations', '/ai/evaluations/1', '/award-records']) {
+  for (const url of ['/admin/users', '/admin/roles', '/admin/scopes', '/admin/user-roles', '/admin/representatives', '/admin/academic-years', '/admin/achievement-types', '/admin/award-types', '/achievements', '/achievements/1/history', '/kpi/goals', '/kpi/catalogs', '/kpi/recommendations', '/award-cycles', '/award-applications', '/reports', '/notifications', '/ai/evaluations', '/ai/evaluations/1', '/award-records']) {
     assert.ok(readCacheKey({ url }), url);
   }
   const key = readCacheKey({ url: '/reports', params: { page: 1, search: 'test', subjectType: undefined } });

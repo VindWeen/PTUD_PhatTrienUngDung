@@ -1,3 +1,4 @@
+import { useAuth } from '../context/AuthContext';
 import UnderlineTabs from '../components/common/UnderlineTabs';
 import PageHeader from '../components/common/PageHeader';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -49,6 +50,22 @@ const labels = {
 };
 
 export default function Kpi() {
+  const { hasRole } = useAuth();
+  const personalAccess = hasRole('LECTURER') || hasRole('UNIT_REPRESENTATIVE');
+  return hasRole('ADMIN') && !personalAccess ? <AdminKpi /> : <PersonalKpi />;
+}
+
+function AdminKpi() {
+  const [revision, setRevision] = useState(0);
+  const [busy, setBusy] = useState(true);
+  return <div className="space-y-6 animate-fadeIn pb-12">
+    <PageHeader title="Mục tiêu / KPI" description="Quản lý ánh xạ mã nhân viên, đồng bộ nguồn KPI và theo dõi nhật ký tích hợp." icon={Target} onRefresh={() => setRevision(value => value + 1)} refreshing={busy} />
+    <div className="soft-card p-5 text-sm text-slate-600 dark:text-slate-300">Bạn đang ở chế độ quản trị nguồn KPI. Mục tiêu cá nhân và tập thể được quản lý bởi giảng viên hoặc đại diện có phân công còn hiệu lực.</div>
+    <ExternalKpi autoLoad refreshKey={revision} onBusyChange={setBusy} />
+  </div>;
+}
+
+function PersonalKpi() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const loadSequence = React.useRef(0);

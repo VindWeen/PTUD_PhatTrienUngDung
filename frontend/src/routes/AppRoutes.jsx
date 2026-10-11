@@ -43,7 +43,7 @@ export default function AppRoutes() {
         <Route element={<MainLayout />}>
           <Route index element={<Navigate to={landing} replace />} />
           <Route path="notifications" element={<Notifications />} />
-          <Route path="kpi" element={<RequireRole roles={['LECTURER', 'UNIT_REPRESENTATIVE']}><Kpi /></RequireRole>} />
+          <Route path="kpi" element={<RequireRole roles={['LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN']}><Kpi /></RequireRole>} />
           <Route path="reports" element={<RequireRole roles={APP_ROLES}><Reports /></RequireRole>} />
           <Route path="me/dashboard" element={<RequireRole roles={APP_ROLES}><Dashboard /></RequireRole>} />
           <Route path="me/profile" element={<RequireRole roles={PROFILE_ROLES}><ProfilePortfolio /></RequireRole>} />

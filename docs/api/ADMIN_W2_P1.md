@@ -1,5 +1,7 @@
 # W2-P1 — Tài khoản, phân công và danh mục
 
+Ghi chú cập nhật: xem [Tài khoản, vai trò và phạm vi quản lý](../requirements/ACCOUNT_ROLES_AND_SCOPES.md) cho mô hình hiện tại. Code đã hỗ trợ scope `COUNCIL` bên cạnh `MANAGER` và `RECORDS_OFFICER`; các mô tả giới hạn hai vai trò bên dưới phản ánh thời điểm W2-P1.
+
 Phụ trách: Võ Nhạc Phước. Bàn giao ngày 02/10/2026 (Asia/Saigon).
 
 ## Quyết định và phụ thuộc

@@ -1,5 +1,7 @@
 # W6-P2 — Hướng dẫn sử dụng cuối theo vai trò
 
+Xem [Tài khoản, vai trò và phạm vi quản lý](requirements/ACCOUNT_ROLES_AND_SCOPES.md) để hiểu một tài khoản có nhiều vai trò/phạm vi, cách cấp phân công và điều kiện hiệu lực.
+
 Dùng API mode và DB demo riêng. Tất cả dữ liệu seed là dữ liệu mẫu, không dùng làm hồ sơ thật. Mật khẩu seed chung `demo1234` đã kiểm bằng HTTP; không sử dụng cho public/production. Đăng xuất khi đổi vai trò; không chia sẻ token. Menu ẩn không thay thế kiểm tra quyền/trạng thái tại backend.
 
 ## Ba thuật ngữ cần phân biệt
