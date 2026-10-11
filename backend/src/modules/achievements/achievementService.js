@@ -23,6 +23,12 @@ export function createAchievementService(
     notify = notifyStatusChanged,
   } = {}
 ) {
+  async function listCatalogs(user) {
+    const active = (await roles(user.userId)).map(r => typeof r === 'string' ? r : r.Code || r.code);
+    if (!active.some(r => ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'].includes(r)))
+      throw new ForbiddenError('Không có quyền đọc danh mục thành tích');
+    return repo.listActiveTypes();
+  }
   async function getUserRoles(user) {
     if (user?.userId) {
       try {
@@ -1044,6 +1050,7 @@ export function createAchievementService(
   }
 
   return {
+    listCatalogs,
     listAchievements,
     getAchievementById,
     createAchievement,
