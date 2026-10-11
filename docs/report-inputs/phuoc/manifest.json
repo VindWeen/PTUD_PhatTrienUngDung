@@ -1,0 +1,222 @@
+{
+  "task": "W6-P4",
+  "owner": "Võ Nhạc Phước",
+  "generatedAt": "2026-10-11T11:10:08.807Z",
+  "checkoutCommit": "460c5bd6976330789a01aa9d700d833c32d5b3a5",
+  "releaseRecordCommit": "afd237763d903f990fc1b84f9aab9c1489eac404",
+  "releaseTagPresent": false,
+  "acceptance": "BLOCKED_RELEASE_ALIGNMENT",
+  "w6p3": {
+    "commit": "3cb8789bf800678d5101f29cfff44584b4004ec6",
+    "integrated": false,
+    "recordingBaseline": "2774075b319964a9fd4839070a428bd4fe667a09",
+    "sourceCompatibility": [
+      {
+        "path": "scripts/w6-p3-video.mjs",
+        "sha256": "dcfb9e6556c99420da4d34086f6e05c037ef9a0ef1ad71cd0ec93c5fd2e71091",
+        "matchesCheckout": false
+      },
+      {
+        "path": "scripts/w6-p3-recorder.mjs",
+        "sha256": "8ddf5dd26e21671fe2b284d1466b2946781952abee759b8cf9eb803a9e73038e",
+        "matchesCheckout": false
+      },
+      {
+        "path": "backend/tests/w5-p3.integration.js",
+        "sha256": "08150e75bcaac2a3117b5456d09755c2e2e6219adc91c58a5aec5e1c332b0aac",
+        "matchesCheckout": false
+      },
+      {
+        "path": "frontend/src/services/awardsApi.js",
+        "sha256": "654160835e9561ac6573133e1d1189485b7e04a6ffbc0d04f541f7eebb7c7ee9",
+        "matchesCheckout": false
+      },
+      {
+        "path": "frontend/src/pages/AwardApplications.jsx",
+        "sha256": "e665a02080b7cc33438dcaca34276a24e9245215f35c558bda7aa8147e803b8b",
+        "matchesCheckout": true
+      },
+      {
+        "path": "frontend/src/pages/Awards.jsx",
+        "sha256": "8653b166b0f9fd179189e399d17abb06a45f3197c65b2ccb9abbef64d207a3dc",
+        "matchesCheckout": true
+      },
+      {
+        "path": "frontend/src/pages/Achievements.jsx",
+        "sha256": "3e7c823c502a0788c577bf7a1b231aa6e59872a10d22752cceeef569a4ea5efc",
+        "matchesCheckout": true
+      }
+    ]
+  },
+  "dependencySources": [
+    {
+      "path": "docs/testing/w6-p3/README.md",
+      "copy": "docs/report-inputs/phuoc/dependency-w6-p3/README.md",
+      "sha256": "94249ee622367f93362a1065dba8a0c1f2a722353ed853670b6f64cb9c88ab36",
+      "status": "OTHER_BRANCH_HISTORICAL"
+    },
+    {
+      "path": "docs/testing/w6-p3/REVIEW_RELEASE.md",
+      "copy": "docs/report-inputs/phuoc/dependency-w6-p3/REVIEW_RELEASE.md",
+      "sha256": "c833a7441a1e501bbae3078d31292755685b6f915c0d904890a383fbff5365d5",
+      "status": "OTHER_BRANCH_HISTORICAL"
+    },
+    {
+      "path": "docs/testing/w6-p3/TIMELINE.md",
+      "copy": "docs/report-inputs/phuoc/dependency-w6-p3/TIMELINE.md",
+      "sha256": "bb7a58b4e85e3fe1d3ac998efcc0ec19a786e33aa2305df638b44a8a8591ff91",
+      "status": "OTHER_BRANCH_HISTORICAL"
+    },
+    {
+      "path": "docs/testing/w6-p3/prs.json",
+      "copy": "docs/report-inputs/phuoc/dependency-w6-p3/prs.json",
+      "sha256": "3769ee2c7868023e421f94332c2d3c18d69c20c471fbf1e401c1c1fb916d982d",
+      "status": "OTHER_BRANCH_HISTORICAL"
+    },
+    {
+      "path": "docs/testing/w6-p3/evidence-manifest.json",
+      "copy": "docs/report-inputs/phuoc/dependency-w6-p3/evidence-manifest.json",
+      "sha256": "59362ef19b3886f95744d19f10869e90fbeaa77808db8b8b5bd0024d7920f37e",
+      "status": "OTHER_BRANCH_HISTORICAL"
+    }
+  ],
+  "assets": [
+    {
+      "source": "docs/report-inputs/RELEASE_RECORD_W6Q3.json",
+      "sha256": "e1966f92e878e5c80165d5c251b3db842fb11aca4f64463f64a9de80d97d2b90",
+      "status": "HISTORICAL_OR_CONTRACT"
+    },
+    {
+      "source": "docs/report-inputs/KNOWN_LIMITATIONS_W6Q3.md",
+      "sha256": "0b01e4b23a8b52a56b9933e81408c5f76e358edfc19994e7f7abbfe329a20843",
+      "status": "HISTORICAL_OR_CONTRACT"
+    },
+    {
+      "source": "docs/report-inputs/quang/TECHNICAL_HANDOFF_W6Q4.md",
+      "sha256": "d3f90c5c6a556c528c1103afc1bdc3a0702fb30fc17ae0063335fe1b8448d546",
+      "status": "HISTORICAL_OR_CONTRACT"
+    },
+    {
+      "source": "docs/testing/w5-p1/load-result.json",
+      "sha256": "41bfbdf36ef224ff543cbace29b2227e2db44bfee769cb14b17c4d6874754cfe",
+      "status": "HISTORICAL_OR_CONTRACT"
+    },
+    {
+      "source": "docs/testing/w5-p1/overlapping-load-result.json",
+      "sha256": "743d96850fd143f19546d3b023946167888bcec35ca84805d1324e34c33170e8",
+      "status": "HISTORICAL_OR_CONTRACT"
+    },
+    {
+      "source": "docs/testing/w5-p1/browser-result.json",
+      "sha256": "2f166baf28828d7452c0a590a93d7b7f37f5829b5923d17f74b201d5c7318780",
+      "status": "HISTORICAL_OR_CONTRACT"
+    },
+    {
+      "source": "docs/ai/recommender-eval/results.json",
+      "sha256": "cb5c4ba3a6a747d90eac1832a074f60a88a7a484827a3235630dd10ce040a1be",
+      "status": "HISTORICAL_OR_CONTRACT"
+    },
+    {
+      "source": "docs/ai/evaluation/evaluation_run_results.json",
+      "sha256": "1a1a8005b31c3027ec1228da20e178966715c29739f46f7759dfa746548b85fe",
+      "status": "HISTORICAL_OR_CONTRACT"
+    },
+    {
+      "source": "docs/ai/evaluation/holdout_dataset.json",
+      "sha256": "ea437e0ab9d80f9e30c469f94763b8957c25b656f294d04f5e756fd0c2838644",
+      "status": "HISTORICAL_OR_CONTRACT"
+    },
+    {
+      "source": "scripts/w5-q2-eval.mjs",
+      "sha256": "d254957f9d8c1c361c912d67d82c9c735968799caf9bdbdf6b910826d9727e5f",
+      "status": "HISTORICAL_OR_CONTRACT"
+    },
+    {
+      "source": "frontend/src/services/kpiApi.js",
+      "sha256": "6688e6092f5769a9d64f23aa9a0b4943f5801b4b995f60eb8853a5f8de209826",
+      "status": "HISTORICAL_OR_CONTRACT"
+    },
+    {
+      "source": "backend/src/modules/kpi/recommendationService.js",
+      "sha256": "b2744349e5306e59944fb74eb012d14578e7f813f1ad9fb1b4782d8d44db4d4b",
+      "status": "HISTORICAL_OR_CONTRACT"
+    },
+    {
+      "source": "output/w6-p3/recording-result.json",
+      "sha256": "7424467a50dd585b5c286626cc1b1a78859ef48e64062ef4eec3aab3b24a0fc9",
+      "status": "HISTORICAL_OR_CONTRACT"
+    },
+    {
+      "source": "output/w6-p3/images/reports.png",
+      "copy": "docs/report-inputs/phuoc/images/reports.png",
+      "bytes": 105279,
+      "sha256": "aa5b79e283c8f6e6746d6dfd9f6b384f2b60d35c3887ad786b10290f5d9b4679",
+      "status": "SYNTHETIC_REAL_API_OTHER_BRANCH_NOT_RELEASE"
+    },
+    {
+      "source": "output/w6-p3/images/verified.png",
+      "copy": "docs/report-inputs/phuoc/images/verified.png",
+      "bytes": 66967,
+      "sha256": "edddc1f15f728ea80a4c702cb85c24f55f0d6a5e44687a6e9c19f94f227f2529",
+      "status": "SYNTHETIC_REAL_API_OTHER_BRANCH_NOT_RELEASE"
+    },
+    {
+      "source": "output/w6-p3/images/recommended.png",
+      "copy": "docs/report-inputs/phuoc/images/recommended.png",
+      "bytes": 92998,
+      "sha256": "7c80612b6d4ba2a70f35b3171be02d1fc29b962e4aeb01aa8bb28f45130df9f7",
+      "status": "SYNTHETIC_REAL_API_OTHER_BRANCH_NOT_RELEASE"
+    },
+    {
+      "source": "output/w6-p3/images/recorded.png",
+      "copy": "docs/report-inputs/phuoc/images/recorded.png",
+      "bytes": 82534,
+      "sha256": "f89107b0db855a18c858c85491fd34d82ca8e21342b142484828d2620e7f181d",
+      "status": "SYNTHETIC_REAL_API_OTHER_BRANCH_NOT_RELEASE"
+    },
+    {
+      "source": "output/w6-p3/images/wrong-role.png",
+      "copy": "docs/report-inputs/phuoc/images/wrong-role.png",
+      "bytes": 28480,
+      "sha256": "a84e8ea415371453db7eed227209b7172a679d17fd20d53f5758d1d23a548a93",
+      "status": "SYNTHETIC_REAL_API_OTHER_BRANCH_NOT_RELEASE"
+    },
+    {
+      "source": "output/w6-p3/images/occ.png",
+      "copy": "docs/report-inputs/phuoc/images/occ.png",
+      "bytes": 91923,
+      "sha256": "a47dbf979de6dc007862d3f80885f2feee651526410b1d2fd37f9b8c48dabc5c",
+      "status": "SYNTHETIC_REAL_API_OTHER_BRANCH_NOT_RELEASE"
+    },
+    {
+      "source": "docs/report-inputs/phuoc/performance.json",
+      "sha256": "d93ecf7dd19462ccd7d4c9b333aba36027cfb6e8f174b12b74cae2a6dcaf8633",
+      "status": "DERIVED_FROM_HISTORICAL_SAMPLES"
+    },
+    {
+      "source": "docs/report-inputs/phuoc/dependency-w6-p3/README.md",
+      "sha256": "94249ee622367f93362a1065dba8a0c1f2a722353ed853670b6f64cb9c88ab36",
+      "status": "OTHER_BRANCH_HISTORICAL"
+    },
+    {
+      "source": "docs/report-inputs/phuoc/dependency-w6-p3/REVIEW_RELEASE.md",
+      "sha256": "c833a7441a1e501bbae3078d31292755685b6f915c0d904890a383fbff5365d5",
+      "status": "OTHER_BRANCH_HISTORICAL"
+    },
+    {
+      "source": "docs/report-inputs/phuoc/dependency-w6-p3/TIMELINE.md",
+      "sha256": "bb7a58b4e85e3fe1d3ac998efcc0ec19a786e33aa2305df638b44a8a8591ff91",
+      "status": "OTHER_BRANCH_HISTORICAL"
+    },
+    {
+      "source": "docs/report-inputs/phuoc/dependency-w6-p3/prs.json",
+      "sha256": "3769ee2c7868023e421f94332c2d3c18d69c20c471fbf1e401c1c1fb916d982d",
+      "status": "OTHER_BRANCH_HISTORICAL"
+    },
+    {
+      "source": "docs/report-inputs/phuoc/dependency-w6-p3/evidence-manifest.json",
+      "sha256": "59362ef19b3886f95744d19f10869e90fbeaa77808db8b8b5bd0024d7920f37e",
+      "status": "OTHER_BRANCH_HISTORICAL"
+    }
+  ]
+}

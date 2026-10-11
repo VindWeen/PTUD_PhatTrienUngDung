@@ -1,0 +1,73 @@
+{
+  "label": "HISTORICAL SYNTHETIC; NOT MEASURED ON RELEASE",
+  "load": {
+    "startedAt": "2026-10-08T15:09:47.610Z",
+    "synthetic": true,
+    "concurrency": 10,
+    "machine": {
+      "os": "Windows_NT",
+      "release": "10.0.22621",
+      "cpu": "11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz",
+      "logicalCpus": 12,
+      "ramGiB": 16,
+      "node": "v20.20.1"
+    },
+    "dataset": {
+      "lecturers": 100,
+      "units": 10,
+      "achievements": 5000,
+      "years": 7
+    },
+    "measurements": [
+      {
+        "path": "/achievements?pageSize=20",
+        "requests": 200,
+        "p95Ms": 1650.7803999999996,
+        "targetMet": true,
+        "recomputedP95Ms": 1650.7803999999996
+      },
+      {
+        "path": "/dashboard/summary",
+        "requests": 200,
+        "p95Ms": 2078.417699999998,
+        "targetMet": false,
+        "recomputedP95Ms": 2078.417699999998
+      }
+    ]
+  },
+  "overlapping": {
+    "startedAt": "2026-10-08T14:57:55.234Z",
+    "synthetic": true,
+    "concurrency": 10,
+    "machine": {
+      "os": "Windows_NT",
+      "release": "10.0.22621",
+      "cpu": "11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz",
+      "logicalCpus": 12,
+      "ramGiB": 16,
+      "node": "v20.20.1"
+    },
+    "dataset": {
+      "lecturers": 100,
+      "units": 10,
+      "achievements": 5000,
+      "years": 7
+    },
+    "measurements": [
+      {
+        "path": "/achievements?pageSize=20",
+        "requests": 200,
+        "p95Ms": 2167.015800000001,
+        "targetMet": false,
+        "recomputedP95Ms": 2167.015800000001
+      },
+      {
+        "path": "/dashboard/summary",
+        "requests": 200,
+        "p95Ms": 2873.548900000009,
+        "targetMet": false,
+        "recomputedP95Ms": 2873.548900000009
+      }
+    ]
+  }
+}
