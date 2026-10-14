@@ -7,6 +7,8 @@ import {
   ConflictError,
 } from "../../utils/errors.js";
 
+const readRoles = Symbol("requestReadRoles");
+
 const id = z.coerce.number().int().positive().safe();
 const ids = z
   .array(id)
@@ -162,7 +164,7 @@ export class ApplicationService extends AwardService {
   }
   async roleCodes(user) {
     if (!user?.userId) throw new ForbiddenError();
-    return (await this.roles(user.userId)).map((r) =>
+    return (await (user[readRoles] || this.roles(user.userId))).map((r) =>
       typeof r === "string" ? r : r.Code || r.code,
     );
   }
@@ -497,20 +499,20 @@ export class ApplicationService extends AwardService {
     });
   }
   async detail(rawId, user) {
+    if (!user?.userId) throw new ForbiddenError();
+    user = { ...user, [readRoles]: await this.roles(user.userId) };
     const r = await this.get(rawId, user);
     const c = this.pool();
-    r.reviews = (
-      await c.query(
-        "SELECT * FROM app.application_reviews WHERE application_id=$1 ORDER BY review_id",
-        [r.application_id],
-      )
-    ).rows;
-    r.comments = (
-      await c.query(
-        "SELECT * FROM app.application_review_comments WHERE application_id=$1 ORDER BY comment_id",
-        [r.application_id],
-      )
-    ).rows;
+    const [reviews, comments, input, histories] = await Promise.all([
+      c.query("SELECT review.*,reviewer.display_name AS reviewer_name,assigner.display_name AS assigned_by_name FROM app.application_reviews review JOIN app.users reviewer ON reviewer.user_id=review.reviewer_id JOIN app.users assigner ON assigner.user_id=review.assigned_by WHERE application_id=$1 ORDER BY review_id", [r.application_id]),
+      c.query("SELECT comment.*,actor.display_name AS actor_name FROM app.application_review_comments comment JOIN app.users actor ON actor.user_id=comment.actor_id WHERE application_id=$1 ORDER BY comment_id", [r.application_id]),
+      c.query("SELECT * FROM app.award_application_inputs WHERE application_id=$1", [r.application_id]),
+      c.query("SELECT * FROM app.award_application_histories WHERE application_id=$1 ORDER BY history_id", [r.application_id]),
+    ]);
+    r.reviews = reviews.rows;
+    r.comments = comments.rows;
+    r.input = input.rows[0] || null;
+    r.histories = histories.rows;
     r.canCouncil = false;
     try {
       await this.council(user, r, c);
@@ -521,22 +523,11 @@ export class ApplicationService extends AwardService {
     r.canReview =
       r.canCouncil &&
       r.reviews.some((a) => String(a.reviewer_id) === String(user.userId));
-    r.input =
-      (
-        await c.query(
-          "SELECT * FROM app.award_application_inputs WHERE application_id=$1",
-          [r.application_id],
-        )
-      ).rows[0] || null;
-    r.histories = (
-      await c.query(
-        "SELECT * FROM app.award_application_histories WHERE application_id=$1 ORDER BY history_id",
-        [r.application_id],
-      )
-    ).rows;
     return r;
   }
   async list(query, user) {
+    if (!user?.userId) throw new ForbiddenError();
+    user = { ...user, [readRoles]: await this.roles(user.userId) };
     const c = this.pool();
     const page = id.parse(query.page || 1);
     const pageSize = z.coerce

@@ -3,8 +3,8 @@ const pagePath = 'M90,0 L90,120 L11,120 C4.92486775,120 0,115.075132 0,109 L0,11
 
 export function BookLoader({ label = 'Đang mở hồ sơ thành tích...' }) {
   return (
-    <div className="loader">
-      <div className="book-body">
+    <div className="loader" role="status" aria-label={label}>
+      <div className="book-body" aria-hidden="true">
         <ul>
           {Array.from({ length: 5 }).map((_, index) => (
             <li key={index}>
@@ -15,7 +15,6 @@ export function BookLoader({ label = 'Đang mở hồ sơ thành tích...' }) {
           ))}
         </ul>
       </div>
-      <span>{label}</span>
     </div>
   )
 }

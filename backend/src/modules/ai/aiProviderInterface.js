@@ -3,6 +3,8 @@ import { AiInvalidModelError } from './aiErrors.js';
 // Danh sách mô hình Free Tier được kiểm duyệt và hỗ trợ
 export const ALLOWED_FREE_MODELS = {
   groq: [
+    'openai/gpt-oss-20b',
+    'openai/gpt-oss-120b',
     'llama-3.1-8b-instant',
     'llama-3.3-70b-versatile',
     'gemma2-9b-it',
@@ -34,7 +36,7 @@ export function validateFreeModel(provider, model) {
 
   if (provider === 'openrouter') {
     const isExplicitlyAllowed = ALLOWED_FREE_MODELS.openrouter.includes(model);
-    const hasFreeSuffix = typeof model === 'string' && model.endsWith(':free');
+    const hasFreeSuffix = typeof model === 'string' && (model.endsWith(':free') || model === 'openrouter/free');
     if (!isExplicitlyAllowed && !hasFreeSuffix) {
       throw new AiInvalidModelError(model);
     }

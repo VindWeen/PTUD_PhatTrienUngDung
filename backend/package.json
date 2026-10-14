@@ -5,6 +5,7 @@
   "main": "src/server.js",
   "type": "module",
   "scripts": {
+    "test:ai-pool": "node --test tests/ai-pool.test.js",
     "test:w6-p1": "node --test tests/w6-p1.test.js tests/w3-p1.test.js tests/w3-p2.test.js tests/w4-p2.test.js tests/w5-p2.test.js tests/w4-p4.test.js",
     "test:w5-p1:integration": "node tests/w5-p1.integration.js",
     "test:w5-p1": "node --test tests/w3-p1.test.js tests/w4-p4.test.js tests/w4-q2.test.js tests/w4-p1.test.js tests/w4-q1.test.js",
@@ -45,6 +46,10 @@
     "migrate": "node ../database/scripts/migrate.js up",
     "migrate:status": "node ../database/scripts/migrate.js status",
     "seed": "node ../database/scripts/seed.js",
+    "seed:scenario:preview": "node ../database/scripts/seedScenario.js",
+    "seed:scenario": "node ../database/scripts/seedScenario.js --apply",
+    "verify:scenario": "node ../scripts/verify-scenario.mjs",
+    "verify:selections": "node ../scripts/verify-selections.mjs",
     "test": "node tests/runner.js",
     "test:w1-p3": "node --test tests/w1-p3.test.js",
     "test:audit": "node --test tests/audit.test.js",

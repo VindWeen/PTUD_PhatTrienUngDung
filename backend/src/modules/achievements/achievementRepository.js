@@ -213,6 +213,10 @@ export async function listAchievements({ filters = {}, limit = 10, offset = 0, s
   const params = [];
   let paramIdx = 1;
 
+  if (filters.category) {
+    whereClauses.push(`EXISTS (SELECT 1 FROM app.achievement_types category_type WHERE category_type.achievement_type_id = a.achievement_type_id AND category_type.code LIKE '${filters.category === 'TEACHING' ? 'TEACH' : 'RESEARCH'}%')`);
+  }
+
   if (filters.subjectType) {
     if (filters.subjectType === 'LECTURER') {
       whereClauses.push('a.lecturer_id IS NOT NULL');

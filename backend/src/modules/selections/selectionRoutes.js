@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import { authenticate } from '../../middlewares/authenticate.js';
+import { options, sources, reviewers } from './selectionService.js';
+const router = Router();
+router.use(authenticate);
+const handle = fn => async (req,res,next) => { try { res.set('Cache-Control','no-store').json({success:true,data:await fn(req)}); } catch(e) { next(e); } };
+router.get('/selection-options',handle(req => options(req.user,req.query.purpose)));
+router.get('/selection-sources',handle(req => sources(req.user,req.query)));
+router.get('/award-applications/:id/reviewers',handle(req => reviewers(req.user,req.params.id)));
+export default router;

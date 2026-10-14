@@ -9,6 +9,17 @@
 }
 
 @layer components {
+  select:not([multiple]) {
+    @apply rounded-xl border border-slate-200 bg-slate-50 text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100;
+    appearance: none;
+    padding: .625rem 2.5rem .625rem .875rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2394a3b8' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right .875rem center;
+    background-repeat: no-repeat;
+    cursor: pointer;
+  }
+  select:focus-visible { outline: 2px solid #14b8a6; outline-offset: 2px; }
+  select:disabled { cursor: not-allowed; opacity: .5; }
   /* Soft UI Card Component */
   .soft-card {
     @apply bg-white dark:bg-soft-darkCard border border-slate-100/80 dark:border-soft-darkBorder rounded-soft-lg shadow-soft-sm transition-all duration-300;

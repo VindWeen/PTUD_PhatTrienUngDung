@@ -1,5 +1,7 @@
+import Select from '../components/common/Select';
 import UnderlineTabs from '../components/common/UnderlineTabs';
 import PageHeader from '../components/common/PageHeader';
+import { useSearchParams } from 'react-router-dom';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Award,
@@ -48,6 +50,7 @@ const STATUS_BADGES = {
 };
 
 export default function Achievements() {
+  const [routeParams] = useSearchParams();
   const { user } = useAuth();
   const userRoles = (user?.roles || []).map((r) => (typeof r === 'string' ? r : r.code));
   const isManager = userRoles.includes('MANAGER');
@@ -76,7 +79,7 @@ export default function Achievements() {
   const [catalogRetry, setCatalogRetry] = useState(0);
 
   // Modal State
-  const [modalOpen, setModalOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(routeParams.get('create') === '1');
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedAchievement, setSelectedAchievement] = useState(null);
   const [detailTab, setDetailTab] = useState('INFO'); // 'INFO' | 'HISTORIES' | 'SUBMISSIONS'
@@ -269,6 +272,13 @@ export default function Achievements() {
       alert(`Không thể xem chi tiết: ${err.message}`);
     }
   };
+
+  useEffect(() => {
+    const requestedId = routeParams.get('id');
+    if (requestedId && /^\d+$/.test(requestedId)) openDetailModal({ achievementId: Number(requestedId) });
+    // Route selection opens once; later edits use the existing detail workflow.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeParams]);
 
   const openActionModal = (ach, type) => {
     setTargetAchievement(ach);
@@ -495,7 +505,7 @@ export default function Achievements() {
 
         {/* Filter: Subject Type */}
         <div className="flex items-center gap-2">
-          <select
+          <Select
             value={subjectFilter}
             onChange={(e) => setSubjectFilter(e.target.value)}
             className="px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 focus:outline-none"
@@ -503,10 +513,10 @@ export default function Achievements() {
             <option value="">Tất cả chủ thể</option>
             <option value="LECTURER">Cá nhân (Giảng viên)</option>
             <option value="UNIT">Tập thể (Đơn vị)</option>
-          </select>
+          </Select>
 
           {/* Filter: Status */}
-          <select
+          <Select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 focus:outline-none"
@@ -517,7 +527,7 @@ export default function Achievements() {
             <option value="NEED_CORRECTION">Cần bổ sung (NEED_CORRECTION)</option>
             <option value="VERIFIED">Đã xác nhận (VERIFIED)</option>
             <option value="REJECTED">Từ chối (REJECTED)</option>
-          </select>
+          </Select>
 
           {/* Filter: Year */}
           <input
@@ -796,7 +806,7 @@ export default function Achievements() {
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     Đơn vị Tập thể đại diện <span className="text-rose-500">*</span>
                   </label>
-                  <select
+                  <Select
                     value={formData.organizationUnitId}
                     onChange={(e) => setFormData({ ...formData, organizationUnitId: e.target.value })}
                     required
@@ -808,7 +818,7 @@ export default function Achievements() {
                         {u.name} ({u.code})
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               )}
 
@@ -817,7 +827,7 @@ export default function Achievements() {
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   Loại Thành tích <span className="text-rose-500">*</span>
                 </label>
-                <select
+                <Select
                   value={formData.achievementTypeId}
                   onChange={(e) => setFormData({ ...formData, achievementTypeId: e.target.value })}
                   required
@@ -829,7 +839,7 @@ export default function Achievements() {
                       {t.name} ({t.code})
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               {/* Tiêu đề */}

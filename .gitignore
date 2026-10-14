@@ -7,6 +7,7 @@ dist/
 *.log
 .DS_Store
 output/
+tmp/
 .playwright-cli/
 storage/*
 !storage/.gitkeep

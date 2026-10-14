@@ -1,3 +1,4 @@
+import Select from '../components/common/Select';
 import PageHeader from '../components/common/PageHeader';
 import React, { useEffect, useState } from 'react';
 import {
@@ -20,6 +21,8 @@ import { useAuth } from '../context/AuthContext';
 import { reportsApi } from '../services/reportsApi.js';
 import { USE_FIXTURES } from '../services/apiConfig.js';
 import { ErrorState, LoadingState, Skeleton } from '../components/common/AsyncState';
+import { useSelectionOptions } from '../hooks/useSelections';
+import { EntitySelect } from '../components/common/EntityPicker';
 
 const initial = {
   kind: '',
@@ -65,6 +68,7 @@ const clean = (value) => Object.fromEntries(Object.entries(value).filter(([, v])
 
 export default function Reports({ dashboard = false }) {
   const { user } = useAuth();
+  const choices = useSelectionOptions('REPORT');
   const [draft, setDraft] = useState(initial);
   const [filters, setFilters] = useState(initial);
   const [page, setPage] = useState(1);
@@ -246,7 +250,7 @@ export default function Reports({ dashboard = false }) {
                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Nguồn hồ sơ
                 </span>
-                <select
+                <Select
                   className={inputClass}
                   value={draft.kind}
                   onChange={(e) =>
@@ -260,14 +264,14 @@ export default function Reports({ dashboard = false }) {
                   <option value="">Tất cả nguồn</option>
                   <option value="ACHIEVEMENT">Thành tích</option>
                   <option value="AWARD">Khen thưởng</option>
-                </select>
+                </Select>
               </label>
 
               <label className="space-y-1">
                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Chủ thể
                 </span>
-                <select
+                <Select
                   className={inputClass}
                   value={draft.subjectType}
                   onChange={(e) => setDraft({ ...draft, subjectType: e.target.value })}
@@ -275,14 +279,14 @@ export default function Reports({ dashboard = false }) {
                   <option value="">Tất cả chủ thể</option>
                   <option value="LECTURER">Cá nhân (Giảng viên)</option>
                   <option value="UNIT">Tập thể (Đơn vị)</option>
-                </select>
+                </Select>
               </label>
 
               <label className="space-y-1">
                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Trạng thái
                 </span>
-                <select
+                <Select
                   className={inputClass}
                   value={draft.status}
                   onChange={(e) => setDraft({ ...draft, status: e.target.value })}
@@ -293,7 +297,7 @@ export default function Reports({ dashboard = false }) {
                       {label} ({k})
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
 
               <label className="space-y-1">
@@ -311,49 +315,10 @@ export default function Reports({ dashboard = false }) {
                 />
               </label>
 
-              <label className="space-y-1">
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  ID năm học (Thành tích)
-                </span>
-                <input
-                  type="number"
-                  min="1"
-                  placeholder="ID năm học"
-                  disabled={draft.kind === 'AWARD'}
-                  className={inputClass}
-                  value={draft.academicYearId}
-                  onChange={(e) => setDraft({ ...draft, academicYearId: e.target.value })}
-                />
-              </label>
-
-              <label className="space-y-1">
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  ID đơn vị lịch sử
-                </span>
-                <input
-                  type="number"
-                  min="1"
-                  placeholder="ID đơn vị"
-                  className={inputClass}
-                  value={draft.contextUnitId}
-                  onChange={(e) => setDraft({ ...draft, contextUnitId: e.target.value })}
-                />
-              </label>
-
-              <label className="space-y-1">
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  ID loại (Chọn nguồn trước)
-                </span>
-                <input
-                  type="number"
-                  min="1"
-                  placeholder="ID loại"
-                  disabled={!draft.kind}
-                  className={inputClass}
-                  value={draft.typeId}
-                  onChange={(e) => setDraft({ ...draft, typeId: e.target.value })}
-                />
-              </label>
+              <EntitySelect label="Năm học (thành tích)" options={choices.academicYears} value={draft.academicYearId} onChange={academicYearId=>setDraft({...draft,academicYearId})} placeholder="Tất cả năm học" disabled={draft.kind==='AWARD' || choices.loading} className={inputClass}/>
+              <EntitySelect label="Đơn vị ghi nhận hồ sơ" options={choices.units} value={draft.contextUnitId} onChange={contextUnitId=>setDraft({...draft,contextUnitId})} placeholder="Tất cả đơn vị được phép xem" disabled={choices.loading} className={inputClass}/>
+              <EntitySelect label="Loại thành tích / khen thưởng" options={draft.kind==='AWARD' ? choices.awardTypes : draft.kind==='ACHIEVEMENT' ? choices.achievementTypes : []} value={draft.typeId} onChange={typeId=>setDraft({...draft,typeId})} placeholder={draft.kind ? 'Tất cả loại' : 'Chọn nguồn hồ sơ trước'} disabled={!draft.kind || choices.loading} className={inputClass}/>
+              {choices.error && <p role="alert" className="text-sm text-rose-600">{choices.error}</p>}
 
               <label className="space-y-1">
                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">

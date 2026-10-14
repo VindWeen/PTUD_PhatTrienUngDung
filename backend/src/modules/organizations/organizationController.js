@@ -2,6 +2,8 @@ import { z } from 'zod';
 import service from './organizationService.js';
 import { representativeSchema as adminRepresentativeSchema } from '../admin/adminSchemas.js';
 import { assign } from '../admin/adminRepository.js';
+import { getActiveRoles } from '../auth/authRepository.js';
+import { canReadUnitProfile } from '../../middlewares/requireUnitRead.js';
 
 const types = ['FACULTY', 'DEPARTMENT', 'DIVISION', 'OFFICE', 'CENTER', 'UNIVERSITY'];
 const createSchema = z.object({ code: z.string().trim().min(1).max(50), name: z.string().trim().min(1).max(255),
@@ -10,7 +12,17 @@ const updateSchema = createSchema.extend({ isActive: z.boolean(), version: z.num
 const transferSchema = z.object({ unitId: z.number().int().positive(), effectiveAt: z.string().datetime() }).strict();
 const ok = (res, data, status = 200) => res.status(status).json({ success: true, ...(data === undefined ? {} : { data }) });
 
-export async function list(req, res, next) { try { ok(res, await service.listUnits()); } catch (e) { next(e); } }
+export async function list(req, res, next) {
+  try {
+    const [units, activeRoles] = await Promise.all([service.listUnits(), getActiveRoles(req.user.userId)]);
+    const roles = activeRoles.map(role => role.Code);
+    const visibleUnits = await Promise.all(units.map(async unit => ({
+      ...unit,
+      canViewProfile: await canReadUnitProfile(req.user.userId, unit.unitId, roles),
+    })));
+    ok(res, visibleUnits);
+  } catch (e) { next(e); }
+}
 export async function profile(req, res, next) { try { ok(res, await service.getUnitProfile(Number(req.params.id))); } catch (e) { next(e); } }
 export async function create(req, res, next) { try { ok(res, await service.createUnit(createSchema.parse(req.body), req.user?.userId), 201); } catch (e) { next(e); } }
 export async function update(req, res, next) { try { ok(res, await service.updateUnit(Number(req.params.id), updateSchema.parse(req.body), req.user?.userId)); } catch (e) { next(e); } }

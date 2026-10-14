@@ -1,4 +1,5 @@
 import { ThemeToggle } from '../components/common/PageHeader';
+import NotificationBell from '../components/common/NotificationBell';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -88,7 +89,7 @@ export default function Dashboard() {
         <Search className="h-4 w-4 text-slate-300" />
         <input aria-label="Tìm kiếm thành tích" placeholder="Tìm kiếm thành tích..." className="w-full bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-300 dark:text-white" />
       </label>
-      <ThemeToggle />
+      <NotificationBell /><ThemeToggle />
       </div>
     </header>
 

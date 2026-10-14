@@ -1,3 +1,5 @@
+import Select from '../components/common/Select';
+import RegulationEditor from '../components/RegulationEditor';
 import UnderlineTabs from '../components/common/UnderlineTabs';
 import PageHeader from '../components/common/PageHeader';
 import React, { useState, useEffect, useCallback } from 'react';
@@ -79,6 +81,8 @@ export default function Regulations() {
     const code = typeof r === 'string' ? r : r.code || r.role_code;
     return ['ADMIN', 'SYSTEM_ADMIN', 'COUNCIL', 'MANAGER'].includes(code);
   });
+
+  const canApprove = (user?.roles || []).some(r => ['ADMIN','SYSTEM_ADMIN','COUNCIL'].includes(typeof r === 'string' ? r : r.code || r.role_code));
 
   const fetchData = useCallback(async (fresh = true) => {
     setLoading(true);
@@ -255,13 +259,20 @@ export default function Regulations() {
     <div className="space-y-6">
       {pageHeader}
 
+      <div className="soft-card p-5 text-sm text-slate-600 dark:text-slate-300 space-y-2">
+        <p><strong>Quy định mới:</strong> người có quyền quản lý chọn Thêm văn bản mới, tạo phiên bản với ngày hiệu lực và nguồn gốc, rồi bổ sung trích đoạn và tiêu chí. Hội đồng hoặc quản trị viên phê duyệt để áp dụng.</p>
+        <p><strong>Quy định thay đổi:</strong> chọn văn bản và tạo phiên bản mới thay thế phiên bản đang chọn. Hệ thống giữ lịch sử và kết thúc hiệu lực phiên bản cũ từ ngày phiên bản thay thế có hiệu lực.</p>
+        <p>AI sử dụng các trích đoạn và tiêu chí đã được ghi nhận; việc thêm đường dẫn hoặc nội dung để tính mã toàn vẹn chưa tự tạo tiêu chí hay tự phê duyệt quy định.</p>
+      </div>
+      {isManagerOrAdmin && selectedVersion && ['chunks','criteria'].includes(activeTab) && <RegulationEditor key={selectedVersion.version_id + activeTab} version={selectedVersion} mode={activeTab} onSaved={async () => { await fetchData(); }} />}
+
       {/* Notice Banner */}
       <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
         <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
         <div className="text-sm text-amber-800 dark:text-amber-300 space-y-1">
-          <p className="font-semibold">Nguyên tắc kiểm soát Tiêu chuẩn & Thẩm quyền (Fail-closed):</p>
+          <p className="font-semibold">Áp dụng quy định đã được phê duyệt:</p>
           <p>
-            Chỉ những phiên bản văn bản và tiêu chí được Hội đồng LHU thẩm định phê duyệt chính thức (<code>is_confirmed = true</code>) mới được cấp phép cho bộ phân tích AI và quy trình xét khen thưởng. Mọi dữ liệu mô phỏng đều được cô lập và gắn nhãn cảnh báo rõ ràng.
+            Chỉ những phiên bản văn bản và tiêu chí được Hội đồng LHU thẩm định phê duyệt chính thức  mới được cấp phép cho bộ phân tích AI và quy trình xét khen thưởng. Mọi dữ liệu mô phỏng đều được cô lập và gắn nhãn cảnh báo rõ ràng.
           </p>
         </div>
       </div>
@@ -275,7 +286,7 @@ export default function Regulations() {
               <h3 className="font-semibold text-slate-800 dark:text-slate-200 text-sm uppercase tracking-wide">
                 Danh mục Văn bản
               </h3>
-              <select
+              <Select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
                 className="text-xs px-2.5 py-1.5 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
@@ -285,7 +296,7 @@ export default function Regulations() {
                 <option value="CIRCULAR">Thông tư</option>
                 <option value="UNIVERSITY_REGULATION">Quy chế LHU</option>
                 <option value="GUIDELINE">Mô phỏng/Hướng dẫn</option>
-              </select>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -379,7 +390,7 @@ export default function Regulations() {
                             </div>
 
                             {/* Quyền duyệt của Hội đồng */}
-                            {isManagerOrAdmin && (
+                            {canApprove && (
                               <div className="flex items-center gap-2">
                                 {!ver.is_confirmed ? (
                                   <button
@@ -476,7 +487,7 @@ export default function Regulations() {
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Xem trích đoạn của văn bản:
               </span>
-              <select
+              <Select
                 value={selectedDoc?.document_id || ''}
                 onChange={(e) => {
                   const doc = documents.find((d) => d.document_id === Number(e.target.value));
@@ -489,7 +500,7 @@ export default function Regulations() {
                     {d.document_code} - {d.title}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div className="relative w-full sm:w-72">
@@ -539,7 +550,7 @@ export default function Regulations() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <span className="text-sm text-slate-600 dark:text-slate-400">Lọc theo duyệt:</span>
-              <select
+              <Select
                 value={filterCriteriaConfirmed}
                 onChange={(e) => setFilterCriteriaConfirmed(e.target.value)}
                 className="text-sm px-3 py-1.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
@@ -547,7 +558,7 @@ export default function Regulations() {
                 <option value="ALL">Tất cả ({criteria.length})</option>
                 <option value="CONFIRMED">Đã xác nhận chính thức</option>
                 <option value="UNCONFIRMED">Chưa duyệt / Mô phỏng</option>
-              </select>
+              </Select>
             </div>
           </div>
 
@@ -561,7 +572,7 @@ export default function Regulations() {
                   <th className="px-4 py-3">Ngưỡng / Đơn vị</th>
                   <th className="px-4 py-3">Căn cứ Pháp lý</th>
                   <th className="px-4 py-3">Trạng thái Duyệt</th>
-                  {isManagerOrAdmin && <th className="px-4 py-3 text-right">Thao tác</th>}
+                  {canApprove && <th className="px-4 py-3 text-right">Thao tác</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -598,7 +609,7 @@ export default function Regulations() {
                         </span>
                       )}
                     </td>
-                    {isManagerOrAdmin && (
+                    {canApprove && (
                       <td className="px-4 py-3 text-right">
                         {!c.is_confirmed ? (
                           <button
@@ -667,7 +678,7 @@ export default function Regulations() {
               </div>
               <div>
                 <label className="block text-slate-700 dark:text-slate-300 font-medium mb-1">Loại Văn bản *</label>
-                <select
+                <Select
                   value={docFormData.documentType}
                   onChange={(e) => setDocFormData({ ...docFormData, documentType: e.target.value })}
                   className="w-full px-3 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700"
@@ -677,7 +688,7 @@ export default function Regulations() {
                   <option value="GUIDELINE">Hướng dẫn</option>
                   <option value="CIRCULAR">Thông tư</option>
                   <option value="LAW">Luật</option>
-                </select>
+                </Select>
               </div>
               <div className="flex justify-end gap-2 pt-4 border-t">
                 <button

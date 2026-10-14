@@ -69,6 +69,7 @@ export const updateAchievementSchema = z
   });
 
 export const listAchievementsQuerySchema = z.object({
+  category: z.enum(['RESEARCH', 'TEACHING']).optional(),
   subjectType: z.enum(['LECTURER', 'UNIT']).optional(),
   lecturerId: z.coerce.number().int().positive().optional(),
   unitId: z.coerce.number().int().positive().optional(),

@@ -59,7 +59,7 @@ export default function AuthPage() {
     event.preventDefault();
     if (!fullName.trim()) { setError('Vui lòng nhập họ tên.'); return; }
     setError(null); setPassword('');
-    setSuccess('Đã hoàn tất bước đăng ký mô phỏng. Chưa tạo tài khoản hay gửi email. Chọn Sign In để trải nghiệm.');
+    setSuccess('Đã hoàn tất bước đăng ký mô phỏng. Chưa tạo tài khoản hay gửi email. Chọn Đăng nhập để trải nghiệm.');
   };
   const handleForgotPassword = () => {
     setError(null); setSuccess(null);
@@ -177,7 +177,7 @@ export default function AuthPage() {
 
         {/* --- Form Container --- */}
         <div className={`form-container ${isLogin ? 'login' : 'register'}`}>
-          <h1>{isLogin ? 'LOGIN' : 'REGISTER'}</h1>
+          <h1>{isLogin ? 'ĐĂNG NHẬP' : 'ĐĂNG KÝ'}</h1>
           {error && <div role="alert" className="alert-box alert-error">{error}</div>}
           {success && <div role="status" className="alert-box alert-success">{success}<button type="button" className="forgot-password-link" onClick={() => switchMode('login')}>Quay lại đăng nhập</button></div>}
 
@@ -254,7 +254,7 @@ export default function AuthPage() {
                 className="btn btn-signin"
                 disabled={isPendingTransition || registerLoading || resetLoading}
               >
-                {registerLoading || resetLoading ? 'Đang xử lý...' : isLogin ? 'Sign In' : 'Sign Up'}
+                {registerLoading || resetLoading ? 'Đang xử lý...' : isLogin ? 'Đăng nhập' : 'Đăng ký'}
               </button>
               {isLogin && USE_FIXTURES && (
                 <button
@@ -309,7 +309,7 @@ export default function AuthPage() {
           )}
 
           <div className="or-divider">
-            <span>Or</span>
+            <span>Hoặc</span>
           </div>
 
           <button 
@@ -318,7 +318,7 @@ export default function AuthPage() {
             onClick={() => !isPendingTransition && !registerLoading && switchMode(isLogin ? 'register' : 'login')}
             disabled={isPendingTransition || registerLoading}
           >
-            {isLogin ? 'Sign Up' : 'Sign In'}
+            {isLogin ? 'Đăng ký' : 'Đăng nhập'}
           </button>
         </div>
 

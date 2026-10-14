@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "lhu-ai-pool",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-13",
+  "workers_dev": true,
+  "vars": {
+    "GROQ_MODEL": "openai/gpt-oss-20b",
+    "OPENROUTER_MODEL": "openrouter/free"
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "POOLS", "class_name": "KeyPool" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["KeyPool"] }]
+}

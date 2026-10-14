@@ -1,9 +1,13 @@
+import Select from './common/Select';
 import { LoadingState } from './common/AsyncState';
 import React, {useEffect, useState} from 'react';
 import {kpiApi} from '../services/kpiApi';
+import { useSelectionOptions } from '../hooks/useSelections';
+import { EntitySelect, lecturerLabel } from './common/EntityPicker';
 export default function ExternalKpi({types = [], refreshKey = 0, onBusyChange, autoLoad = false}) {
  const [data,setData] = useState(null), [error,setError] = useState(''), [busy,setBusy] = useState(autoLoad);
  const [employeeId,setEmployeeId] = useState(''), [lecturerId,setLecturerId] = useState(''), [type,setType] = useState('');
+ const choices=useSelectionOptions('KPI_MAPPING',Boolean(data?.isAdmin));
  useEffect(() => {
    if (!autoLoad && refreshKey === 0) return;
    let active = true;
@@ -26,17 +30,18 @@ export default function ExternalKpi({types = [], refreshKey = 0, onBusyChange, a
    {error && <p role="alert" className="text-red-600">{error}</p>}
    {data?.isAdmin && <div className="space-y-2">
      <label>Mã nhân viên ngoài <input value={employeeId} onChange={e=>setEmployeeId(e.target.value)} /></label>
-     <label>ID giảng viên nội bộ <input value={lecturerId} onChange={e=>setLecturerId(e.target.value)} /></label>
+     <EntitySelect label="Giảng viên nội bộ" options={choices.lecturers} value={lecturerId} onChange={setLecturerId} getLabel={lecturerLabel} placeholder="Chọn giảng viên để ánh xạ" disabled={choices.loading}/>
+     {choices.error && <p role="alert" className="text-rose-600">{choices.error}</p>}
      <button disabled={busy || !employeeId || !lecturerId} onClick={()=>act(()=>kpiApi.externalMapping({employeeId,lecturerId}))}>Lưu ánh xạ mã</button>
      <button disabled={busy} onClick={()=>act(()=>kpiApi.externalRun({}))}>Pull qua HTTP</button>
-     <p>Ánh xạ: {data.mappings.map(m=>`${m.employee_id} → ${m.lecturer_id}`).join('; ') || 'Chưa có'}</p>
+     <p>Ánh xạ: {data.mappings.map(m=>`${m.employee_id} → ${choices.lecturers.find(l=>String(l.id)===String(m.lecturer_id))?.name || 'Giảng viên đã ánh xạ'}`).join('; ') || 'Chưa có'}</p>
      <ul>{data.runs.map(r=><li key={r.run_id}>{r.run_id}: {r.status}; lần gọi {r.attempts}; {JSON.stringify(r.summary)}
        {r.status !== 'RUNNING' && <button disabled={busy} onClick={()=>act(()=>kpiApi.externalRun({retryOf:r.run_id}))}>Retry</button>}
        <ul>{data.items.filter(i=>i.run_id===r.run_id).map(i=><li key={i.item_index}>Dòng {i.item_index + 1}: {i.outcome}</li>)}</ul>
      </li>)}</ul>
    </div>}
    {data && <>
-     {!data.isAdmin && <label>Loại thành tích để tạo nháp <select value={type} onChange={e=>setType(e.target.value)}><option value="">Chọn loại</option>{types.filter(t=>['LECTURER','BOTH'].includes(t.applicable_subject_type)).map(t=><option key={t.achievement_type_id} value={t.achievement_type_id}>{t.name}</option>)}</select></label>}
+     {!data.isAdmin && <label>Loại thành tích để tạo nháp <Select value={type} onChange={e=>setType(e.target.value)}><option value="">Chọn loại</option>{types.filter(t=>['LECTURER','BOTH'].includes(t.applicable_subject_type)).map(t=><option key={t.achievement_type_id} value={t.achievement_type_id}>{t.name}</option>)}</Select></label>}
      <ul>{data.records.map(r=><li key={r.record_id}>{r.payload.title} — {r.payload.employeeId}; {r.payload.periodStart} → {r.payload.periodEnd}; revision {r.source_version}: {r.status} {r.reason}
        {r.achievement_id && <span> — nháp #{r.achievement_id}</span>}
        {!data.isAdmin && r.status==='READY' && <button disabled={busy || !type} onClick={()=>act(()=>kpiApi.externalDraft(r.record_id,{version:r.version,achievementTypeId:type}))}>Xác nhận tạo nháp riêng</button>}

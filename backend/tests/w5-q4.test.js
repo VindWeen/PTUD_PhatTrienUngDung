@@ -331,14 +331,19 @@ describe('[W5-Q4-5] Hồ sơ ứng viên — nhất quán, sẵn sàng đóng b�
 
   it('Không có key, secret hoặc connection string thật trong docs/report-inputs', () => {
     const dir = path.join(ROOT, 'docs/report-inputs');
-    const files = fs.readdirSync(dir).filter(f => !f.endsWith('.png') && !f.endsWith('.jpg'));
+    const collectFiles = current => fs.readdirSync(current, { withFileTypes: true }).flatMap(entry => {
+      const target = path.join(current, entry.name);
+      if (entry.isDirectory()) return collectFiles(target);
+      return entry.isFile() && !/\.(png|jpg)$/i.test(entry.name) ? [target] : [];
+    });
+    const files = collectFiles(dir);
     const secretPatterns = [
       /SUPABASE_DB_URL\s*=\s*postgresql:\/\/[^$"'\s]+/i,
       /JWT_SECRET\s*=\s*[^\s]{16,}/i,
       /service_role_key\s*=\s*eyJ[A-Za-z0-9._-]{20,}/i,
     ];
     for (const f of files) {
-      const content = fs.readFileSync(path.join(dir, f), 'utf8');
+      const content = fs.readFileSync(f, 'utf8');
       for (const pat of secretPatterns) {
         assert.ok(
           !pat.test(content),

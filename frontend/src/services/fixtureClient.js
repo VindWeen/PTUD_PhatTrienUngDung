@@ -59,6 +59,11 @@ export const fixtureClient = {
     let items = clone(achievementFixtures.achievementsList.payload.data.items);
     if (params.subjectType) items = items.filter(i => i.subjectType === params.subjectType);
     if (params.status) items = items.filter(i => i.status === params.status);
+    if (params.lecturerId) items = items.filter(i => Number(i.lecturerId) === Number(params.lecturerId));
+    if (params.category) items = items.filter(i => params.category === 'TEACHING' ? /^TEACH/.test(i.achievementTypeCode) : /^RESEARCH/.test(i.achievementTypeCode));
+    if (params.recognitionYear) items = items.filter(i => Number(i.recognitionYear) === Number(params.recognitionYear));
+    if (params.achievementTypeId) items = items.filter(i => Number(i.achievementTypeId) === Number(params.achievementTypeId));
+    if (params.search) items = items.filter(i => (i.title + ' ' + (i.description || '')).toLocaleLowerCase('vi').includes(params.search.toLocaleLowerCase('vi')));
     return { items, pagination: { total: items.length, page: 1, pageSize: 10, totalPages: 1 } };
   },
   getAchievementById: async () => clone(achievementFixtures.achievementDetailVerified.payload.data),

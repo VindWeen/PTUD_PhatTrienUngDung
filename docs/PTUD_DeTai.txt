@@ -1,0 +1,30 @@
+Hệ thống Quản lý Hồ sơ Thành tích Số và Hỗ trợ Xét duyệt Khen thưởng thông minh dựa trên Trí tuệ Nhân tạo (AI)
+
+"Hiện nay, việc quản lý thành tích khen thưởng của cá nhân (giảng viên) và tập thể (Bộ môn, Khoa) thường được lưu trữ rải rác dưới dạng văn bản giấy hoặc file Excel rời rạc. Điều này gây khó khăn trong việc tra cứu, cộng dồn thành tích qua các năm để xét duyệt những danh hiệu cao hơn (ví dụ: cần 3 năm liên tục đạt Chiến sĩ thi đua cơ sở để xét Bằng khen cấp Bộ). Đồng thời, việc đối chiếu hồ sơ cá nhân với các quy định khen thưởng phức tạp tốn rất nhiều thời gian của hội đồng xét duyệt.
+Đề tài này hướng tới việc xây dựng một nền tảng số hóa toàn diện:
+   + Lưu trữ tập trung: Tạo ra một ""Hồ sơ năng lực và thành tích điện tử"" được cá nhân hóa cho từng giảng viên và tập thể, tự động tích lũy dữ liệu qua từng năm.
+   + Ứng dụng AI: Tích hợp AI để đọc hiểu các quy định khen thưởng của Nhà nước/Nhà trường, từ đó tự động ""khám sức khỏe thành tích"" của giảng viên, đưa ra dự báo khả năng đạt giải thưởng và gợi ý các mục tiêu KPI cần phấn đấu trong năm tiếp theo.
+   + Tính liên kết: Hệ thống có khả năng nhận luồng dữ liệu (Data Integration) từ Hệ thống Quản lý Công việc & KPI (đề tài khác) để tự động cập nhật kết quả hoàn thành nhiệm vụ hàng năm làm minh chứng xét thưởng"
+
+"Giai đoạn 1: Phục vụ môn học / Đồ án Phát triển Ứng dụng (PTUD)
+Trọng tâm: Xây dựng nền tảng dữ liệu lõi và quy trình số hóa cơ bản.
+   + Xây dựng hoàn chỉnh cơ sở dữ liệu (Database) lưu trữ thông tin giảng viên, tập thể, danh mục các loại hình khen thưởng và minh chứng thành tích qua các năm.
+   + Phát triển giao diện người dùng (Web App) cá nhân hóa: Mỗi giảng viên có một trang Dashboard riêng xem lại lịch sử thành tích, các bằng khen đã đạt được.
+   + Phát triển giao diện quản trị (Admin/Ban chủ nhiệm): Thêm/sửa/xóa hồ sơ, tìm kiếm và trích xuất báo cáo danh sách cá nhân/tập thể đạt thành tích theo năm.
+   + Thực hiện thành công quy trình Nộp minh chứng và Phê duyệt thành tích trên hệ thống (Workflow cơ bản).
+Giai đoạn 2: Khóa luận Tốt nghiệp (KLTN)
+Trọng tâm: Tích hợp Trí tuệ Nhân tạo (AI) và Liên kết hệ thống ngoài.
+   + Tích hợp AI - Tác tử Xét duyệt (Award Validator Agent): AI sẽ đọc dữ liệu thành tích cộng dồn của giảng viên và đối chiếu với văn bản luật (dùng RAG) để tự động đánh giá: ""Giảng viên A đã đủ điều kiện xét danh hiệu Chiến sĩ thi đua cấp Bộ năm nay chưa? Nếu chưa, còn thiếu tiêu chí nào?"".
+   + Tích hợp AI - Tác tử Gợi ý KPI (KPI Recommender Agent): Dựa trên mục tiêu muốn đạt danh hiệu X vào năm sau, AI sẽ tự động phân tích và đưa ra đề xuất KPI cụ thể cho giảng viên trong năm nay (ví dụ: cần xuất bản thêm 1 bài báo Q2, hoặc hướng dẫn 1 nhóm sinh viên NCKH).
+   + Liên kết hệ thống (API Integration): Xây dựng các API RESTful để kết nối với Hệ thống Quản lý KPI nội bộ, cho phép kéo (pull) kết quả đánh giá KPI cuối năm tự động chuyển thành ""Thành tích"" trên hệ thống này.
+3. CÔNG NGHỆ SỬ DỤNG
+   + Frontend (Giao diện): Next.js hoặc ReactJS kết hợp Tailwind CSS để xây dựng giao diện Dashboard hiện đại, hiển thị biểu đồ trực quan.
+   + Backend (Máy chủ & API): Nodejs+Express.
+   + Database (Cơ sở dữ liệu): Microsoft Sql Server + ChromaDB hoặc FAISS: Vector Database để lưu trữ văn bản luật, quy chế khen thưởng phục vụ cho AI truy xuất.
+   + Trí tuệ nhân tạo (AI Engine):
+        - Sử dụng LangChain hoặc LlamaIndex để xây dựng luồng RAG (Retrieval-Augmented Generation).
+        - Sử dụng API của các mô hình LLM (như Gemini 1.5 Pro, GPT-4o, hoặc các mô hình mã nguồn mở chạy local nếu yêu cầu bảo mật cao)."
+
+"- Về mặt sản phẩm: Một ứng dụng Web hoạt động ổn định, có phân quyền rõ ràng (Giảng viên, Trưởng Bộ môn, Ban Chủ nhiệm Khoa, Chuyên viên thi đua khen thưởng).
+- Về mặt vận hành: Sinh viên chứng minh được luồng dữ liệu (Data flow) thông suốt: Từ lúc Giảng viên hoàn thành KPI ở hệ thống A -> Đẩy dữ liệu qua hệ thống B -> Hệ thống B tích lũy dữ liệu 3 năm -> AI của hệ thống B thông báo giảng viên đủ điều kiện nhận Bằng khen.
+- Về mặt trải nghiệm: Tạo ra một bản báo cáo tự động (Auto-generated Report) có độ chính xác cao thay thế cho việc hội đồng thi đua phải ngồi dò từng file Excel và đếm số lượng bằng khen thủ công"

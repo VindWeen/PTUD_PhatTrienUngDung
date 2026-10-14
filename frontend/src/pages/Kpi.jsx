@@ -1,3 +1,6 @@
+import Select from '../components/common/Select';
+import { readKpiFile } from '../services/kpiImport';
+import { goalSourceText } from '../services/kpiPresentation';
 import { useAuth } from '../context/AuthContext';
 import UnderlineTabs from '../components/common/UnderlineTabs';
 import PageHeader from '../components/common/PageHeader';
@@ -66,6 +69,7 @@ function AdminKpi() {
 }
 
 function PersonalKpi() {
+  const {user}=useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const loadSequence = React.useRef(0);
@@ -77,6 +81,7 @@ function PersonalKpi() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [csv, setCsv] = useState('');
+  const [importFileName, setImportFileName] = useState('');
   const [preview, setPreview] = useState(null);
   const [resultForm, setResult] = useState(null);
   const [draft, setDraft] = useState(null);
@@ -147,12 +152,12 @@ function PersonalKpi() {
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12">
-      <PageHeader title="Mục tiêu / KPI" description="Thiết lập và theo dõi mục tiêu cá nhân, đơn vị; nhập mục tiêu bằng CSV." icon={Target} onRefresh={load} refreshing={busy || loading} primaryAction={{label: showCreateForm && !editing ? 'Đóng biểu mẫu' : 'Thiết lập KPI mới', onClick: () => {setEditing(null); setForm(empty); setShowCreateForm(v => !v);}}} tabs={<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <PageHeader title="Mục tiêu / KPI" description="Thiết lập và theo dõi mục tiêu cá nhân, đơn vị; nhập mục tiêu bằng Excel hoặc CSV." icon={Target} onRefresh={load} refreshing={busy || loading} primaryAction={{label: showCreateForm && !editing ? 'Đóng biểu mẫu' : 'Thiết lập KPI mới', onClick: () => {setEditing(null); setForm(empty); setShowCreateForm(v => !v);}}} tabs={<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <UnderlineTabs label="Đối tượng mục tiêu KPI" value={subjectType} onChange={id => {
           setSubject(id); setEditing(null); setPreview(null); setResult(null); setDraft(null); setForm(empty);
         }} items={[{id: 'LECTURER', label: 'Cá nhân tôi', icon: User}, {id: 'UNIT', label: 'Đơn vị tôi đại diện', icon: Building2}]} />
         {subjectType === 'UNIT' && (
-            <select
+            <Select
               value={unit}
               onChange={(e) => {
                 setUnit(e.target.value);
@@ -169,7 +174,7 @@ function PersonalKpi() {
                   {u.name}
                 </option>
               ))}
-            </select>
+            </Select>
           )}
       </div>} />
 
@@ -299,11 +304,11 @@ function PersonalKpi() {
               <div className="flex items-center gap-2">
                 <FileSpreadsheet className="w-5 h-5 text-[#008080]" />
                 <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                  Nhập mục tiêu bằng file CSV
+                  Nhập mục tiêu từ Excel / CSV
                 </h2>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Tải file mẫu, chọn CSV hoặc dán nội dung, rồi kiểm tra trước khi nhập vào hệ thống.
+                Tải file mẫu, chọn XLSX, CSV, TSV hoặc dán nội dung, rồi kiểm tra trước khi nhập vào hệ thống.
               </p>
             </div>
 
@@ -329,26 +334,31 @@ function PersonalKpi() {
           </div>
 
           <div className="grid lg:grid-cols-3 gap-5 items-stretch">
-            <label className="flex flex-col justify-between gap-4 rounded-2xl border border-dashed border-teal-200 bg-teal-50/40 p-5 dark:border-teal-800 dark:bg-teal-950/20">
+            <label className="relative flex cursor-pointer flex-col items-center justify-center text-center gap-4 rounded-2xl border border-dashed border-teal-200 bg-teal-50/40 p-5 focus-within:ring-4 focus-within:ring-teal-500/15 dark:border-teal-800 dark:bg-teal-950/20">
               <UploadCloud className="h-8 w-8 text-[#008080] dark:text-teal-400" />
               <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Chọn file CSV từ máy tính
+                Chọn file Excel / CSV từ máy tính
               </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">Dung lượng tối đa 500 KB. Nội dung sẽ hiện ở khung bên cạnh để bạn kiểm tra.</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Dung lượng tối đa 5 MB. Đọc trang tính đầu tiên có dữ liệu. Nội dung sẽ hiện ở khung bên cạnh để bạn kiểm tra.</span>
+              <span className="flex w-full flex-col items-center justify-center gap-2.5">
+                <span className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-xs font-semibold text-white shadow-sm"><UploadCloud className="h-4 w-4" />Chọn tệp</span>
+                <span title={importFileName || undefined} className="max-w-full break-all text-center text-xs text-slate-500 dark:text-slate-400">{importFileName || 'Chưa có tệp được chọn'}</span>
+              </span>
               <input
                 type="file"
-                accept=".csv,text/csv"
-                className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#008080] file:text-white hover:file:bg-[#006666] cursor-pointer"
+                accept=".csv,.tsv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                className="sr-only"
+                aria-label="Chọn tệp mục tiêu Excel hoặc CSV"
+                disabled={busy}
                 onChange={async (e) => {
                   setPreview(null);
                   const f = e.target.files[0];
                   if (f) {
-                    if (f.size > 500000) {
-                      setCsv('');
-                      setError('File CSV tối đa 500 KB');
-                      return;
-                    }
-                    setCsv(await f.text());
+                    setImportFileName(f.name);
+                    setBusy(true); setError(''); setCsv('');
+                    try { setCsv(await readKpiFile(f)); }
+                    catch (error) { setError(error.message || 'Không thể đọc tệp Excel. Kiểm tra định dạng tệp.'); }
+                    finally { setBusy(false); }
                   }
                 }}
               />
@@ -452,7 +462,7 @@ function PersonalKpi() {
           )}
         </section>
       )}
-      <KpiRecommendations onAccepted={load} />
+      <KpiRecommendations onAccepted={load} subjectType={subjectType} subjectId={subjectType==='UNIT' ? unit : user?.lecturerProfile?.lecturerId}/>
       <ExternalKpi types={catalogs.types} />
       {/* 4. KPI Goals List */}
       <section className="space-y-3">
@@ -563,7 +573,7 @@ function PersonalKpi() {
                         <span className="text-slate-400 font-medium">Kế hoạch:</span> {g.plan || 'Chưa nhập'}
                       </p>
                       <p>
-                        <span className="text-slate-400 font-medium">Căn cứ:</span> {g.source_note}
+                        <span className="text-slate-400 font-medium">Căn cứ:</span> {goalSourceText(g.source_note)}
                       </p>
                     </div>
 
@@ -789,7 +799,7 @@ function PersonalKpi() {
                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Chọn loại danh mục thành tích
                 </span>
-                <select
+                <Select
                   required
                   className={inputClass}
                   value={draft.type}
@@ -807,7 +817,7 @@ function PersonalKpi() {
                         {t.name}
                       </option>
                     ))}
-                </select>
+                </Select>
               </label>
 
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-700">

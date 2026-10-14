@@ -74,6 +74,7 @@ export class AwardService {
  }
  async detail(rawId,user) {
   const r = await this.getRecord(rawId,user); const c = this.pool();
+  r.subject_name = r.lecturer_id ? (await c.query('SELECT full_name FROM app.lecturers WHERE lecturer_id=$1',[r.lecturer_id])).rows[0]?.full_name : (await c.query('SELECT name FROM app.organization_units WHERE unit_id=$1',[r.unit_id])).rows[0]?.name;
   r.decision = (await c.query('SELECT * FROM app.award_decisions WHERE decision_id=$1',[r.decision_id])).rows[0];
   r.files = (await c.query('SELECT decision_file_id,version_no,original_file_name,mime_type,file_size FROM app.award_decision_files WHERE decision_id=$1 ORDER BY version_no',[r.decision_id])).rows;
   r.histories = (await c.query('SELECT * FROM app.award_record_histories WHERE record_id=$1 ORDER BY history_id',[r.record_id])).rows;

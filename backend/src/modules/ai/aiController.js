@@ -10,14 +10,14 @@ const ok = (res, data, status = 200) =>
 const smokeTestSchema = z.object({
   chunkId: z.coerce.number().int().positive(),
   question: z.string().trim().min(3).max(1000).optional(),
-  provider: z.enum(['groq', 'openrouter', 'mock']).optional(),
+  provider: z.enum(['auto', 'groq', 'openrouter', 'mock']).optional(),
   model: z.string().optional(),
 }).strict();
 
 const evaluateCriterionSchema = z.object({
   criterionId: z.coerce.number().int().positive(),
   achievementId: z.coerce.number().int().positive().optional(),
-  provider: z.enum(['groq', 'openrouter', 'mock']).optional(),
+  provider: z.enum(['auto', 'groq', 'openrouter', 'mock']).optional(),
   model: z.string().optional(),
 }).strict();
 
@@ -28,8 +28,8 @@ const evaluateStructuredSchema = z.object({
   applicationId: z.coerce.number().int().positive().optional(),
   kpiGoalId: z.coerce.number().int().positive().optional(),
   asOfDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  provider: z.enum(['groq', 'openrouter', 'mock']).optional(),
-  forcedProvider: z.enum(['groq', 'openrouter', 'mock']).optional(),
+  provider: z.enum(['auto', 'groq', 'openrouter', 'mock']).optional(),
+  forcedProvider: z.enum(['auto', 'groq', 'openrouter', 'mock']).optional(),
   model: z.string().optional(),
 }).strict();
 
@@ -143,7 +143,7 @@ const explainSchema = z.object({
     humanReviewRequired: z.boolean(),
   }),
   asOfDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  provider: z.enum(['groq', 'openrouter', 'mock']).optional(),
+  provider: z.enum(['auto', 'groq', 'openrouter', 'mock']).optional(),
   model: z.string().optional(),
   runId: z.string().uuid().optional(),
 }).strict();

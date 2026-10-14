@@ -1,6 +1,7 @@
 import React from 'react';
 import { Download, Moon, Plus, RefreshCw, Sun } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
+import NotificationBell from './NotificationBell';
 
 export function ThemeToggle() {
   const { isDark, toggleTheme } = useTheme();
@@ -13,7 +14,7 @@ export function ThemeToggle() {
 
 // Shared action order: refresh, export, page-specific action, theme.
 export default function PageHeader({ title, description, icon: Icon, badge, onRefresh, refreshing = false, exportAction, primaryAction, secondaryActions, tabs }) {
-  return <header data-page-header className="soft-card overflow-hidden [&_button]:focus-visible:outline [&_button]:focus-visible:outline-2 [&_button]:focus-visible:outline-offset-2 [&_button]:focus-visible:outline-teal-500">
+  return <header data-page-header className="soft-card [&_button]:focus-visible:outline [&_button]:focus-visible:outline-2 [&_button]:focus-visible:outline-offset-2 [&_button]:focus-visible:outline-teal-500">
     <div className="flex flex-col gap-5 p-5 sm:p-6 xl:flex-row xl:items-center xl:justify-between">
       <div className="flex min-w-0 items-start gap-3">
         {Icon && <span className="shrink-0 rounded-2xl bg-teal-50 p-2.5 text-teal-600 dark:bg-teal-950/50 dark:text-teal-400"><Icon className="h-6 w-6" /></span>}
@@ -29,7 +30,7 @@ export default function PageHeader({ title, description, icon: Icon, badge, onRe
         {exportAction && <button type="button" onClick={exportAction.onClick} disabled={exportAction.disabled} className="soft-btn-secondary h-11 text-sm disabled:opacity-50 disabled:cursor-not-allowed"><Download className="h-4 w-4" />{exportAction.label || 'Xuất dữ liệu'}</button>}
         {secondaryActions}
         {primaryAction && <button type="button" onClick={primaryAction.onClick} disabled={primaryAction.disabled} className="soft-btn-primary h-11 text-sm"><Plus className="h-4 w-4" />{primaryAction.label}</button>}
-        <ThemeToggle />
+        <NotificationBell /><ThemeToggle />
       </div>
     </div>
     {tabs && <div className="border-t border-slate-200/80 px-5 pb-3 pt-1 dark:border-slate-700/80 sm:px-6">{tabs}</div>}

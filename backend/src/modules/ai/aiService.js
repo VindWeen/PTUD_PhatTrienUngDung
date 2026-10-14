@@ -2,6 +2,7 @@ import config from '../../config/env.js';
 import { GroqProvider } from './providers/groqProvider.js';
 import { OpenRouterProvider } from './providers/openrouterProvider.js';
 import { MockAiProvider } from './providers/mockProvider.js';
+import { PoolProvider } from './providers/poolProvider.js';
 import { validateFreeModel } from './aiProviderInterface.js';
 import aiCache from './aiCache.js';
 import { AiRateLimitError, AiTimeoutError, AiProviderUnavailableError } from './aiErrors.js';
@@ -21,7 +22,11 @@ export class AiService {
     this.regulations = options.regulations || regulationRepo;
     this.evaluationRepo = options.evaluationRepo || evaluationRepo;
     this.readAchievement = options.readAchievement || achievementService.getAchievementById;
-    this.providerName = options.providerName || config.AI_PROVIDER;
+    this.poolUrl = options.poolUrl ?? config.AI_POOL_URL;
+    this.poolToken = options.poolToken ?? config.AI_POOL_TOKEN;
+    this.providerName = options.providerName || (this.poolUrl ? options.poolMode || config.AI_POOL_MODE : config.AI_PROVIDER);
+    this.poolProviders = Object.fromEntries(['auto', 'groq', 'openrouter'].map(mode =>
+      [mode, new PoolProvider(this.poolUrl, this.poolToken, mode)]));
     this.groqProvider = new GroqProvider(options.groqApiKey || config.GROQ_API_KEY, options.groqModel || config.GROQ_MODEL);
     this.openrouterProvider = new OpenRouterProvider(options.openrouterApiKey || config.OPENROUTER_API_KEY, options.openrouterModel || config.OPENROUTER_MODEL);
     this.mockProvider = new MockAiProvider(options.mockModel || 'mock-lhu-ai');
@@ -29,6 +34,12 @@ export class AiService {
 
   getProvider(forcedProvider) {
     const target = forcedProvider || this.providerName;
+    if (this.poolUrl && target !== 'mock') {
+      if (!this.poolToken) throw new AiProviderUnavailableError(target, 'Thiếu AI_POOL_TOKEN; không dùng mock fallback');
+      if (!this.poolProviders[target]) throw new ValidationError('Pool phải là auto, groq hoặc openrouter');
+      return this.poolProviders[target];
+    }
+    if (target === 'auto') throw new AiProviderUnavailableError('auto', 'Chế độ auto cần cấu hình Worker pool');
     if (target === 'groq') {
       if (this.groqProvider.apiKey) return this.groqProvider;
       console.warn('⚠️ GROQ_API_KEY chưa cấu hình, fallback sang MockAiProvider cho môi trường kiểm thử');
@@ -44,12 +55,15 @@ export class AiService {
 
   async completeWithRetry({ prompt, systemPrompt, model, forcedProvider, chunkHash = '', version = '1.0', requireRealProvider = false }) {
     const targetProvider = forcedProvider || this.providerName;
+    const usePool = Boolean(this.poolUrl) && targetProvider !== 'mock';
+    if (usePool && model) throw new ValidationError('Model của pool được cấu hình trên Cloudflare; bỏ trường model khỏi request');
     if (model) {
       validateFreeModel(targetProvider, model);
     }
     if (requireRealProvider && !(
-      (targetProvider === 'groq' && this.groqProvider.apiKey) ||
-      (targetProvider === 'openrouter' && this.openrouterProvider.apiKey)
+      (usePool && this.poolToken) ||
+      (!usePool && targetProvider === 'groq' && this.groqProvider.apiKey) ||
+      (!usePool && targetProvider === 'openrouter' && this.openrouterProvider.apiKey)
     )) throw new AiProviderUnavailableError(targetProvider, 'Cần key server-only; không dùng mock fallback');
     const provider = this.getProvider(forcedProvider);
     // Validate defaults before cache lookup; cache must never bypass the free-model gate.
@@ -59,7 +73,7 @@ export class AiService {
       prompt,
       systemPrompt,
       chunkHash,
-      version: `${provider.name}:${version}`,
+      version: `${provider.name}:${provider.cacheNamespace || 'direct'}:${version}`,
     });
 
     // 1. Kiểm tra Cache
@@ -70,12 +84,12 @@ export class AiService {
 
     // 2. Gọi Provider có giới hạn số lần retry
     let lastError = null;
-    const maxRetries = config.AI_MAX_RETRIES;
+    const maxRetries = provider.isPool ? 0 : config.AI_MAX_RETRIES;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), config.AI_TIMEOUT_MS);
+        const timeoutId = setTimeout(() => controller.abort(), provider.isPool ? Math.max(35000, config.AI_TIMEOUT_MS) : config.AI_TIMEOUT_MS);
 
         try {
           const result = await provider.complete({
@@ -446,9 +460,9 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
       evaluationType: 'CRITERION_ASSESSMENT',
       subject: { subjectType, subjectId, kpiGoalId },
       providerInfo: {
-        provider: forcedProvider || 'mock',
+        provider: forcedProvider === 'auto' ? 'mock' : forcedProvider || 'mock',
         model: model || 'deterministic-evaluator-v1',
-        isMock: forcedProvider === 'mock' || !forcedProvider,
+        isMock: forcedProvider === 'mock' || forcedProvider === 'auto' || !forcedProvider,
       },
       criterionResults,
     });

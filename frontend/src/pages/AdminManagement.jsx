@@ -1,3 +1,4 @@
+import Select from '../components/common/Select';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
@@ -117,9 +118,9 @@ export default function AdminManagement() {
       <fieldset disabled={busy || loading} className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 disabled:opacity-60">
         {Object.entries(fields).map(([key,type]) => <label key={key} className={type === 'checkbox' ? 'flex items-center gap-3 text-sm font-medium md:self-end md:pb-3' : 'flex min-w-0 flex-col gap-2 text-sm font-medium'}>
           {key === 'validTo' && resource === 'representatives' ? 'Hiệu lực đến (bắt buộc)' : labels[key]}
-          {Array.isArray(type) || choices[type] ? <select required value={form[key] ?? (Array.isArray(type) ? type[0] : '')} onChange={e => setForm({ ...form,[key]: e.target.value })} className={fieldClass}>
+          {Array.isArray(type) || choices[type] ? <Select required value={form[key] ?? (Array.isArray(type) ? type[0] : '')} onChange={e => setForm({ ...form,[key]: e.target.value })} className={fieldClass}>
             {!Array.isArray(type) && <option value="">{loading ? 'Đang tải lựa chọn...' : 'Chọn...'}</option>}{(Array.isArray(type) ? type.map(v => [v,optionLabel(key, v)]) : choices[type]).map(([v,label]) => <option key={v} value={v}>{label}</option>)}
-          </select> : <input type={type} required={(key === 'validTo' && resource === 'representatives') || (!['validTo','description'].includes(key) && type !== 'checkbox')} checked={type === 'checkbox' ? Boolean(form[key] ?? key === 'isActive') : undefined} value={type === 'checkbox' ? undefined : form[key] ?? ''} onChange={e => setForm({ ...form,[key]: type === 'checkbox' ? e.target.checked : e.target.value })} className={type === 'checkbox' ? 'h-4 w-4 accent-teal-600' : fieldClass} />}
+          </Select> : <input type={type} required={(key === 'validTo' && resource === 'representatives') || (!['validTo','description'].includes(key) && type !== 'checkbox')} checked={type === 'checkbox' ? Boolean(form[key] ?? key === 'isActive') : undefined} value={type === 'checkbox' ? undefined : form[key] ?? ''} onChange={e => setForm({ ...form,[key]: type === 'checkbox' ? e.target.checked : e.target.value })} className={type === 'checkbox' ? 'h-4 w-4 accent-teal-600' : fieldClass} />}
         </label>)}
       </fieldset>
       <div className="flex justify-end border-t border-slate-200 pt-4 dark:border-slate-700"><button disabled={busy || loading || USE_FIXTURES} className="soft-btn-primary text-sm">{busy ? 'Đang lưu...' : editing ? 'Lưu thay đổi' : ['scopes','user-roles','representatives'].includes(resource) ? 'Tạo phân công' : 'Tạo mới'}</button></div>

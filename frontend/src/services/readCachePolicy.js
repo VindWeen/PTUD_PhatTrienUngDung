@@ -2,7 +2,7 @@
 export function readCacheKey(config) {
   if ((config.method || 'GET').toUpperCase() !== 'GET') return null;
   const url = config.url || '';
-  const allowed = /^(\/admin\/(?:users|roles|scopes|user-roles|representatives|academic-years|achievement-types|award-types)|\/dashboard\/summary|\/me\/profile|\/organizations|\/units\/\d+\/profile|\/regulations(?:\/.*)?|\/achievements(?:\/catalogs|\/\d+(?:\/history|\/submissions)?)?|\/kpi\/(?:goals|catalogs|recommendations|external)|\/award-cycles|\/award-applications(?:\/\d+)?|\/award-records(?:\/\d+)?|\/reports|\/notifications|\/ai\/evaluations(?:\/\d+)?)$/.test(url);
+  const allowed = /^(\/admin\/(?:users|roles|scopes|user-roles|representatives|academic-years|achievement-types|award-types)|\/dashboard\/summary|\/me\/profile|\/organizations|\/units\/\d+\/profile|\/regulations(?:\/.*)?|\/achievements(?:\/catalogs|\/\d+(?:\/history|\/submissions|\/evidences)?)?|\/kpi\/(?:goals|catalogs|recommendations|external)|\/award-cycles|\/award-applications(?:\/\d+)?|\/award-records(?:\/\d+)?|\/reports|\/notifications|\/ai\/evaluations(?:\/\d+)?)$/.test(url);
   if (!allowed || config.responseType === 'blob') return null;
   const params = Object.entries(config.params || {})
     .filter(([, value]) => value !== undefined && value !== null)

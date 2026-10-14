@@ -17,7 +17,7 @@ import { recordAuditLog } from "../audit/auditService.js";
 const generateSchema = z
   .object({
     runId: z.string().uuid(),
-    provider: z.enum(["groq", "openrouter"]).optional(),
+    provider: z.enum(["auto", "groq", "openrouter"]).optional(),
   })
   .strict();
 const decisionSchema = z

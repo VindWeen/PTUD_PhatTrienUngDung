@@ -37,6 +37,7 @@ export const setOnAuthFailedCallback = (callback) => {
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 30000,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -93,7 +94,7 @@ apiClient.interceptors.response.use(
 
       try {
         // Gọi refresh token bằng HttpOnly cookie
-        const res = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true });
+        const res = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true, timeout: 30000 });
         const newAccessToken = res.data?.data?.accessToken;
 
         if (newAccessToken) {
@@ -102,6 +103,7 @@ apiClient.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
           return apiClient(originalRequest);
         }
+        throw new Error('Không thể khôi phục phiên đăng nhập. Vui lòng đăng nhập lại.');
       } catch (refreshErr) {
         processQueue(refreshErr, null);
         clearAccessToken();

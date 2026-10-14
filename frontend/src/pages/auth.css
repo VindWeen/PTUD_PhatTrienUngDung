@@ -9,7 +9,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
 }
 
 .ptud-auth .auth-theme-switch {
@@ -97,13 +97,13 @@
 }
 
 .ptud-auth .form-container h1 {
-  font-family: 'Impact', 'Barlow Condensed', sans-serif;
-  font-size: 58px;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-size: 40px;
   color: #10528e;
   margin: 0 0 24px;
-  letter-spacing: 1.5px;
-  font-weight: normal;
-  line-height: 1;
+  letter-spacing: 0;
+  font-weight: 800;
+  line-height: 1.2;
   text-shadow: 0 4px 14px rgba(16, 82, 142, .12);
 }
 
@@ -661,7 +661,7 @@
   }
 
   .ptud-auth .form-container h1 {
-    font-size: clamp(44px, 14vw, 54px);
+    font-size: clamp(28px, 8vw, 40px);
     margin-bottom: 12px;
     color: #12629c;
     text-shadow: 0 4px 0 rgba(22, 72, 119, .12);
@@ -752,7 +752,7 @@
   }
 
   .ptud-auth .form-container h1 {
-    font-size: 42px;
+    font-size: 32px;
   }
 
   .ptud-auth .input-box {

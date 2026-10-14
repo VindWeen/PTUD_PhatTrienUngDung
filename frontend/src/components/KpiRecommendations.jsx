@@ -1,15 +1,30 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { kpiApi } from '../services/kpiApi';
 import { Sparkles, History, Check, X, Target } from 'lucide-react';
+import { EntitySelect } from './common/EntityPicker';
+import { aiEvaluationApi } from '../services/aiEvaluationApi';
 
 const fieldClass = 'soft-input w-full text-sm disabled:opacity-60';
 const statusLabels = { PENDING: 'Chờ bạn rà soát', ACCEPTED: 'Đã chấp nhận', REJECTED: 'Đã từ chối' };
 
-export default function KpiRecommendations({ onAccepted }) {
+export default function KpiRecommendations({ onAccepted,subjectType,subjectId }) {
   const [runId, setRunId] = useState('');
   const [items, setItems] = useState([]);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [runs,setRuns]=useState([]);
+  const [runsLoading,setRunsLoading]=useState(false);
+  const [runsError,setRunsError]=useState('');
+  const [runRevision,setRunRevision]=useState(0);
+  useEffect(()=>{
+    let active=true;
+    setRuns([]);setRunId('');setItems([]);setRunsError('');
+    if(!subjectId){setRunsLoading(false);return;}
+    setRunsLoading(true);
+    aiEvaluationApi.listEvaluationRuns({subjectType,subjectId,limit:100},true).then(rows=>{if(active)setRuns(rows);})
+      .catch(e=>{if(active)setRunsError(e.message);}).finally(()=>{if(active)setRunsLoading(false);});
+    return()=>{active=false;};
+  },[subjectType,subjectId,runRevision]);
   async function act(fn) {
     setBusy(true);
     setMessage('');
@@ -50,23 +65,13 @@ export default function KpiRecommendations({ onAccepted }) {
       <div className="flex items-start gap-3">
         <span className="rounded-2xl bg-teal-50 p-3 text-[#008080] dark:bg-teal-950/40 dark:text-teal-400"><Sparkles className="h-5 w-5" /></span>
         <div><h2 className="text-lg font-bold text-slate-900 dark:text-white">Gợi ý KPI bằng AI</h2>
-          <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Sử dụng mã phiên thẩm định ở trang AI để đề xuất mục tiêu từ tiêu chí đã xác nhận. Bạn rà soát và chấp nhận trước khi tạo KPI.</p></div>
+          <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Chọn phiên thẩm định đã thực hiện để đề xuất mục tiêu từ tiêu chí đã xác nhận. Bạn rà soát và chấp nhận trước khi tạo KPI.</p></div>
       </div>
       <div className="flex flex-col lg:flex-row lg:items-end gap-3">
-      <label className="flex-1 space-y-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-        Mã phiên thẩm định AI
-        <input
-          className={`${fieldClass} mt-1.5`}
-          placeholder="Nhập mã phiên đã thẩm định"
-          value={runId}
-          onChange={(e) => {
-            setRunId(e.target.value);
-            setItems([]);
-          }}
-        />
-      </label>
+      <div className="flex-1"><EntitySelect label="Phiên thẩm định AI" options={runs.map(r=>({...r,id:r.runId}))} value={runId} onChange={id=>{setRunId(id);setItems([]);}} placeholder={runsLoading ? 'Đang tải phiên thẩm định…' : 'Chọn phiên thẩm định'} disabled={runsLoading || busy} getLabel={r=>`${new Date(r.executedAt).toLocaleString('vi-VN')} · ${{ELIGIBLE:'Đủ điều kiện',INELIGIBLE:'Chưa đạt',NEEDS_HUMAN_REVIEW:'Cần người rà soát',SIMULATION_ONLY:'Chỉ mô phỏng'}[r.overallConclusion] || r.overallConclusion} · ${r.model}`}/></div>
+      <button type="button" className="soft-btn-secondary text-xs" disabled={runsLoading || busy || !subjectId} onClick={()=>setRunRevision(v=>v+1)}>Tải lại phiên thẩm định</button>
       <button
-        disabled={busy}
+        disabled={busy || !runId}
         onClick={() =>
           act(async () => {
             const out = await kpiApi.recommendations(runId);
@@ -91,6 +96,8 @@ export default function KpiRecommendations({ onAccepted }) {
         <Sparkles className="h-4 w-4" /> {busy ? 'Đang xử lý…' : 'Tạo gợi ý bằng AI'}
       </button>
       </div>
+      {runsError && <p role="alert" className="text-sm text-rose-600">{runsError}</p>}
+      {!runsLoading && !runs.length && <p className="text-sm text-slate-500">Chưa có phiên thẩm định cho chủ thể này. Thực hiện đánh giá ở trang AI trước.</p>}
       {message && <p role="status" className="rounded-xl border border-teal-200 bg-teal-50 p-3 text-sm text-teal-800 dark:border-teal-800 dark:bg-teal-950/30 dark:text-teal-200">{message}</p>}
       {items.map((r, index) => (
         <article key={r.recommendation_id} className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5 space-y-4 text-sm dark:border-slate-700 dark:bg-slate-800/40">

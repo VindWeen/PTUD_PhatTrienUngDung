@@ -51,6 +51,15 @@ const envSchema = z.object({
   MAX_FILE_SIZE_BYTES: z.coerce.number().int().default(10485760),
 
   // AI Provider Adapter (W3-Q3)
+  AI_POOL_URL: z.string().trim().default('').refine((value) => {
+    if (!value) return true;
+    try {
+      const url = new URL(value);
+      return url.protocol === 'https:' && !url.username && !url.password && !url.search && !url.hash;
+    } catch { return false; }
+  }, 'AI_POOL_URL phải là URL HTTPS, không chứa credentials/query/fragment'),
+  AI_POOL_TOKEN: z.string().trim().default(''),
+  AI_POOL_MODE: z.enum(['auto', 'groq', 'openrouter']).default('auto'),
   AI_PROVIDER: z.enum(['groq', 'openrouter', 'mock']).default('groq'),
   GROQ_API_KEY: z.string().optional(),
   GROQ_MODEL: z.string().default('llama-3.1-8b-instant'),

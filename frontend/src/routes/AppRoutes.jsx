@@ -1,21 +1,20 @@
-import React from 'react';
-import Kpi from '../pages/Kpi';
+import React, { lazy, Suspense } from 'react';
+const Kpi = lazy(() => import('../pages/Kpi'));
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MainLayout from '../layouts/MainLayout';
-import AIForecast from '../pages/AIForecast';
+const AIForecast = lazy(() => import('../pages/AIForecast'));
 import AuthPage from '../pages/AuthPage';
-import Dashboard from '../pages/Dashboard';
-import Reports from '../pages/Reports';
+const Dashboard = lazy(() => import('../pages/Dashboard'));
+const Reports = lazy(() => import('../pages/Reports'));
 import NotFound from '../pages/NotFound';
-import ProfilePortfolio from '../pages/ProfilePortfolio';
-import Organizations from '../pages/Organizations';
-import AdminManagement from '../pages/AdminManagement';
-import Achievements from '../pages/Achievements';
-import Awards from '../pages/Awards';
-import AwardApplications from '../pages/AwardApplications';
-import Notifications from '../pages/Notifications';
-import Regulations from '../pages/Regulations';
+const ProfilePortfolio = lazy(() => import('../pages/ProfilePortfolio'));
+const Organizations = lazy(() => import('../pages/Organizations'));
+const AdminManagement = lazy(() => import('../pages/AdminManagement'));
+const Achievements = lazy(() => import('../pages/Achievements'));
+const Awards = lazy(() => import('../pages/Awards'));
+const AwardApplications = lazy(() => import('../pages/AwardApplications'));
+const Regulations = lazy(() => import('../pages/Regulations'));
 import { LoadingState } from '../components/common/AsyncState';
 
 const APP_ROLES = ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'];
@@ -37,12 +36,12 @@ export default function AppRoutes() {
   const { signedIn, loading, user } = useAuth();
   const landing = (user?.roles || []).some(r => (typeof r === 'string' ? r : r.code) === 'COUNCIL') ? '/award-applications' : '/me/dashboard';
   return (
-    <Routes>
+    <Suspense fallback={<LoadingState label="Đang mở trang…" />}><Routes>
       <Route path="/login" element={loading ? <LoadingState label="Đang kiểm tra phiên đăng nhập..." /> : signedIn ? <Navigate to={landing} replace /> : <AuthPage />} />
       <Route element={<RequireAuth />}>
         <Route element={<MainLayout />}>
           <Route index element={<Navigate to={landing} replace />} />
-          <Route path="notifications" element={<Notifications />} />
+          <Route path="notifications" element={<Navigate to={`${landing}?notifications=1`} replace />} />
           <Route path="kpi" element={<RequireRole roles={['LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN']}><Kpi /></RequireRole>} />
           <Route path="reports" element={<RequireRole roles={APP_ROLES}><Reports /></RequireRole>} />
           <Route path="me/dashboard" element={<RequireRole roles={APP_ROLES}><Dashboard /></RequireRole>} />
@@ -62,6 +61,6 @@ export default function AppRoutes() {
       </Route>
       <Route path="/404" element={<NotFound />} />
       <Route path="*" element={<NotFound />} />
-    </Routes>
+    </Routes></Suspense>
   );
 }

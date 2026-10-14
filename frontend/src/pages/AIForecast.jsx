@@ -1,3 +1,6 @@
+import Select from '../components/common/Select';
+import { useSelectionOptions } from '../hooks/useSelections';
+import { EntitySelect, lecturerLabel } from '../components/common/EntityPicker';
 import UnderlineTabs from '../components/common/UnderlineTabs';
 import PageHeader from '../components/common/PageHeader';
 import React, { useState, useEffect, useCallback } from 'react';
@@ -39,8 +42,9 @@ export default function AIForecast() {
   // Form State
   const [subjectType, setSubjectType] = useState('LECTURER');
   const [subjectId, setSubjectId] = useState('');
+  const choices = useSelectionOptions('AI');
   const [asOfDate, setAsOfDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [provider, setProvider] = useState('mock');
+  const [provider, setProvider] = useState('auto');
   const [availableCriteria, setAvailableCriteria] = useState([]);
   const [criteriaError, setCriteriaError] = useState(null);
   const [loadingCriteria, setLoadingCriteria] = useState(true);
@@ -70,18 +74,12 @@ export default function AIForecast() {
   // Fixtures State (W3-Q4)
   const [selectedFixtureCase, setSelectedFixtureCase] = useState(fixtures.fixtures[0].caseId);
 
-  // Set default subject ID from logged-in user profile
+  // Choose from authorized subjects; user IDs and lecturer IDs are different identities.
   useEffect(() => {
-    if (user?.lecturerProfile?.LecturerId) {
-      setSubjectId(String(user.lecturerProfile.LecturerId));
-      setSubjectType('LECTURER');
-    } else if (user?.lecturerProfile?.UnitId) {
-      setSubjectId(String(user.lecturerProfile.UnitId));
-      setSubjectType('UNIT');
-    } else if (user?.userId) {
-      setSubjectId(String(user.userId));
-    }
-  }, [user]);
+    if(choices.loading)return;
+    const subjects=subjectType==='LECTURER' ? choices.lecturers : choices.subjectUnits;
+    setSubjectId(current=>subjects.some(s=>String(s.id)===String(current)) ? current : String(subjects[0]?.id || ''));
+  }, [choices.loading,choices.lecturers,choices.subjectUnits,subjectType]);
 
   // Load criteria list from backend
   useEffect(() => {
@@ -143,7 +141,7 @@ export default function AIForecast() {
     e?.preventDefault();
     if (loadingCriteria || criteriaError || !selectedCriteriaIds.length) return;
     if (!subjectId) {
-      setEvalError(new Error('Vui lòng nhập mã chủ thể thẩm định'));
+      setEvalError(new Error('Vui lòng chọn chủ thể thẩm định'));
       return;
     }
     setEvaluating(true);
@@ -237,6 +235,7 @@ export default function AIForecast() {
         {id: 'fixtures', label: '12 Hồ sơ Thử nghiệm (W3-Q4)', icon: FileCheck2},
       ]} />} />
 
+      <div className="soft-card p-5 text-sm text-slate-600 dark:text-slate-300"><strong>Chức năng thẩm định:</strong> đối chiếu thành tích với tiêu chí tại ngày đánh giá, chỉ ra điều kiện đạt/chưa đạt, giải thích căn cứ quy định và lưu lịch sử. Chế độ mô phỏng dùng dữ liệu trả lời mẫu; Groq/OpenRouter cần cấu hình ở máy chủ. Kết quả hỗ trợ rà soát, quyết định khen thưởng do người có thẩm quyền thực hiện.</div>
       {/* Mandatory Disclaimer Banner */}
       <div
         role="status"
@@ -272,7 +271,7 @@ export default function AIForecast() {
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => setSubjectType('LECTURER')}
+                    onClick={() => {setSubjectType('LECTURER');setSubjectId('');}}
                     className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition-all ${
                       subjectType === 'LECTURER'
                         ? 'bg-[#008080] text-white border-[#008080]'
@@ -284,7 +283,7 @@ export default function AIForecast() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setSubjectType('UNIT')}
+                    onClick={() => {setSubjectType('UNIT');setSubjectId('');}}
                     className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition-all ${
                       subjectType === 'UNIT'
                         ? 'bg-[#008080] text-white border-[#008080]'
@@ -300,17 +299,10 @@ export default function AIForecast() {
               {/* Subject ID */}
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
-                  Mã Chủ thể ({subjectType === 'LECTURER' ? 'Lecturer ID' : 'Unit ID'})
+                  Chủ thể thẩm định
                 </label>
-                <input
-                  type="number"
-                  min="1"
-                  required
-                  value={subjectId}
-                  onChange={(e) => setSubjectId(e.target.value)}
-                  placeholder="VD: 1, 2, 3..."
-                  className="soft-input w-full text-xs"
-                />
+                <EntitySelect label={subjectType==='LECTURER' ? 'Giảng viên được thẩm định' : 'Đơn vị được thẩm định'} options={subjectType==='LECTURER' ? choices.lecturers : choices.subjectUnits} value={subjectId} onChange={setSubjectId} required disabled={choices.loading || evaluating} placeholder="Chọn chủ thể" getLabel={subjectType==='LECTURER' ? lecturerLabel : o=>o.name}/>
+                {choices.error && <p role="alert" className="text-xs text-rose-600">{choices.error}</p>}
               </div>
 
               {/* As Of Date */}
@@ -332,17 +324,18 @@ export default function AIForecast() {
               {/* AI Provider */}
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
-                  Mô hình / Provider Thẩm định
+                  Provider giải thích AI
                 </label>
-                <select
+                <Select
                   value={provider}
                   onChange={(e) => setProvider(e.target.value)}
                   className="soft-input w-full text-xs"
                 >
+                  <option value="auto">Tự động (Groq → OpenRouter)</option>
                   <option value="mock">Mô phỏng provider (không gọi LLM thật)</option>
-                  <option value="groq">Groq (Llama 3.3 70B Versatile)</option>
+                  <option value="groq">Groq</option>
                   <option value="openrouter">OpenRouter (Free Tier)</option>
-                </select>
+                </Select>
               </div>
             </div>
 
@@ -697,7 +690,7 @@ export default function AIForecast() {
 
               {/* Filters */}
               <div className="flex items-center gap-2">
-                <select
+                <Select
                   value={historyFilterType}
                   onChange={(e) => setHistoryFilterType(e.target.value)}
                   className="soft-input text-xs py-1.5"
@@ -705,7 +698,7 @@ export default function AIForecast() {
                   <option value="">Tất cả chủ thể</option>
                   <option value="LECTURER">Giảng viên (Cá nhân)</option>
                   <option value="UNIT">Đơn vị (Tập thể)</option>
-                </select>
+                </Select>
 
               </div>
             </div>
@@ -793,7 +786,7 @@ export default function AIForecast() {
 
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
               Chọn hồ sơ mẫu fixture:
-              <select
+              <Select
                 className="soft-input w-full mt-1.5 text-xs"
                 value={selectedFixtureCase}
                 onChange={(e) => setSelectedFixtureCase(e.target.value)}
@@ -803,7 +796,7 @@ export default function AIForecast() {
                     {f.caseId} — {f.title}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
 
             {fixtureItem && (

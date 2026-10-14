@@ -47,6 +47,7 @@ Readiness phải có DB `UP`; tải được trang đăng nhập chưa chứng m
 
 ## Sử dụng và bàn giao
 
+- [Kịch bản SCN đầy đủ để thực hành workflow](docs/testing/scenario/README.md): tài khoản sáu vai trò, các nhánh xử lý, file mẫu và cách reset/kiểm chứng. Từ `backend`, dùng `npm run seed:scenario` trên DB demo để backup rồi dựng lại dữ liệu nghiệp vụ; `npm run verify:scenario` kiểm tra HTTP và rollback lượt test.
 - [Hướng dẫn theo vai trò](docs/USER_GUIDE.md), [demo đủ vai trò 20–25 phút](docs/DEMO_SCRIPT.md) (có bản rút gọn).
 - [Tài khoản, nhiều vai trò và phạm vi quản lý](docs/requirements/ACCOUNT_ROLES_AND_SCOPES.md): mô hình phân quyền hiện tại và cách cấp phân công tại trang Quản trị.
 - [Checklist tổng duyệt W6-P2](docs/testing/w6-p2/REHEARSAL_CHECKLIST.md): sáu vai trò, thuật ngữ, quyền sai và gate restore thật.
