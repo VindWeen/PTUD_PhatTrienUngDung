@@ -2,7 +2,7 @@ import { request } from './request';
 import apiClient from './apiClient';
 export const awardsApi = {
  list: (contextUnitId,fresh = false) => request({url:'/award-records',params:{contextUnitId},fresh}),
- detail: id => request({url:`/award-records/${id}`}),
+ detail: (id,fresh = false) => request({url:`/award-records/${id}`,fresh}),
  decision: data => request({method:'POST',url:'/award-decisions',data}),
  create: data => request({method:'POST',url:'/award-records',data}),
  upload: (id,file) => { const data = new FormData(); data.append('file',file); return request({method:'POST',url:`/award-decisions/${id}/files`,data,headers:{'Content-Type':'multipart/form-data'}}); },

@@ -36,11 +36,13 @@ KPI là nhánh lập kế hoạch: mục tiêu → kết quả thực hiện →
 ## 2. Người mới bắt đầu thế nào?
 
 1. Nhận tài khoản từ quản trị viên, đăng nhập bằng tên đăng nhập và mật khẩu.
-2. Nhìn menu để biết chức năng được phép. Một tài khoản có thể có nhiều vai trò.
+2. Kiểm tra tên, tên đăng nhập và các vai trò ở đầu trang; nhìn menu để biết chức năng được phép. Một tài khoản có thể có nhiều vai trò.
 3. Nếu là giảng viên, mở Hồ sơ năng lực, kiểm tra thông tin, cập nhật điện thoại/chức danh/học vị khi cần.
 4. Kê khai việc đã làm: vào Thành tích. Lập kế hoạch tương lai: vào Mục tiêu / KPI.
 5. Xin xét thưởng: hoàn thành xác nhận nguồn rồi vào Hồ sơ đề nghị.
 6. Xem trạng thái, lịch sử và chuông thông báo để biết đang chờ ai. Test vai trò khác thì đăng xuất rồi đăng nhập tài khoản tương ứng.
+
+Khi trang đang mở, hệ thống kiểm tra thông báo mỗi 10 giây. Thông báo chuyển trạng thái thành tích sẽ tự cập nhật danh sách, chi tiết đang mở và các thao tác được phép, không cần F5. Nếu hồ sơ thay đổi khi đang mở hộp xác nhận thao tác, đóng hộp và chọn lại từ trạng thái mới.
 
 Đăng ký và Quên mật khẩu trên trang đăng nhập hiện chỉ mô phỏng, chưa tạo tài khoản/gửi email thật. Đổi mật khẩu thật nằm trong Hồ sơ năng lực: mật khẩu hiện tại, mật khẩu mới tối thiểu 8 ký tự, nhập lại mật khẩu mới. Đổi thành công thu hồi phiên cũ và yêu cầu đăng nhập lại. Tài khoản chỉ có Hội đồng/Chuyên viên/Admin chưa có trang đổi mật khẩu riêng trong menu hiện tại.
 
@@ -73,7 +75,7 @@ Quản lý dữ liệu cá nhân: hồ sơ, KPI, thành tích/minh chứng, đ�
 
 1. Thành tích → Kê khai Thành tích → Cá nhân → chọn loại thành tích phù hợp.
 2. Điền tiêu đề rõ việc đạt được, tối thiểu 5 ký tự; mô tả; vai trò đóng góp nếu có; thời gian nếu có; năm ghi nhận; chọn năm học khi áp dụng. Ngày kết thúc không trước ngày bắt đầu.
-3. Lưu nháp → mở chi tiết → Minh chứng → tên/ghi chú minh chứng → chọn file → tải lên. Hỗ trợ PDF, JPG/JPEG, PNG, DOCX, tối đa 10 MB/tệp, file phải đúng định dạng.
+3. Trong form kê khai, chọn một hoặc nhiều tệp ở Minh chứng đính kèm, đặt tên/ghi chú rồi Lưu bản nháp để lưu hồ sơ và tải tệp. Hỗ trợ PDF, JPG/JPEG, PNG, DOCX, tối đa 10 MB/tệp, file phải đúng định dạng. Form chỉnh sửa cho thêm minh chứng và xem/thay/xóa tệp đã lưu; thay/xóa áp dụng ngay, thay tệp giữ phiên bản cũ. Có thể bổ sung tệp từ chi tiết như trước. Nếu một tệp tải lỗi, hồ sơ và các tệp đã tải thành công được giữ; lưu lại để thử tải các tệp còn thiếu.
 4. Có ít nhất một file → Nộp duyệt hồ sơ → SUBMITTED, chờ Quản lý.
 5. NEED_CORRECTION: đọc lý do, sửa hồ sơ/file rồi gửi lại. VERIFIED: đã xác nhận, có thể dùng làm nguồn đề nghị.
 

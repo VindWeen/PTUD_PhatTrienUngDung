@@ -118,7 +118,7 @@ export default function Reports({ dashboard = false }) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'W3-P1-reports.csv';
+      a.download = `bao-cao${filters.kind === 'ACHIEVEMENT' ? '-thanh-tich' : filters.kind === 'AWARD' ? '-khen-thuong' : ''}${filters.recognitionYear ? '-' + filters.recognitionYear : ''}-${new Date().toLocaleDateString('sv-SE')}.csv`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (err) {

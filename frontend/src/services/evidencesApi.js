@@ -3,7 +3,7 @@ import { fixtureClient } from './fixtureClient.js';
 import apiClient from './apiClient.js';
 import { request } from './request.js';
 
-function validateEvidenceFile(file) {
+export function validateEvidenceFile(file) {
   if (!file) throw new Error('Vui lòng chọn tệp minh chứng.');
   if (!/\.(pdf|jpe?g|png|docx)$/i.test(file.name)) throw new Error('Chỉ hỗ trợ PDF, JPG, PNG và DOCX.');
   if (!file.size || file.size > 10 * 1024 * 1024) throw new Error('Tệp phải có nội dung và dung lượng không quá 10 MB.');

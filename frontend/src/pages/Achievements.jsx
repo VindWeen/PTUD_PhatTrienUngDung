@@ -36,7 +36,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { achievementsApi } from '../services/achievementsApi';
 import { organizationsApi } from '../services/organizationsApi';
-import { evidencesApi } from '../services/evidencesApi';
+import { evidencesApi, validateEvidenceFile } from '../services/evidencesApi';
 import { LoadingState, ErrorState, EmptyState } from '../components/common/AsyncState';
 
 const STATUS_BADGES = {
@@ -86,6 +86,7 @@ export default function Achievements() {
   const [isEditing, setIsEditing] = useState(false);
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formError, setFormError] = useState(null);
+  const [pendingEvidences, setPendingEvidences] = useState([]);
 
   // Evidence States (W2-Q2)
   const [evidences, setEvidences] = useState([]);
@@ -153,6 +154,35 @@ export default function Achievements() {
     loadData(false);
   }, [loadData]);
 
+  useEffect(() => {
+    let active = true;
+    const refresh = async (event) => {
+      if (!event.detail.some(n => n.entityType === 'ACHIEVEMENT')) return;
+      loadData(true);
+      const selectedId = selectedAchievement?.achievementId;
+      if (detailModalOpen && selectedId) {
+        try {
+          const detail = await achievementsApi.getById(selectedId, true);
+          if (active) {
+            setSelectedAchievement(detail);
+            loadHistoryAndSubmissions(selectedId);
+          }
+        } catch (err) { if (active) setError(err); }
+      }
+      if (actionModalOpen && targetAchievement?.achievementId) {
+        try {
+          const target = await achievementsApi.getById(targetAchievement.achievementId, true);
+          if (active && String(target.version) !== String(targetAchievement.version)) {
+            setActionConflict(true);
+            setActionError('Hồ sơ vừa được cập nhật. Đóng hộp thao tác và chọn lại thao tác từ trạng thái mới.');
+          }
+        } catch (err) { if (active) setActionError(err.message); }
+      }
+    };
+    window.addEventListener('workflow-updated', refresh);
+    return () => { active = false; window.removeEventListener('workflow-updated', refresh); };
+  }, [loadData, detailModalOpen, selectedAchievement?.achievementId, actionModalOpen, targetAchievement?.achievementId, targetAchievement?.version]);
+
   // Load danh mục loại thành tích và tổ chức
   useEffect(() => {
     async function fetchCatalogs() {
@@ -176,6 +206,9 @@ export default function Achievements() {
 
   const openCreateModal = () => {
     setIsEditing(false);
+    setPendingEvidences([]);
+    setEvidences([]);
+    setEvidenceError(null);
     setFormData({
       subjectType: 'LECTURER',
       organizationUnitId: units[0]?.unitId || '',
@@ -197,6 +230,9 @@ export default function Achievements() {
     setDetailModalOpen(false);
     setIsEditing(true);
     setSelectedAchievement(ach);
+    setPendingEvidences([]);
+    setEvidences([]);
+    loadEvidences(ach.achievementId);
     setFormData({
       subjectType: ach.subjectType,
       organizationUnitId: ach.organizationUnitId || '',
@@ -403,13 +439,26 @@ export default function Achievements() {
     }
   };
 
+  const addEvidenceFiles = (files) => {
+    try {
+      const selected = Array.from(files || []);
+      selected.forEach(validateEvidenceFile);
+      setPendingEvidences(current => [...current, ...selected.map(file => ({id:crypto.randomUUID(),file,title:file.name.slice(0,255),description:''}))]);
+      setFormError(null);
+    } catch (err) { setFormError(err.message); }
+  };
+
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     setFormSubmitting(true);
     setFormError(null);
 
+    let saved;
     try {
-      let saved;
+      for (const evidence of pendingEvidences) {
+        validateEvidenceFile(evidence.file);
+        if (evidence.title.trim().length < 3 || evidence.title.trim().length > 255) throw new Error('Tên minh chứng phải có từ 3 đến 255 ký tự.');
+      }
       if (formData.startDate && formData.endDate && formData.endDate < formData.startDate) {
         throw new Error('Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.');
       }
@@ -441,11 +490,21 @@ export default function Achievements() {
         });
       }
 
+      // Keep the persisted ID/version if an upload fails so retrying cannot create another draft.
+      setIsEditing(true);
+      setSelectedAchievement({...saved,actions:saved.actions || (isEditing ? selectedAchievement?.actions : {manageEvidence:true})});
+      setFormData(current => ({...current,version:saved.version}));
+      for (const evidence of pendingEvidences) {
+        try { await evidencesApi.createEvidence(saved.achievementId, evidence); }
+        catch (err) { throw new Error(`${evidence.file.name}: ${err.message || 'Tải tệp thất bại'}`); }
+        setPendingEvidences(current => current.filter(item => item.id !== evidence.id));
+      }
       setModalOpen(false);
       await loadData();
       await openDetailModal(saved);
     } catch (err) {
-      setFormError(err.message || 'Thao tác không thành công.');
+      setFormError(saved ? `Hồ sơ đã được lưu. Chưa tải được hết minh chứng: ${err.message || 'Vui lòng thử lại.'} Các tệp còn lại được giữ để bạn lưu lại.` : (err.message || 'Thao tác không thành công.'));
+      if (saved) { loadEvidences(saved.achievementId); loadData(); }
     } finally {
       setFormSubmitting(false);
     }
@@ -750,6 +809,7 @@ export default function Achievements() {
                 <span>{isEditing ? 'Chỉnh sửa Bản nháp Thành tích' : 'Kê khai Thành tích Mới (Bản nháp)'}</span>
               </h2>
               <button
+                disabled={formSubmitting || evidenceSubmitting}
                 onClick={() => setModalOpen(false)}
                 className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition"
               >
@@ -765,6 +825,7 @@ export default function Achievements() {
             )}
 
             <form onSubmit={handleFormSubmit} className="mt-5 space-y-4 text-sm">
+              <fieldset disabled={formSubmitting || evidenceSubmitting} className="space-y-4">
               {/* Chủ thể: Cá nhân hoặc Tập thể */}
               {!isEditing && (
                 <div>
@@ -929,6 +990,34 @@ export default function Achievements() {
                 />
               </div>
 
+              <section className="space-y-3 rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
+                <h3 className="flex items-center gap-2 font-semibold"><FileText className="h-4 w-4 text-teal-600"/>Minh chứng đính kèm</h3>
+                {isEditing && <>
+                  {canAct(selectedAchievement,'manageEvidence') && !!evidences.length && <p className="text-xs text-slate-500">Thay tệp hoặc xóa minh chứng đã lưu sẽ áp dụng ngay. Thay tệp giữ lại các phiên bản cũ.</p>}
+                  {evidencesLoading && <p role="status" className="text-xs text-slate-500">Đang tải minh chứng đã lưu…</p>}
+                  {evidenceError && <p role="alert" className="text-xs text-rose-600">{evidenceError}</p>}
+                  <ul className="space-y-2">{evidences.map(ev => <li key={ev.evidenceId} className="rounded-xl bg-slate-50 p-3 dark:bg-slate-900">
+                    <p className="break-words font-medium">{ev.title}</p><p className="mt-1 break-all text-xs text-slate-500">{ev.latestFileName || 'Chưa có tệp'} · Phiên bản {ev.latestVersionNo || 1}</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {ev.latestFileId && <button type="button" className="soft-btn-secondary text-xs" onClick={() => handleDownloadFile(ev.latestFileId,ev.latestFileName)}><Download className="h-3.5 w-3.5"/>Tải xuống</button>}
+                      {canAct(selectedAchievement,'manageEvidence') && <>
+                        <label className="soft-btn-secondary cursor-pointer text-xs focus-within:ring-2 focus-within:ring-teal-500"><UploadCloud className="h-3.5 w-3.5"/>Thay tệp<input type="file" className="sr-only" aria-label={`Thay tệp ${ev.title}`} accept=".pdf,.jpg,.jpeg,.png,.docx" onChange={e => {handleUploadFileVersion(ev.evidenceId,e.target.files?.[0]);e.target.value='';}}/></label>
+                        <button type="button" className="soft-btn-secondary text-xs text-rose-600" onClick={() => handleDeleteEvidence(ev.evidenceId)}><Trash2 className="h-3.5 w-3.5"/>Xóa minh chứng</button>
+                      </>}
+                    </div>
+                  </li>)}</ul>
+                </>}
+                {(!isEditing || canAct(selectedAchievement,'manageEvidence')) && <>
+                  <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-teal-300 bg-teal-50 p-3 text-teal-700 focus-within:ring-2 focus-within:ring-teal-500 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-300"><UploadCloud className="h-5 w-5"/><span className="font-semibold">Chọn tệp minh chứng</span><input type="file" multiple className="sr-only" aria-label="Chọn tệp minh chứng cho thành tích" accept=".pdf,.jpg,.jpeg,.png,.docx" onChange={e => {addEvidenceFiles(e.target.files);e.target.value='';}}/></label>
+                  <p className="text-xs text-slate-500">Có thể chọn nhiều tệp PDF, JPG, PNG, DOCX, tối đa 10 MB/tệp. Tệp mới được tải lên khi lưu hồ sơ.</p>
+                  <ul className="space-y-3">{pendingEvidences.map(ev => <li key={ev.id} className="space-y-2 rounded-xl bg-slate-50 p-3 dark:bg-slate-900">
+                    <div className="flex items-start justify-between gap-2"><p className="min-w-0 break-all text-xs text-slate-500">{ev.file.name} · {(ev.file.size/1024).toFixed(1)} KB · Chưa tải lên</p><button type="button" aria-label={`Bỏ tệp ${ev.file.name}`} className="shrink-0 text-rose-500" onClick={() => setPendingEvidences(current => current.filter(item => item.id !== ev.id))}><X className="h-4 w-4"/></button></div>
+                    <label className="block space-y-1 text-xs font-semibold">Tên minh chứng<input required minLength={3} maxLength={255} className="soft-input w-full" value={ev.title} onChange={e => setPendingEvidences(current => current.map(item => item.id === ev.id ? {...item,title:e.target.value} : item))}/></label>
+                    <label className="block space-y-1 text-xs font-semibold">Ghi chú minh chứng<input maxLength={500} className="soft-input w-full" value={ev.description} onChange={e => setPendingEvidences(current => current.map(item => item.id === ev.id ? {...item,description:e.target.value} : item))}/></label>
+                  </li>)}</ul>
+                </>}
+              </section>
+
               {/* Footer Buttons */}
               <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-200 dark:border-slate-700">
                 <button
@@ -946,6 +1035,7 @@ export default function Achievements() {
                   {formSubmitting ? 'Đang lưu...' : isEditing ? 'Cập nhật bản nháp' : 'Lưu bản nháp'}
                 </button>
               </div>
+              </fieldset>
             </form>
           </div>
         </div>

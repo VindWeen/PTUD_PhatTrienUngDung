@@ -31,7 +31,7 @@ for (const [path, kind] of [['/reports/achievements', 'ACHIEVEMENT'], ['/reports
 router.get(['/reports/export.csv', '/reports/export'], async (req, res, next) => {
   try {
     const csv = await report(req.path === '/reports/export' ? legacyFilters(req.query) : req.query, req.user, true);
-    res.set('Cache-Control', 'no-store').attachment('W3-P1-reports.csv').type('text/csv; charset=utf-8').send(csv);
+    res.set('Cache-Control', 'no-store').attachment('bao-cao.csv').type('text/csv; charset=utf-8').send(csv);
   } catch (error) { next(error); }
 });
 export default router;

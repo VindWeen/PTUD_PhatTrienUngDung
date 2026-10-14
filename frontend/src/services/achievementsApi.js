@@ -11,8 +11,8 @@ export const achievementsApi = {
   list: (params = {}, fresh = false) =>
     USE_FIXTURES ? fixtureClient.listAchievements(params) : request({ method: 'GET', url: '/achievements', params, fresh }),
 
-  getById: (id) =>
-    USE_FIXTURES ? fixtureClient.getAchievementById(id) : request({ method: 'GET', url: `/achievements/${id}` }),
+  getById: (id, fresh = false) =>
+    USE_FIXTURES ? fixtureClient.getAchievementById(id) : request({ method: 'GET', url: `/achievements/${id}`, fresh }),
 
   create: (data) =>
     USE_FIXTURES ? fixtureWriteError() : request({ method: 'POST', url: '/achievements', data }),
