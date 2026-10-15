@@ -8,6 +8,20 @@ import { useDemoAuth } from '../hooks/useDemoAuth';
 import { USE_FIXTURES } from '../services/apiConfig';
 import './auth.css';
 
+// Tài khoản thử nghiệm từ supabase/seed.sql và database/scripts/seedScenario.js.
+const QUICK_ACCOUNTS = [
+  { username: 'an.nv', label: 'Giảng viên' },
+  { username: 'bich.tt', label: 'Quản lý FIT' },
+  { username: 'duc.pm', label: 'Admin' },
+  { username: 'cuong.lh', label: 'Đại diện đơn vị' },
+  { username: 'records.demo', label: 'Văn thư' },
+  { username: 'council.demo', label: 'Hội đồng · Được phân công' },
+  { username: 'council.other', label: 'Hội đồng · Chưa phân công' },
+  { username: 'linh.pharm', label: 'Giảng viên Khoa Dược' },
+  { username: 'rep.expired', label: 'Đại diện · Hết phân công' },
+  { username: 'locked.demo', label: 'Tài khoản bị khóa' },
+];
+
 export default function AuthPage() {
   const { theme, toggleTheme: onToggleTheme } = useTheme();
   const { signIn } = useDemoAuth();
@@ -273,35 +287,18 @@ export default function AuthPage() {
                     <span>Tài khoản thử nghiệm:</span>
                     <span className="text-[10px] text-brand-600 font-mono">pass: demo1234</span>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => fillQuickAccount('an.nv')}
-                      className="px-2 py-1 text-[11px] rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-700 border border-slate-200 transition-colors"
-                    >
-                      Giảng viên (an.nv)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => fillQuickAccount('bich.tt')}
-                      className="px-2 py-1 text-[11px] rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-700 border border-slate-200 transition-colors"
-                    >
-                      Quản lý FIT (bich.tt)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => fillQuickAccount('duc.pm')}
-                      className="px-2 py-1 text-[11px] rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-700 border border-slate-200 transition-colors"
-                    >
-                      Admin (duc.pm)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => fillQuickAccount('cuong.lh')}
-                      className="px-2 py-1 text-[11px] rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-700 border border-slate-200 transition-colors"
-                    >
-                      ĐBCL (cuong.lh)
-                    </button>
+                  <div className="flex max-h-28 flex-wrap gap-1.5 overflow-y-auto">
+                    {QUICK_ACCOUNTS.map(({ username, label }) => (
+                      <button
+                        key={username}
+                        type="button"
+                        onClick={() => fillQuickAccount(username)}
+                        disabled={isPendingTransition}
+                        className="px-2 py-1 text-[11px] rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-700 border border-slate-200 transition-colors disabled:opacity-50"
+                      >
+                        {label} ({username})
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
