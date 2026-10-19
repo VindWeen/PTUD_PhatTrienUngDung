@@ -1,5 +1,11 @@
 # Kịch bản test đầy đủ theo vai trò
 
+**Bộ file sẵn cho hai người:** [ZIP, dữ liệu copy theo form và thứ tự seed](../kits/README.md). Bao gồm minh chứng V1/V2, quyết định/ảnh, file lỗi và CSV/TSV/XLSX cho ca nhập KPI.
+
+**Đợt chuẩn bị 19/10/2026:** đã backup, reset và nạp lại SCN, gồm cả việc xóa lịch cá nhân cũ. Xem [biên bản reset](RESET_2026-10-19.md) và [test plan 145 ca hoàn toàn qua UI](../UI_TEST_PLAN.md). Chưa thực thi các ca của test plan mới; các kết quả kiểm thử dưới đây là lịch sử của đợt trước.
+
+**Chia 2 người test:** xem [phân công song song](../UI_TEST_PLAN_PARALLEL.md), [72 ca người 1](../UI_TEST_PLAN_TESTER_1.md) và [73 ca người 2](../UI_TEST_PLAN_TESTER_2.md). Hai bộ được thiết kế cho hai môi trường dữ liệu độc lập; mỗi người tự đổi đủ vai trò và tự chuẩn bị đầu vào, không bàn giao từng bước cho người kia. Việc chia tài liệu không tự tạo thêm môi trường hoặc reset lại database.
+
 Bộ dữ liệu `SCN` phục vụ học workflow và kiểm thử trên database demo. Mọi thành tích, KPI và quyết định mang nhãn **MÔ PHỎNG**. Các hồ sơ đã ở bước giữa/cuối được dựng qua service backend, có lịch sử, lần nộp và file private tương ứng.
 
 Lần chuẩn bị ngày 13/10/2026: đã tạo 10 tài khoản, 12 thành tích, 8 đề nghị, 4 sổ thưởng, 4 KPI và 2 phiên đánh giá mô phỏng. **26 nhóm kiểm tra HTTP đạt PASS**; đối chiếu fingerprint toàn bộ 51 bảng xác nhận lượt verify đã rollback và không thay đổi nội dung bảng. Chưa chạy thao tác trình duyệt, provider AI thật, nguồn KPI thật hoặc phục hồi vào schema thử nghiệm; các bước tương ứng ở checklist bên dưới.
@@ -206,7 +212,7 @@ Giữ ba nguồn nền của database; dọn các văn bản `DOC-TEST-*`. Có t
 
 ## 9. Reset và kiểm chứng
 
-Script mới giữ dữ liệu nền và backup trước mỗi lần reset. Mười tài khoản demo được đặt lại mật khẩu/trạng thái/phân quyền theo bảng ở trên để các ca sửa quyền có thể làm lại. **Lệnh apply xóa toàn bộ dữ liệu nghiệp vụ demo hiện tại**, kể cả hồ sơ bạn vừa test, rồi tạo lại SCN; chỉ dùng database demo đã thống nhất.
+Script mới giữ dữ liệu nền và backup trước mỗi lần reset. Mười tài khoản demo được đặt lại mật khẩu/trạng thái/phân quyền theo bảng ở trên để các ca sửa quyền có thể làm lại. **Lệnh apply xóa toàn bộ dữ liệu nghiệp vụ demo hiện tại**, kể cả hồ sơ bạn vừa test và ghi chú lịch cá nhân, rồi tạo lại SCN; chỉ dùng database demo đã thống nhất.
 
 ```powershell
 cd backend

@@ -14,7 +14,7 @@ import { runBackup } from '../../scripts/backup.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const fixtures = path.join(root, 'docs/testing/scenario/fixtures');
 const operational = [
-  'audit_logs', 'refresh_tokens', 'notifications',
+  'audit_logs', 'refresh_tokens', 'notifications', 'personal_calendar_events',
   'application_review_comments', 'application_reviews', 'award_application_histories',
   'award_application_inputs', 'award_applications', 'award_record_achievements',
   'award_record_histories', 'award_records', 'award_decision_files', 'award_decisions',
