@@ -1,17 +1,15 @@
+import { PersonalCalendarCard } from '../components/calendar/PersonalCalendar';
 import { ThemeToggle } from '../components/common/PageHeader';
 import NotificationBell from '../components/common/NotificationBell';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Award,
-  BellRing,
   BookOpen,
-  CalendarDays,
+  FileText,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   GraduationCap,
-  Microscope,
+  Target,
   Plus,
   Search,
   Users,
@@ -20,18 +18,10 @@ import { useAuth } from '../context/AuthContext';
 import { EmptyState, ErrorState, LoadingState } from '../components/common/AsyncState';
 import { portfolioApi } from '../services/portfolioApi';
 
-const calendarDays = [
-  { day: 28, muted: true }, { day: 29, muted: true }, { day: 30, muted: true }, { day: 31, muted: true },
-  { day: 1 }, { day: 2 }, { day: 3 }, { day: 4 }, { day: 5 }, { day: 6 }, { day: 7, dot: true },
-  { day: 8 }, { day: 9 }, { day: 10 }, { day: 11 }, { day: 12 }, { day: 13 }, { day: 14 },
-  { day: 15 }, { day: 16 }, { day: 17 }, { day: 18, dot: true }, { day: 19 }, { day: 20 },
-  { day: 21, selected: true, hasEvent: true }, { day: 22 }, { day: 23 }, { day: 24 }, { day: 25 }, { day: 26 }, { day: 27 },
-];
-
 const actionCards = [
-  { title: 'Khen thưởng', subtitle: 'Danh sách giải thưởng', icon: Award, tone: 'teal', route: '/me/profile' },
-  { title: 'Nghiên cứu', subtitle: 'Kho lưu trữ đề tài', icon: Microscope, tone: 'blue', route: '/me/profile' },
-  { title: 'Giảng dạy', subtitle: 'Lịch trình & giáo án', icon: GraduationCap, tone: 'amber', route: '/me/profile' },
+  { title: 'Thành tích', subtitle: 'Kê khai và quản lý thành tích', icon: Award, tone: 'teal', route: '/achievements' },
+  { title: 'Hồ sơ đề nghị', subtitle: 'Lập và theo dõi đề nghị khen thưởng', icon: FileText, tone: 'blue', route: '/award-applications' },
+  { title: 'Mục tiêu / KPI', subtitle: 'Theo dõi mục tiêu và tiến độ thực hiện', icon: Target, tone: 'amber', route: '/kpi' },
 ];
 
 const toneStyles = {
@@ -57,8 +47,6 @@ export default function Dashboard() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [hoveredEventDay, setHoveredEventDay] = useState(null);
-  const [selectedEventDay, setSelectedEventDay] = useState(null);
 
   const loadSummary = useCallback(async (fresh = true) => {
     setLoading(true); setError(null);
@@ -132,36 +120,7 @@ export default function Dashboard() {
           </button>)}
         </div>
 
-        <div className="relative min-h-[385px] overflow-hidden rounded-[34px] bg-white p-7 shadow-[0_8px_30px_rgba(55,78,107,0.05)] dark:bg-slate-900 sm:p-9" onMouseLeave={() => setHoveredEventDay(null)}>
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-xl font-extrabold text-slate-800 dark:text-white">Lịch xét duyệt - Tháng 4</h2>
-            <div className="flex gap-4"><button aria-label="Tháng trước"><ChevronLeft className="h-5 w-5 text-slate-300" /></button><button aria-label="Tháng sau"><ChevronRight className="h-5 w-5 text-slate-700 dark:text-white" /></button></div>
-          </div>
-          <div className="grid grid-cols-7 text-center text-[11px]">
-            {['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'].map((day) => <div key={day} className="pb-4 font-medium text-slate-400">{day}</div>)}
-            {calendarDays.map((item, index) => <div
-              key={`${item.day}-${index}`}
-              className="relative flex h-[53px] items-center justify-center"
-              onMouseEnter={() => item.hasEvent && setHoveredEventDay(item.day)}
-              onMouseLeave={() => item.hasEvent && setHoveredEventDay(null)}
-            >
-              <button
-                type="button"
-                aria-label={item.hasEvent ? `Ngày ${item.day}, có lịch Hội đồng xét duyệt` : `Ngày ${item.day}`}
-                aria-expanded={item.hasEvent ? hoveredEventDay === item.day || selectedEventDay === item.day : undefined}
-                onFocus={() => item.hasEvent && setHoveredEventDay(item.day)}
-                onBlur={() => setHoveredEventDay(null)}
-                onClick={() => item.hasEvent ? setSelectedEventDay((value) => value === item.day ? null : item.day) : setSelectedEventDay(null)}
-                className={`flex h-10 w-16 items-center justify-center rounded-xl text-xs font-semibold transition ${item.hasEvent ? 'cursor-pointer ring-offset-2 hover:ring-2 hover:ring-[#70d5cf] focus:outline-none focus:ring-2 focus:ring-[#70d5cf]' : 'cursor-default'} ${item.selected ? 'bg-[#ddf2ef] text-[#60cec3]' : item.muted ? 'text-slate-200 dark:text-slate-700' : 'text-slate-700 dark:text-slate-200'}`}
-              >{item.day}</button>
-              {item.dot && <span className="absolute bottom-1 h-1 w-1 rounded-full bg-amber-400" />}
-              {item.hasEvent && (hoveredEventDay === item.day || selectedEventDay === item.day) && <div role="dialog" aria-label="Chi tiết lịch Hội đồng xét duyệt" className="absolute left-[calc(50%+30px)] top-1/2 z-30 w-[230px] -translate-y-1/2 animate-fadeIn rounded-[20px] border border-[#6ed4cf] bg-white/95 p-4 text-left shadow-xl backdrop-blur dark:bg-slate-800/95">
-                <div className="flex items-start justify-between"><div><h3 className="text-sm font-extrabold text-slate-700 dark:text-white">Hội đồng xét duyệt</h3><p className="mt-0.5 text-[11px] text-slate-400">Phòng Hội thảo 1</p></div><span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-400 text-white"><BellRing className="h-4 w-4" /></span></div>
-                <div className="mt-3 flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#ddf5f3] text-[#6bcfc7]"><CalendarDays className="h-4 w-4" /></span><div><strong className="block text-xs text-slate-700 dark:text-white">11:30 - 12:30</strong><small className="text-[10px] font-medium text-[#58c7be]">Xác nhận tham gia</small></div></div>
-              </div>}
-            </div>)}
-          </div>
-        </div>
+        <PersonalCalendarCard />
       </div>
 
       <aside className="flex min-h-[500px] flex-col rounded-[30px] bg-white p-5 shadow-[0_8px_28px_rgba(55,78,107,0.05)] dark:bg-slate-900 xl:col-span-3">

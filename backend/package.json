@@ -5,6 +5,8 @@
   "main": "src/server.js",
   "type": "module",
   "scripts": {
+    "test:calendar": "node --test tests/calendar.test.js",
+    "test:calendar:integration": "node tests/calendar.integration.js",
     "test:ai-pool": "node --test tests/ai-pool.test.js",
     "test:w6-p1": "node --test tests/w6-p1.test.js tests/w3-p1.test.js tests/w3-p2.test.js tests/w4-p2.test.js tests/w5-p2.test.js tests/w4-p4.test.js",
     "test:w5-p1:integration": "node tests/w5-p1.integration.js",

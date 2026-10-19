@@ -6,10 +6,16 @@ import { LoadingState } from '../components/common/AsyncState';
 import { useAuth } from '../context/AuthContext';
 import useWorkflowUpdates from '../hooks/useWorkflowUpdates';
 import { UserRound } from 'lucide-react';
+import { CalendarProvider, CalendarButton } from '../components/calendar/PersonalCalendar';
 
 const roleLabels = { LECTURER: 'Giảng viên', UNIT_REPRESENTATIVE: 'Đại diện đơn vị', MANAGER: 'Quản lý / Thẩm định', RECORDS_OFFICER: 'Cán bộ thi đua khen thưởng', COUNCIL: 'Hội đồng', ADMIN: 'Quản trị viên' };
 
 export default function MainLayout() {
+  const { user } = useAuth();
+  return <CalendarProvider key={user?.userId || user?.username || 'anonymous'}><MainLayoutContent /></CalendarProvider>;
+}
+
+function MainLayoutContent() {
   const { pathname } = useLocation();
   const { user } = useAuth();
   useWorkflowUpdates();
@@ -23,6 +29,7 @@ export default function MainLayout() {
       <div className="lg:pl-[108px] pb-24 lg:pb-8 transition-all duration-200">
         <div className="p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto">
           {user && <div aria-label="Tài khoản đang đăng nhập" className="mb-5 flex flex-wrap items-center justify-end gap-3 text-sm">
+            <CalendarButton />
             <UserRound className="h-5 w-5 shrink-0 text-teal-600" />
             <div className="min-w-0"><p className="break-words font-semibold">{user.displayName || user.username}<span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">@{user.username}</span></p>
               <p className="text-xs text-slate-500 dark:text-slate-400">{(user.roles || []).map(r => { const code = typeof r === 'string' ? r : r.code; return roleLabels[code] || r.name || code; }).join(' · ')}</p>

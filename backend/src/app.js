@@ -1,4 +1,5 @@
 import express from 'express';
+import calendarRoutes from './modules/calendar/calendarRoutes.js';
 import kpiRoutes from './modules/kpi/kpiRoutes.js';
 import regulationRoutes from './modules/regulations/regulationRoutes.js';
 import aiRoutes from './modules/ai/aiRoutes.js';
@@ -70,6 +71,7 @@ app.use(apiPrefix, awardRoutes);
 app.use(apiPrefix, applicationRoutes);
 app.use(apiPrefix, selectionRoutes);
 app.use(apiPrefix, notificationRoutes);
+app.use(apiPrefix, calendarRoutes);
 app.use(apiPrefix, reportRoutes);
 app.use(apiPrefix, kpiRoutes);
 app.use(apiPrefix, regulationRoutes);

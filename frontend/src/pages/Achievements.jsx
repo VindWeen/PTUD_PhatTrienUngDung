@@ -897,7 +897,7 @@ export default function Achievements() {
                   <option value="">-- Chọn loại thành tích --</option>
                   {types.map((t) => (
                     <option key={t.achievement_type_id} value={t.achievement_type_id}>
-                      {t.name} ({t.code})
+                      {t.name}
                     </option>
                   ))}
                 </Select>
