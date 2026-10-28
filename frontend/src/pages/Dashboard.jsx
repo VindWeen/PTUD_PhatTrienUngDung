@@ -47,6 +47,13 @@ export default function Dashboard() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  function searchAchievements(event) {
+    event.preventDefault();
+    const query = searchQuery.trim();
+    if (query) navigate(`/achievements?${new URLSearchParams({ search: query })}`);
+  }
 
   const loadSummary = useCallback(async (fresh = true) => {
     setLoading(true); setError(null);
@@ -73,10 +80,10 @@ export default function Dashboard() {
         <p className="mt-1 text-xs font-medium capitalize text-slate-400">{todayLabel}</p>
       </div>
       <div className="flex w-full items-center gap-2 sm:w-auto">
-      <label className="flex h-11 w-full items-center gap-2 rounded-2xl bg-white px-4 shadow-[0_8px_24px_rgba(55,78,107,0.05)] dark:bg-slate-900 sm:w-[290px]">
-        <Search className="h-4 w-4 text-slate-300" />
-        <input aria-label="Tìm kiếm thành tích" placeholder="Tìm kiếm thành tích..." className="w-full bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-300 dark:text-white" />
-      </label>
+      <form onSubmit={searchAchievements} role="search" className="flex h-11 w-full items-center gap-2 rounded-2xl bg-white px-4 shadow-[0_8px_24px_rgba(55,78,107,0.05)] dark:bg-slate-900 sm:w-[290px]">
+        <input aria-label="Tìm kiếm thành tích" placeholder="Tìm kiếm thành tích..." maxLength={100} value={searchQuery} onChange={event => setSearchQuery(event.target.value)} className="w-full bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-300 dark:text-white" />
+        <button type="submit" aria-label="Tìm thành tích" className="shrink-0 text-slate-400 hover:text-teal-600"><Search className="h-4 w-4" /></button>
+      </form>
       <NotificationBell /><ThemeToggle />
       </div>
     </header>

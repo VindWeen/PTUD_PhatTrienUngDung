@@ -68,7 +68,7 @@ export default function Achievements() {
   // Filters
   const [subjectFilter, setSubjectFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(() => (routeParams.get('search') || '').slice(0, 100));
   const [yearFilter, setYearFilter] = useState('');
 
   // Danh mục loại thành tích & đơn vị
