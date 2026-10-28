@@ -38,6 +38,7 @@ export default function AdminManagement() {
   const [form,setForm] = useState({});
   const [editing,setEditing] = useState(null);
   const [error,setError] = useState('');
+  const [saveError,setSaveError] = useState(null);
   const [busy,setBusy] = useState(false);
   const [loading,setLoading] = useState(true);
   const [notice,setNotice] = useState('');
@@ -78,10 +79,10 @@ export default function AdminManagement() {
     if (next === resource || busy) return;
     requestSequence.current++;
     setResource(next); setRows([]); setChoices({user: [], role: [], unit: []});
-    setForm({}); setEditing(null); setError(''); setNotice(''); setLoading(true);
+    setForm({}); setEditing(null); setError(''); setSaveError(null); setNotice(''); setLoading(true);
   }
   async function save(event) {
-    event.preventDefault(); setBusy(true); setError(''); setNotice('');
+    event.preventDefault(); setBusy(true); setSaveError(null); setNotice('');
     try {
       const payload = {};
       for (const [key,type] of Object.entries(fields)) {
@@ -92,7 +93,7 @@ export default function AdminManagement() {
       if (editing) await apiClient.patch(`/admin/${resource}/${editing[definition.key]}`,payload);
       else await apiClient.post(`/admin/${resource}`,payload);
       setForm({}); setEditing(null); setNotice('Đã lưu thành công.'); await load();
-    } catch(e) { setError(e.message); } finally { setBusy(false); }
+    } catch(e) { setSaveError(e); } finally { setBusy(false); }
   }
   function edit(row) {
     setEditing(row);
@@ -109,9 +110,13 @@ export default function AdminManagement() {
   const fieldClass = 'soft-input w-full !rounded-xl !px-3 !py-2.5 text-sm';
   return <main className="space-y-6 animate-fadeIn text-slate-800 dark:text-slate-100">
     <PageHeader title="Quản trị hệ thống" description="Quản lý tài khoản, phân công vai trò, phạm vi và danh mục." icon={ShieldCheck} onRefresh={load} refreshing={busy || loading} tabs={<UnderlineTabs label="Danh mục quản trị" value={resource} onChange={changeResource} disabled={busy} items={Object.entries(resources).map(([id, item]) => ({id, label: item.label}))} />} />
-    {error && <ErrorState error={error} onRetry={load} />}
+    {error && <ErrorState message={error} onRetry={load} />}
     {notice && <p role="status" className="rounded-2xl border border-teal-200 bg-teal-50 p-4 text-sm text-teal-800 dark:border-teal-900 dark:bg-teal-950/40 dark:text-teal-200">{notice}</p>}
     <form onSubmit={save} className="soft-card p-5 sm:p-6 space-y-5">
+      {saveError && <div role="alert" className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-950/30 dark:text-rose-300">
+        <p>{saveError.message}</p>
+        {saveError.fieldErrors && <ul className="mt-2 list-disc pl-5">{Object.entries(saveError.fieldErrors).map(([key,message]) => <li key={key}>{labels[key] || key}: {message}</li>)}</ul>}
+      </div>}
       <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-bold">{editing ? 'Chỉnh sửa' : 'Thêm mới'} · {definition.label}</h2><p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{['scopes','user-roles','representatives'].includes(resource) ? 'Phân công quyền và thời hạn hiệu lực cho tài khoản.' : 'Nhập thông tin và lưu để cập nhật danh mục.'}</p></div>
         {editing && <button type="button" onClick={() => {setEditing(null); setForm({});}} className="soft-btn-secondary text-sm" disabled={busy}>Hủy sửa</button>}
       </div>
@@ -120,7 +125,7 @@ export default function AdminManagement() {
           {key === 'validTo' && resource === 'representatives' ? 'Hiệu lực đến (bắt buộc)' : labels[key]}
           {Array.isArray(type) || choices[type] ? <Select required value={form[key] ?? (Array.isArray(type) ? type[0] : '')} onChange={e => setForm({ ...form,[key]: e.target.value })} className={fieldClass}>
             {!Array.isArray(type) && <option value="">{loading ? 'Đang tải lựa chọn...' : 'Chọn...'}</option>}{(Array.isArray(type) ? type.map(v => [v,optionLabel(key, v)]) : choices[type]).map(([v,label]) => <option key={v} value={v}>{label}</option>)}
-          </Select> : <input type={type} required={(key === 'validTo' && resource === 'representatives') || (!['validTo','description'].includes(key) && type !== 'checkbox')} checked={type === 'checkbox' ? Boolean(form[key] ?? key === 'isActive') : undefined} value={type === 'checkbox' ? undefined : form[key] ?? ''} onChange={e => setForm({ ...form,[key]: type === 'checkbox' ? e.target.checked : e.target.value })} className={type === 'checkbox' ? 'h-4 w-4 accent-teal-600' : fieldClass} />}
+          </Select> : <input type={type} minLength={key === 'password' ? 10 : undefined} maxLength={key === 'password' ? 72 : key === 'username' ? 50 : key === 'email' ? 255 : key === 'displayName' ? 100 : undefined} pattern={key === 'username' ? '[A-Za-z0-9_.\\-]+' : undefined} autoComplete={key === 'password' ? 'new-password' : undefined} required={(key === 'validTo' && resource === 'representatives') || (!['validTo','description'].includes(key) && type !== 'checkbox')} checked={type === 'checkbox' ? Boolean(form[key] ?? key === 'isActive') : undefined} value={type === 'checkbox' ? undefined : form[key] ?? ''} onChange={e => setForm({ ...form,[key]: type === 'checkbox' ? e.target.checked : e.target.value })} className={type === 'checkbox' ? 'h-4 w-4 accent-teal-600' : fieldClass} />}
         </label>)}
       </fieldset>
       <div className="flex justify-end border-t border-slate-200 pt-4 dark:border-slate-700"><button disabled={busy || loading || USE_FIXTURES} className="soft-btn-primary text-sm">{busy ? 'Đang lưu...' : editing ? 'Lưu thay đổi' : ['scopes','user-roles','representatives'].includes(resource) ? 'Tạo phân công' : 'Tạo mới'}</button></div>

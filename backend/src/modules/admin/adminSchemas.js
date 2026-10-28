@@ -6,7 +6,7 @@ const period = { validFrom: z.string().datetime({ offset: true }), validTo: z.st
 const validPeriod = v => !v.validTo || Date.parse(v.validTo) > Date.parse(v.validFrom);
 export const assignmentSchema = z.object({ userId: id, roleId: id, unitId: id.optional(), includeDescendants: z.boolean().default(false), ...period }).strict().refine(validPeriod, { message: 'Thời hạn kết thúc phải sau bắt đầu', path: ['validTo'] });
 export const representativeSchema = z.object({ userId: id, unitId: id, ...period, validTo: z.string().datetime({ offset: true }) }).strict().refine(validPeriod, { message: 'Thời hạn kết thúc phải sau bắt đầu', path: ['validTo'] });
-export const userSchema = z.object({ username: text(50).regex(/^[A-Za-z0-9_.-]+$/), email: z.string().email().max(255), displayName: text(100), password: z.string().min(10).max(72) }).strict();
+export const userSchema = z.object({ username: text(50).regex(/^[A-Za-z0-9_.-]+$/), email: z.string().email().max(255), displayName: text(100), password: z.string().min(10, 'Mật khẩu phải có ít nhất 10 ký tự.').max(72, 'Mật khẩu không được vượt quá 72 ký tự.') }).strict();
 export const userUpdateSchema = z.object({ email: z.string().email().max(255), displayName: text(100), status: z.enum(['ACTIVE', 'INACTIVE', 'LOCKED']), version: id }).strict();
 const common = { code, name: text(150), isActive: z.boolean().default(true) };
 const subject = z.enum(['LECTURER', 'UNIT', 'BOTH']).default('BOTH');
