@@ -100,7 +100,7 @@ export default function ProfilePortfolio() {
     }
   };
 
-  const pageHeader = (<PageHeader title="Hồ sơ năng lực" description={profile?.updatedAt ? `Cập nhật lần cuối: ${new Date(profile.updatedAt).toLocaleDateString('vi-VN')}` : 'Thông tin cá nhân, thành tích và minh chứng của bạn.'} icon={Medal} onRefresh={loadProfile} refreshing={profileLoading} secondaryActions={<button
+  const pageHeader = (<PageHeader title="Hồ sơ năng lực" description={profile?.updatedAt ? `Cập nhật lần cuối: ${new Date(profile.updatedAt).toLocaleDateString('vi-VN')}` : 'Thông tin cá nhân, thành tích và minh chứng của bạn.'} icon={Medal} onRefresh={loadProfile} refreshing={profileLoading} secondaryActions={<><button type="button" onClick={() => navigate('/me/cv')} className="soft-btn-secondary h-11 text-sm">Tạo CV cá nhân</button><button
             onClick={() => {
               setShowPasswordModal(true);
               setPasswordError(null);
@@ -114,7 +114,7 @@ export default function ProfilePortfolio() {
           >
             <LockKeyhole className="w-4 h-4 text-brand-600 dark:text-brand-400" />
             <span>Đổi mật khẩu</span>
-          </button>} tabs={<UnderlineTabs label="Nội dung hồ sơ năng lực" items={tabs} value={activeTab} onChange={setActiveTab} />} />);
+          </button></>} tabs={<UnderlineTabs label="Nội dung hồ sơ năng lực" items={tabs} value={activeTab} onChange={setActiveTab} />} />);
   if (profileLoading) return <div className="space-y-6">{pageHeader}<LoadingState label="Đang tải hồ sơ năng lực..." layout="cards" /></div>;
   if (profileError) return <div className="space-y-6">{pageHeader}<ErrorState error={profileError} onRetry={loadProfile} /></div>;
   if (!profile) return <div className="space-y-6">{pageHeader}<EmptyState message="Chưa có hồ sơ năng lực." /></div>;

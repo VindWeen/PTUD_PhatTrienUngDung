@@ -9,6 +9,9 @@ const Dashboard = lazy(() => import('../pages/Dashboard'));
 const Reports = lazy(() => import('../pages/Reports'));
 import NotFound from '../pages/NotFound';
 const ProfilePortfolio = lazy(() => import('../pages/ProfilePortfolio'));
+const CvEditor = lazy(() => import('../pages/CvEditor'));
+const PublicCv = lazy(() => import('../pages/PublicCv'));
+const CvPreview = lazy(() => import('../pages/CvPreview'));
 const Organizations = lazy(() => import('../pages/Organizations'));
 const AdminManagement = lazy(() => import('../pages/AdminManagement'));
 const Achievements = lazy(() => import('../pages/Achievements'));
@@ -38,6 +41,7 @@ export default function AppRoutes() {
   return (
     <Suspense fallback={<LoadingState label="Đang mở trang…" />}><Routes>
       <Route path="/login" element={loading ? <LoadingState label="Đang kiểm tra phiên đăng nhập..." /> : signedIn ? <Navigate to={landing} replace /> : <AuthPage />} />
+      <Route path="/cv/:id" element={<PublicCv />} />
       <Route element={<RequireAuth />}>
         <Route element={<MainLayout />}>
           <Route index element={<Navigate to={landing} replace />} />
@@ -46,6 +50,8 @@ export default function AppRoutes() {
           <Route path="reports" element={<RequireRole roles={APP_ROLES}><Reports /></RequireRole>} />
           <Route path="me/dashboard" element={<RequireRole roles={APP_ROLES}><Dashboard /></RequireRole>} />
           <Route path="me/profile" element={<RequireRole roles={PROFILE_ROLES}><ProfilePortfolio /></RequireRole>} />
+          <Route path="me/cv" element={<RequireRole roles={PROFILE_ROLES}><CvEditor /></RequireRole>} />
+          <Route path="me/cv/preview" element={<RequireRole roles={PROFILE_ROLES}><CvPreview /></RequireRole>} />
           <Route path="me/ai-forecast" element={<RequireRole roles={APP_ROLES}><AIForecast /></RequireRole>} />
           <Route path="organizations" element={<RequireRole roles={APP_ROLES}><Organizations /></RequireRole>} />
           <Route path="achievements" element={<RequireRole roles={APP_ROLES}><Achievements /></RequireRole>} />

@@ -23,6 +23,7 @@ import organizationRoutes from './modules/organizations/organizationRoutes.js';
 import adminRoutes from './modules/admin/adminRoutes.js';
 import achievementRoutes from './modules/achievements/achievementRoutes.js';
 import evidenceRoutes from './modules/evidences/evidenceRoutes.js';
+import cvRoutes from './modules/cv/cvRoutes.js';
 
 const app = express();
 
@@ -63,6 +64,7 @@ app.use(`${apiPrefix}/health`, healthRoutes);
 
 // Auth Routes
 app.use(`${apiPrefix}/auth`, authRoutes);
+app.use(apiPrefix, cvRoutes);
 app.use(apiPrefix, profileRoutes);
 app.use(apiPrefix, organizationRoutes);
 app.use(apiPrefix, achievementRoutes);

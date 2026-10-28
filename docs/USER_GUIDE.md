@@ -1,5 +1,13 @@
 # Hướng dẫn sử dụng hệ thống theo vai trò
 
+## CV cá nhân chia sẻ bằng đường dẫn
+
+Giảng viên đăng nhập, mở **Hồ sơ năng lực → Tạo CV cá nhân**, chọn mẫu, nhập giới thiệu và kinh nghiệm khác, rồi chọn các phân công LHU và thành tích đã xác nhận muốn hiển thị. Email và số điện thoại mặc định không hiển thị; chỉ bật khi muốn chia sẻ. Chọn **Xem trước** và **Lưu bản nháp**; bấm **Công khai CV** để tạo bản công khai và nhận link. Bất kỳ ai có link đều xem được. Khi sửa bản nháp, bấm **Cập nhật CV công khai** để cập nhật bản chia sẻ; **Ngừng chia sẻ** sẽ làm link không còn truy cập được. Lịch sử công tác chính thức vẫn do quản trị viên cập nhật, kinh nghiệm khác chỉ nằm trong CV.
+
+Chạy migration mới trước khi dùng. Trên Cloudflare Pages, triển khai frontend kèm file `public/_headers`, cấu hình backend và CORS cho tên miền frontend; đường dẫn `/cv/*` phải trả về ứng dụng frontend. Trang CV gửi chỉ dẫn `noindex` nhưng đây không phải bảo vệ truy cập: người có link vẫn có thể chia sẻ lại.
+
+Xem trước mở trong tab riêng, có thể chọn **In hoặc lưu PDF** bằng hộp thoại trình duyệt. **Đổi link chia sẻ** làm link cũ không còn truy cập được. Thành tích không còn ở trạng thái đã xác nhận sẽ tự ẩn khỏi CV công khai; bản CV công khai được tạo trước khi bổ sung kiểm tra này cần công khai lại để hiện thành tích. Các thông tin khác lấy theo bản chụp tại lần công khai, kể cả phân công công tác; cần công khai lại để cập nhật.
+
 Đối chiếu giao diện và kiểm tra quyền trong code ngày 14/10/2026. Các tài khoản, file và dữ liệu SCN là MÔ PHỎNG.
 
 ## 1. Hiểu hệ thống trước khi dùng
