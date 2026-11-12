@@ -71,6 +71,10 @@ export default function Dashboard() {
     loadKpiGoals();
   }, [loadSummary, loadKpiGoals]);
 
+  const todayLabel = useMemo(() => new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit', month: 'long', year: 'numeric', weekday: 'long',
+  }).format(new Date()), []);
+
   const roadmapItems = useMemo(() => {
     if (!kpiGoals || kpiGoals.length === 0) return [];
     const colors = ['bg-[#78a5d1]', 'bg-[#97aa70]', 'bg-[#e28b8c]', 'bg-[#d8975a]'];
