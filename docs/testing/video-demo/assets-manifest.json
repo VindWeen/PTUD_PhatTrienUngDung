@@ -1,0 +1,65 @@
+{
+  "purpose": "MÔ PHỎNG - PHỤC VỤ DEMO",
+  "files": [
+    {
+      "file": "Không hỗ trợ - thử định dạng.txt",
+      "bytes": 139,
+      "sha256": "b0bcaad4dfd5c2786055c07614c23ebccd8890406f5e4c61b4e1d6bf03548fbf"
+    },
+    {
+      "file": "KPI - hợp lệ.csv",
+      "bytes": 519,
+      "sha256": "ff8d986b63f905b626d1bc433ad9436e7bc3aa2a6a05db78834aa2b8fde13fb8"
+    },
+    {
+      "file": "KPI - lỗi.csv",
+      "bytes": 336,
+      "sha256": "2791502fd4f11b238daa6ae41e70b113265603a8920ea51ec5930e984bcc8739"
+    },
+    {
+      "file": "KPI - xem trước có lỗi.csv",
+      "bytes": 635,
+      "sha256": "6b0d8b65a8bc0a85b36f048795d9b219323c1084bf8afe7c1f37e477e7dd9d07"
+    },
+    {
+      "file": "Minh chứng nghiên cứu - bản 1 - xem trước.png",
+      "bytes": 64799,
+      "sha256": "721ef2ad473e2097bdc389bc3fba6fee37478976a11e0603bf24969d68ec4828"
+    },
+    {
+      "file": "Minh chứng nghiên cứu - bản 1.pdf",
+      "bytes": 80226,
+      "sha256": "c21ca08e4956a452ec72b5b5076d388d9a8a93264d423f818bbc29fa4e606762"
+    },
+    {
+      "file": "Minh chứng nghiên cứu - bản 2 - xem trước.png",
+      "bytes": 76004,
+      "sha256": "39e51866d769968227096267dbc47e11b4a2337555ce0abcb4b5ca262ba36dc6"
+    },
+    {
+      "file": "Minh chứng nghiên cứu - bản 2.pdf",
+      "bytes": 80727,
+      "sha256": "852c61eb8cc03d160e5395a565b83e55e7160720b71d5627d939235fc96253da"
+    },
+    {
+      "file": "Quyết định khen thưởng - mô phỏng - xem trước.png",
+      "bytes": 74190,
+      "sha256": "093c06fc46375b4f3dea10d00f29731801ccc69b722aced4ec51278222968db2"
+    },
+    {
+      "file": "Quyết định khen thưởng - mô phỏng.pdf",
+      "bytes": 81247,
+      "sha256": "045f0ed972301e972c38269af19ce388c511cf40c6474bee24776653bba88176"
+    },
+    {
+      "file": "Quyết định sửa sai - mô phỏng - xem trước.png",
+      "bytes": 69313,
+      "sha256": "cfd7c4631f6d55b6893f24420dd89ccc53e63396cb5e566ffae3d934f1471296"
+    },
+    {
+      "file": "Quyết định sửa sai - mô phỏng.pdf",
+      "bytes": 80534,
+      "sha256": "8406b2449a729f49a971d0181a3fce48a854dcc4c893995d8e5a587169bf5f37"
+    }
+  ]
+}

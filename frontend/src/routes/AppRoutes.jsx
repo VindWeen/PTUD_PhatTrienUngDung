@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import MainLayout from '../layouts/MainLayout';
 const AIForecast = lazy(() => import('../pages/AIForecast'));
 import AuthPage from '../pages/AuthPage';
+import ResetPassword from '../pages/ResetPassword';
 const Dashboard = lazy(() => import('../pages/Dashboard'));
 const Reports = lazy(() => import('../pages/Reports'));
 import NotFound from '../pages/NotFound';
@@ -41,6 +42,7 @@ export default function AppRoutes() {
   return (
     <Suspense fallback={<LoadingState label="Đang mở trang…" />}><Routes>
       <Route path="/login" element={loading ? <LoadingState label="Đang kiểm tra phiên đăng nhập..." /> : signedIn ? <Navigate to={landing} replace /> : <AuthPage />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/cv/:id" element={<PublicCv />} />
       <Route element={<RequireAuth />}>
         <Route element={<MainLayout />}>
@@ -55,7 +57,7 @@ export default function AppRoutes() {
           <Route path="me/ai-forecast" element={<RequireRole roles={APP_ROLES}><AIForecast /></RequireRole>} />
           <Route path="organizations" element={<RequireRole roles={APP_ROLES}><Organizations /></RequireRole>} />
           <Route path="achievements" element={<RequireRole roles={APP_ROLES}><Achievements /></RequireRole>} />
-          <Route path="regulations" element={<RequireRole roles={APP_ROLES}><Regulations /></RequireRole>} />
+          <Route path="regulations" element={<RequireRole roles={[...APP_ROLES, 'COUNCIL']}><Regulations /></RequireRole>} />
           <Route path="awards" element={<RequireRole roles={['RECORDS_OFFICER']}><Awards /></RequireRole>} />
           <Route path="award-applications" element={<RequireRole roles={['LECTURER','UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'COUNCIL']}><AwardApplications /></RequireRole>} />
           <Route path="me/achievements" element={<Navigate to="/achievements" replace />} />

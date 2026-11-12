@@ -16,7 +16,7 @@ export async function findLecturerByUserId(userId) {
     `SELECT lecturer_id AS "lecturerId", user_id AS "userId", employee_code AS "employeeCode",
             full_name AS "fullName", email, phone, title, degree, is_active AS "isActive",
             updated_at AS "updatedAt", version
-       FROM app.lecturers WHERE user_id = $1 AND is_active = TRUE`, [userId]);
+       FROM app.lecturers WHERE user_id = $1 AND is_active = 1`, [userId]);
   return result.rows[0] || null;
 }
 
@@ -35,7 +35,7 @@ export async function getWorkHistory(lecturerId) {
 export async function getTitlesAndHonors(lecturerId) {
   const result = await query(
     `SELECT r.record_id AS "awardRecordId", COALESCE(t.name, p.name) AS "awardTypeName",
-            COALESCE(r.recognition_year, EXTRACT(YEAR FROM r.decision_date)::int) AS "recognitionYear",
+            COALESCE(r.recognition_year, YEAR(r.decision_date)) AS "recognitionYear",
             COALESCE(t.level, 'UNIVERSITY') AS level, COALESCE(d.decision_number,r.decision_number) AS "decisionNumber",
             COALESCE(d.decision_date,r.decision_date) AS "decisionDate", r.status
        FROM app.award_records r
@@ -48,14 +48,14 @@ export async function getTitlesAndHonors(lecturerId) {
 
 export async function getProfileStats(lecturerId) {
   const result = await query(
-    `SELECT COUNT(*)::int AS "totalAchievements",
-            COUNT(*) FILTER (WHERE status = 'VERIFIED')::int AS "verifiedAchievements",
-            COUNT(*) FILTER (WHERE status IN ('SUBMITTED', 'UNDER_REVIEW'))::int AS "pendingAchievements",
-            COUNT(*) FILTER (WHERE status = 'NEED_CORRECTION')::int AS "needCorrectionAchievements",
-            COUNT(*) FILTER (WHERE status = 'REJECTED')::int AS "rejectedAchievements",
-            COUNT(*) FILTER (WHERE status = 'REVOKED')::int AS "revokedAchievements",
-            COUNT(*) FILTER (WHERE status = 'DRAFT')::int AS "draftAchievements",
-            (SELECT COUNT(*)::int FROM app.award_records r WHERE r.lecturer_id = $1 AND r.status = 'RECORDED') AS "recordedAwards"
+    `SELECT COUNT(*) AS "totalAchievements",
+            COUNT(CASE WHEN status = 'VERIFIED' THEN 1 END) AS "verifiedAchievements",
+            COUNT(CASE WHEN status IN ('SUBMITTED', 'UNDER_REVIEW') THEN 1 END) AS "pendingAchievements",
+            COUNT(CASE WHEN status = 'NEED_CORRECTION' THEN 1 END) AS "needCorrectionAchievements",
+            COUNT(CASE WHEN status = 'REJECTED' THEN 1 END) AS "rejectedAchievements",
+            COUNT(CASE WHEN status = 'REVOKED' THEN 1 END) AS "revokedAchievements",
+            COUNT(CASE WHEN status = 'DRAFT' THEN 1 END) AS "draftAchievements",
+            (SELECT COUNT(*) FROM app.award_records r WHERE r.lecturer_id = $1 AND r.status = 'RECORDED') AS "recordedAwards"
        FROM app.achievements WHERE lecturer_id = $1`, [lecturerId]);
   return result.rows[0];
 }
@@ -63,11 +63,10 @@ export async function getProfileStats(lecturerId) {
 export async function updateLecturer(lecturerId, version, fields) {
   const result = await query(
     `UPDATE app.lecturers SET phone = $1, title = $2, degree = $3,
-            updated_at = NOW(), version = version + 1
-      WHERE lecturer_id = $4 AND version = $5
-      RETURNING lecturer_id AS "lecturerId", user_id AS "userId", employee_code AS "employeeCode",
-                full_name AS "fullName", email, phone, title, degree, is_active AS "isActive",
-                updated_at AS "updatedAt", version`,
+            updated_at = SYSUTCDATETIME(), version = version + 1
+      OUTPUT INSERTED.lecturer_id AS "lecturerId", INSERTED.user_id AS "userId", INSERTED.employee_code AS "employeeCode",
+                INSERTED.full_name AS "fullName", INSERTED.email, INSERTED.phone, INSERTED.title, INSERTED.degree, INSERTED.is_active AS "isActive",
+                INSERTED.updated_at AS "updatedAt", INSERTED.version WHERE lecturer_id = $4 AND version = $5`,
     [fields.phone ?? null, fields.title ?? null, fields.degree ?? null, lecturerId, version]);
   return result.rows[0] || null;
 }

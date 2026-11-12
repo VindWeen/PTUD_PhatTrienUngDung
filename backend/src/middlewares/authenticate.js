@@ -24,6 +24,7 @@ export async function authenticate(req, res, next) {
         username: decoded.username,
         email: decoded.email,
         roles: decoded.roles || [],
+        passwordChangedAt: decoded.passwordChangedAt ?? null,
       };
     } catch (err) {
       if (err.name === 'TokenExpiredError') {
@@ -33,6 +34,8 @@ export async function authenticate(req, res, next) {
     }
     const user = await findUserById(req.user.userId);
     if (!user || user.Status !== 'ACTIVE') throw new UnauthorizedError('Tài khoản không còn hoạt động');
+    const currentPasswordChange = user.PasswordChangedAt ? new Date(user.PasswordChangedAt).toISOString() : null;
+    if (req.user.passwordChangedAt !== currentPasswordChange) throw new UnauthorizedError('Mật khẩu đã thay đổi. Vui lòng đăng nhập lại');
     next();
   } catch (error) {
     next(error);

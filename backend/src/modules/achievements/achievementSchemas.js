@@ -69,6 +69,8 @@ export const updateAchievementSchema = z
   });
 
 export const listAchievementsQuerySchema = z.object({
+  trash: z.enum(['true', 'false']).optional(),
+  workflow: z.enum(['ACTIONABLE', 'PENDING', 'VERIFIED', 'ENDED']).optional(),
   category: z.enum(['RESEARCH', 'TEACHING']).optional(),
   subjectType: z.enum(['LECTURER', 'UNIT']).optional(),
   lecturerId: z.coerce.number().int().positive().optional(),

@@ -55,6 +55,6 @@ DEMO_VERSION_CONFIG của W6-Q1 ghi Vite 5/Node >=18 và migrations 001–009; p
 - [ ] Sau restore, HTTP owner tải đúng SHA256/size, anonymous 401, ngoài quyền 403/404; lịch sử đúng; kiểm cả file quyết định.
 - [ ] Chạy lại kịch bản browser trên DB/storage đã restore. Không dùng DB nguồn thay DB restored.
 
-Gate release còn mở cho đến khi các ô trên có bằng chứng. Chi tiết kết quả lệnh và blocker mới nhất ở [bàn giao W6-P2](../../weekly/WEEK_06_W6_P2.md).
+Gate release còn mở cho đến khi các ô trên có bằng chứng. Chi tiết kết quả lệnh và blocker mới nhất ở [bàn giao W6-P2](../../archive/weekly/WEEK_06_W6_P2.md).
 
 W6-P2 đã chạy restore gói cục bộ `backups/w5p3_http` vào schema ngẫu nhiên: **FAIL 42703 verified_by** tại Data DML; schema test được dọn. DDL đã chứa ADD COLUMN nhưng điều kiện literal table_schema vẫn là app nguồn. Đây là blocker thực tế mới, không chỉ NOT_RUN từ CI Quang. HTTP và browser trên DB restored chưa chạy được.

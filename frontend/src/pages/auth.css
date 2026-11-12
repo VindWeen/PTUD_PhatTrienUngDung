@@ -975,3 +975,17 @@
 @media (prefers-reduced-motion: reduce) {
   .ptud-auth *, .ptud-auth *::before, .ptud-auth *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; transition-delay: 0s !important; }
 }
+
+/* Ưu tiên biểu mẫu và tránh cắt danh sách tài khoản thử nghiệm. */
+@media (min-width: 1101px) {
+  .ptud-auth .auth-wrapper:has(.quick-accounts-section[open]) { height: auto; min-height: 100dvh; padding: 32px 0; overflow-y: auto; }
+  .ptud-auth .login-card:has(.quick-accounts-section[open]) { height: 850px; flex-shrink: 0; }
+}
+@media (max-width: 640px) {
+  .ptud-auth .login-card:has(.quick-accounts-section[open]) { min-height: 100svh; }
+  .ptud-auth .login-card::before { height: 155px; }
+  .ptud-auth .login-card::after { top: 110px; height: 70px; }
+  .ptud-auth .brand-logo-container { top: 69px; }
+  .ptud-auth .brand-logo-img { width: min(170px, 45vw); }
+  .ptud-auth .form-container { margin-top: 185px; }
+}

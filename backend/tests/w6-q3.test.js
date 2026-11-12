@@ -53,7 +53,7 @@ describe('W6-Q3 S1: Checklist nghiệm thu cuối — artefacts tồn tại', ()
     // Known limitations doc (tạo bởi W6-Q3)
     'docs/report-inputs/KNOWN_LIMITATIONS_W6Q3.md',
     // Demo scenario doc (tạo bởi W6-Q3)
-    'docs/DEMO_SCENARIO_W6Q3.md',
+    'docs/archive/DEMO_SCENARIO_W6Q3.md',
   ];
 
   for (const rel of artefacts) {
@@ -194,7 +194,7 @@ describe('W6-Q3 S3: RELEASE_RECORD — bản phát hành hợp lệ', () => {
 describe('W6-Q3 S4: DEMO_SCENARIO — kịch bản PTUD→AI→KPI đầy đủ', () => {
   let content;
   before(() => {
-    const p = path.join(ROOT, 'docs/DEMO_SCENARIO_W6Q3.md');
+    const p = path.join(ROOT, 'docs/archive/DEMO_SCENARIO_W6Q3.md');
     content = fs.readFileSync(p, 'utf8');
   });
 

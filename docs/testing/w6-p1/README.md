@@ -1,6 +1,6 @@
 # W6-P1 — Log và bộ ảnh cuối
 
-Bàn giao: [WEEK_06_W6_P1.md](../../weekly/WEEK_06_W6_P1.md). Các ảnh là dữ liệu tổng hợp có nhãn chạy trên Express/pg/Supabase thật trong schema kiểm thử rollback; không là ảnh dữ liệu vận hành LHU hay ảnh sau restore. Metadata/hash được ghi trong [verification.json](verification.json).
+Bàn giao: [WEEK_06_W6_P1.md](../../archive/weekly/WEEK_06_W6_P1.md). Các ảnh là dữ liệu tổng hợp có nhãn chạy trên Express/pg/Supabase thật trong schema kiểm thử rollback; không là ảnh dữ liệu vận hành LHU hay ảnh sau restore. Metadata/hash được ghi trong [verification.json](verification.json).
 
 | Trang | 390px | 768px | 1440px |
 |---|---|---|---|

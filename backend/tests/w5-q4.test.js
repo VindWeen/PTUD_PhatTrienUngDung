@@ -150,10 +150,10 @@ describe('[W5-Q4-2] Phân loại lỗi chặn demo', () => {
     );
   });
 
-  it('[P2-TLS] Ghi nhận giới hạn TLS rejectUnauthorized:false trong code', () => {
+  it('[P2-TLS] SQL Server có tùy chọn mã hóa và xác minh chứng chỉ', () => {
     const dbConfig = readText('backend/src/config/database.js');
     assert.ok(
-      dbConfig.includes('rejectUnauthorized') || dbConfig.includes('ssl'),
+      dbConfig.includes('encrypt:config.DB_ENCRYPT') && dbConfig.includes('trustServerCertificate:config.DB_TRUST_SERVER_CERTIFICATE'),
       'database.js phải có cấu hình TLS'
     );
     // PR_REVIEW ghi giới hạn TLS chưa xác minh CA — không che giấu
@@ -230,11 +230,11 @@ describe('[W5-Q4-3] Đóng góp Quang — truy nguyên commit/test/demo', () => 
     );
     // Báo cáo tuần Q2 và Q3 phải có
     assert.ok(
-      fileExists('docs/weekly/WEEK_05_W5_Q2.md'),
+      fileExists('docs/archive/weekly/WEEK_05_W5_Q2.md'),
       'WEEK_05_W5_Q2.md phải tồn tại'
     );
     assert.ok(
-      fileExists('docs/weekly/WEEK_05_W5_Q3.md'),
+      fileExists('docs/archive/weekly/WEEK_05_W5_Q3.md'),
       'WEEK_05_W5_Q3.md phải tồn tại'
     );
   });

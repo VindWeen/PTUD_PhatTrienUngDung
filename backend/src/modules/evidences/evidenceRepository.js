@@ -1,4 +1,5 @@
 import { getPool } from '../../config/database.js';
+import { normalizeFileName } from '../../utils/fileName.js';
 
 function mapEvidenceRow(row) {
   if (!row) return null;
@@ -25,7 +26,7 @@ function mapFileRow(row) {
     evidenceFileId: Number(row.evidenceFileId),
     evidenceId: Number(row.evidenceId),
     versionNo: Number(row.versionNo),
-    originalFileName: row.originalFileName,
+    originalFileName: normalizeFileName(row.originalFileName),
     storageKey: row.storageKey,
     mimeType: row.mimeType,
     fileExtension: row.fileExtension,
@@ -55,17 +56,14 @@ export class EvidenceRepository {
         created_at,
         updated_at
       )
-      VALUES ($1, $2, $3, FALSE, $4, NOW(), NOW())
-      RETURNING
-        evidence_id AS "evidenceId",
-        achievement_id AS "achievementId",
-        title,
-        description,
-        is_removed AS "isRemoved",
-        created_by AS "createdBy",
-        created_at AS "createdAt",
-        updated_at AS "updatedAt";
-    `;
+      OUTPUT INSERTED.evidence_id AS "evidenceId",
+        INSERTED.achievement_id AS "achievementId",
+        INSERTED.title,
+        INSERTED.description,
+        INSERTED.is_removed AS "isRemoved",
+        INSERTED.created_by AS "createdBy",
+        INSERTED.created_at AS "createdAt",
+        INSERTED.updated_at AS "updatedAt" VALUES ($1, $2, $3, 0, $4, SYSUTCDATETIME(), SYSUTCDATETIME())`;
     const res = await db.query(query, [achievementId, title, description, createdBy]);
     return mapEvidenceRow(res.rows[0]);
   }
@@ -101,20 +99,17 @@ export class EvidenceRepository {
         uploaded_by,
         uploaded_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
-      RETURNING
-        evidence_file_id AS "evidenceFileId",
-        evidence_id AS "evidenceId",
-        version_no AS "versionNo",
-        original_file_name AS "originalFileName",
-        storage_key AS "storageKey",
-        mime_type AS "mimeType",
-        file_extension AS "fileExtension",
-        file_size AS "fileSize",
-        sha256_hash AS "sha256Hash",
-        uploaded_by AS "uploadedBy",
-        uploaded_at AS "uploadedAt";
-    `;
+      OUTPUT INSERTED.evidence_file_id AS "evidenceFileId",
+        INSERTED.evidence_id AS "evidenceId",
+        INSERTED.version_no AS "versionNo",
+        INSERTED.original_file_name AS "originalFileName",
+        INSERTED.storage_key AS "storageKey",
+        INSERTED.mime_type AS "mimeType",
+        INSERTED.file_extension AS "fileExtension",
+        INSERTED.file_size AS "fileSize",
+        INSERTED.sha256_hash AS "sha256Hash",
+        INSERTED.uploaded_by AS "uploadedBy",
+        INSERTED.uploaded_at AS "uploadedAt" VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, SYSUTCDATETIME())`;
     const params = [
       evidenceId,
       versionNo,
@@ -204,7 +199,7 @@ export class EvidenceRepository {
    */
   async getEvidencesByAchievementId(achievementId, includeRemoved = false) {
     const db = getPool();
-    const filterRemoved = includeRemoved ? '' : 'AND e.is_removed = FALSE';
+    const filterRemoved = includeRemoved ? '' : 'AND e.is_removed = 0';
     const query = `
       SELECT
         e.evidence_id AS "evidenceId",
@@ -224,13 +219,13 @@ export class EvidenceRepository {
         ef.uploaded_at AS "latestUploadedAt",
         (SELECT COUNT(*) FROM app.evidence_files WHERE evidence_id = e.evidence_id) AS "totalVersions"
       FROM app.evidences e
-      LEFT JOIN LATERAL (
-        SELECT *
+      OUTER APPLY (
+        SELECT TOP (1) *
         FROM app.evidence_files
         WHERE evidence_id = e.evidence_id
         ORDER BY version_no DESC
-        LIMIT 1
-      ) ef ON TRUE
+
+      ) ef
       WHERE e.achievement_id = $1 ${filterRemoved}
       ORDER BY e.created_at ASC;
     `;
@@ -246,7 +241,7 @@ export class EvidenceRepository {
       updatedAt: row.updatedAt,
       latestFileId: row.latestFileId ? Number(row.latestFileId) : null,
       latestVersionNo: row.latestVersionNo ? Number(row.latestVersionNo) : null,
-      latestFileName: row.latestFileName || null,
+      latestFileName: normalizeFileName(row.latestFileName) || null,
       latestFileSize: row.latestFileSize ? Number(row.latestFileSize) : null,
       latestMimeType: row.latestMimeType || null,
       latestSha256Hash: row.latestSha256Hash || null,
@@ -315,20 +310,17 @@ export class EvidenceRepository {
   }
 
   /**
-   * Đánh dấu xóa mềm danh mục minh chứng (is_removed = TRUE)
+   * Đánh dấu xóa mềm danh mục minh chứng (is_removed = 1)
    */
   async softDeleteEvidence(evidenceId, client = null) {
     const db = client || getPool();
     const query = `
       UPDATE app.evidences
-      SET is_removed = TRUE, updated_at = NOW()
-      WHERE evidence_id = $1
-      RETURNING
-        evidence_id AS "evidenceId",
-        achievement_id AS "achievementId",
-        is_removed AS "isRemoved",
-        updated_at AS "updatedAt";
-    `;
+      SET is_removed = 1, updated_at = SYSUTCDATETIME()
+      OUTPUT INSERTED.evidence_id AS "evidenceId",
+        INSERTED.achievement_id AS "achievementId",
+        INSERTED.is_removed AS "isRemoved",
+        INSERTED.updated_at AS "updatedAt" WHERE evidence_id = $1`;
     const res = await db.query(query, [evidenceId]);
     const row = res.rows[0];
     if (!row) return null;

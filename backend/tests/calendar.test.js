@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createEventSchema } from '../src/modules/calendar/calendarService.js';
+import { createEventSchema, calendarService } from '../src/modules/calendar/calendarService.js';
 import { monthCells, shiftMonth, onDay } from '../../frontend/src/components/calendar/calendarModel.js';
 
 const event = { title: 'Lịch thi', category: 'exam', startsAt: '2028-02-29T09:00', endsAt: '2028-02-29T10:00', allDay: false };
@@ -28,4 +28,18 @@ test('month navigation handles year rollover, leap years and Monday-first grids'
   assert.equal(monthCells('2027-02').includes('2027-02-29'), false);
   assert.equal(monthCells('2026-10')[0], '2026-09-28');
   assert.equal(monthCells('2026-10').length, 42);
+});
+
+test('system calendar uses open award-period deadlines as read-only events', async () => {
+  let sql;
+  const service = calendarService(async statement => {
+    sql = statement;
+    return { rows: [{ id: '5', name: 'Kỳ cuối năm', end_date: '2028-12-15' }] };
+  });
+  const events = await service.listSystem();
+  assert.match(sql, /status='OPEN'/);
+  assert.equal(events[0].id, 'award-period-5');
+  assert.equal(events[0].startsAt, '2028-12-15T00:00');
+  assert.equal(events[0].readOnly, true);
+  assert.equal(events[0].category, 'system');
 });

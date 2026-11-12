@@ -205,7 +205,7 @@ test('4. [W5-Q1 Export / CSV] Phân quyền xuất báo cáo CSV và vệ sinh c
   const queryResult = reportQuery({ search: 'nghiên cứu' }, 10);
   assert.ok(queryResult.sql.includes('scope_units AS'), 'SQL báo cáo bắt buộc phải chứa CTE phân quyền scope_units');
   assert.ok(queryResult.sql.includes('active_roles AS'), 'SQL báo cáo bắt buộc phải đọc active_roles từ DB');
-  assert.ok(queryResult.sql.includes('title ILIKE'), 'SQL báo cáo hỗ trợ tìm kiếm an toàn');
+  assert.ok(queryResult.sql.includes('title LIKE'), 'SQL báo cáo hỗ trợ tìm kiếm an toàn');
 });
 
 // ============================================================================

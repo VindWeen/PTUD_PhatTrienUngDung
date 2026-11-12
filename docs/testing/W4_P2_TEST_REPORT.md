@@ -32,7 +32,7 @@ Chưa chạy UI bằng trình duyệt; build không chứng minh tương tác/h�
 - `frontend/src/services/kpiApi.js`: client API mới.
 - `docs/api/EXTERNAL_KPI_W4_P2.md`: API, DB plan, phụ thuộc và hướng dẫn tự kiểm tra.
 - `docs/api/W4_P2.openapi.json`: hợp đồng máy đọc bổ sung.
-- `docs/weekly/WEEK_04_W4_P2.md`: bàn giao/kế hoạch.
+- `docs/archive/weekly/WEEK_04_W4_P2.md`: bàn giao/kế hoạch.
 - `docs/testing/W4_P2_TEST_REPORT.md`: báo cáo này.
 
 Chưa commit/push/merge. Đề xuất: `feat(W4-P2): add simulated KPI HTTP connector, revision staging and sync logs`.

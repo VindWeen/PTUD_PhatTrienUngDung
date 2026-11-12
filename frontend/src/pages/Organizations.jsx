@@ -1,12 +1,29 @@
 import PageHeader from '../components/common/PageHeader';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Building2, Trash2 } from 'lucide-react';
+import { Building2, ChevronDown, ChevronRight, Trash2, Pencil, UserRoundCheck, ArrowRightLeft, Save, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { EmptyState, ErrorState, LoadingState } from '../components/common/AsyncState';
 import { organizationsApi } from '../services/organizationsApi';
 import { useSelectionOptions } from '../hooks/useSelections';
 import { EntitySelect, lecturerLabel } from '../components/common/EntityPicker';
 import Select from '../components/common/Select';
+
+const unitTypes = { UNIVERSITY: 'Trường', FACULTY: 'Khoa', DEPARTMENT: 'Bộ môn', DIVISION: 'Ban', OFFICE: 'Phòng', CENTER: 'Trung tâm' };
+
+// Keep children beside their parent, while tolerating missing parents in scoped lists.
+function orderedUnits(units) {
+  const seen = new Set();
+  const rows = [];
+  const visit = (unit, depth, ancestors = []) => {
+    if (seen.has(String(unit.unitId))) return;
+    seen.add(String(unit.unitId));
+    rows.push({ unit, depth, ancestors });
+    units.filter(child => String(child.parentId) === String(unit.unitId)).forEach(child => visit(child, depth + 1, [...ancestors, String(unit.unitId)]));
+  };
+  units.filter(unit => !unit.parentId || !units.some(parent => String(parent.unitId) === String(unit.parentId))).forEach(unit => visit(unit, 0));
+  units.forEach(unit => visit(unit, 0));
+  return rows;
+}
 
 export default function Organizations() {
   const { hasRole } = useAuth();
@@ -18,6 +35,7 @@ export default function Organizations() {
   const hasProfileRole = canManage || ['MANAGER', 'RECORDS_OFFICER', 'UNIT_REPRESENTATIVE'].some(hasRole);
   const canViewProfile = (unit) => unit.canViewProfile ?? hasProfileRole;
   const [units, setUnits] = useState([]);
+  const [expandedUnits, setExpandedUnits] = useState(() => new Set());
   const [selected, setSelected] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -108,23 +126,38 @@ export default function Organizations() {
         <label className="text-xs font-semibold">Ngày kết thúc phân công<input type="date" required className="soft-input mt-1 w-full" value={actionForm.endDate || ''} onChange={e=>setActionForm({...actionForm,endDate:e.target.value})}/></label>
       </> : <EntitySelect label="Giảng viên cần chuyển" options={choices.lecturers} value={actionForm.lecturerId} onChange={lecturerId=>setActionForm({...actionForm,lecturerId})} getLabel={lecturerLabel} required disabled={choices.loading} placeholder="Chọn giảng viên"/>}
       {(actionError || choices.error) && <p role="alert" className="text-sm text-rose-600 sm:col-span-2">{actionError || choices.error}</p>}
-      <div className="flex gap-2 sm:col-span-2"><button className="soft-btn-primary" disabled={busy || choices.loading}>Lưu</button><button type="button" className="soft-btn-secondary" disabled={busy} onClick={()=>setAction(null)}>Đóng</button></div>
+      <div className="flex flex-wrap gap-2 sm:col-span-2"><button className="soft-btn-primary h-11 text-sm" disabled={busy || choices.loading}><Save aria-hidden="true" className="h-4 w-4 shrink-0" />Lưu</button><button type="button" className="soft-btn-secondary h-11 text-sm" disabled={busy} onClick={()=>setAction(null)}><X aria-hidden="true" className="h-4 w-4 shrink-0" />Đóng</button></div>
     </form>}
     <div className={`grid gap-6 ${units.some(unit => canViewProfile(unit) && !deniedUnitIds.includes(unit.unitId)) ? 'lg:grid-cols-3' : ''}`}>
       <section className="soft-card p-5 space-y-2">
         <h2 className="font-bold mb-3">Danh sách đơn vị</h2>
         {loading && <LoadingState label="Đang tải cơ cấu tổ chức..." rows={4} />}
         {!loading && !units.length && !error && <EmptyState message="Chưa có đơn vị tổ chức." />}
-        {units.map((unit) => <button key={unit.unitId} disabled={!canViewProfile(unit) || deniedUnitIds.includes(unit.unitId)} onClick={() => choose(unit.unitId)} className={`w-full text-left p-3 rounded-xl border disabled:cursor-default ${selectedId === unit.unitId && !deniedUnitIds.includes(unit.unitId) ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30' : 'border-slate-200 dark:border-slate-700'}`}>
-          <span className="flex items-center gap-2 font-semibold"><Building2 className="w-4 h-4" />{unit.name}</span><span className="text-xs text-slate-500">{unit.code} · {unit.type}</span>
-        </button>)}
+        <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">Bấm mũi tên để xem hoặc thu gọn các đơn vị trực thuộc.</p>
+        {orderedUnits(units).filter(({ ancestors }) => ancestors.every(id => expandedUnits.has(id))).map(({ unit, depth }) => {
+          const readable = canViewProfile(unit) && !deniedUnitIds.includes(unit.unitId);
+          const children = units.filter(child => String(child.parentId) === String(unit.unitId) && String(child.unitId) !== String(unit.unitId));
+          const expanded = expandedUnits.has(String(unit.unitId));
+          return <div key={unit.unitId} style={{ paddingLeft: `${Math.min(depth, 3) * 28}px` }}>
+            <div className="relative">
+            <button disabled={!readable} aria-current={selectedId === unit.unitId ? 'true' : undefined} onClick={() => choose(unit.unitId)} className={`w-full text-left p-3 ${children.length ? 'pr-14' : ''} rounded-xl border disabled:cursor-default focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 ${selectedId === unit.unitId && readable ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30' : 'border-slate-200 dark:border-slate-700 hover:border-teal-400 disabled:hover:border-slate-200'}`}>
+              <span className="flex items-start gap-2 font-semibold"><Building2 className="mt-0.5 h-4 w-4 shrink-0" /><span className="min-w-0 break-words">{unit.name}</span>{readable && !children.length && <ChevronRight className="ml-auto h-4 w-4 shrink-0" />}</span>
+              <span className="mt-1 block text-sm text-slate-500 dark:text-slate-400">{unitTypes[unit.type] || 'Đơn vị'} · {unit.code}</span>
+              {unit.parentName && <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">Trực thuộc: {unit.parentName}</span>}
+              {children.length > 0 && <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">{children.length} đơn vị trực thuộc</span>}
+              <span className={`mt-2 block text-xs ${readable ? 'font-semibold text-teal-700 dark:text-teal-300' : 'text-slate-500'}`}>{readable ? 'Xem hồ sơ đơn vị' : 'Chưa có quyền xem hồ sơ'}</span>
+            </button>
+            {children.length > 0 && <button type="button" aria-label={`${expanded ? 'Thu gọn' : 'Mở rộng'} đơn vị trực thuộc ${unit.name}`} title={expanded ? 'Thu gọn đơn vị trực thuộc' : 'Xem đơn vị trực thuộc'} aria-expanded={expanded} onClick={() => setExpandedUnits(previous => { const next = new Set(previous); if (expanded) next.delete(String(unit.unitId)); else next.add(String(unit.unitId)); return next; })} className="absolute right-2 top-2 flex h-10 w-10 items-center justify-center rounded-lg text-teal-700 hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-teal-300 dark:hover:bg-teal-950"><ChevronDown aria-hidden="true" className={`h-5 w-5 transition-transform motion-reduce:transition-none ${expanded ? '' : '-rotate-90'}`} /></button>}
+            </div>
+          </div>;
+        })}
       </section>
       {units.some(unit => canViewProfile(unit) && !deniedUnitIds.includes(unit.unitId)) && <section className="soft-card p-6 lg:col-span-2">
         {loading || busy ? <LoadingState label="Đang tải hồ sơ đơn vị..." /> : selected ? <div className="space-y-5">
-          <div className="flex justify-between gap-3"><div><h2 className="text-xl font-bold">{selected.name}</h2><p className="text-sm text-slate-500">{selected.code} · {selected.type}</p></div>{canManage && <div className="flex flex-wrap justify-end gap-2"><button onClick={editUnit} className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800">Sửa</button><button onClick={remove} disabled={busy} className="px-3 py-2 rounded-xl text-rose-600 bg-rose-50 flex items-center gap-2"><Trash2 className="w-4 h-4" />Xóa</button></div>}</div>
+          <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-xl font-bold">{selected.name}</h2><p className="text-sm text-slate-500">{selected.code} · {unitTypes[selected.type] || 'Đơn vị'}</p></div>{canManage && <div className="flex flex-wrap gap-2"><button type="button" onClick={editUnit} disabled={busy} className="soft-btn-secondary h-11 text-sm"><Pencil aria-hidden="true" className="h-4 w-4 shrink-0" />Sửa</button><button type="button" onClick={remove} disabled={busy} className="soft-btn-secondary h-11 text-sm !bg-rose-50 !text-rose-700 hover:!bg-rose-100 dark:!bg-rose-950/50 dark:!text-rose-300 dark:hover:!bg-rose-900"><Trash2 aria-hidden="true" className="h-4 w-4 shrink-0" />Xóa</button></div>}</div>
           <p className="text-sm">{selected.description || 'Chưa có mô tả hồ sơ đơn vị.'}</p>
           <dl className="grid sm:grid-cols-2 gap-4 text-sm"><div><dt className="text-slate-500">Đơn vị cha</dt><dd className="font-semibold">{selected.parentUnit?.name || 'Không có'}</dd></div><div><dt className="text-slate-500">Số giảng viên hiện tại</dt><dd className="font-semibold">{selected.lecturersCount ?? 0}</dd></div><div><dt className="text-slate-500">Đại diện hiện tại</dt><dd className="font-semibold">{selected.representative?.displayName || 'Chưa phân công'}</dd></div><div><dt className="text-slate-500">Thành tích xác nhận</dt><dd className="font-semibold">{selected.stats?.verifiedAchievements ?? 0}</dd></div></dl>
-          {canManage && <div className="flex flex-wrap gap-2 border-t pt-4"><button onClick={appoint} className="px-3 py-2 rounded-xl bg-blue-50 text-blue-700">Phân công đại diện</button><button onClick={transfer} className="px-3 py-2 rounded-xl bg-amber-50 text-amber-700">Chuyển giảng viên vào đơn vị</button></div>}
+          {canManage && <div className="flex flex-wrap gap-2 border-t border-slate-200 pt-4 dark:border-slate-700"><button type="button" onClick={appoint} disabled={busy} className="soft-btn-secondary h-11 text-sm"><UserRoundCheck aria-hidden="true" className="h-4 w-4 shrink-0" />Phân công đại diện</button><button type="button" onClick={transfer} disabled={busy} className="soft-btn-secondary h-11 text-sm"><ArrowRightLeft aria-hidden="true" className="h-4 w-4 shrink-0" />Chuyển giảng viên vào đơn vị</button></div>}
           {!canManage && <p className="text-xs text-slate-500 border-t pt-4">Chỉ quản trị viên được thay đổi cơ cấu, đại diện hoặc điều chuyển công tác.</p>}
         </div> : <EmptyState message="Chọn một đơn vị để xem hồ sơ." />}
       </section>}

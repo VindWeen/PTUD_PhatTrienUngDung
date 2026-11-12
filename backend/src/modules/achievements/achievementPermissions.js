@@ -30,6 +30,10 @@ export function createPermissionResolver(user, roles, { representative, scope })
       remove: canMutate && (owner || roles.includes('ADMIN')) && achievement.status === 'DRAFT'
         && !(achievement.latestRevisionNo || achievement.submissions?.length),
     };
+    if (achievement.deletedAt) {
+      Object.keys(actions).forEach(key => { if (key !== 'isSelf') actions[key] = false; });
+      actions.restore = canMutate && (owner || roles.includes('ADMIN'));
+    }
     return { ...achievement, actions };
   };
 }

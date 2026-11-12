@@ -21,13 +21,13 @@ export async function options(user, purpose = 'APPLICATION') {
   const [unitRows, lecturerRows, scopes, reps] = await Promise.all([
     db.query('SELECT unit_id,code,name,parent_id,is_active FROM app.organization_units ORDER BY name,unit_id'),
     db.query(`SELECT l.lecturer_id,l.user_id,l.full_name,l.employee_code,l.is_active,
-      la.unit_id,u.name unit_name FROM app.lecturers l JOIN app.users account USING(user_id)
-      LEFT JOIN app.lecturer_assignments la ON la.lecturer_id=l.lecturer_id AND la.is_primary AND la.valid_from<=NOW() AND (la.valid_to IS NULL OR la.valid_to>NOW())
-      LEFT JOIN app.organization_units u ON u.unit_id=la.unit_id AND u.is_active
+      la.unit_id,u.name unit_name FROM app.lecturers l JOIN app.users account ON account.user_id=l.user_id
+      LEFT JOIN app.lecturer_assignments la ON la.lecturer_id=l.lecturer_id AND la.is_primary=1 AND la.valid_from<=SYSUTCDATETIME() AND (la.valid_to IS NULL OR la.valid_to>SYSUTCDATETIME())
+      LEFT JOIN app.organization_units u ON u.unit_id=la.unit_id AND u.is_active=1
       WHERE account.status='ACTIVE' ORDER BY l.full_name,l.lecturer_id`),
     getActiveScopes(user.userId),
-    roles.includes('UNIT_REPRESENTATIVE') ? db.query(`SELECT rep.unit_id FROM app.unit_representatives rep JOIN app.organization_units u USING(unit_id)
-      WHERE rep.user_id=$1 AND u.is_active AND rep.revoked_at IS NULL AND rep.valid_from<=NOW() AND (rep.valid_to IS NULL OR rep.valid_to>NOW())`, [user.userId]) : { rows: [] },
+    roles.includes('UNIT_REPRESENTATIVE') ? db.query(`SELECT rep.unit_id FROM app.unit_representatives rep JOIN app.organization_units u ON u.unit_id=rep.unit_id
+      WHERE rep.user_id=$1 AND u.is_active=1 AND rep.revoked_at IS NULL AND rep.valid_from<=SYSUTCDATETIME() AND (rep.valid_to IS NULL OR rep.valid_to>SYSUTCDATETIME())`, [user.userId]) : { rows: [] },
   ]);
   const units = unitRows.rows.map(u => ({ id: Number(u.unit_id), code: u.code, name: u.name, parentId: u.parent_id ? Number(u.parent_id) : null, active: u.is_active }));
   const represented = new Set(reps.rows.map(r => Number(r.unit_id)));
@@ -62,14 +62,14 @@ export async function options(user, purpose = 'APPLICATION') {
   if (purpose === 'REPORT') for (const l of lecturers) if (l.unitId) permittedUnits.add(l.unitId);
   const subjectUnits = units.filter(u => u.active && (purpose === 'APPLICATION' ? represented.has(u.id) : fullAccess || permittedUnits.has(u.id)));
   const [awardTypes, achievementTypes, academicYears, decisions, users] = await Promise.all([
-    db.query(`SELECT award_type_id AS id,name,code,applicable_subject_type AS "subjectType",is_active AS active FROM app.award_types ${purpose === 'REPORT' ? '' : 'WHERE is_active'} ORDER BY name`),
-    db.query(`SELECT achievement_type_id AS id,name,code,applicable_subject_type AS "subjectType",is_active AS active FROM app.achievement_types ${purpose === 'REPORT' ? '' : 'WHERE is_active'} ORDER BY name`),
-    db.query('SELECT academic_year_id AS id,name,code,is_current AS current FROM app.academic_years ORDER BY start_date DESC'),
-    purpose === 'AWARD' ? db.query(`SELECT DISTINCT d.decision_id AS id,d.decision_number AS "decisionNumber",d.title,d.decision_date::text AS date
-      FROM app.award_decisions d LEFT JOIN app.award_records r USING(decision_id)
-      WHERE d.created_by=$1 OR r.context_unit_id=ANY($2::bigint[]) ORDER BY date DESC,id DESC`, [user.userId,[...scoped]]) : { rows: [] },
+    db.query(`SELECT award_type_id AS id,name,code,applicable_subject_type AS "subjectType",is_active AS active FROM app.award_types ${purpose === 'REPORT' ? '' : 'WHERE is_active=1'} ORDER BY name`),
+    db.query(`SELECT achievement_type_id AS id,name,code,applicable_subject_type AS "subjectType",is_active AS active FROM app.achievement_types ${purpose === 'REPORT' ? '' : 'WHERE is_active=1'} ORDER BY name`),
+    db.query('SELECT academic_year_id AS id,name,code,is_current AS [current] FROM app.academic_years ORDER BY start_date DESC'),
+    purpose === 'AWARD' ? db.query(`SELECT DISTINCT d.decision_id AS id,d.decision_number AS "decisionNumber",d.title,CONVERT(varchar(10), d.decision_date, 23) AS date
+      FROM app.award_decisions d LEFT JOIN app.award_records r ON r.decision_id=d.decision_id
+      WHERE d.created_by=$1 OR r.context_unit_id IN (SELECT CONVERT(bigint, value) FROM OPENJSON($2)) ORDER BY date DESC,id DESC`, [user.userId,JSON.stringify([...scoped])]) : { rows: [] },
     purpose === 'ORGANIZATION' ? db.query(`SELECT u.user_id AS id,u.display_name AS name,u.username FROM app.users u WHERE u.status='ACTIVE'
-      AND EXISTS(SELECT 1 FROM app.user_roles ur JOIN app.roles r USING(role_id) WHERE ur.user_id=u.user_id AND r.code='UNIT_REPRESENTATIVE' AND r.is_active AND ur.revoked_at IS NULL AND ur.valid_from<=NOW() AND (ur.valid_to IS NULL OR ur.valid_to>NOW())) ORDER BY u.display_name`) : { rows: [] },
+      AND EXISTS(SELECT 1 FROM app.user_roles ur JOIN app.roles r ON r.role_id=ur.role_id WHERE ur.user_id=u.user_id AND r.code='UNIT_REPRESENTATIVE' AND r.is_active=1 AND ur.revoked_at IS NULL AND ur.valid_from<=SYSUTCDATETIME() AND (ur.valid_to IS NULL OR ur.valid_to>SYSUTCDATETIME())) ORDER BY u.display_name`) : { rows: [] },
   ]);
   const numericRows = rows => rows.map(r => ({ ...r, id: Number(r.id) }));
   return { lecturers, subjectUnits, units: units.filter(u => permittedUnits.has(u.id) && (u.active || purpose === 'REPORT')),
@@ -90,7 +90,7 @@ export async function sources(user, { purpose = 'APPLICATION', subjectType, subj
     db.query(`SELECT achievement_id AS id,title,recognition_year AS year,status FROM app.achievements
       WHERE ${column}=$1 ${purpose === 'APPLICATION' ? "AND status='VERIFIED'" : ''} ORDER BY recognition_year DESC,achievement_id DESC`, [id]),
     db.query(`SELECT r.record_id AS id,r.status,r.recognition_year AS year,d.title,d.decision_number AS "decisionNumber"
-      FROM app.award_records r JOIN app.award_decisions d USING(decision_id)
+      FROM app.award_records r JOIN app.award_decisions d ON d.decision_id=r.decision_id
       WHERE r.${column}=$1 AND r.status=${purpose === 'APPLICATION' ? "'RECORDED'" : "'REVOKED'"} ORDER BY r.recognition_year DESC,r.record_id DESC`, [id]),
   ]);
   // Award sources must also be within the officer's historical scope, not only the current assignment.
@@ -111,9 +111,9 @@ export async function reviewers(user, applicationId) {
   const r = await applications.get(numberId(applicationId), user, db);
   await applications.council(user, r, db);
   const candidates = (await db.query(`SELECT u.user_id,u.display_name,u.username,
-    EXISTS(SELECT 1 FROM app.application_reviews WHERE application_id=$1 AND reviewer_id=u.user_id) AS assigned
-    FROM app.users u WHERE u.status='ACTIVE' AND EXISTS(SELECT 1 FROM app.user_roles ur JOIN app.roles role USING(role_id)
-      WHERE ur.user_id=u.user_id AND role.code='COUNCIL' AND role.is_active AND ur.revoked_at IS NULL AND ur.valid_from<=NOW() AND (ur.valid_to IS NULL OR ur.valid_to>NOW())) ORDER BY u.display_name`, [r.application_id])).rows;
+    CAST(CASE WHEN EXISTS(SELECT 1 FROM app.application_reviews WHERE application_id=$1 AND reviewer_id=u.user_id) THEN 1 ELSE 0 END AS bit) AS assigned
+    FROM app.users u WHERE u.status='ACTIVE' AND EXISTS(SELECT 1 FROM app.user_roles ur JOIN app.roles role ON role.role_id=ur.role_id
+      WHERE ur.user_id=u.user_id AND role.code='COUNCIL' AND role.is_active=1 AND ur.revoked_at IS NULL AND ur.valid_from<=SYSUTCDATETIME() AND (ur.valid_to IS NULL OR ur.valid_to>SYSUTCDATETIME())) ORDER BY u.display_name`, [r.application_id])).rows;
   const visible = [];
   for (const u of candidates) {
     try { await applications.council({userId:Number(u.user_id)}, r, db); }

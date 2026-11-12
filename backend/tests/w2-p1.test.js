@@ -22,7 +22,7 @@ test('deactivate keeps referenced catalog and audits in same transaction; failur
   const client = { query: async (sql) => { statements.push(sql); return { rows: [{ id:9,is_active:false }],rowCount:1 }; }, release() {} };
   setPool({ connect: async () => client });
   await deactivateCatalog(3,'award-types',9);
-  assert.match(statements[1],/UPDATE app.award_types SET is_active=FALSE/);
+  assert.match(statements[1],/UPDATE app.award_types SET is_active=0/);
   assert.ok(statements.some(s => s.includes('INSERT INTO app.audit_logs')));
   assert.equal(statements.at(-1),'COMMIT');
   assert.ok(!statements.some(s => /DELETE FROM/.test(s)));
@@ -47,9 +47,9 @@ test('scope re-queries current DB state each time and guards role, account, unit
     assert.match(sql,/s.revoked_at IS NULL/);
     assert.match(sql,/ur.revoked_at IS NULL/);
     assert.match(sql,/u.status = 'ACTIVE'/);
-    assert.match(sql,/root.is_active = TRUE/);
-    assert.match(sql,/s.valid_to > NOW\(\)/);
-    assert.match(sql,/h.include_descendants = TRUE/);
+    assert.match(sql,/root.is_active = 1/);
+    assert.match(sql,/s.valid_to > SYSUTCDATETIME\(\)/);
+    assert.match(sql,/h.include_descendants = 1/);
     return { rows: revoked ? [] : [{ HasScope:1 }] };
   } });
   assert.equal(await isUnitInUserScope(2,2,'MANAGER'),true);

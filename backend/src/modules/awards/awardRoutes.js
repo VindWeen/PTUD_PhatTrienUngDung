@@ -8,6 +8,8 @@ const router = Router();
 router.use(authenticate);
 const handle = (fn,status=200) => async (req,res,next) => { try { res.status(status).json({success:true,data:await fn(req)}); } catch(e) { next(e); } };
 router.post('/award-decisions',handle(r=>service.createDecision(r.body,r.user),201));
+router.get('/award-applications/ready-for-award',handle(r=>service.readyApplications(r.query,r.user)));
+router.post('/award-applications/:id/award-record',handle(r=>service.createFromApplication(r.params.id,r.body,r.user),201));
 router.post('/award-records',handle(r=>service.createRecord(r.body,r.user),201));
 router.get('/award-records',handle(r=>service.list(r.query,r.user)));
 router.get('/award-records/:id',handle(r=>service.detail(r.params.id,r.user)));

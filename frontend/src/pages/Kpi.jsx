@@ -52,6 +52,8 @@ const labels = {
   sourceNote: 'Căn cứ / Nguồn cung cấp',
 };
 
+const formatDecimal = value => String(value ?? '').replace(/(\.\d*?[1-9])0+$|\.0+$/, '$1');
+
 export default function Kpi() {
   const { hasRole } = useAuth();
   const personalAccess = hasRole('LECTURER') || hasRole('UNIT_REPRESENTATIVE');
@@ -87,6 +89,7 @@ function PersonalKpi() {
   const [draft, setDraft] = useState(null);
   const [catalogs, setCatalogs] = useState({ types: [], units: [] });
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [tool, setTool] = useState('goals');
 
   useEffect(() => {
     kpiApi
@@ -152,9 +155,9 @@ function PersonalKpi() {
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12">
-      <PageHeader title="Mục tiêu / KPI" description="Thiết lập và theo dõi mục tiêu cá nhân, đơn vị; nhập mục tiêu bằng Excel hoặc CSV." icon={Target} onRefresh={load} refreshing={busy || loading} primaryAction={{label: showCreateForm && !editing ? 'Đóng biểu mẫu' : 'Thiết lập KPI mới', onClick: () => {setEditing(null); setForm(empty); setShowCreateForm(v => !v);}}} tabs={<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <PageHeader title="Mục tiêu / KPI" description="Thiết lập và theo dõi mục tiêu cá nhân, đơn vị; nhập mục tiêu bằng Excel hoặc CSV." icon={Target} onRefresh={load} refreshing={busy || loading} primaryAction={{label: showCreateForm && !editing ? 'Đóng biểu mẫu' : 'Thiết lập KPI mới', onClick: () => {setTool('goals'); setEditing(null); setForm(empty); setShowCreateForm(v => !v);}}} tabs={<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <UnderlineTabs label="Đối tượng mục tiêu KPI" value={subjectType} onChange={id => {
-          setSubject(id); setEditing(null); setPreview(null); setResult(null); setDraft(null); setForm(empty);
+          setSubject(id); setTool('goals'); setEditing(null); setPreview(null); setResult(null); setDraft(null); setForm(empty);
         }} items={[{id: 'LECTURER', label: 'Cá nhân tôi', icon: User}, {id: 'UNIT', label: 'Đơn vị tôi đại diện', icon: Building2}]} />
         {subjectType === 'UNIT' && (
             <Select
@@ -296,176 +299,14 @@ function PersonalKpi() {
         </div>
       )}
 
-      {/* 5. CSV Import Section */}
-      {subjectType === 'LECTURER' && (
-        <section className="bg-white dark:bg-slate-800/80 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-700">
-            <div>
-              <div className="flex items-center gap-2">
-                <FileSpreadsheet className="w-5 h-5 text-[#008080]" />
-                <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                  Nhập mục tiêu từ Excel / CSV
-                </h2>
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Tải file mẫu, chọn XLSX, CSV, TSV hoặc dán nội dung, rồi kiểm tra trước khi nhập vào hệ thống.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => act(async () => {
-                const data = await kpiApi.template();
-                const url = URL.createObjectURL(
-                  new Blob([data], { type: 'text/csv;charset=utf-8' })
-                );
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'W3-P2-kpi.csv';
-                a.click();
-                setTimeout(() => URL.revokeObjectURL(url), 1000);
-              })}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-soft-sm self-start sm:self-auto"
-            >
-              <Download className="w-4 h-4 text-slate-500" />
-              <span>Tải file mẫu CSV</span>
-            </button>
-          </div>
-
-          <div className="grid lg:grid-cols-3 gap-5 items-stretch">
-            <label className="relative flex cursor-pointer flex-col items-center justify-center text-center gap-4 rounded-2xl border border-dashed border-teal-200 bg-teal-50/40 p-5 focus-within:ring-4 focus-within:ring-teal-500/15 dark:border-teal-800 dark:bg-teal-950/20">
-              <UploadCloud className="h-8 w-8 text-[#008080] dark:text-teal-400" />
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Chọn file Excel / CSV từ máy tính
-              </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">Dung lượng tối đa 5 MB. Đọc trang tính đầu tiên có dữ liệu. Nội dung sẽ hiện ở khung bên cạnh để bạn kiểm tra.</span>
-              <span className="flex w-full flex-col items-center justify-center gap-2.5">
-                <span className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-xs font-semibold text-white shadow-sm"><UploadCloud className="h-4 w-4" />Chọn tệp</span>
-                <span title={importFileName || undefined} className="max-w-full break-all text-center text-xs text-slate-500 dark:text-slate-400">{importFileName || 'Chưa có tệp được chọn'}</span>
-              </span>
-              <input
-                type="file"
-                accept=".csv,.tsv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                className="sr-only"
-                aria-label="Chọn tệp mục tiêu Excel hoặc CSV"
-                disabled={busy}
-                onChange={async (e) => {
-                  setPreview(null);
-                  const f = e.target.files[0];
-                  if (f) {
-                    setImportFileName(f.name);
-                    setBusy(true); setError(''); setCsv('');
-                    try { setCsv(await readKpiFile(f)); }
-                    catch (error) { setError(error.message || 'Không thể đọc tệp Excel. Kiểm tra định dạng tệp.'); }
-                    finally { setBusy(false); }
-                  }
-                }}
-              />
-            </label>
-
-            <label className="lg:col-span-2 flex flex-col gap-2">
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Nội dung CSV
-              </span>
-              <textarea
-                className={`${inputClass} font-mono flex-1 min-h-[180px] resize-y`}
-                rows={6}
-                placeholder="Dữ liệu CSV hiển thị tại đây..."
-                value={csv}
-                onChange={(e) => {
-                  setCsv(e.target.value);
-                  setPreview(null);
-                }}
-              />
-            </label>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-700">
-            <p className="text-xs text-slate-500 dark:text-slate-400">Dữ liệu chỉ được lưu sau bước xác nhận nhập.</p>
-            <button
-              type="button"
-              disabled={busy || !csv.trim()}
-              onClick={() => act(async () => setPreview(await kpiApi.preview(csv)))}
-              className="soft-btn-primary text-xs"
-            >
-              <UploadCloud className="w-4 h-4" />
-              <span>Kiểm tra dữ liệu trước</span>
-            </button>
-          </div>
-
-          {preview && (
-            <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-700">
-              <h3 className="text-xs font-bold text-slate-800 dark:text-white">
-                Kết quả kiểm tra ({preview.rows?.length || 0} dòng)
-              </h3>
-              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-700 font-semibold text-slate-600 dark:text-slate-400">
-                      <th className="p-3">Dòng</th>
-                      <th className="p-3">Mã KPI</th>
-                      <th className="p-3">Kết quả đối soát</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {preview.rows.map((r) => (
-                      <tr key={r.row} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
-                        <td className="p-3 font-mono">{r.row}</td>
-                        <td className="p-3 font-mono font-bold text-[#008080]">
-                          {r.goal?.code || '—'}
-                        </td>
-                        <td className="p-3">
-                          <span
-                            className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold ${
-                              ['READY_GOAL', 'READY_RESULT', 'IMPORTED'].includes(r.status)
-                                ? 'bg-emerald-50 text-emerald-700'
-                                : r.status === 'DUPLICATE'
-                                  ? 'bg-slate-100 text-slate-700'
-                                  : 'bg-rose-50 text-rose-700'
-                            }`}
-                          >
-                            {r.status}
-                          </span>{' '}
-                          <span className="text-slate-500">
-                            {r.message || (r.error ? JSON.stringify(r.error) : '')}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {!preview.rows.some((r) => r.status === 'INVALID') && (
-                <div className="flex justify-end pt-2">
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() =>
-                      act(async () => {
-                        const out = await kpiApi.commit(csv);
-                        setPreview(null);
-                        setNotice(
-                          `Đã import thành công ${out.imported} mục tiêu; bỏ qua ${out.duplicates} dòng trùng lặp.`
-                        );
-                      })
-                    }
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#008080] hover:bg-[#006666] text-white text-xs font-semibold transition shadow-soft-sm active:scale-95 disabled:opacity-50"
-                  >
-                    <Check className="w-4 h-4" />
-                    <span>Xác nhận import vào hệ thống</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </section>
-      )}
-      <KpiRecommendations onAccepted={load} subjectType={subjectType} subjectId={subjectType==='UNIT' ? unit : user?.lecturerProfile?.lecturerId}/>
-      <ExternalKpi types={catalogs.types} />
       {/* 4. KPI Goals List */}
-      <section className="space-y-3">
+      <div className="soft-card px-5 sm:px-6"><UnderlineTabs label="Công cụ mục tiêu KPI" value={tool} onChange={setTool} items={[
+        {id:'goals',label:`Mục tiêu của tôi (${items.length})`,icon:Target},
+        ...(subjectType === 'LECTURER' ? [{id:'import',label:'Nhập từ Excel / CSV',icon:FileSpreadsheet}] : []),
+        {id:'ai',label:'Gợi ý kế hoạch AI',icon:Sparkles},
+        {id:'external',label:'Nguồn bổ sung',icon:ExternalLink},
+      ]} /></div>
+      <section hidden={tool !== 'goals'} className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h2 className="text-base font-bold text-slate-900 dark:text-white">
@@ -493,7 +334,7 @@ function PersonalKpi() {
           </div>
         )}
 
-        <div className="grid gap-3">
+        <div className="grid min-w-0 grid-cols-1 items-start gap-4">
           {!loading && items.map((g) => {
             const hasResult = !!g.result;
             const targetNum = Number(g.target) || 0;
@@ -503,15 +344,15 @@ function PersonalKpi() {
             return (
               <article
                 key={g.goal_id}
-                className="bg-white dark:bg-slate-800/80 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm hover:shadow-soft-md transition space-y-3"
+                className="min-w-0 bg-white dark:bg-slate-800/80 rounded-2xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-700/80 space-y-4"
               >
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                <div className="flex min-w-0 flex-col gap-4">
                   <div className="space-y-1.5 flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-teal-50 text-[#008080] dark:bg-teal-950/50 dark:text-teal-300">
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         {g.code}
                       </span>
-                      <h3 className="text-base font-bold text-slate-900 dark:text-white truncate">
+                      <h3 className="min-w-0 text-base font-bold text-slate-900 dark:text-white break-words">
                         {g.title}
                       </h3>
                       <span
@@ -524,27 +365,27 @@ function PersonalKpi() {
                         {g.status === 'DRAFT' ? 'Bản nháp' : 'Đã chấp nhận'}
                       </span>
                       <span className="text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-700/60 px-2 py-0.5 rounded">
-                        Nguồn: {g.source}
+                        Nguồn: {({MANUAL:'Tự thiết lập',AI:'Gợi ý AI',EXTERNAL:'Đồng bộ',CSV:'Nhập từ tệp'})[g.source] || 'Nguồn bổ sung'}
                       </span>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        {g.period_start.slice(0, 10)} → {g.period_end.slice(0, 10)}
+                        {new Date(g.period_start).toLocaleDateString('vi-VN')} → {new Date(g.period_end).toLocaleDateString('vi-VN')}
                       </span>
                       <span>
-                        Chỉ tiêu: <strong className="text-slate-800 dark:text-white">{g.target} {g.measure_unit}</strong>
+                        Chỉ tiêu: <strong className="text-slate-800 dark:text-white">{formatDecimal(g.target)} {g.measure_unit}</strong>
                       </span>
                       {hasResult && (
                         <span>
-                          Thực tế: <strong className="text-[#008080] dark:text-teal-400">{g.result.actual} {g.measure_unit}</strong>
+                          Thực tế: <strong className="text-[#008080] dark:text-teal-400">{formatDecimal(g.result.actual)} {g.measure_unit}</strong>
                         </span>
                       )}
                     </div>
 
                     {hasResult && (
-                      <div className="pt-1 max-w-sm space-y-1">
+                      <div className="pt-1 space-y-1">
                         <div className="flex justify-between text-[11px] font-semibold">
                           <span className="text-slate-500">Mức độ hoàn thành</span>
                           <span className={percent >= 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#008080] dark:text-teal-400'}>
@@ -568,7 +409,7 @@ function PersonalKpi() {
                       </div>
                     )}
 
-                    <div className="pt-1 text-xs text-slate-600 dark:text-slate-300 space-y-0.5">
+                    <div className="pt-2 text-sm leading-6 text-slate-600 dark:text-slate-300 space-y-1">
                       <p>
                         <span className="text-slate-400 font-medium">Kế hoạch:</span> {g.plan || 'Chưa nhập'}
                       </p>
@@ -581,7 +422,7 @@ function PersonalKpi() {
                       <div className="mt-2 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl text-xs space-y-1 border border-slate-100 dark:border-slate-800">
                         <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-white">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          <span>Kết quả thực tế: {g.result.actual} {g.measure_unit} ({g.result.source})</span>
+                          <span>Kết quả thực tế: {formatDecimal(g.result.actual)} {g.measure_unit} ({({MANUAL:'Tự kê khai',EXTERNAL:'Nguồn đồng bộ',CSV:'Nhập từ tệp'})[g.result.source] || 'Nguồn bổ sung'})</span>
                         </div>
                         <p className="text-slate-500 dark:text-slate-400">
                           Minh chứng kê khai (chưa xác nhận): {g.result.evidence_note || '—'}
@@ -599,7 +440,7 @@ function PersonalKpi() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex sm:flex-col items-center sm:items-end gap-2 shrink-0">
+                  <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 dark:border-slate-700 [&_button]:min-h-11 [&_button]:rounded-lg [&_button]:text-sm">
                     {g.status === 'DRAFT' ? (
                       <>
                         <button
@@ -681,6 +522,180 @@ function PersonalKpi() {
         </div>
       </section>
 
+      {/* 5. CSV Import Section */}
+      {subjectType === 'LECTURER' && tool === 'import' && (
+        <section className="bg-white dark:bg-slate-800/80 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-700">
+            <div>
+              <div className="flex items-center gap-2">
+                <FileSpreadsheet className="w-5 h-5 text-[#008080]" />
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                  Nhập mục tiêu từ Excel / CSV
+                </h2>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Tải file mẫu, chọn XLSX, CSV, TSV hoặc dán nội dung, rồi kiểm tra trước khi nhập vào hệ thống.
+              </p>
+            </div>
+
+
+          </div>
+          <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">Tải mẫu, điền mỗi mục tiêu trên một dòng rồi chọn tệp để kiểm tra. Giữ nguyên tên các cột trong mẫu; dùng ngày theo dạng YYYY-MM-DD. Chưa lưu dữ liệu ở bước chọn tệp.</p>
+          <div className="flex justify-end">            <button
+              type="button"
+              disabled={busy}
+              onClick={() => act(async () => {
+                const data = await kpiApi.template();
+                const url = URL.createObjectURL(
+                  new Blob([data], { type: 'text/csv;charset=utf-8' })
+                );
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'W3-P2-kpi.csv';
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+              })}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-soft-sm self-start sm:self-auto"
+            >
+              <Download className="w-4 h-4 text-slate-500" />
+              <span>Tải file mẫu CSV</span>
+            </button></div>
+
+          <div className="grid lg:grid-cols-3 gap-5 items-stretch">
+            <label className="relative flex cursor-pointer flex-col items-center justify-center text-center gap-4 rounded-2xl border border-dashed border-teal-200 bg-teal-50/40 p-5 focus-within:ring-4 focus-within:ring-teal-500/15 dark:border-teal-800 dark:bg-teal-950/20">
+              <UploadCloud className="h-8 w-8 text-[#008080] dark:text-teal-400" />
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Chọn file Excel / CSV từ máy tính
+              </span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Dung lượng tối đa 5 MB. Đọc trang tính đầu tiên có dữ liệu. Nội dung sẽ hiện ở khung bên cạnh để bạn kiểm tra.</span>
+              <span className="flex w-full flex-col items-center justify-center gap-2.5">
+                <span className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-xs font-semibold text-white shadow-sm"><UploadCloud className="h-4 w-4" />Chọn tệp</span>
+                <span title={importFileName || undefined} className="max-w-full break-all text-center text-xs text-slate-500 dark:text-slate-400">{importFileName || 'Chưa có tệp được chọn'}</span>
+              </span>
+              <input
+                type="file"
+                accept=".csv,.tsv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                className="sr-only"
+                aria-label="Chọn tệp mục tiêu Excel hoặc CSV"
+                disabled={busy}
+                onChange={async (e) => {
+                  setPreview(null);
+                  const f = e.target.files[0];
+                  if (f) {
+                    setImportFileName(f.name);
+                    setBusy(true); setError(''); setCsv('');
+                    try { setCsv(await readKpiFile(f)); }
+                    catch (error) { setError(error.message || 'Không thể đọc tệp Excel. Kiểm tra định dạng tệp.'); }
+                    finally { setBusy(false); }
+                  }
+                }}
+              />
+            </label>
+
+            <details className="lg:col-span-2 rounded-xl border border-slate-200 p-4 dark:border-slate-700"><summary className="cursor-pointer text-sm font-semibold">Xem hoặc chỉnh nội dung CSV (nâng cao)</summary><label className="mt-4 flex flex-col gap-2">
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Nội dung CSV
+              </span>
+              <textarea
+                className={`${inputClass} font-mono flex-1 min-h-[180px] resize-y`}
+                rows={6}
+                placeholder="Dữ liệu CSV hiển thị tại đây..."
+                value={csv}
+                onChange={(e) => {
+                  setCsv(e.target.value);
+                  setPreview(null);
+                }}
+              />
+            </label></details>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+            <p className="text-xs text-slate-500 dark:text-slate-400">Dữ liệu chỉ được lưu sau bước xác nhận nhập.</p>
+            <button
+              type="button"
+              disabled={busy || !csv.trim()}
+              onClick={() => act(async () => setPreview(await kpiApi.preview(csv)))}
+              className="soft-btn-primary text-xs"
+            >
+              <UploadCloud className="w-4 h-4" />
+              <span>Kiểm tra dữ liệu trước</span>
+            </button>
+          </div>
+
+          {preview && (
+            <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+              <h3 className="text-xs font-bold text-slate-800 dark:text-white">
+                Kết quả kiểm tra ({preview.rows?.length || 0} dòng)
+              </h3>
+              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-700 font-semibold text-slate-600 dark:text-slate-400">
+                      <th className="p-3">Dòng</th>
+                      <th className="p-3">Mã KPI</th>
+                      <th className="p-3">Mục tiêu và kỳ thực hiện</th>
+                      <th className="p-3">Kết quả đối soát</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {preview.rows.map((r) => (
+                      <tr key={r.row} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                        <td className="p-3 font-mono">{r.row}</td>
+                        <td className="p-3 font-mono font-bold text-[#008080]">
+                          {r.goal?.code || '—'}
+                        </td>
+                        <td className="min-w-52 p-3"><p className="font-semibold">{r.goal?.title || '—'}</p>{r.goal && <p className="mt-1 text-slate-500">{r.goal.target} {r.goal.measureUnit} · {r.goal.periodStart} – {r.goal.periodEnd}</p>}</td>
+                        <td className="p-3">
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold ${
+                              ['READY_GOAL', 'READY_RESULT', 'IMPORTED'].includes(r.status)
+                                ? 'bg-emerald-50 text-emerald-700'
+                                : r.status === 'DUPLICATE'
+                                  ? 'bg-slate-100 text-slate-700'
+                                  : 'bg-rose-50 text-rose-700'
+                            }`}
+                          >
+                            {({READY_GOAL:'Có thể nhập mục tiêu',READY_RESULT:'Có thể nhập kết quả',IMPORTED:'Đã nhập',DUPLICATE:'Trùng dữ liệu',INVALID:'Cần chỉnh sửa'})[r.status] || 'Cần kiểm tra'}
+                          </span>{' '}
+                          <span className="text-slate-500">
+                            {r.message || (r.error ? (typeof r.error === 'string' ? r.error : 'Dữ liệu chưa hợp lệ. Kiểm tra lại nội dung và định dạng các cột.') : '')}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <>
+                {preview.rows.some(r=>r.status === 'INVALID') && <p role="alert" className="text-sm text-rose-700 dark:text-rose-300">Cần sửa các dòng được đánh dấu trước khi nhập. Sau khi sửa tệp, chọn lại tệp và kiểm tra dữ liệu.</p>}
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="button"
+                    disabled={busy || preview.rows.some(r=>r.status === 'INVALID') || !preview.rows.some(r=>['READY_GOAL','READY_RESULT'].includes(r.status))}
+                    onClick={() =>
+                      act(async () => {
+                        const out = await kpiApi.commit(csv);
+                        setPreview(null);
+                        setNotice(
+                          `Đã nhập thành công ${out.imported} mục tiêu; bỏ qua ${out.duplicates} dòng trùng lặp.`
+                        );
+                      })
+                    }
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#008080] hover:bg-[#006666] text-white text-xs font-semibold transition shadow-soft-sm active:scale-95 disabled:opacity-50"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>Xác nhận nhập vào hệ thống</span>
+                  </button>
+                </div>
+              </>
+            </div>
+          )}
+        </section>
+      )}
+      {tool === 'ai' && <KpiRecommendations onAccepted={load} subjectType={subjectType} subjectId={subjectType==='UNIT' ? unit : user?.lecturerProfile?.lecturerId}/>}
+      {tool === 'external' && <section className="soft-card p-5"><h2 className="mb-4 text-lg font-semibold">Nguồn KPI bổ sung và lịch sử đồng bộ</h2><ExternalKpi types={catalogs.types} /></section>}
+
       {/* Result Form Modal */}
       {resultForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm animate-fadeIn">
@@ -749,7 +764,7 @@ function PersonalKpi() {
                   disabled={busy}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#008080] hover:bg-[#006666] text-white text-xs font-semibold transition shadow-soft-sm active:scale-95 disabled:opacity-50"
                 >
-                  <span>Lưu kết quả MANUAL</span>
+                  <span>Lưu kết quả kê khai</span>
                 </button>
               </div>
             </form>

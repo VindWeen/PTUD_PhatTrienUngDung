@@ -32,4 +32,4 @@ W6-P3 `3cb8789bf800678d5101f29cfff44584b4004ec6` tồn tại trên nhánh khác,
 
 Từ root: `node scripts/w6-p4-inputs.mjs --verify` kiểm hash/source HEAD; `npm --prefix backend run test:w6-q3` kiểm tài liệu release. Mở sáu ảnh, đọc caption kèm USE_CASES; đối chiếu p95 trong performance.json với mẫu gốc. Chỉ chạy `node scripts/w6-p4-inputs.mjs` để gom lại sau review nguồn, vì lệnh đó thay manifest và bản chép cho W6-P4.
 
-Kết quả thực chạy và file đổi ở [WEEK_06_W6_P4](../../weekly/WEEK_06_W6_P4.md). Chưa commit/push/merge. Commit đề xuất: `docs(W6-P4): collect Phuoc product evidence, review metrics and storyboard with release blockers`.
+Kết quả thực chạy và file đổi ở [WEEK_06_W6_P4](../../archive/weekly/WEEK_06_W6_P4.md). Chưa commit/push/merge. Commit đề xuất: `docs(W6-P4): collect Phuoc product evidence, review metrics and storyboard with release blockers`.

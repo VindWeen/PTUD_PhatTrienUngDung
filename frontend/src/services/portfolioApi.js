@@ -31,9 +31,7 @@ export const portfolioApi = {
             RecordedCount: awdValid,
             RevokedAwardCount: Math.max(0, awdTotal - awdValid),
           },
-          categories: {
-            RESEARCH: achValid,
-          },
+          categories: {},
           raw: res,
         };
       }

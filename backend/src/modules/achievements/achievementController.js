@@ -73,6 +73,11 @@ export async function remove(req, res, next) {
   }
 }
 
+export async function restore(req, res, next) {
+  try { ok(res, await achievementService.restoreAchievement(req.user, Number(req.params.id))); }
+  catch (error) { next(error); }
+}
+
 export async function submit(req, res, next) {
   try {
     const id = Number(req.params.id);
@@ -177,6 +182,7 @@ export default {
   create,
   update,
   remove,
+  restore,
   submit,
   verify,
   requestCorrection,

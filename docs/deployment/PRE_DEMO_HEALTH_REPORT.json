@@ -1,31 +1,30 @@
 {
-  "timestamp": "2026-10-09T08:33:09.621Z",
-  "durationMs": 1165,
+  "checkedAt": "2026-11-11T09:40:36.926Z",
+  "databaseEngine": "SQL Server",
   "database": {
-    "serverVersion": "PostgreSQL 17.11 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 15.2.0, 64-bit",
-    "latencyMs": 743,
-    "totalBytes": 24647347,
-    "totalFormatted": "23.51 MB",
-    "appSchemaBytes": 3260416,
-    "appSchemaFormatted": "3.11 MB",
-    "freeTierPercentage": "4.70%",
-    "freeTierLimitFormatted": "500 MB"
+    "database_name": "PTUD_LHU",
+    "version": "Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) \n\tOct  8 2022 05:58:25 \n\tCopyright (C) 2022 Microsoft Corporation\n\tDeveloper Edition (64-bit) on Windows 10 Home Single Language 10.0 <X64> (Build 26200: ) (Hypervisor)\n",
+    "server_time": "2026-11-11T09:40:36.831Z"
   },
-  "storage": {
-    "directory": "C:\\DriveD\\EverythingElse\\LHU\\PTUD_PhatTrienUngDung\\backend\\storage\\private\\evidences",
-    "fileCount": 16,
-    "totalBytes": 722,
-    "formattedSize": "722 B",
-    "supabaseStorageQuotaUsed": "0 B"
+  "latencyMs": 163,
+  "schema": {
+    "businessTables": 53,
+    "integrity": {
+      "bad_fks": 0,
+      "bad_checks": 0
+    }
   },
-  "security": {
-    "adr001PostgrestIsolated": true,
-    "tableCount": 51,
-    "expectedTables": 51
+  "privateFiles": {
+    "total": 14,
+    "matching": 13,
+    "problems": [
+      {
+        "storageKey": "evidences/2026/ach_8_ev_1793176346648_v1_a0658cbd.pdf",
+        "status": "MISSING"
+      }
+    ]
   },
   "demoReadiness": {
-    "status": "READY",
-    "autoPauseRiskMitigated": true,
-    "noPaidServiceDependency": true
+    "status": "NEEDS_ATTENTION"
   }
 }

@@ -1,5 +1,7 @@
 # PROJECT DEVELOPMENT BLUEPRINT
 
+> **KẾ HOẠCH BAN ĐẦU — đối chiếu 03/11/2026:** source đã có AI/KPI, workflow hồ sơ đề nghị và Hội đồng, CV và lịch cá nhân. Các mục “làm sau/KLTN” bên dưới mô tả kế hoạch khi viết, không phải trạng thái triển khai hiện tại. Xem [README](../README.md) và [bản đồ tài liệu](README.md).
+
 ## Hệ thống Quản lý Hồ sơ Thành tích Số và Hỗ trợ Xét duyệt Khen thưởng thông minh dựa trên Trí tuệ Nhân tạo (AI)
 
 > Cập nhật: 12/09/2026. Blueprint cho nhóm 2 người triển khai 13 tuần môn PTUD và tiếp tục thành KLTN. Quy tắc nghiệp vụ dưới đây là phương án đề xuất, cần đối chiếu với giảng viên hướng dẫn/đơn vị sử dụng ở tuần 1. Tài liệu không xác nhận điều kiện khen thưởng theo pháp luật.

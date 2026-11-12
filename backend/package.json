@@ -5,6 +5,9 @@
   "main": "src/server.js",
   "type": "module",
   "scripts": {
+    "demo": "node ../scripts/demo/start-demo.mjs",
+    "demo:reset": "powershell -NoProfile -ExecutionPolicy Bypass -File ../scripts/demo/reset-demo.ps1",
+    "test:sqlserver": "node --test --test-concurrency=1 tests/sqlserver-core.integration.js tests/sqlserver-ai-kpi.integration.js tests/sqlserver-awards.integration.js tests/sqlserver-backup.integration.js",
     "test:calendar": "node --test tests/calendar.test.js",
     "test:calendar:integration": "node tests/calendar.integration.js",
     "test:ai-pool": "node --test tests/ai-pool.test.js",
@@ -83,8 +86,7 @@
   },
   "keywords": [
     "express",
-    "supabase",
-    "postgresql",
+    "sql-server",
     "ptud",
     "lhu",
     "rest-api"
@@ -100,11 +102,12 @@
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "mssql": "^12.7.14",
     "multer": "^2.4.0",
-    "pg": "^8.23.1",
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "pg": "^8.23.1",
     "nodemon": "^3.1.9"
   }
 }

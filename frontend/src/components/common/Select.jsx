@@ -30,6 +30,7 @@ export default function Select({ children, value, onChange, className, disabled,
   useEffect(() => {
     if (!open) return;
     function place() {
+      if (!button.current) return;
       const rect = button.current.getBoundingClientRect();
       const width = Math.min(Math.max(rect.width, 200), window.innerWidth - 24);
       const below = window.innerHeight - rect.bottom - 16;
@@ -51,7 +52,7 @@ export default function Select({ children, value, onChange, className, disabled,
     if (!option || option.disabled) return;
     native.current.value = option.value;
     native.current.dispatchEvent(new Event('change', { bubbles: true }));
-    setInvalid(false); setOpen(false); button.current.focus();
+    setInvalid(false); setOpen(false); button.current?.focus();
   }
   function move(direction) {
     let next = active;

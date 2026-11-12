@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { CalendarDays, Check, ChevronLeft, ChevronRight, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { calendarApi } from '../../services/calendarApi';
-import { CATEGORIES, emptyEvent, eventPayload, mockEvents, monthCells, onDay, shiftMonth, todayKey } from './calendarModel';
+import { CATEGORIES, emptyEvent, eventPayload, monthCells, onDay, shiftMonth, todayKey } from './calendarModel';
 import './calendar.css';
 
 const CalendarContext = createContext(null);
@@ -9,6 +9,7 @@ const useCalendar = () => useContext(CalendarContext);
 
 export function CalendarProvider({ children }) {
   const [events, setEvents] = useState([]);
+  const [systemEvents, setSystemEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
@@ -17,7 +18,7 @@ export function CalendarProvider({ children }) {
   const alive = useRef(true);
   const reload = useCallback(async () => {
     setLoading(true); setError('');
-    try { const data = await calendarApi.list(); if (alive.current) setEvents(data); }
+    try { const [data, shared] = await Promise.all([calendarApi.list(), calendarApi.listSystem()]); if (alive.current) { setEvents(data); setSystemEvents(shared); } }
     catch (e) { if (alive.current) setError(e.message || 'Không tải được lịch cá nhân.'); }
     finally { if (alive.current) setLoading(false); }
   }, []);
@@ -34,7 +35,7 @@ export function CalendarProvider({ children }) {
     await calendarApi.remove(event.id, event.version);
     if (alive.current) setEvents(items => items.filter(e => e.id !== event.id));
   };
-  const value = { events: [...events, ...mockEvents(month)], loading, error, reload, selected, setSelected, month, setMonth, openCalendar, save, remove };
+  const value = { events: [...events, ...systemEvents], loading, error, reload, selected, setSelected, month, setMonth, openCalendar, save, remove };
   return <CalendarContext.Provider value={value}>
     {children}
     {open && <CalendarDialog onClose={() => setOpen(false)} />}
@@ -50,7 +51,8 @@ function MonthControls() {
   const { month, setMonth, setSelected } = useCalendar();
   return <div className="flex flex-wrap items-center gap-2">
     <button type="button" aria-label="Tháng trước" disabled={month <= '1900-01'} className="calendar-icon" onClick={() => setMonth(shiftMonth(month, -1))}><ChevronLeft size={18} /></button>
-    <label className="text-sm font-semibold"><span className="sr-only">Chọn tháng và năm</span><input type="month" min="1900-01" max="2199-12" className="calendar-input !w-auto" value={month} onChange={e => { if (/^\d{4}-\d{2}$/.test(e.target.value)) setMonth(e.target.value); }} /></label>
+    <label className="text-sm font-semibold"><span className="sr-only">Chọn tháng</span><select className="calendar-input !w-auto" value={month.slice(5)} onChange={e => setMonth(`${month.slice(0, 4)}-${e.target.value}`)}>{Array.from({ length: 12 }, (_, i) => <option key={i} value={String(i + 1).padStart(2, '0')}>Tháng {i + 1}</option>)}</select></label>
+    <label className="text-sm font-semibold"><span className="sr-only">Chọn năm</span><select className="calendar-input !w-auto" value={month.slice(0, 4)} onChange={e => setMonth(`${e.target.value}-${month.slice(5)}`)}>{Array.from({ length: 300 }, (_, i) => <option key={i} value={1900 + i}>{1900 + i}</option>)}</select></label>
     <button type="button" aria-label="Tháng sau" disabled={month >= '2199-12'} className="calendar-icon" onClick={() => setMonth(shiftMonth(month, 1))}><ChevronRight size={18} /></button>
     <button type="button" className="calendar-secondary text-xs" onClick={() => { const day = todayKey(); setMonth(day.slice(0, 7)); setSelected(day); }}>Hôm nay</button>
   </div>;
@@ -58,17 +60,30 @@ function MonthControls() {
 
 function CalendarGrid({ onSelect, compact = false, filter = 'all' }) {
   const { month, selected, events } = useCalendar();
+  const [dismissedPreview, setDismissedPreview] = useState(null);
   const today = todayKey();
   return <div className={`calendar-grid ${compact ? 'calendar-grid-compact' : ''}`}>
     {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(day => <div key={day} className="py-3 text-center text-xs font-semibold text-slate-500">{day}</div>)}
-    {monthCells(month).map(day => {
+    {monthCells(month).map((day, index) => {
       const items = events.filter(e => onDay(e, day) && (filter === 'all' || e.category === filter));
       return <button type="button" key={day} onClick={() => onSelect(day)} aria-label={`${day}${items.length ? `, ${items.length} sự kiện` : ''}`} aria-pressed={selected === day}
+        aria-describedby={compact && items.length && dismissedPreview !== day ? `calendar-preview-${day}` : undefined}
+        onMouseEnter={() => setDismissedPreview(null)} onFocus={() => setDismissedPreview(null)}
+        onKeyDown={e => { if (e.key === 'Escape') setDismissedPreview(day); }}
         className={`calendar-day ${day.slice(0, 7) !== month ? 'calendar-muted' : ''} ${selected === day ? 'calendar-selected' : ''} ${today === day ? 'calendar-today' : ''}`}>
         <span className="text-xs font-semibold">{Number(day.slice(-2))}</span>
         <span className="mt-1 flex min-h-1.5 justify-center gap-1" aria-hidden="true">{[...new Set(items.map(e => e.category))].map(category => <i key={category} className={`h-1.5 w-1.5 rounded-full ${CATEGORIES[category].color}`} />)}</span>
         {!compact && items.slice(0, 2).map(e => <span key={e.id} className={`calendar-chip ${CATEGORIES[e.category].color} ${e.completed ? 'line-through opacity-50' : ''}`}>{e.title}</span>)}
         {!compact && items.length > 2 && <small className="text-[10px]">+{items.length - 2} sự kiện</small>}
+        {compact && items.length > 0 && dismissedPreview !== day && <span role="tooltip" id={`calendar-preview-${day}`} style={{ '--calendar-column': index % 7 }} className={`calendar-preview ${index % 7 > 3 ? 'calendar-preview-right' : ''}`}>
+          <span className="calendar-preview-date">Ngày {day.slice(8)}/{day.slice(5, 7)} · {items.length} sự kiện</span>
+          {items.slice(0, 3).map(event => <span className="calendar-preview-event" key={event.id}>
+            <strong>{event.title}</strong>
+            <span>{event.allDay ? 'Cả ngày' : `${event.startsAt.slice(11, 16)} – ${event.endsAt.slice(11, 16)}`}{event.location ? ` · ${event.location}` : ''}</span>
+            {event.description && <span className="calendar-preview-description">{event.description}</span>}
+          </span>)}
+          {items.length > 3 && <span>Còn {items.length - 3} sự kiện · Bấm ngày để xem tất cả</span>}
+        </span>}
       </button>;
     })}
   </div>;
@@ -90,7 +105,7 @@ export function PersonalCalendarCard() {
     </div>
     <MonthControls /><CalendarStatus />
     <CalendarGrid compact onSelect={openCalendar} />
-    <p className="mt-3 text-xs text-slate-500">Chọn ngày để ghi lịch. Chấm xanh lá: sự kiện chung minh họa.</p>
+    <p className="mt-3 text-xs text-slate-500">Di chuột vào ngày để xem nhanh, chọn ngày để ghi lịch. Chấm xanh lá: hạn kỳ đề nghị đang mở.</p>
   </section>;
 }
 
@@ -166,7 +181,7 @@ function CalendarDialog({ onClose }) {
           <CalendarGrid onSelect={selectDay} filter={filter} />
           <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-slate-500">{Object.entries(CATEGORIES).map(([key, v]) => <span key={key} className="flex items-center gap-1.5"><i className={`h-2 w-2 rounded-full ${v.color}`} />{v.label}</span>)}</div>
           <div className="mt-6 border-t border-slate-200 pt-4 dark:border-slate-700"><h3 className="mb-2 text-sm font-bold">Sắp tới</h3>
-            {events.filter(e => e.endsAt.slice(0, 10) >= todayKey() && !e.completed && (filter === 'all' || e.category === filter)).sort((a, b) => a.startsAt.localeCompare(b.startsAt)).slice(0, 5).map(e => <button key={e.id} type="button" onClick={() => selectDay(e.startsAt.slice(0, 10))} className="flex w-full items-center gap-2 rounded-lg p-2 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-800"><i className={`h-2 w-2 shrink-0 rounded-full ${CATEGORIES[e.category].color}`} /><span className="min-w-0 flex-1 break-words">{e.title}{e.readOnly ? ' · Minh họa' : ''}</span><time className="shrink-0 text-slate-500">{e.startsAt.slice(0, 10).split('-').reverse().join('/')}</time></button>)}
+            {events.filter(e => e.endsAt.slice(0, 10) >= todayKey() && !e.completed && (filter === 'all' || e.category === filter)).sort((a, b) => a.startsAt.localeCompare(b.startsAt)).slice(0, 5).map(e => <button key={e.id} type="button" onClick={() => selectDay(e.startsAt.slice(0, 10))} className="flex w-full items-center gap-2 rounded-lg p-2 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-800"><i className={`h-2 w-2 shrink-0 rounded-full ${CATEGORIES[e.category].color}`} /><span className="min-w-0 flex-1 break-words">{e.title}</span><time className="shrink-0 text-slate-500">{e.startsAt.slice(0, 10).split('-').reverse().join('/')}</time></button>)}
           </div>
         </section>
         <aside ref={details} className="min-w-0 border-t border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-950/30 sm:p-5 lg:border-l lg:border-t-0" aria-label="Chi tiết ngày">

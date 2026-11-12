@@ -33,9 +33,13 @@ export function errorHandler(err, req, res, next) {
       fieldErrors[field] = e.message;
     });
   } 
-  // 3. Lỗi chuẩn SQLSTATE từ PostgreSQL (driver pg)
+  // 3. SQL Server errors normalized at the database boundary for the API contract.
   else if (err?.code) {
-    if (err.code === '23505') {
+    if (err.code === '40001') {
+      statusCode = 409;
+      code = 'CONCURRENCY_CONFLICT';
+      message = 'Dữ liệu đang được xử lý đồng thời. Vui lòng tải lại và thử lại thao tác.';
+    } else if (err.code === '23505') {
       statusCode = 409;
       code = 'DUPLICATE_RECORD';
       message = 'Bản ghi bị trùng lặp dữ liệu với một bản ghi đã tồn tại trong hệ thống.';

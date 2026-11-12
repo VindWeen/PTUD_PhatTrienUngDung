@@ -16,4 +16,4 @@ Mock provider vẫn có `isMock=true` và `automaticAward=false` ở endpoint đ
 
 Chưa có bộ quy chế LHU/tiêu chí chuyên môn được xác nhận cho corpus này; không gửi corpus tới vendor, không đo accuracy LLM. Không thay seed/phê duyệt nguồn thật. Integration chỉ bật flags confirmed trên dữ liệu **SYNTHETIC trong schema test rollback** và ép provider mock để kiểm tra đường đi API; flags không là xác nhận chuyên môn.
 
-Review rủi ro revision/file và phiên bản quy định tại `docs/reviews/W3_P4_REVISION_AI_REVIEW.md`. Quyền/state/version hiện tại được check trước provider, chưa bảo đảm source không thay đổi trong lúc chờ provider; cần run input snapshot và schema lưu run cho mở rộng production.
+Review rủi ro revision/file và phiên bản quy định tại `docs/archive/reviews/W3_P4_REVISION_AI_REVIEW.md`. Quyền/state/version hiện tại được check trước provider, chưa bảo đảm source không thay đổi trong lúc chờ provider; cần run input snapshot và schema lưu run cho mở rộng production.

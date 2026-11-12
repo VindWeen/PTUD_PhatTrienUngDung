@@ -38,7 +38,7 @@ async function authorized(client, user, goal) {
 async function lockGoal(client, user, rawId) {
   const goal = (
     await client.query(
-      "SELECT *,period_start::text,period_end::text FROM app.kpi_goals WHERE goal_id=$1 FOR UPDATE",
+      "SELECT * FROM app.kpi_goals WITH (UPDLOCK, HOLDLOCK) WHERE goal_id=$1",
       [parse(id, rawId)],
     )
   ).rows[0];
@@ -73,7 +73,7 @@ async function run(fn) {
   } catch (e) {
     if (e.code === "23505")
       throw new ConflictError("Trùng mã KPI/kỳ hoặc kết quả đã tồn tại");
-    if (e.code === "23503")
+    if (e.code === "23503" || e.sqlServerNumber === 547)
       throw new ConflictError("Bản ghi có liên kết hoặc danh mục không hợp lệ");
     throw e;
   }
@@ -92,11 +92,14 @@ export async function list(user, raw) {
     return {
       items: (
         await client.query(
-          `SELECT g.*,g.period_start::text,g.period_end::text,
-      (to_jsonb(r)||jsonb_build_object('result_id',r.result_id::text,'goal_id',r.goal_id::text,
-        'actual',r.actual::text,'achievement_id',r.achievement_id::text,'created_by',r.created_by::text,'version',r.version::text)) result FROM app.kpi_goals g
-      LEFT JOIN app.kpi_results r USING(goal_id) WHERE g.lecturer_id IS NOT DISTINCT FROM $1
-      AND g.unit_id IS NOT DISTINCT FROM $2 ORDER BY g.period_end DESC,g.goal_id DESC`,
+          `SELECT g.*,
+      (SELECT CAST(r.result_id AS varchar(100)) AS result_id, CAST(r.goal_id AS varchar(100)) AS goal_id,
+        CAST(r.actual AS varchar(100)) AS actual, r.source, r.source_note, r.evidence_note,
+        CAST(r.achievement_id AS varchar(100)) AS achievement_id, CAST(r.created_by AS varchar(100)) AS created_by,
+        r.created_at, r.updated_at, CAST(r.version AS varchar(100)) AS version
+        FROM app.kpi_results r WHERE r.goal_id=g.goal_id
+        FOR JSON PATH, INCLUDE_NULL_VALUES, WITHOUT_ARRAY_WRAPPER) AS result FROM app.kpi_goals g WHERE (g.lecturer_id = $1 OR (g.lecturer_id IS NULL AND $1 IS NULL))
+      AND (g.unit_id = $2 OR (g.unit_id IS NULL AND $2 IS NULL)) ORDER BY g.period_end DESC,g.goal_id DESC`,
           [s.lecturer_id || null, s.unit_id || null],
         )
       ).rows,
@@ -112,14 +115,14 @@ export async function catalogs(user) {
       throw new ForbiddenError("Không có vai trò KPI");
     const types = (
       await client.query(
-        "SELECT achievement_type_id,code,name,applicable_subject_type FROM app.achievement_types WHERE is_active ORDER BY name",
+        "SELECT achievement_type_id,code,name,applicable_subject_type FROM app.achievement_types WHERE is_active = 1 ORDER BY name",
       )
     ).rows;
     const units = roles.includes("UNIT_REPRESENTATIVE")
       ? (
           await client.query(
-            `SELECT u.unit_id,u.name FROM app.unit_representatives r JOIN app.organization_units u USING(unit_id)
-      WHERE r.user_id=$1 AND u.is_active AND r.revoked_at IS NULL AND r.valid_from<=NOW() AND (r.valid_to IS NULL OR r.valid_to>NOW()) ORDER BY u.name`,
+            `SELECT u.unit_id,u.name FROM app.unit_representatives r JOIN app.organization_units u ON u.unit_id=r.unit_id
+      WHERE r.user_id=$1 AND u.is_active = 1 AND r.revoked_at IS NULL AND r.valid_from<=SYSUTCDATETIME() AND (r.valid_to IS NULL OR r.valid_to>SYSUTCDATETIME()) ORDER BY u.name`,
             [user.userId],
           )
         ).rows
@@ -153,21 +156,21 @@ export async function mutateGoal(user, goalId, action, raw) {
     if (action === "delete")
       out = (
         await client.query(
-          "DELETE FROM app.kpi_goals WHERE goal_id=$1 RETURNING *,period_start::text,period_end::text",
+          "DELETE FROM app.kpi_goals OUTPUT DELETED.* WHERE goal_id=$1",
           [g.goal_id],
         )
       ).rows[0];
     else if (action === "accept")
       out = (
         await client.query(
-          `UPDATE app.kpi_goals SET status='ACCEPTED',accepted_by=$2,accepted_at=NOW(),version=version+1,updated_at=NOW() WHERE goal_id=$1 RETURNING *,period_start::text,period_end::text`,
+          `UPDATE app.kpi_goals SET status='ACCEPTED',accepted_by=$2,accepted_at=SYSUTCDATETIME(),version=version+1,updated_at=SYSUTCDATETIME() OUTPUT INSERTED.* WHERE goal_id=$1`,
           [g.goal_id, user.userId],
         )
       ).rows[0];
     else
       out = (
         await client.query(
-          `UPDATE app.kpi_goals SET code=$2,title=$3,measure_unit=$4,period_start=$5,period_end=$6,target=$7,plan=$8,source='MANUAL',source_note=$9,version=version+1,updated_at=NOW() WHERE goal_id=$1 RETURNING *,period_start::text,period_end::text`,
+          `UPDATE app.kpi_goals SET code=$2,title=$3,measure_unit=$4,period_start=$5,period_end=$6,target=$7,[plan]=$8,source='MANUAL',source_note=$9,version=version+1,updated_at=SYSUTCDATETIME() OUTPUT INSERTED.* WHERE goal_id=$1`,
           [
             g.goal_id,
             p.code,
@@ -201,7 +204,7 @@ export async function result(user, goalId, action, raw) {
       throw new ConflictError("Cần chấp nhận mục tiêu trước khi ghi kết quả");
     let r = (
       await client.query(
-        "SELECT * FROM app.kpi_results WHERE goal_id=$1 FOR UPDATE",
+        "SELECT * FROM app.kpi_results WITH (UPDLOCK, HOLDLOCK) WHERE goal_id=$1",
         [g.goal_id],
       )
     ).rows[0];
@@ -222,14 +225,14 @@ export async function result(user, goalId, action, raw) {
       else if (action === "update")
         r = (
           await client.query(
-            `UPDATE app.kpi_results SET actual=$2,source='MANUAL',source_note=$3,evidence_note=$4,version=version+1,updated_at=NOW() WHERE result_id=$1 RETURNING *`,
+            `UPDATE app.kpi_results SET actual=$2,source='MANUAL',source_note=$3,evidence_note=$4,version=version+1,updated_at=SYSUTCDATETIME() OUTPUT INSERTED.* WHERE result_id=$1`,
             [r.result_id, p.actual, p.sourceNote, p.evidenceNote],
           )
         ).rows[0];
       else {
         const type = (
           await client.query(
-            `SELECT 1 FROM app.achievement_types WHERE achievement_type_id=$1 AND is_active
+            `SELECT 1 FROM app.achievement_types WHERE achievement_type_id=$1 AND is_active = 1
           AND applicable_subject_type IN ($2,'BOTH')`,
             [p.achievementTypeId, g.lecturer_id ? "LECTURER" : "UNIT"],
           )
@@ -244,7 +247,7 @@ export async function result(user, goalId, action, raw) {
         const a = (
           await client.query(
             `INSERT INTO app.achievements(lecturer_id,unit_id,context_unit_id,achievement_type_id,title,description,start_date,end_date,recognition_year,status,created_by)
-          VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'DRAFT',$10) RETURNING achievement_id,status,version`,
+          OUTPUT INSERTED.achievement_id,INSERTED.status,INSERTED.version VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'DRAFT',$10)`,
             [
               g.lecturer_id,
               g.unit_id,
@@ -261,7 +264,7 @@ export async function result(user, goalId, action, raw) {
         ).rows[0];
         r = (
           await client.query(
-            "UPDATE app.kpi_results SET achievement_id=$2,version=version+1,updated_at=NOW() WHERE result_id=$1 RETURNING *",
+            "UPDATE app.kpi_results SET achievement_id=$2,version=version+1,updated_at=SYSUTCDATETIME() OUTPUT INSERTED.* WHERE result_id=$1",
             [r.result_id, a.achievement_id],
           )
         ).rows[0];
@@ -286,7 +289,7 @@ export async function importCsv(user, raw, commit = false) {
     // Serialize imports for this subject; unique DB indexes also protect manual/import races.
     if (commit)
       await client.query(
-        "SELECT lecturer_id FROM app.lecturers WHERE lecturer_id=$1 FOR UPDATE",
+        "SELECT lecturer_id FROM app.lecturers WITH (UPDLOCK, HOLDLOCK) WHERE lecturer_id=$1",
         [s.lecturer_id],
       );
     const seen = new Map();

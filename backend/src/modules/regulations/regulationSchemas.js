@@ -24,6 +24,17 @@ export const lhuApplicationStatusEnum = z.enum([
 
 export const targetTypeEnum = z.enum(['INDIVIDUAL', 'COLLECTIVE', 'BOTH']);
 
+const sourceIds = z.array(z.number().int().positive().safe()).min(1).max(200)
+  .transform(ids => [...new Set(ids)].sort((a, b) => a - b));
+export const sourceRulesSchema = z.discriminatedUnion('sourceType', [
+  z.object({ sourceType: z.literal('ACHIEVEMENT'), achievementTypeIds: sourceIds, requireConsecutive: z.boolean().optional() }).strict(),
+  z.object({ sourceType: z.literal('AWARD_RECORD'), awardTypeIds: sourceIds, requireConsecutive: z.boolean().optional() }).strict(),
+]);
+export const updateSourceRulesSchema = z.object({
+  sourceRules: sourceRulesSchema.nullable(),
+  expectedRevision: z.number().int().nonnegative(),
+}).strict();
+
 // 1. Tạo Văn bản gốc
 export const createDocumentSchema = z.object({
   documentCode: text(100).transform((v) => v.toUpperCase()),
@@ -79,6 +90,7 @@ export const batchCreateChunksSchema = z.object({
 
 // 4. Tạo Tiêu chí Khen thưởng
 export const createCriteriaVersionSchema = z.object({
+  sourceRules: sourceRulesSchema.optional().nullable(),
   criterionCode: text(50).transform((v) => v.toUpperCase()),
   name: text(255, 3),
   targetType: targetTypeEnum,
@@ -107,6 +119,7 @@ export const confirmVersionSchema = z.object({
 // 6. Xác nhận Tiêu chí Khen thưởng
 export const confirmCriteriaSchema = z.object({
   isConfirmed: z.boolean(),
+  expectedSourceRulesRevision: z.number().int().nonnegative().optional(),
   notes: z.string().trim().max(2000).optional().nullable(),
 }).strict();
 

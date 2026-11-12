@@ -294,17 +294,10 @@ try {
     1,
     400,
   );
-  const empty = await call(
+  await call(
     "POST",
     "/award-applications",
     { ...applicationBody, achievementIds: [] },
-    1,
-    201,
-  );
-  await call(
-    "POST",
-    `/award-applications/${empty.application_id}/submit`,
-    { version: 1 },
     1,
     400,
   );

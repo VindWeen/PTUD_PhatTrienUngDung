@@ -18,16 +18,16 @@ const envSchema = z.object({
   API_PREFIX: z.string().default('/api/v1'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
 
-  // Cấu hình Database Supabase PostgreSQL
-  DATABASE_URL: z.string().optional(),
-  SUPABASE_DB_URL: z.string().optional(),
+  // SQL Server is the only application database; PostgreSQL URLs are not used.
   DB_HOST: z.string().optional().default('localhost'),
   DB_SERVER: z.string().optional(), // tương thích ngược nếu đặt DB_SERVER
-  DB_PORT: z.coerce.number().int().positive().default(5432),
-  DB_NAME: z.string().default('postgres'),
-  DB_USER: z.string().default('postgres'),
+  DB_PORT: z.coerce.number().int().positive().default(1433),
+  DB_NAME: z.string().default('PTUD_LHU'),
+  DB_USER: z.string().default('ptud_lhu_app'),
   DB_PASSWORD: z.string().optional().default(''),
-  DB_SSL: z.preprocess((val) => val === 'true' || val === true || val === '1', z.boolean()).default(false),
+  DB_ENCRYPT: z.preprocess((val) => val === 'true' || val === true || val === '1', z.boolean()).default(true),
+  DB_TRUST_SERVER_CERTIFICATE: z.preprocess((val) => val === 'true' || val === true || val === '1', z.boolean()).default(false),
+  DB_REQUEST_TIMEOUT: z.coerce.number().int().positive().default(30000),
   DB_CONNECTION_TIMEOUT: z.coerce.number().int().default(15000),
 
   // Pool
@@ -44,6 +44,10 @@ const envSchema = z.object({
   COOKIE_SECURE: z.preprocess((val) => val === 'true' || val === true || val === '1', z.boolean()).optional(),
   COOKIE_SAME_SITE: z.enum(['lax', 'strict', 'none']).optional(),
   COOKIE_DOMAIN: z.string().optional(),
+
+  RESET_EMAIL_API_KEY: z.string().default(''),
+  RESET_EMAIL_FROM: z.string().default(''),
+  APP_PUBLIC_URL: z.string().default(''),
 
   // Storage
   STORAGE_DIR: z.string().optional(),

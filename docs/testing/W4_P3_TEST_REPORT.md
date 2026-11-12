@@ -37,7 +37,7 @@ Các lượt phát triển đã phát hiện timeout do chạy hai bộ migratio
 - `frontend/src/components/common/Sidebar.jsx`, `frontend/src/routes/AppRoutes.jsx`: truy cập Hội đồng và landing page phù hợp.
 - `supabase/migrations/20261007000024_w4_p3_council.sql`: schema reviews/comments, trạng thái đề nghị và loại notification.
 - `docs/api/COUNCIL_W4_P3.md`, `docs/api/W4_P3.openapi.json`: hợp đồng API và bước tự kiểm tra.
-- `docs/weekly/WEEK_04_W4_P3.md`, tài liệu này: quyết định Supabase, kế hoạch và bàn giao.
+- `docs/archive/weekly/WEEK_04_W4_P3.md`, tài liệu này: quyết định Supabase, kế hoạch và bàn giao.
 
 ## Phần còn lại và giới hạn
 

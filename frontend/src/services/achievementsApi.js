@@ -20,6 +20,10 @@ export const achievementsApi = {
   update: (id, data) =>
     USE_FIXTURES ? fixtureWriteError() : request({ method: 'PATCH', url: `/achievements/${id}`, data }),
 
+  remove: (id) => USE_FIXTURES ? fixtureWriteError() : request({ method: 'DELETE', url: `/achievements/${id}` }),
+
+  restore: (id) => USE_FIXTURES ? fixtureWriteError() : request({ method: 'POST', url: `/achievements/${id}/restore` }),
+
   submit: (id, data) =>
     USE_FIXTURES ? fixtureClient.submitAchievement(id, data) : request({ method: 'POST', url: `/achievements/${id}/submit`, data }),
 

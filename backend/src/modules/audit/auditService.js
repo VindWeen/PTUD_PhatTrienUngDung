@@ -86,7 +86,7 @@ export function maskSecrets(data, visited = new WeakSet()) {
  * @param {Object|null} [params.newValues=null] - Trạng thái/giá trị sau khi đổi (tự động mask)
  * @param {string|null} [params.ipAddress=null] - Địa chỉ IP client
  * @param {string|null} [params.userAgent=null] - User-Agent trình duyệt/ứng dụng
- * @param {Object|null} [params.client=null] - pg.Client nếu chạy trong transaction cơ sở dữ liệu
+ * @param {Object|null} [params.client=null] - SQL Server client nếu chạy trong transaction cơ sở dữ liệu
  * @param {boolean} [params.throwOnError=false] - Ném ngoại lệ khi ghi audit thất bại (mặc định false)
  * @returns {Promise<Object|null>} Bản ghi audit đã lưu hoặc null nếu có lỗi
  */
@@ -131,11 +131,9 @@ export async function recordAuditLog({
         ip_address,
         user_agent,
         created_at
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, NOW()
-      )
-      RETURNING audit_id, user_id, action, entity_name, entity_id, old_values, new_values, ip_address, user_agent, created_at;
-    `;
+      ) OUTPUT INSERTED.audit_id, INSERTED.user_id, INSERTED.action, INSERTED.entity_name, INSERTED.entity_id, INSERTED.old_values, INSERTED.new_values, INSERTED.ip_address, INSERTED.user_agent, INSERTED.created_at VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, SYSUTCDATETIME()
+      )`;
 
     const params = [
       normalizedUserId,
@@ -169,7 +167,7 @@ export async function recordAuditLog({
  * @param {string} [options.action] - Lọc theo loại hành động
  * @param {number} [options.limit=50] - Giới hạn số lượng
  * @param {number} [options.offset=0] - Vị trí bắt đầu
- * @param {Object|null} [options.client=null] - pg.Client nếu cần
+ * @param {Object|null} [options.client=null] - SQL Server client nếu cần
  * @returns {Promise<Array>} Danh sách bản ghi audit
  */
 export async function getAuditLogs({
@@ -228,7 +226,7 @@ export async function getAuditLogs({
     FROM app.audit_logs
     ${whereClause}
     ORDER BY created_at DESC, audit_id DESC
-    LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder};
+    OFFSET ${offsetPlaceholder} ROWS FETCH NEXT ${limitPlaceholder} ROWS ONLY;
   `;
 
   const result = await query(sql, params, client);

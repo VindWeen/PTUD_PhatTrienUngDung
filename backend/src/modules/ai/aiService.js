@@ -27,8 +27,8 @@ export class AiService {
     this.providerName = options.providerName || (this.poolUrl ? options.poolMode || config.AI_POOL_MODE : config.AI_PROVIDER);
     this.poolProviders = Object.fromEntries(['auto', 'groq', 'openrouter'].map(mode =>
       [mode, new PoolProvider(this.poolUrl, this.poolToken, mode)]));
-    this.groqProvider = new GroqProvider(options.groqApiKey || config.GROQ_API_KEY, options.groqModel || config.GROQ_MODEL);
-    this.openrouterProvider = new OpenRouterProvider(options.openrouterApiKey || config.OPENROUTER_API_KEY, options.openrouterModel || config.OPENROUTER_MODEL);
+    this.groqProvider = new GroqProvider(options.groqApiKey ?? config.GROQ_API_KEY, options.groqModel || config.GROQ_MODEL);
+    this.openrouterProvider = new OpenRouterProvider(options.openrouterApiKey ?? config.OPENROUTER_API_KEY, options.openrouterModel || config.OPENROUTER_MODEL);
     this.mockProvider = new MockAiProvider(options.mockModel || 'mock-lhu-ai');
   }
 
@@ -268,22 +268,22 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
       if (Number(lecturer.user_id) === Number(user.userId)) return true;
 
       // MANAGER có scope trên đơn vị công tác của giảng viên
-      if (roleCodes.includes('MANAGER')) {
+      if (roleCodes.includes('MANAGER') || roleCodes.includes('RECORDS_OFFICER')) {
         const assignRes = await db(
           `SELECT unit_id FROM app.lecturer_assignments 
-           WHERE lecturer_id = $1 AND is_primary = TRUE 
-             AND valid_from <= NOW() AND (valid_to IS NULL OR valid_to > NOW())`,
+           WHERE lecturer_id = $1 AND is_primary = 1 
+             AND valid_from <= SYSUTCDATETIME() AND (valid_to IS NULL OR valid_to > SYSUTCDATETIME())`,
           [subjectId]
         );
         const unitId = assignRes.rows[0]?.unit_id;
-        if (unitId && (await isUnitInUserScope(user.userId, unitId, 'MANAGER'))) {
-          return true;
-        }
+        for (const role of ['MANAGER', 'RECORDS_OFFICER'])
+          if (unitId && roleCodes.includes(role) && await isUnitInUserScope(user.userId, unitId, role)) return true;
       }
       throw new OutOfScopeError('Người ngoài scope không có quyền truy cập dữ liệu AI của giảng viên này');
     }
 
     if (subjectType === 'UNIT') {
+      if (roleCodes.includes('RECORDS_OFFICER') && await isUnitInUserScope(user.userId, subjectId, 'RECORDS_OFFICER')) return true;
       if (roleCodes.includes('MANAGER')) {
         const inScope = await isUnitInUserScope(user.userId, subjectId, 'MANAGER');
         if (inScope) return true;
@@ -308,7 +308,6 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
       asOfDate = new Date().toISOString().slice(0, 10),
       forcedProvider = 'mock',
       model = 'deterministic-evaluator-v1',
-      rules = null,
       mockRecords = null,
     },
     user,
@@ -327,20 +326,16 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
       const achSql = `
         SELECT a.achievement_id AS id,
                'ACHIEVEMENT' AS type,
+               a.achievement_type_id AS "sourceTypeId",
                a.lecturer_id, a.unit_id,
-               COALESCE(a.recognition_year, EXTRACT(YEAR FROM a.achievement_date)::int) AS year,
+               COALESCE(a.recognition_year, YEAR(a.achievement_date)) AS year,
                a.status,
                a.replaces_achievement_id AS "replacesRecordId",
                (
-                 SELECT json_agg(json_build_object(
-                   'id', ef.evidence_file_id,
-                   'sha256', ef.sha256_hash,
-                   'name', ef.original_file_name
-                 ))
+                 SELECT ef.evidence_file_id AS id, ef.sha256_hash AS sha256, ef.original_file_name AS name
                  FROM app.evidences e
                  JOIN app.evidence_files ef ON ef.evidence_id = e.evidence_id
-                 WHERE e.achievement_id = a.achievement_id AND e.is_removed = FALSE
-               ) AS files
+                 WHERE e.achievement_id = a.achievement_id AND e.is_removed = 0 FOR JSON PATH, INCLUDE_NULL_VALUES) AS files
         FROM app.achievements a
         WHERE ${subjectType === 'LECTURER' ? 'a.lecturer_id = $1' : 'a.unit_id = $1'}
           AND a.status IN ('VERIFIED', 'RECORDED', 'REVOKED', 'CANCELLED')
@@ -350,19 +345,15 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
       const awardSql = `
         SELECT r.record_id AS id,
                'AWARD_RECORD' AS type,
+               r.award_type_id AS "sourceTypeId",
                r.lecturer_id, r.unit_id,
                r.recognition_year AS year,
                r.status,
                r.replaces_award_record_id AS "replacesRecordId",
                (
-                 SELECT json_agg(json_build_object(
-                   'id', adf.decision_file_id,
-                   'sha256', adf.sha256_hash,
-                   'name', adf.original_file_name
-                 ))
+                 SELECT adf.decision_file_id AS id, adf.sha256_hash AS sha256, adf.original_file_name AS name
                  FROM app.award_decision_files adf
-                 WHERE adf.decision_id = r.decision_id
-               ) AS files
+                 WHERE adf.decision_id = r.decision_id FOR JSON PATH, INCLUDE_NULL_VALUES) AS files
         FROM app.award_records r
         WHERE ${subjectType === 'LECTURER' ? 'r.lecturer_id = $1' : 'r.unit_id = $1'}
           AND r.status IN ('RECORDED', 'REVOKED')
@@ -372,6 +363,7 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
       const mapRow = (r) => ({
         id: Number(r.id),
         type: r.type,
+        sourceTypeId: r.sourceTypeId ? Number(r.sourceTypeId) : null,
         subjectId: Number(subjectType === 'LECTURER' ? r.lecturer_id : r.unit_id),
         year: Number(r.year),
         status: r.status,
@@ -389,7 +381,10 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
     if (Array.isArray(criteriaVersionIds) && criteriaVersionIds.length > 0) {
       for (const cid of criteriaVersionIds) {
         const c = await this.regulations.findCriteriaVersionById(client, cid);
-        if (c) criteriaList.push(c);
+        if (!c) throw new ValidationError(`Không tìm thấy tiêu chí #${cid}`);
+        if (!['BOTH', subjectType === 'LECTURER' ? 'INDIVIDUAL' : 'COLLECTIVE'].includes(c.target_type))
+          throw new ValidationError('Tiêu chí không áp dụng cho chủ thể đã chọn');
+        criteriaList.push(c);
       }
     } else {
       criteriaList = await this.regulations.listCriteriaVersions(client, {
@@ -433,7 +428,7 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
         },
         records,
         asOfDate,
-        rules,
+        rules: crit.source_rules || null,
       });
       criterionResults.push(evalResult);
     }
@@ -452,7 +447,6 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
       documentVersions: docVersions,
       records,
       asOfDate,
-      rules,
     });
 
     // 5. Build EvaluationRun object
@@ -512,7 +506,7 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
       if (subjectId) {
         await this.authorizeSubjectAccess(user, subjectType || 'LECTURER', subjectId, client);
       }
-      return this.evaluationRepo.listEvaluationRuns(client, filters);
+      return this.evaluationRepo.listEvaluationRuns(client, roleCodes.includes('ADMIN') ? filters : { ...filters, officerUserId: user.userId });
     }
 
     if (filters.subjectId) {
@@ -546,20 +540,16 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
     const achSql = `
       SELECT a.achievement_id AS id,
              'ACHIEVEMENT' AS type,
+             a.achievement_type_id AS "sourceTypeId",
              a.lecturer_id, a.unit_id,
-             COALESCE(a.recognition_year, EXTRACT(YEAR FROM a.achievement_date)::int) AS year,
+             COALESCE(a.recognition_year, YEAR(a.achievement_date)) AS year,
              a.status,
              a.replaces_achievement_id AS "replacesRecordId",
              (
-               SELECT json_agg(json_build_object(
-                 'id', ef.evidence_file_id,
-                 'sha256', ef.sha256_hash,
-                 'name', ef.original_file_name
-               ))
+               SELECT ef.evidence_file_id AS id, ef.sha256_hash AS sha256, ef.original_file_name AS name
                FROM app.evidences e
                JOIN app.evidence_files ef ON ef.evidence_id = e.evidence_id
-               WHERE e.achievement_id = a.achievement_id AND e.is_removed = FALSE
-             ) AS files
+               WHERE e.achievement_id = a.achievement_id AND e.is_removed = 0 FOR JSON PATH, INCLUDE_NULL_VALUES) AS files
       FROM app.achievements a
       WHERE ${subjectType === 'LECTURER' ? 'a.lecturer_id = $1' : 'a.unit_id = $1'}
         AND a.status IN ('VERIFIED', 'RECORDED', 'REVOKED', 'CANCELLED')
@@ -569,19 +559,15 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
     const awardSql = `
       SELECT r.record_id AS id,
              'AWARD_RECORD' AS type,
+             r.award_type_id AS "sourceTypeId",
              r.lecturer_id, r.unit_id,
              r.recognition_year AS year,
              r.status,
              r.replaces_award_record_id AS "replacesRecordId",
              (
-               SELECT json_agg(json_build_object(
-                 'id', adf.decision_file_id,
-                 'sha256', adf.sha256_hash,
-                 'name', adf.original_file_name
-               ))
+               SELECT adf.decision_file_id AS id, adf.sha256_hash AS sha256, adf.original_file_name AS name
                FROM app.award_decision_files adf
-               WHERE adf.decision_id = r.decision_id
-             ) AS files
+               WHERE adf.decision_id = r.decision_id FOR JSON PATH, INCLUDE_NULL_VALUES) AS files
       FROM app.award_records r
       WHERE ${subjectType === 'LECTURER' ? 'r.lecturer_id = $1' : 'r.unit_id = $1'}
         AND r.status IN ('RECORDED', 'REVOKED')
@@ -591,6 +577,7 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
     const mapRow = (r) => ({
       id: Number(r.id),
       type: r.type,
+      sourceTypeId: r.sourceTypeId ? Number(r.sourceTypeId) : null,
       subjectId: Number(subjectType === 'LECTURER' ? r.lecturer_id : r.unit_id),
       year: Number(r.year),
       status: r.status,
@@ -603,18 +590,22 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
     const currentRecords = [...achRes.rows.map(mapRow), ...awardRes.rows.map(mapRow)];
     const savedSnapshot = run.inputSnapshot || {};
 
+    const savedCriteria = savedSnapshot.criteria?.length ? savedSnapshot.criteria : [savedSnapshot.criterion];
+    const liveCriteria = await Promise.all(savedCriteria.map(c => c?.criterionId ? this.regulations.findCriteriaVersionById(client, c.criterionId) : null));
+    const liveDocuments = await Promise.all(liveCriteria.map(c => c?.version_id ? this.regulations.findVersionById(client, c.version_id) : null));
+    const missingPolicy = !liveCriteria.length || liveCriteria.some(c => !c) || liveDocuments.some(d => !d);
+
     const { inputHash: currentHash } = buildInputSnapshot({
       subject: run.targetSubject,
-      criterion: savedSnapshot.criterion || {},
-      documentVersion: savedSnapshot.documentVersion || {},
-      criteria: savedSnapshot.criteria || [],
-      documentVersions: savedSnapshot.documentVersions || [],
+      criterion: liveCriteria[0] || {},
+      documentVersion: liveDocuments[0] || {},
+      criteria: liveCriteria.filter(Boolean),
+      documentVersions: liveDocuments.filter(Boolean),
       records: currentRecords,
       asOfDate: savedSnapshot.asOfDate,
-      rules: savedSnapshot.criterion?.rules || null,
     });
 
-    const isStale = currentHash !== run.inputHash;
+    const isStale = missingPolicy || currentHash !== run.inputHash;
     if (isStale !== run.isStale) {
       await this.evaluationRepo.markRunStale(client, runId, isStale);
     }
@@ -627,7 +618,7 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
       totalSavedRecords: savedSnapshot.records?.length || 0,
       totalCurrentRecords: currentRecords.length,
       reason: isStale
-        ? 'Dữ liệu hồ sơ thành tích/khen thưởng của chủ thể đã thay đổi kể từ phiên đánh giá này'
+        ? 'Dữ liệu hồ sơ hoặc căn cứ tiêu chí/quy định đã thay đổi kể từ phiên đánh giá này'
         : 'Dữ liệu hồ sơ vẫn đồng nhất với thời điểm đánh giá',
     };
   }

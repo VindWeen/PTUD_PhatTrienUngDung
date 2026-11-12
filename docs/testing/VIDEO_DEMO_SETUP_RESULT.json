@@ -1,0 +1,33 @@
+{
+  "checkedAt": "2026-11-11",
+  "database": "PTUD_LHU_Demo",
+  "frontend": "http://127.0.0.1:5175",
+  "backendPort": 5001,
+  "mockKpiPort": 5011,
+  "accounts": 10,
+  "achievements": 12,
+  "applications": 8,
+  "awardRecords": 4,
+  "kpiGoals": 4,
+  "simulationAssessments": 2,
+  "privateReferencesVerified": 13,
+  "apiChecksPassed": 26,
+  "verificationMutationsRolledBack": true,
+  "baselineArchive": "backups/video-demo-baseline",
+  "baselineIncludesDatabaseAndPrivateFiles": true,
+  "isolatedRestoreTestDatabase": "PTUD_LHU_Demo_RestoreTest",
+  "nativeCheckDbPassed": true,
+  "restoredTableCountsMatched": true,
+  "demoResetExecutedAndVerified": true,
+  "browserAnLoginAndListsPassed": true,
+  "demoSqlLoginCanAccessPrimaryDb": false,
+  "staleFrontendApiEnvironmentOverrideTest": "PASS",
+  "testServersStoppedBeforeHandoff": true,
+  "primaryEnvironmentEdited": false,
+  "limitations": [
+    "AI defaults to mock; live providers are not configured for this demo runtime",
+    "SCN sources remain SIMULATION_ONLY; confirmed-policy KPI recommendation success is not claimed",
+    "External KPI is a local simulated HTTP source, not a real institutional integration",
+    "Email delivery is disabled for demo"
+  ]
+}

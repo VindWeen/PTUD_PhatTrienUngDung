@@ -1,20 +1,20 @@
 import { query } from '../../utils/dbHelper.js';
 
 export async function listActiveTypes() {
-  const { rows } = await query('SELECT achievement_type_id,code,name,applicable_subject_type FROM app.achievement_types WHERE is_active ORDER BY name');
+  const { rows } = await query('SELECT achievement_type_id,code,name,applicable_subject_type FROM app.achievement_types WHERE is_active=1 ORDER BY name');
   return rows;
 }
 
 export async function findLecturerByUserId(userId) {
   const result = await query(
-    `SELECT l.lecturer_id AS "lecturerId", l.user_id AS "userId", l.employee_code AS "employeeCode",
+    `SELECT TOP (1) l.lecturer_id AS "lecturerId", l.user_id AS "userId", l.employee_code AS "employeeCode",
             l.full_name AS "fullName", l.email AS "email", l.title AS "title", l.degree AS "degree",
             la.unit_id AS "primaryUnitId", ou.code AS "primaryUnitCode", ou.name AS "primaryUnitName"
      FROM app.lecturers l
-     LEFT JOIN app.lecturer_assignments la ON l.lecturer_id = la.lecturer_id AND la.is_primary = TRUE AND (la.valid_to IS NULL OR la.valid_to > NOW())
+     LEFT JOIN app.lecturer_assignments la ON l.lecturer_id = la.lecturer_id AND la.is_primary = 1 AND (la.valid_to IS NULL OR la.valid_to > SYSUTCDATETIME())
      LEFT JOIN app.organization_units ou ON la.unit_id = ou.unit_id
-     WHERE l.user_id = $1 AND l.is_active = TRUE
-     LIMIT 1`,
+     WHERE l.user_id = $1 AND l.is_active = 1
+     `,
     [userId]
   );
   return result.rows[0] || null;
@@ -22,15 +22,15 @@ export async function findLecturerByUserId(userId) {
 
 export async function findActiveRepresentative(userId, unitId) {
   const result = await query(
-    `SELECT rep.unit_representative_id AS "unitRepresentativeId", rep.user_id AS "userId",
+    `SELECT TOP (1) rep.unit_representative_id AS "unitRepresentativeId", rep.user_id AS "userId",
             rep.unit_id AS "unitId", rep.valid_from AS "validFrom", rep.valid_to AS "validTo"
      FROM app.unit_representatives rep
      WHERE rep.user_id = $1 
        AND rep.unit_id = $2
        AND rep.revoked_at IS NULL
-       AND rep.valid_from <= NOW()
-       AND (rep.valid_to IS NULL OR rep.valid_to > NOW())
-     LIMIT 1`,
+       AND rep.valid_from <= SYSUTCDATETIME()
+       AND (rep.valid_to IS NULL OR rep.valid_to > SYSUTCDATETIME())
+     `,
     [userId, unitId]
   );
   return result.rows[0] || null;
@@ -42,24 +42,26 @@ export async function listUserRepresentedUnitIds(userId) {
      FROM app.unit_representatives rep
      WHERE rep.user_id = $1 
        AND rep.revoked_at IS NULL
-       AND rep.valid_from <= NOW()
-       AND (rep.valid_to IS NULL OR rep.valid_to > NOW())`,
+       AND rep.valid_from <= SYSUTCDATETIME()
+       AND (rep.valid_to IS NULL OR rep.valid_to > SYSUTCDATETIME())`,
     [userId]
   );
   return result.rows.map((r) => Number(r.unitId));
 }
 
 export async function listDescendantUnitIds(rootIds) {
-  const result = await query(`WITH RECURSIVE units AS (
-    SELECT unit_id FROM app.organization_units WHERE unit_id = ANY($1::bigint[]) AND is_active = TRUE
-    UNION
-    SELECT child.unit_id FROM app.organization_units child JOIN units parent ON child.parent_id = parent.unit_id
-    WHERE child.is_active = TRUE
-  ) SELECT unit_id FROM units`, [rootIds]);
+  const result = await query(`WITH units AS (
+    SELECT unit_id,CAST('/'+CONVERT(varchar(20), unit_id)+'/' AS varchar(max)) AS visited
+    FROM app.organization_units WHERE unit_id IN (SELECT CONVERT(bigint, value) FROM OPENJSON($1)) AND is_active=1
+    UNION ALL
+    SELECT child.unit_id,CAST(parent.visited+CONVERT(varchar(20), child.unit_id)+'/' AS varchar(max))
+    FROM app.organization_units child JOIN units parent ON child.parent_id=parent.unit_id
+    WHERE child.is_active=1 AND CHARINDEX('/'+CONVERT(varchar(20),child.unit_id)+'/',parent.visited)=0
+  ) SELECT DISTINCT unit_id FROM units OPTION (MAXRECURSION 32767)`, [JSON.stringify(rootIds)]);
   return result.rows.map(row => Number(row.unit_id));
 }
 
-export async function findAchievementById(id, client = null) {
+export async function findAchievementById(id, client = null, includeDeleted = false) {
   const runQuery = client ? client.query.bind(client) : query;
   const result = await runQuery(
     `SELECT a.achievement_id AS "achievementId",
@@ -71,11 +73,11 @@ export async function findAchievementById(id, client = null) {
             a.title AS "title",
             a.description AS "description",
             a.contribution_role AS "contributionRole",
-            a.start_date::text AS "startDate",
-            a.end_date::text AS "endDate",
+            CONVERT(varchar(10), a.start_date, 23) AS "startDate",
+            CONVERT(varchar(10), a.end_date, 23) AS "endDate",
             a.recognition_year AS "recognitionYear",
             a.academic_year_id AS "academicYearId",
-            a.status AS "status",
+            a.status AS "status", a.deleted_at AS "deletedAt", DATEADD(day, 30, a.deleted_at) AS "expiresAt",
             a.created_by AS "createdBy",
             a.submitted_by AS "submittedBy",
             a.verified_by AS "verifiedBy",
@@ -107,7 +109,7 @@ export async function findAchievementById(id, client = null) {
      LEFT JOIN app.organization_units u_ctx ON a.context_unit_id = u_ctx.unit_id
      LEFT JOIN app.achievement_types at ON a.achievement_type_id = at.achievement_type_id
      LEFT JOIN app.academic_years ay ON a.academic_year_id = ay.academic_year_id
-     WHERE a.achievement_id = $1`,
+     WHERE a.achievement_id = $1 ${includeDeleted ? '' : 'AND a.deleted_at IS NULL'}`,
     [id]
   );
 
@@ -118,7 +120,7 @@ export async function findAchievementById(id, client = null) {
     `SELECT s.submission_id AS "submissionId", s.revision_no AS "revisionNo",
             s.submitted_at AS "submittedAt", s.submitted_by AS "submittedByUserId",
             u.display_name AS "submittedByFullName",
-            (SELECT COUNT(*)::int FROM app.submission_evidence_files sef WHERE sef.submission_id = s.submission_id) AS "frozenFilesCount"
+            (SELECT COUNT(*) FROM app.submission_evidence_files sef WHERE sef.submission_id = s.submission_id) AS "frozenFilesCount"
      FROM app.achievement_submissions s
      LEFT JOIN app.users u ON s.submitted_by = u.user_id
      WHERE s.achievement_id = $1
@@ -137,10 +139,10 @@ export async function findAchievementById(id, client = null) {
   }));
 
   const correctionRes = await runQuery(
-    `SELECT h.reason
+    `SELECT TOP (1) h.reason
      FROM app.achievement_status_histories h
      WHERE h.achievement_id = $1 AND h.to_status = 'NEED_CORRECTION'
-     ORDER BY h.created_at DESC, h.history_id DESC LIMIT 1`,
+     ORDER BY h.created_at DESC, h.history_id DESC `,
     [id]
   );
   const latestCorrectionReason = correctionRes.rows[0]?.reason || null;
@@ -159,7 +161,7 @@ export async function findAchievementById(id, client = null) {
     endDate: row.endDate,
     recognitionYear: row.recognitionYear ? Number(row.recognitionYear) : null,
     academicYearId: row.academicYearId ? Number(row.academicYearId) : null,
-    status: row.status,
+    status: row.status, deletedAt: row.deletedAt, expiresAt: row.expiresAt,
     createdBy: Number(row.createdBy),
     submittedBy: row.submittedBy ? Number(row.submittedBy) : null,
     verifiedBy: row.verifiedBy ? Number(row.verifiedBy) : null,
@@ -209,7 +211,7 @@ export async function findAchievementById(id, client = null) {
 }
 
 export async function listAchievements({ filters = {}, limit = 10, offset = 0, sortBy = 'updatedAt', sortOrder = 'desc' }) {
-  const whereClauses = [];
+  const whereClauses = [filters.trash === 'true' ? 'a.deleted_at IS NOT NULL AND a.deleted_at > DATEADD(day, -30, SYSUTCDATETIME())' : 'a.deleted_at IS NULL'];
   const params = [];
   let paramIdx = 1;
 
@@ -241,8 +243,8 @@ export async function listAchievements({ filters = {}, limit = 10, offset = 0, s
   }
 
   if (filters.contextUnitIds && filters.contextUnitIds.length > 0) {
-    whereClauses.push(`a.context_unit_id = ANY($${paramIdx++}::bigint[])`);
-    params.push(filters.contextUnitIds);
+    whereClauses.push(`a.context_unit_id IN (SELECT CONVERT(bigint, value) FROM OPENJSON($${paramIdx++}))`);
+    params.push(JSON.stringify(filters.contextUnitIds));
   }
 
   if (filters.recognitionYear) {
@@ -260,13 +262,17 @@ export async function listAchievements({ filters = {}, limit = 10, offset = 0, s
     params.push(filters.achievementTypeId);
   }
 
+  if (filters.statuses?.length) {
+    whereClauses.push(`a.status IN (SELECT value COLLATE Latin1_General_100_BIN2 FROM OPENJSON($${paramIdx++}))`);
+    params.push(JSON.stringify(filters.statuses));
+  }
   if (filters.status) {
     whereClauses.push(`a.status = $${paramIdx++}`);
     params.push(filters.status);
   }
 
   if (filters.search) {
-    whereClauses.push(`(a.title ILIKE $${paramIdx} OR a.description ILIKE $${paramIdx})`);
+    whereClauses.push(`(a.title COLLATE Latin1_General_100_CI_AS LIKE $${paramIdx} OR a.description COLLATE Latin1_General_100_CI_AS LIKE $${paramIdx})`);
     params.push(`%${filters.search}%`);
     paramIdx++;
   }
@@ -311,20 +317,20 @@ export async function listAchievements({ filters = {}, limit = 10, offset = 0, s
            a.title AS "title",
            a.description AS "description",
            a.contribution_role AS "contributionRole",
-           a.start_date::text AS "startDate",
-           a.end_date::text AS "endDate",
+           CONVERT(varchar(10), a.start_date, 23) AS "startDate",
+           CONVERT(varchar(10), a.end_date, 23) AS "endDate",
            a.recognition_year AS "recognitionYear",
            a.academic_year_id AS "academicYearId",
            ay.code AS "academicYearCode",
-           a.status AS "status",
+           a.status AS "status", a.deleted_at AS "deletedAt", DATEADD(day, 30, a.deleted_at) AS "expiresAt",
            a.created_by AS "createdBy",
            a.submitted_by AS "submittedBy",
            l.user_id AS "lecturerUserId",
            a.version AS "version",
            a.created_at AS "createdAt",
            a.updated_at AS "updatedAt",
-           (SELECT COUNT(*)::int FROM app.evidences e WHERE e.achievement_id = a.achievement_id AND e.is_removed = FALSE) AS "evidenceCount",
-           (SELECT COALESCE(MAX(s.revision_no), 0)::int FROM app.achievement_submissions s WHERE s.achievement_id = a.achievement_id) AS "latestRevisionNo"
+           (SELECT COUNT(*) FROM app.evidences e WHERE e.achievement_id = a.achievement_id AND e.is_removed = 0) AS "evidenceCount",
+           (SELECT COALESCE(MAX(s.revision_no), 0) FROM app.achievement_submissions s WHERE s.achievement_id = a.achievement_id) AS "latestRevisionNo"
     FROM app.achievements a
     LEFT JOIN app.lecturers l ON a.lecturer_id = l.lecturer_id
     LEFT JOIN app.organization_units u_subj ON a.unit_id = u_subj.unit_id
@@ -332,11 +338,11 @@ export async function listAchievements({ filters = {}, limit = 10, offset = 0, s
     LEFT JOIN app.achievement_types at ON a.achievement_type_id = at.achievement_type_id
     LEFT JOIN app.academic_years ay ON a.academic_year_id = ay.academic_year_id
     ${whereSql}
-    ORDER BY ${sortCol} ${order}, a.achievement_id ${order}
-    LIMIT $${paramIdx++} OFFSET $${paramIdx++}
+    ORDER BY CASE a.status WHEN 'NEED_CORRECTION' THEN 0 WHEN 'DRAFT' THEN 1 WHEN 'SUBMITTED' THEN 2 WHEN 'VERIFIED' THEN 3 WHEN 'REJECTED' THEN 4 WHEN 'REVOKED' THEN 5 ELSE 6 END, ${sortCol} ${order}, a.achievement_id ${order}
+    OFFSET $${paramIdx++} ROWS FETCH NEXT $${paramIdx++} ROWS ONLY
   `;
 
-  const listParams = [...params, limit, offset];
+  const listParams = [...params, offset, limit];
   // Independent read queries: avoid another network round trip in the critical path.
   const [countRes, listRes] = await Promise.all([
     query(countSql, params),
@@ -364,7 +370,7 @@ export async function listAchievements({ filters = {}, limit = 10, offset = 0, s
       recognitionYear: r.recognitionYear ? Number(r.recognitionYear) : null,
       academicYearId: r.academicYearId ? Number(r.academicYearId) : null,
       academicYearCode: r.academicYearCode,
-      status: r.status,
+      status: r.status, deletedAt: r.deletedAt, expiresAt: r.expiresAt,
       createdBy: r.createdBy != null ? Number(r.createdBy) : null,
       submittedBy: r.submittedBy != null ? Number(r.submittedBy) : null,
       lecturerUserId: r.lecturerUserId != null ? Number(r.lecturerUserId) : null,
@@ -386,14 +392,13 @@ export async function createAchievement(data) {
         recognition_year, academic_year_id, status, created_by, version,
         replaces_achievement_id,
         created_at, updated_at
-     ) VALUES (
+     ) OUTPUT INSERTED.achievement_id AS "achievementId", INSERTED.version, INSERTED.replaces_achievement_id AS "replacesAchievementId", INSERTED.created_at AS "createdAt", INSERTED.updated_at AS "updatedAt" VALUES (
         $1, $2, $3, $4,
         $5, $6, $7, $8, $9,
         $10, $11, 'DRAFT', $12, 1,
         $13,
-        NOW(), NOW()
-     )
-     RETURNING achievement_id AS "achievementId", version, replaces_achievement_id AS "replacesAchievementId", created_at AS "createdAt", updated_at AS "updatedAt"`,
+        SYSUTCDATETIME(), SYSUTCDATETIME()
+     )`,
     [
       data.lecturerId || null,
       data.organizationUnitId || null,
@@ -452,42 +457,42 @@ export async function updateAchievement(id, currentVersion, fields) {
   }
 
   updates.push('version = version + 1');
-  updates.push('updated_at = NOW()');
+  updates.push('updated_at = SYSUTCDATETIME()');
 
   const sql = `
     UPDATE app.achievements
     SET ${updates.join(', ')}
-    WHERE achievement_id = $${idx++} AND version = $${idx++}
-    RETURNING achievement_id AS "achievementId", version, updated_at AS "updatedAt"
-  `;
+    OUTPUT INSERTED.achievement_id AS "achievementId", INSERTED.version, INSERTED.updated_at AS "updatedAt" WHERE achievement_id = $${idx++} AND version = $${idx++} AND deleted_at IS NULL`;
   params.push(id, currentVersion);
 
   const result = await query(sql, params);
   return result.rows[0] || null;
 }
 
-export async function deleteAchievement(id) {
-  const result = await query(
-    `DELETE FROM app.achievements
-     WHERE achievement_id = $1 AND status = 'DRAFT'
-     RETURNING achievement_id AS "achievementId"`,
-    [id]
-  );
+export async function deleteAchievement(id, userId, version) {
+  const result = await query(`UPDATE app.achievements SET deleted_at = SYSUTCDATETIME(), deleted_by = $2, updated_at = SYSUTCDATETIME(), version = version + 1
+    OUTPUT INSERTED.achievement_id WHERE achievement_id = $1 AND version = $3 AND status = 'DRAFT' AND deleted_at IS NULL
+    AND NOT EXISTS (SELECT 1 FROM app.achievement_submissions s WHERE s.achievement_id = app.achievements.achievement_id)`, [id, userId, version]);
+  return result.rowCount > 0;
+}
+export async function restoreAchievement(id, version) {
+  const result = await query(`UPDATE app.achievements SET deleted_at = NULL, deleted_by = NULL, updated_at = SYSUTCDATETIME(), version = version + 1
+    OUTPUT INSERTED.achievement_id WHERE achievement_id = $1 AND version = $2 AND status = 'DRAFT'
+    AND deleted_at > DATEADD(day, -30, SYSUTCDATETIME())`, [id, version]);
   return result.rowCount > 0;
 }
 
 /**
- * W2-Q3: Khóa dòng thành tích với SELECT ... FOR UPDATE trên pg client của transaction
+ * W2-Q3: Khóa dòng thành tích với SELECT ... UPDLOCK trên SQL Server client của transaction
  */
 export async function findAchievementForUpdate(client, id) {
   const result = await client.query(
     `SELECT a.*,
             CASE WHEN a.lecturer_id IS NOT NULL THEN 'LECTURER' ELSE 'UNIT' END AS "subjectType",
             l.user_id AS "lecturerUserId"
-     FROM app.achievements a
+     FROM app.achievements a WITH (UPDLOCK, HOLDLOCK)
      LEFT JOIN app.lecturers l ON a.lecturer_id = l.lecturer_id
-     WHERE a.achievement_id = $1
-     FOR UPDATE OF a`,
+     WHERE a.achievement_id = $1 AND a.deleted_at IS NULL`,
     [id]
   );
   return result.rows[0] || null;
@@ -510,7 +515,7 @@ export async function getActiveEvidencesWithFiles(achievementId, client = null) 
       FROM app.evidence_files
       GROUP BY evidence_id
     ) latest ON ef.evidence_id = latest.evidence_id AND ef.version_no = latest.max_v
-    WHERE e.achievement_id = $1 AND e.is_removed = FALSE
+    WHERE e.achievement_id = $1 AND e.is_removed = 0
     ORDER BY e.evidence_id ASC
   `;
   if (client) {
@@ -528,8 +533,7 @@ export async function createSubmission(client, { achievementId, revisionNo, snap
   const result = await client.query(
     `INSERT INTO app.achievement_submissions (
         achievement_id, revision_no, snapshot_data, submitted_by, submitted_at, created_at
-     ) VALUES ($1, $2, $3, $4, NOW(), NOW())
-     RETURNING submission_id AS "submissionId", revision_no AS "revisionNo", submitted_at AS "submittedAt"`,
+     ) OUTPUT INSERTED.submission_id AS "submissionId", INSERTED.revision_no AS "revisionNo", INSERTED.submitted_at AS "submittedAt" VALUES ($1, $2, $3, $4, SYSUTCDATETIME(), SYSUTCDATETIME())`,
     [achievementId, revisionNo, JSON.stringify(snapshotData), submittedBy]
   );
   return result.rows[0];
@@ -544,9 +548,7 @@ export async function linkSubmissionEvidenceFiles(client, submissionId, evidence
   for (const fileId of evidenceFileIds) {
     const res = await client.query(
       `INSERT INTO app.submission_evidence_files (submission_id, evidence_file_id, attached_at)
-       VALUES ($1, $2, NOW())
-       ON CONFLICT (submission_id, evidence_file_id) DO NOTHING
-       RETURNING submission_id AS "submissionId", evidence_file_id AS "evidenceFileId"`,
+       OUTPUT INSERTED.submission_id AS "submissionId", INSERTED.evidence_file_id AS "evidenceFileId" SELECT $1,$2,SYSUTCDATETIME() WHERE NOT EXISTS (SELECT 1 FROM app.submission_evidence_files WITH (UPDLOCK,HOLDLOCK) WHERE submission_id=$1 AND evidence_file_id=$2)`,
       [submissionId, fileId]
     );
     if (res.rows[0]) rows.push(res.rows[0]);
@@ -561,8 +563,7 @@ export async function recordStatusHistory(client, { achievementId, submissionId 
   const result = await client.query(
     `INSERT INTO app.achievement_status_histories (
         achievement_id, submission_id, from_status, to_status, actor_id, reason, created_at
-     ) VALUES ($1, $2, $3, $4, $5, $6, NOW())
-     RETURNING history_id AS "historyId", achievement_id AS "achievementId", from_status AS "fromStatus", to_status AS "toStatus", created_at AS "createdAt"`,
+     ) OUTPUT INSERTED.history_id AS "historyId", INSERTED.achievement_id AS "achievementId", INSERTED.from_status AS "fromStatus", INSERTED.to_status AS "toStatus", INSERTED.created_at AS "createdAt" VALUES ($1, $2, $3, $4, $5, $6, SYSUTCDATETIME())`,
     [achievementId, submissionId, fromStatus, toStatus, actorId, reason]
   );
   return result.rows[0];
@@ -575,7 +576,7 @@ export async function updateAchievementStatus(client, id, currentVersion, curren
   const setClauses = [
     'status = $1',
     'version = version + 1',
-    'updated_at = NOW()',
+    'updated_at = SYSUTCDATETIME()',
   ];
   const params = [targetStatus];
   let idx = 2;
@@ -600,9 +601,7 @@ export async function updateAchievementStatus(client, id, currentVersion, curren
   const sql = `
     UPDATE app.achievements
     SET ${setClauses.join(', ')}
-    WHERE achievement_id = $${idx++} AND version = $${idx++} AND status = $${idx++}
-    RETURNING *
-  `;
+    OUTPUT INSERTED.* WHERE achievement_id = $${idx++} AND version = $${idx++} AND status = $${idx++}`;
   params.push(id, currentVersion, currentStatus);
 
   const result = await client.query(sql, params);
@@ -624,12 +623,12 @@ export async function listHistories(achievementId) {
      FROM app.achievement_status_histories h
      LEFT JOIN app.users u ON h.actor_id = u.user_id
      LEFT JOIN app.lecturers l ON u.user_id = l.user_id
-     LEFT JOIN LATERAL (
-       SELECT ro.code FROM app.user_roles ur
+     OUTER APPLY (
+       SELECT TOP (1) ro.code FROM app.user_roles ur
        JOIN app.roles ro ON ur.role_id = ro.role_id
        WHERE ur.user_id = h.actor_id AND ur.revoked_at IS NULL
-       LIMIT 1
-     ) r ON true
+
+     ) r
      WHERE h.achievement_id = $1
      ORDER BY h.created_at ASC, h.history_id ASC`,
     [achievementId]
@@ -660,7 +659,7 @@ export async function listSubmissions(achievementId) {
             s.snapshot_data AS "snapshotData", s.submitted_by AS "submittedByUserId",
             s.submitted_at AS "submittedAt", s.created_at AS "createdAt",
             u.display_name AS "submittedByFullName",
-            (SELECT COUNT(*)::int FROM app.submission_evidence_files sef WHERE sef.submission_id = s.submission_id) AS "frozenFilesCount"
+            (SELECT COUNT(*) FROM app.submission_evidence_files sef WHERE sef.submission_id = s.submission_id) AS "frozenFilesCount"
      FROM app.achievement_submissions s
      LEFT JOIN app.users u ON s.submitted_by = u.user_id
      WHERE s.achievement_id = $1
@@ -692,6 +691,7 @@ export default {
   createAchievement,
   updateAchievement,
   deleteAchievement,
+  restoreAchievement,
   findAchievementForUpdate,
   getActiveEvidencesWithFiles,
   createSubmission,

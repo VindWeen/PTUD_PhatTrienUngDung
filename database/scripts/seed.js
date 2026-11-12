@@ -1,52 +1,39 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Pool, getDbPoolConfig } from '../../backend/src/config/database.js';
+import { splitBatches } from './migrate.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const seedSqlPath = path.resolve(__dirname, '../../supabase/seed.sql');
-
-export async function seedDatabase(customPool = null) {
+export const seedSqlPath = fileURLToPath(new URL('../sqlserver/seed.sql', import.meta.url));
+export async function seedDatabase(customPool = null, { apply = false } = {}) {
+  if (!apply) throw new Error('Demo seed requires --apply / {apply:true}; only an empty SQL Server app schema is allowed.');
   const pool = customPool || new Pool(getDbPoolConfig());
-  const ownPool = !customPool;
-
+  let client;
   try {
-    console.log('🌱 Đang nạp dữ liệu mẫu Supabase (Seed Data)...');
-    console.log(`📂 Nguồn seed: ${seedSqlPath}`);
-
-    if (!fs.existsSync(seedSqlPath)) {
-      throw new Error(`Không tìm thấy file seed: ${seedSqlPath}`);
-    }
-
-    const seedSql = fs.readFileSync(seedSqlPath, 'utf8');
-    const client = await pool.connect();
-
+    const sql = fs.readFileSync(seedSqlPath, 'utf8');
+    client = await pool.connect();
+    await client.query('BEGIN');
     try {
-      await client.query('BEGIN');
-      await client.query(seedSql);
+      const locked = await client.query(`DECLARE @result INT;
+        EXEC @result = sys.sp_getapplock @Resource=N'lhu_sqlserver_demo_seed',
+          @LockMode=N'Exclusive', @LockOwner=N'Transaction', @LockTimeout=15000;
+        SELECT @result AS lock_result;`);
+      if (!locked.rows?.length || Number(locked.rows[0].lock_result) < 0) throw new Error('Cannot acquire demo seed lock.');
+      for (const batch of splitBatches(sql)) await client.query(batch);
       await client.query('COMMIT');
-      console.log('✅ Nạp dữ liệu mẫu Supabase PostgreSQL thành công 100%!');
+      console.log('SQL Server demo seed applied to empty target; names/data are synthetic development examples.');
+      return { applied: true };
     } catch (error) {
-      await client.query('ROLLBACK');
-      console.error('❌ Lỗi khi nạp dữ liệu seed:', error.message);
+      try { await client.query('ROLLBACK'); } catch { /* XACT_ABORT may already have rolled back. */ }
       throw error;
-    } finally {
-      client.release();
     }
   } finally {
-    if (ownPool) {
-      await pool.end();
-    }
+    if (client) await client.release();
+    if (!customPool) await pool.end();
   }
 }
-
-// Chạy trực tiếp từ CLI: node database/scripts/seed.js
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  seedDatabase()
-    .then(() => process.exit(0))
-    .catch((err) => {
-      console.error('Seed thất bại:', err);
-      process.exit(1);
-    });
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  if (!process.argv.includes('--apply')) {
+    console.log('Usage: node database/scripts/seed.js --apply\nOnly an empty, migrated SQL Server target is accepted. Existing data is never deleted.');
+  } else seedDatabase(null, { apply: true }).catch(error => { console.error(`Seed refused/failed: ${error.message}`); process.exitCode = 1; });
 }

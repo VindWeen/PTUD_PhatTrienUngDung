@@ -110,7 +110,7 @@ export async function refresh(req, res, next) {
     const result = await authService.refreshToken(rawRefreshToken, { ip, userAgent });
 
     // Cập nhật lại HttpOnly Cookie mới sau khi Token Rotation
-    setRefreshCookie(res, result.newRawRefreshToken, false);
+    setRefreshCookie(res, result.newRawRefreshToken, result.rememberMe);
 
     res.status(200).json({
       success: true,

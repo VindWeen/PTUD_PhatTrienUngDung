@@ -79,6 +79,6 @@ git diff --check
 
 Integration runner dùng Express HTTP, auth thật, migration/seed thật và `pg` kết nối Supabase. Nó tạo schema tên ngẫu nhiên trong outer transaction, chuyển toàn bộ SQL test sang schema đó và dùng savepoint cho transaction nghiệp vụ; cuối lượt ROLLBACK. Không migrate/seed schema `app` dùng chung, không đổi mật khẩu tài khoản thật. URL DB lấy từ cấu hình backend hiện có; cần quyền tạo schema và chạy migration. Không chạy runner auth cũ vì có nhánh thay mật khẩu tài khoản trong DB dùng chung.
 
-Kết quả thực tế và danh sách file được ghi ở `docs/weekly/WEEK_02_W2_P1.md`. UI đã lint/build; chưa xác nhận thao tác bằng trình duyệt trên DB `app` dùng chung. Không triển khai workflow thành tích/khen thưởng hoặc AI ngoài scope. Danh mục không tự tạo căn cứ hay quyết định trao thưởng. Giới hạn hiện tại: danh sách tối đa 500, chưa phân trang; sửa danh mục theo lần ghi cuối, tài khoản dùng version.
+Kết quả thực tế và danh sách file được ghi ở `docs/archive/weekly/WEEK_02_W2_P1.md`. UI đã lint/build; chưa xác nhận thao tác bằng trình duyệt trên DB `app` dùng chung. Không triển khai workflow thành tích/khen thưởng hoặc AI ngoài scope. Danh mục không tự tạo căn cứ hay quyết định trao thưởng. Giới hạn hiện tại: danh sách tối đa 500, chưa phân trang; sửa danh mục theo lần ghi cuối, tài khoản dùng version.
 
 Đề xuất commit: `feat(W2-P1): quản trị tài khoản, phân công và danh mục trên Supabase`. Chưa commit/push/merge.

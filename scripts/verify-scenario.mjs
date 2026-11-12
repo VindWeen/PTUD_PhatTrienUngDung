@@ -5,11 +5,11 @@ import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { Pool, getDbPoolConfig, setPool } from '../backend/src/config/database.js';
-import { transactionPool } from '../database/scripts/seedScenario.js';
+import { transactionPool, appFingerprint } from '../database/scripts/seedScenario.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'output/scenario/manifest.json'), 'utf8'));
-const pool = new Pool({ ...getDbPoolConfig(), max: 1, min: 0 });
+const pool = new Pool({ ...getDbPoolConfig(), pool: { ...getDbPoolConfig().pool, max: 1, min: 0 } });
 const results = [], tokens = {}, newFiles = [];
 let client, server, mockServer, storage, originalSave, baselineFingerprint, fingerprintSql, rolledBack = false;
 const sourceEnv = { url: process.env.KPI_SOURCE_URL, token: process.env.KPI_SOURCE_TOKEN };
@@ -35,15 +35,13 @@ const councilId = manifest.accounts.find(u => u.username === 'council.demo').use
 async function version(route, user) { return Number((await request(route, user)).version); }
 try {
   client = await pool.connect();
-  const tables = (await client.query("SELECT table_name FROM information_schema.tables WHERE table_schema='app' AND table_type='BASE TABLE' ORDER BY table_name")).rows;
-  fingerprintSql = tables.map(({ table_name: t }) => {
-    if (!/^[a-z_]+$/.test(t)) throw new Error('Unexpected table identifier');
-    return `SELECT '${t}' table_name,COUNT(*)::int n,md5(COALESCE(jsonb_agg(to_jsonb(r) ORDER BY to_jsonb(r)::text)::text,'[]')) fingerprint FROM app.${t} r`;
-  }).join(' UNION ALL ');
-  baselineFingerprint = (await client.query(fingerprintSql)).rows;
+  baselineFingerprint = await appFingerprint(client);
   await client.query('BEGIN');
-  await client.query("SET LOCAL statement_timeout='30s'");
-  setPool(transactionPool(client));
+  await client.query('SET LOCK_TIMEOUT 30000');
+  const nativeClient = client;
+  const sharedPool = transactionPool(nativeClient);
+  setPool(sharedPool);
+  client = { query: sharedPool.query, release: () => nativeClient.release() };
   storage = (await import('../backend/src/modules/evidences/storage/localStorageAdapter.js')).default;
   storage.baseDir = manifest.storageDirectory; originalSave = storage.saveFile.bind(storage);
   storage.saveFile = async (key, bytes) => { newFiles.push(storage.resolveSafePath(key)); return originalSave(key, bytes); };
@@ -57,8 +55,8 @@ try {
     await request('/auth/login', null, 'POST', { username: 'an.nv', password: 'incorrect' }, 401);
   });
   await check('Baseline counts, snapshots, and file hashes', async () => {
-    for (const [table, n] of [['achievements',12],['award_applications',8],['award_records',4],['kpi_goals',4]]) assert.equal((await client.query('SELECT COUNT(*)::int n FROM app.' + table)).rows[0].n, n);
-    assert.equal((await client.query("SELECT COUNT(*)::int n FROM app.award_applications a LEFT JOIN app.award_application_inputs i USING(application_id) WHERE a.status<>'DRAFT' AND i.application_id IS NULL")).rows[0].n, 0);
+    for (const [table, n] of [['achievements',12],['award_applications',8],['award_records',4],['kpi_goals',4]]) assert.equal((await client.query('SELECT COUNT(*) n FROM app.' + table)).rows[0].n, n);
+    assert.equal((await client.query("SELECT COUNT(*) n FROM app.award_applications a LEFT JOIN app.award_application_inputs i ON i.application_id=a.application_id WHERE a.status<>'DRAFT' AND i.application_id IS NULL")).rows[0].n, 0);
     const rows = (await client.query('SELECT storage_key,sha256_hash,file_size FROM app.evidence_files UNION ALL SELECT storage_key,sha256_hash,file_size FROM app.award_decision_files')).rows;
     for (const f of rows) { const bytes = fs.readFileSync(storage.resolveSafePath(f.storage_key)); assert.equal(bytes.length, Number(f.file_size)); assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), f.sha256_hash); }
   });
@@ -78,7 +76,7 @@ try {
     await request(route + '/recommend', 'council.other', 'POST', { version: Number(d.version), reason: 'Kiểm thử chưa được phân công' }, 403);
   });
   await check('Private evidence HTTP download matches hash', async () => {
-    const f = (await client.query('SELECT evidence_file_id,sha256_hash FROM app.evidence_files ORDER BY evidence_file_id LIMIT 1')).rows[0];
+    const f = (await client.query('SELECT TOP (1) evidence_file_id,sha256_hash FROM app.evidence_files ORDER BY evidence_file_id')).rows[0];
     const route = '/evidence-files/' + f.evidence_file_id + '/download';
     await request(route, null, 'GET', undefined, 401); await request(route, 'linh.pharm', 'GET', undefined, 403);
     const response = await fetch(base + route, { headers: { Authorization: 'Bearer ' + tokens['an.nv'] } }); assert.equal(response.status, 200);
@@ -139,7 +137,7 @@ try {
     const csv = fs.readFileSync(path.join(root, 'docs/testing/scenario/fixtures/kpi-valid.csv'), 'utf8');
     const preview = await request('/kpi/import/preview', 'an.nv', 'POST', { csv }); assert.ok(preview);
     await request('/kpi/import/commit', 'an.nv', 'POST', { csv });
-    assert.equal((await client.query("SELECT COUNT(*)::int n FROM app.kpi_goals WHERE code LIKE 'SCN-CSV-%'")).rows[0].n, 2);
+    assert.equal((await client.query("SELECT COUNT(*) n FROM app.kpi_goals WHERE code LIKE 'SCN-CSV-%'")).rows[0].n, 2);
     const duplicate = await request('/kpi/import/commit', 'an.nv', 'POST', { csv }); assert.equal(duplicate.imported, 0); assert.equal(duplicate.duplicates, 2);
     const invalid = fs.readFileSync(path.join(root, 'docs/testing/scenario/fixtures/kpi-invalid.csv'), 'utf8');
     await request('/kpi/import/commit', 'an.nv', 'POST', { csv: invalid }, 400);
@@ -151,7 +149,7 @@ try {
     await request('/kpi/external/mappings', 'duc.pm', 'POST', { employeeId: 'SIM-EMP-001', lecturerId: manifest.lecturers['an.nv'] }, 201);
     await request('/kpi/external/runs', 'duc.pm', 'POST', {}, 201);
     await request('/kpi/external/runs', 'duc.pm', 'POST', {}, 201);
-    assert.equal((await client.query('SELECT COUNT(*)::int n FROM app.external_kpi_records')).rows[0].n, 1);
+    assert.equal((await client.query('SELECT COUNT(*) n FROM app.external_kpi_records')).rows[0].n, 1);
     const owned = await request('/kpi/external', 'an.nv'); assert.equal(owned.records.length, 1);
     const other = await request('/kpi/external', 'linh.pharm'); assert.equal(other.records.length, 0);
   });
@@ -176,7 +174,7 @@ finally {
   await close(server); await close(mockServer);
   if (client) {
     await client.query('ROLLBACK');
-    try { assert.deepEqual((await client.query(fingerprintSql)).rows, baselineFingerprint); rolledBack = true;
+    try { assert.deepEqual(await appFingerprint(client), baselineFingerprint); rolledBack = true;
       results.push({ name: 'All app table contents unchanged after verification rollback', status: 'PASS' });
     } catch (e) { process.exitCode = 1; results.push({ name: 'Rollback fingerprint', status: 'FAIL', message: e.message }); }
     client.release();

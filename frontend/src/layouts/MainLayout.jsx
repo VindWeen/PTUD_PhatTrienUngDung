@@ -26,7 +26,7 @@ function MainLayoutContent() {
       <Sidebar />
 
       {/* Main Content Area */}
-      <div className="lg:pl-[108px] pb-24 lg:pb-8 transition-all duration-200">
+      <div className="lg:pl-[108px] pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-8 transition-all duration-200">
         <div className="p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto">
           {user && <div aria-label="Tài khoản đang đăng nhập" className="mb-5 flex flex-wrap items-center justify-end gap-3 text-sm">
             <CalendarButton />

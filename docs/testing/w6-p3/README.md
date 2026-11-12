@@ -8,7 +8,7 @@ Phụ trách: Võ Nhạc Phước. Dữ liệu trong video là **MÔ PHỎNG**, 
 - [Bảng đóng góp](CONTRIBUTIONS.md), [CSV](commits.csv), [JSON nguyên tác giả/committer/ngày/parents](commits.json), [PR evidence](prs.json).
 - [Manifest SHA256/bytes](evidence-manifest.json), [review hai người và release 28/10](REVIEW_RELEASE.md).
 - [Hồi quy phụ thuộc 93 ca](../../../output/w6-p3/dependency-tests.log).
-- [User guide cuối](../../USER_GUIDE.md), [checklist W6-P2](../w6-p2/REHEARSAL_CHECKLIST.md), [bàn giao W6-P3](../../weekly/WEEK_06_W6_P3.md).
+- [User guide cuối](../../USER_GUIDE.md), [checklist W6-P2](../w6-p2/REHEARSAL_CHECKLIST.md), [bàn giao W6-P3](../../archive/weekly/WEEK_06_W6_P3.md).
 
 SHA chạy là baseline `2774075b319964a9fd4839070a428bd4fe667a09` cộng hash harness và sửa header multipart upload quyết định W6-P3 chưa commit. Không tự gán SHA mới cho W6-P3. SHA video/file là SHA-256 nội dung, khác SHA commit Git. Link GitHub là tham chiếu SHA local; trạng thái PR live chưa xác minh. Ngày Git là ngày ghi trong lịch sử, không chứng minh đã release hoặc đã peer approve.
 

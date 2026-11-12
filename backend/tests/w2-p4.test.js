@@ -42,8 +42,10 @@ test('W2-P4: dữ liệu KPI mô phỏng đúng số lượng W1-P4; ngày/mẫu
   assert.equal(fixture.confirmedLhuCouncilForm, null);
 });
 test('W2-P4: file của chủ khác bị từ chối với lecturer', async () => {
-  await assert.rejects(new EvidenceService()._assertCanViewAchievement({ lecturerUserId: 99 }, { userId: 1, roles: ['LECTURER'] }), e => e.statusCode === 403);
+  const service = new EvidenceService({ roleGetter: async () => ['LECTURER'], scopeChecker: async () => false });
+  await assert.rejects(service._assertCanViewAchievement({ achievementId: 1, status: 'VERIFIED', lecturerUserId: 99 }, { userId: 1, roles: ['LECTURER'] }), e => e.statusCode === 403);
 });
-test('REPRO review: RECORDS_OFFICER authorization bypass scope', async () => {
-  assert.equal(await new EvidenceService()._assertCanViewAchievement({ lecturerUserId: 99, contextUnitId: 999 }, { userId: 1, roles: ['RECORDS_OFFICER'] }), true);
+test('RECORDS_OFFICER cannot view evidence outside their current scope', async () => {
+  const service = new EvidenceService({ roleGetter: async () => ['RECORDS_OFFICER'], scopeChecker: async () => false });
+  await assert.rejects(service._assertCanViewAchievement({ achievementId: 1, status: 'VERIFIED', lecturerUserId: 99, contextUnitId: 999 }, { userId: 1, roles: ['RECORDS_OFFICER'] }), e => e.statusCode === 403);
 });

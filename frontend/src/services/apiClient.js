@@ -5,19 +5,25 @@ import { clearReadCache } from './readCache.js';
 
 let inMemoryAccessToken = null;
 let onAuthFailedCallback = null;
-let isRefreshing = false;
-let failedQueue = [];
+let refreshPromise = null;
 
-const processQueue = (error, token = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-  failedQueue = [];
-};
+// Initial session restoration and concurrent 401 responses share one rotation.
+export function refreshAccessToken() {
+  if (!refreshPromise) {
+    const rotate = () => axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true, timeout: 30000 });
+    const request = typeof navigator !== 'undefined' && navigator.locks
+      ? navigator.locks.request('ptud-auth-refresh', rotate)
+      : rotate();
+    refreshPromise = request
+      .then(response => {
+        const data = response.data?.data;
+        if (!data?.accessToken) throw new Error('Không thể khôi phục phiên đăng nhập.');
+        setAccessToken(data.accessToken);
+        return data;
+      }).finally(() => { refreshPromise = null; });
+  }
+  return refreshPromise;
+}
 
 export const setAccessToken = (token) => {
   if (token !== inMemoryAccessToken) clearReadCache();
@@ -75,44 +81,23 @@ apiClient.interceptors.response.use(
     const isAuthRoute =
       originalRequest?.url?.includes('/auth/refresh') ||
       originalRequest?.url?.includes('/auth/login') ||
-      originalRequest?.url?.includes('/auth/logout');
+      originalRequest?.url?.includes('/auth/logout') ||
+      originalRequest?.url?.includes('/auth/reset-password') ||
+      originalRequest?.url?.includes('/auth/forgot-password');
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthRoute) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return apiClient(originalRequest);
-          })
-          .catch((err) => Promise.reject(err));
-      }
-
       originalRequest._retry = true;
-      isRefreshing = true;
 
       try {
-        // Gọi refresh token bằng HttpOnly cookie
-        const res = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true, timeout: 30000 });
-        const newAccessToken = res.data?.data?.accessToken;
-
-        if (newAccessToken) {
-          setAccessToken(newAccessToken);
-          processQueue(null, newAccessToken);
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          return apiClient(originalRequest);
-        }
-        throw new Error('Không thể khôi phục phiên đăng nhập. Vui lòng đăng nhập lại.');
+        const { accessToken } = await refreshAccessToken();
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return apiClient(originalRequest);
       } catch (refreshErr) {
-        processQueue(refreshErr, null);
         clearAccessToken();
         if (typeof onAuthFailedCallback === 'function') {
           onAuthFailedCallback();
         }
         return Promise.reject(apiError);
-      } finally {
-        isRefreshing = false;
       }
     }
 

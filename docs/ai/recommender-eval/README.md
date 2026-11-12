@@ -30,7 +30,7 @@ Integration Supabase thật, Express HTTP thật, nguồn HTTP MÔ PHỎNG và p
 - backend/tests/w5-p2.test.js; w5-p2.integration.js; w4-p1.integration.js; w4-p2.integration.js; w3-p2.integration.js.
 - backend/package.json; scripts/w5-p2-eval.mjs.
 - docs/api/KPI_RECOMMENDATIONS_W4_P1.md; EXTERNAL_KPI_W4_P2.md.
-- docs/ai/recommender-eval/PROTOCOL.md; README.md; results.json; docs/weekly/WEEK_05_W5_P2.md.
+- docs/ai/recommender-eval/PROTOCOL.md; README.md; results.json; docs/archive/weekly/WEEK_05_W5_P2.md.
 
 ## Tự kiểm tra
 

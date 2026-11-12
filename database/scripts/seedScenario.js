@@ -1,7 +1,7 @@
 /** Reset demo transactions and build real workflow snapshots through backend services.
- * Run from backend: node ../database/scripts/seedScenario.js --apply
- * Requires migrated app schema and the base catalogs/accounts from supabase/seed.sql.
- * Backups are mandatory; no schema/auth/storage Supabase tables are dropped.
+ * Run only on an isolated demo DB: node ../database/scripts/seedScenario.js --apply --demo-db=EXACT_DATABASE_NAME
+ * Requires the native SQL Server schema and base catalogs/accounts.
+ * A verified COPY_ONLY SQL Server backup and private-file archive are mandatory.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -44,22 +44,47 @@ export function transactionPool(client) {
     const stack = [];
     return { release() {}, async query(sql, params) {
       const command = typeof sql === 'string' ? sql.trim().toUpperCase() : '';
-      if (command === 'BEGIN') { const name = `scenario_${++serial}`; stack.push(name); return execute(`SAVEPOINT ${name}`); }
-      if (command === 'COMMIT') { const name = stack.pop(); if (!name) throw new Error('Unbalanced service transaction'); return execute(`RELEASE SAVEPOINT ${name}`); }
-      if (command === 'ROLLBACK') { const name = stack.pop(); if (!name) throw new Error('Unbalanced service transaction'); await execute(`ROLLBACK TO SAVEPOINT ${name}`); return execute(`RELEASE SAVEPOINT ${name}`); }
+      if (command === 'BEGIN') { const name = `scenario_${++serial}`; stack.push(name); return execute(`SAVE TRANSACTION ${name}`); }
+      if (command === 'COMMIT') { if (!stack.pop()) throw new Error('Unbalanced service transaction'); return { rows: [], rowCount: 0 }; }
+      if (command === 'ROLLBACK') { const name = stack.pop(); if (!name) throw new Error('Unbalanced service transaction'); return execute(`ROLLBACK TRANSACTION ${name}`); }
       return execute(sql, params);
     } };
   };
-  return { query: execute, connect: async () => makeClient() };
+  const pool = { query: execute, connect: async () => makeClient(), ready: async () => pool };
+  return pool;
 }
 
-export async function seedScenario({ apply = false } = {}) {
+// Hash ordered native rows in Node instead of relying on database-specific JSON aggregation.
+export async function appFingerprint(client) {
+  const tables = (await client.query(`SELECT t.name AS table_name,c.name AS column_name,ic.key_ordinal
+    FROM sys.tables t JOIN sys.schemas s ON s.schema_id=t.schema_id
+    JOIN sys.indexes i ON i.object_id=t.object_id AND i.is_primary_key=1
+    JOIN sys.index_columns ic ON ic.object_id=i.object_id AND ic.index_id=i.index_id
+    JOIN sys.columns c ON c.object_id=ic.object_id AND c.column_id=ic.column_id
+    WHERE s.name=N'app' ORDER BY t.name,ic.key_ordinal`)).rows;
+  const keys = new Map();
+  for (const { table_name: table, column_name: column } of tables) {
+    if (!/^[a-z_]+$/.test(table) || !/^[a-z_]+$/.test(column)) throw new Error('Unexpected schema identifier');
+    if (!keys.has(table)) keys.set(table, []);
+    keys.get(table).push(`[${column}]`);
+  }
+  const fingerprints = [];
+  for (const [table, columns] of keys) {
+    const rows = (await client.query(`SELECT * FROM app.[${table}] ORDER BY ${columns.join(',')}`)).rows;
+    fingerprints.push({ table_name: table, n: rows.length, fingerprint: crypto.createHash('sha256').update(JSON.stringify(rows)).digest('hex') });
+  }
+  return fingerprints;
+}
+
+export async function seedScenario({ apply = false, demoDb = null, serverBackupDir = null } = {}) {
   if (!apply) {
-    console.log('Preview only. --apply backs up app + private files, resets demo transactions, and creates SCN scenarios.');
+    console.log('Preview only. --apply --demo-db=EXACT_DATABASE_NAME backs up SQL Server + private files, resets demo transactions, and creates SCN scenarios.');
     console.log('Preserves roles, existing accounts, units, catalogs, migrations and three base regulation sources.');
     console.log('Reset tables: ' + operational.join(', '));
     return;
   }
+  const configuredDb = getDbPoolConfig().database;
+  if (!demoDb || demoDb !== configuredDb || !/(demo|test|sandbox)/i.test(demoDb)) throw new Error('Destructive scenario reset requires --demo-db matching an isolated database name containing demo, test or sandbox.');
   for (const file of ['evidence-demo.pdf', 'decision-demo.pdf']) {
     if (!fs.existsSync(path.join(fixtures, file))) throw new Error('Missing fixture: ' + file);
   }
@@ -67,34 +92,42 @@ export async function seedScenario({ apply = false } = {}) {
   if (!storageBase.startsWith(root + path.sep)) throw new Error('Scenario storage must stay within this project');
   const oldFiles = walk(storageBase);
   const addedFiles = [];
-  const pool = new Pool({ ...getDbPoolConfig(), max: 2, min: 0 });
+  const pool = new Pool({ ...getDbPoolConfig(), pool: { ...getDbPoolConfig().pool, max: 2, min: 0 } });
   let client, committed = false, storageAdapter, restoreSave;
   const manifest = { seedVersion: 1, date: today, simulationOnly: true, accounts: [], achievements: {}, applications: {}, awards: {}, kpi: {}, ai: {} };
   try {
     const foundation = (await pool.query("SELECT username FROM app.users WHERE username IN ('an.nv','bich.tt','duc.pm','cuong.lh')")).rows;
     if (foundation.length !== 4) throw new Error('Load the base seed on a fresh demo DB first; four foundation accounts are required');
-    const backup = await runBackup({ outDir: path.join(root, 'backups', 'before_scenario_' + new Date().toISOString().replace(/[:.]/g, '-')), storageDir: storageBase });
+    const backup = await runBackup({ outDir: path.join(root, 'backups', 'before_scenario_' + new Date().toISOString().replace(/[:.]/g, '-')), storageDir: storageBase, ...(serverBackupDir ? { serverBackupDir } : {}) });
     // Do not log backup data: it contains authentication hashes and private metadata.
     const backupDir = backup.backupDir || backup.outDir;
     if (!backup.success || !backupDir) throw new Error('Backup did not complete');
-    for (const key of ['schemaDump','rolesDump','dataDump','fullDump']) {
-      const actual = crypto.createHash('sha256').update(fs.readFileSync(path.join(backupDir, backup.manifest.database[key + 'File']))).digest('hex');
-      if (actual !== backup.manifest.database[key + 'Sha256']) throw new Error('Backup checksum mismatch: ' + key);
-    }
-    const archivedFiles = JSON.parse(fs.readFileSync(path.join(backupDir, 'storage_backup/storage_manifest.json'), 'utf8'));
-    for (const file of archivedFiles.files) {
-      const archived = path.resolve(backupDir, 'storage_backup', file.storageKey);
-      if (!archived.startsWith(path.join(backupDir, 'storage_backup') + path.sep)) throw new Error('Invalid archived file path');
-      const actual = crypto.createHash('sha256').update(fs.readFileSync(archived)).digest('hex');
-      if (actual !== file.checksumSha256) throw new Error('Backup file checksum mismatch');
+    const archive = path.join(backupDir, backup.manifest.database.archiveFile);
+    if (crypto.createHash('sha256').update(fs.readFileSync(archive)).digest('hex') !== backup.manifest.database.sha256) throw new Error('SQL Server backup checksum mismatch');
+    for (const file of backup.manifest.storage.files) {
+      const archived = path.resolve(backupDir, backup.manifest.storage.archiveDirectory, file.storageKey);
+      if (!archived.startsWith(path.join(backupDir, backup.manifest.storage.archiveDirectory) + path.sep)) throw new Error('Invalid archived file path');
+      if (crypto.createHash('sha256').update(fs.readFileSync(archived)).digest('hex') !== file.checksumSha256) throw new Error('Backup file checksum mismatch');
     }
     manifest.backupDirectory = backupDir;
     client = await pool.connect();
     await client.query('BEGIN');
-    await client.query("SET LOCAL lock_timeout='10s'");
-    await client.query("SET LOCAL statement_timeout='60s'");
-    await client.query('TRUNCATE ' + operational.map(t => 'app.' + t).join(', ') + ' RESTART IDENTITY');
-    setPool(transactionPool(client));
+    await client.query('SET LOCK_TIMEOUT 10000');
+    // SQL Server cannot TRUNCATE referenced tables. Disable constraints only inside
+    // this explicit demo reset transaction, then re-enable and re-trust every one.
+    const appTables = (await client.query("SELECT t.name FROM sys.tables t JOIN sys.schemas s ON s.schema_id=t.schema_id WHERE s.name=N'app'")).rows.map(row => row.name);
+    for (const table of appTables) {
+      if (!/^[a-z_]+$/.test(table)) throw new Error('Unexpected table identifier');
+      await client.query(`ALTER TABLE app.[${table}] NOCHECK CONSTRAINT ALL`);
+    }
+    await client.query('DISABLE TRIGGER app.immutable_award_application_input ON app.award_application_inputs');
+    for (const table of operational) await client.query(`DELETE FROM app.[${table}]`);
+    await client.query('ENABLE TRIGGER app.immutable_award_application_input ON app.award_application_inputs');
+    for (const table of appTables) await client.query(`ALTER TABLE app.[${table}] WITH CHECK CHECK CONSTRAINT ALL`);
+    const nativeClient = client;
+    const sharedPool = transactionPool(nativeClient);
+    setPool(sharedPool);
+    client = { query: sharedPool.query, release: () => nativeClient.release() };
 
     const storage = (await import('../../backend/src/modules/evidences/storage/localStorageAdapter.js')).default;
     storage.baseDir = storageBase;
@@ -110,18 +143,14 @@ export async function seedScenario({ apply = false } = {}) {
 
     // Delete identifiable obsolete fixture documents; preserve the base sources/confirmation states.
     const obsolete = "SELECT document_id FROM app.regulation_documents WHERE document_code LIKE 'DOC-TEST-%' OR document_code LIKE 'SCN-%'";
+    await client.query(`DELETE FROM app.criteria_source_rule_history WHERE criteria_version_id IN (SELECT criteria_version_id FROM app.award_criteria_versions WHERE version_id IN (SELECT version_id FROM app.regulation_document_versions WHERE document_id IN (${obsolete})))`);
+    await client.query(`DELETE FROM app.regulation_chunk_embeddings WHERE chunk_id IN (SELECT chunk_id FROM app.regulation_chunks WHERE version_id IN (SELECT version_id FROM app.regulation_document_versions WHERE document_id IN (${obsolete})))`);
     await client.query(`DELETE FROM app.award_criteria_versions WHERE version_id IN (SELECT version_id FROM app.regulation_document_versions WHERE document_id IN (${obsolete}))`);
     await client.query(`DELETE FROM app.regulation_chunks WHERE version_id IN (SELECT version_id FROM app.regulation_document_versions WHERE document_id IN (${obsolete}))`);
     await client.query(`DELETE FROM app.regulation_document_versions WHERE document_id IN (${obsolete})`);
     await client.query(`DELETE FROM app.regulation_documents WHERE document_id IN (${obsolete})`);
 
-    // Align all identity sequences after earlier scripts with explicitly assigned IDs.
-    const sequences = (await client.query(`SELECT table_name,column_name FROM information_schema.columns
-      WHERE table_schema='app' AND (is_identity='YES' OR column_default LIKE 'nextval%')`)).rows;
-    for (const { table_name: t, column_name: col } of sequences) {
-      if (!/^[a-z_]+$/.test(t + col)) throw new Error('Unexpected identifier');
-      await client.query(`SELECT setval(pg_get_serial_sequence($1,$2),GREATEST(COALESCE((SELECT MAX(${col}) FROM app.${t}),0)+1,1),false)`, ['app.' + t, col]);
-    }
+    // Native IDENTITY columns keep advancing; scenario manifests record the returned IDs.
     const passwordHash = await bcrypt.hash('demo1234', 10);
     const roles = Object.fromEntries((await client.query('SELECT code,role_id FROM app.roles')).rows.map(r => [r.code, Number(r.role_id)]));
     const units = Object.fromEntries((await client.query('SELECT code,unit_id FROM app.organization_units')).rows.map(r => [r.code, Number(r.unit_id)]));
@@ -129,7 +158,7 @@ export async function seedScenario({ apply = false } = {}) {
     const awardTypes = Object.fromEntries((await client.query('SELECT code,award_type_id FROM app.award_types')).rows.map(r => [r.code, Number(r.award_type_id)]));
     for (const code of ['ADMIN','LECTURER','MANAGER','COUNCIL','UNIT_REPRESENTATIVE','RECORDS_OFFICER']) if (!roles[code]) throw new Error('Missing role ' + code);
     if (!units.FIT || !units.FIT_SE || !units.PHARM || !types.RESEARCH_PATENT) throw new Error('Missing base catalog');
-    const baseUsers = (await client.query("UPDATE app.users SET password_hash=$1,status='ACTIVE',must_change_password=FALSE WHERE username IN ('an.nv','bich.tt','duc.pm','cuong.lh') RETURNING user_id,username", [passwordHash])).rows;
+    const baseUsers = (await client.query("UPDATE app.users SET password_hash=$1,status='ACTIVE',must_change_password=0 OUTPUT INSERTED.user_id,INSERTED.username WHERE username IN ('an.nv','bich.tt','duc.pm','cuong.lh')", [passwordHash])).rows;
     const users = Object.fromEntries(baseUsers.map(u => [u.username, { userId: Number(u.user_id) }]));
     // Restore the known demo assignments too, so manual permission tests are resettable.
     for (const [username, assignedRoles] of [['an.nv',['LECTURER']],['bich.tt',['MANAGER','LECTURER']],['duc.pm',['ADMIN']],['cuong.lh',['LECTURER','UNIT_REPRESENTATIVE']]]) {
@@ -137,11 +166,11 @@ export async function seedScenario({ apply = false } = {}) {
       await client.query('DELETE FROM app.user_unit_scopes WHERE user_id=$1', [uid]);
       await client.query('DELETE FROM app.unit_representatives WHERE user_id=$1', [uid]);
       await client.query('DELETE FROM app.user_roles WHERE user_id=$1', [uid]);
-      for (const role of assignedRoles) await client.query("INSERT INTO app.user_roles(user_id,role_id,valid_from) VALUES($1,$2,NOW()-INTERVAL '1 year')", [uid, roles[role]]);
+      for (const role of assignedRoles) await client.query("INSERT INTO app.user_roles(user_id,role_id,valid_from) VALUES($1,$2,DATEADD(year,-1,SYSUTCDATETIME()))", [uid, roles[role]]);
       manifest.accounts.push({ username, roles: assignedRoles, userId: uid, password: 'demo1234', status: 'ACTIVE' });
     }
-    await client.query("INSERT INTO app.user_unit_scopes(user_id,role_id,unit_id,include_descendants,valid_from) VALUES($1,$2,$3,TRUE,NOW()-INTERVAL '1 year')", [users['bich.tt'].userId, roles.MANAGER, units.FIT]);
-    await client.query("INSERT INTO app.unit_representatives(user_id,unit_id,valid_from,valid_to,assigned_by) VALUES($1,$2,NOW()-INTERVAL '1 year',NOW()+INTERVAL '1 year',$3)", [users['cuong.lh'].userId, units.FIT_SE, users['duc.pm'].userId]);
+    await client.query("INSERT INTO app.user_unit_scopes(user_id,role_id,unit_id,include_descendants,valid_from) VALUES($1,$2,$3,1,DATEADD(year,-1,SYSUTCDATETIME()))", [users['bich.tt'].userId, roles.MANAGER, units.FIT]);
+    await client.query("INSERT INTO app.unit_representatives(user_id,unit_id,valid_from,valid_to,assigned_by) VALUES($1,$2,DATEADD(year,-1,SYSUTCDATETIME()),DATEADD(year,1,SYSUTCDATETIME()),$3)", [users['cuong.lh'].userId, units.FIT_SE, users['duc.pm'].userId]);
     const extra = [
       ['records.demo', 'Chuyên viên thi đua DEMO', 'RECORDS_OFFICER'],
       ['council.demo', 'Hội đồng - người xử lý DEMO', 'COUNCIL'],
@@ -151,30 +180,35 @@ export async function seedScenario({ apply = false } = {}) {
       ['locked.demo', 'Tài khoản bị khóa DEMO', 'LECTURER'],
     ];
     for (const [username, name, role] of extra) {
-      const u = (await client.query(`INSERT INTO app.users(username,email,password_hash,display_name,status,must_change_password)
-        VALUES($1,$2,$3,$4,$5,FALSE) ON CONFLICT(username) DO UPDATE SET password_hash=EXCLUDED.password_hash,status=EXCLUDED.status,must_change_password=FALSE RETURNING user_id`,
+      const u = (await client.query(`IF EXISTS (SELECT 1 FROM app.users WITH (UPDLOCK,HOLDLOCK) WHERE username=$1)
+        UPDATE app.users SET password_hash=$3,status=$5,must_change_password=0 OUTPUT INSERTED.user_id WHERE username=$1;
+        ELSE INSERT INTO app.users(username,email,password_hash,display_name,status,must_change_password)
+        OUTPUT INSERTED.user_id VALUES($1,$2,$3,$4,$5,0);`,
       [username, username + '@example.invalid', passwordHash, name, username === 'locked.demo' ? 'LOCKED' : 'ACTIVE'])).rows[0];
       users[username] = { userId: Number(u.user_id) };
       await client.query('DELETE FROM app.user_unit_scopes WHERE user_id=$1', [u.user_id]);
       await client.query('DELETE FROM app.unit_representatives WHERE user_id=$1', [u.user_id]);
       await client.query('DELETE FROM app.user_roles WHERE user_id=$1', [u.user_id]);
-      await client.query("INSERT INTO app.user_roles(user_id,role_id,valid_from) VALUES($1,$2,NOW()-INTERVAL '1 year')", [u.user_id, roles[role]]);
-      if (['RECORDS_OFFICER','COUNCIL'].includes(role)) await client.query("INSERT INTO app.user_unit_scopes(user_id,role_id,unit_id,include_descendants,valid_from) VALUES($1,$2,$3,TRUE,NOW()-INTERVAL '1 year')", [u.user_id, roles[role], units.FIT]);
+      await client.query("INSERT INTO app.user_roles(user_id,role_id,valid_from) VALUES($1,$2,DATEADD(year,-1,SYSUTCDATETIME()))", [u.user_id, roles[role]]);
+      if (['RECORDS_OFFICER','COUNCIL'].includes(role)) await client.query("INSERT INTO app.user_unit_scopes(user_id,role_id,unit_id,include_descendants,valid_from) VALUES($1,$2,$3,1,DATEADD(year,-1,SYSUTCDATETIME()))", [u.user_id, roles[role], units.FIT]);
       manifest.accounts.push({ username, role, userId: Number(u.user_id), password: 'demo1234', status: username === 'locked.demo' ? 'LOCKED' : 'ACTIVE' });
     }
     await client.query(`INSERT INTO app.unit_representatives(user_id,unit_id,valid_from,valid_to,assigned_by)
-      VALUES($1,$2,NOW()-INTERVAL '30 days',NOW()-INTERVAL '1 day',$3)`, [users['rep.expired'].userId, units.FIT_CS, users['duc.pm'].userId]);
-    await client.query("UPDATE app.unit_representatives SET valid_to=NOW()+INTERVAL '1 year' WHERE user_id=$1 AND unit_id=$2 AND revoked_at IS NULL", [users['cuong.lh'].userId, units.FIT_SE]);
-    const outside = (await client.query(`INSERT INTO app.lecturers(user_id,employee_code,full_name,email,is_active)
-      VALUES($1,'SCN-GV-PHARM','Giảng viên Linh DEMO','linh.pharm@example.invalid',TRUE)
-      ON CONFLICT(user_id) DO UPDATE SET is_active=TRUE RETURNING lecturer_id`, [users['linh.pharm'].userId])).rows[0];
+      VALUES($1,$2,DATEADD(day,-30,SYSUTCDATETIME()),DATEADD(day,-1,SYSUTCDATETIME()),$3)`, [users['rep.expired'].userId, units.FIT_CS, users['duc.pm'].userId]);
+    await client.query("UPDATE app.unit_representatives SET valid_to=DATEADD(year,1,SYSUTCDATETIME()) WHERE user_id=$1 AND unit_id=$2 AND revoked_at IS NULL", [users['cuong.lh'].userId, units.FIT_SE]);
+    const outside = (await client.query(`IF EXISTS (SELECT 1 FROM app.lecturers WITH (UPDLOCK,HOLDLOCK) WHERE user_id=$1)
+      UPDATE app.lecturers SET is_active=1 OUTPUT INSERTED.lecturer_id WHERE user_id=$1;
+      ELSE INSERT INTO app.lecturers(user_id,employee_code,full_name,email,is_active)
+      OUTPUT INSERTED.lecturer_id VALUES($1,'SCN-GV-PHARM','Giảng viên Linh DEMO','linh.pharm@example.invalid',1);`, [users['linh.pharm'].userId])).rows[0];
     await client.query('DELETE FROM app.lecturer_assignments WHERE lecturer_id=$1', [outside.lecturer_id]);
-    await client.query("INSERT INTO app.lecturer_assignments(lecturer_id,unit_id,is_primary,valid_from,assigned_by) VALUES($1,$2,TRUE,NOW()-INTERVAL '1 year',$3)", [outside.lecturer_id, units.PHARM, users['duc.pm'].userId]);
-    const lecturerIds = Object.fromEntries((await client.query('SELECT u.username,l.lecturer_id FROM app.lecturers l JOIN app.users u USING(user_id)')).rows.map(r => [r.username, Number(r.lecturer_id)]));
-    await client.query('UPDATE app.academic_years SET is_current=FALSE');
+    await client.query("INSERT INTO app.lecturer_assignments(lecturer_id,unit_id,is_primary,valid_from,assigned_by) VALUES($1,$2,1,DATEADD(year,-1,SYSUTCDATETIME()),$3)", [outside.lecturer_id, units.PHARM, users['duc.pm'].userId]);
+    const lecturerIds = Object.fromEntries((await client.query('SELECT u.username,l.lecturer_id FROM app.lecturers l JOIN app.users u ON u.user_id=l.user_id')).rows.map(r => [r.username, Number(r.lecturer_id)]));
+    await client.query('UPDATE app.academic_years SET is_current=0');
     const schoolStartYear = Number(today.slice(5,7)) >= 9 ? year : year-1;
-    const academicYear = (await client.query(`INSERT INTO app.academic_years(code,name,start_date,end_date,is_current,is_active)
-      VALUES($1,$2,$3,$4,TRUE,TRUE) ON CONFLICT(code) DO UPDATE SET is_current=TRUE,is_active=TRUE RETURNING academic_year_id`,
+    const academicYear = (await client.query(`IF EXISTS (SELECT 1 FROM app.academic_years WITH (UPDLOCK,HOLDLOCK) WHERE code=$1)
+      UPDATE app.academic_years SET is_current=1,is_active=1 OUTPUT INSERTED.academic_year_id WHERE code=$1;
+      ELSE INSERT INTO app.academic_years(code,name,start_date,end_date,is_current,is_active)
+      OUTPUT INSERTED.academic_year_id VALUES($1,$2,$3,$4,1,1);`,
     [`${schoolStartYear}-${schoolStartYear+1}`, `Năm học ${schoolStartYear} - ${schoolStartYear+1}`, `${schoolStartYear}-09-01`, `${schoolStartYear+1}-08-31`])).rows[0];
     const sample = fs.readFileSync(path.join(fixtures, 'evidence-demo.pdf'));
     const decisionFile = fs.readFileSync(path.join(fixtures, 'decision-demo.pdf'));
@@ -274,7 +308,7 @@ export async function seedScenario({ apply = false } = {}) {
       const bytes = fs.readFileSync(storage.resolveSafePath(row.storage_key));
       if (crypto.createHash('sha256').update(bytes).digest('hex') !== row.sha256_hash) throw new Error('File hash mismatch');
     }
-    const missing = (await client.query("SELECT COUNT(*)::int n FROM app.award_applications a LEFT JOIN app.award_application_inputs i USING(application_id) WHERE a.status<>'DRAFT' AND i.application_id IS NULL")).rows[0].n;
+    const missing = (await client.query("SELECT COUNT(*) n FROM app.award_applications a LEFT JOIN app.award_application_inputs i ON i.application_id=a.application_id WHERE a.status<>'DRAFT' AND i.application_id IS NULL")).rows[0].n;
     if (missing) throw new Error('Missing submitted application snapshots');
     await client.query('COMMIT'); committed = true;
     storage.saveFile = originalSave;
@@ -296,5 +330,5 @@ export async function seedScenario({ apply = false } = {}) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  seedScenario({ apply: process.argv.includes('--apply') }).catch(e => { console.error('SCN failed:', e.message); process.exitCode = 1; });
+  seedScenario({ apply: process.argv.includes('--apply'), demoDb: process.argv.find(arg => arg.startsWith('--demo-db='))?.slice(10), serverBackupDir: process.argv.find(arg => arg.startsWith('--server-backup-dir='))?.slice(20) }).catch(e => { console.error('SCN failed:', e.message); process.exitCode = 1; });
 }

@@ -20,6 +20,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
+import { safeFile, checkReferences } from '../../scripts/backup.mjs';
+import { validateTargetName } from '../../scripts/restore.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '../..');
@@ -126,10 +128,10 @@ describe('W6-Q2 S2: Backup script và manifest backup', () => {
       'backup.mjs phải tạo backup_manifest.json');
   });
 
-  it('backup.mjs tạo storage_manifest.json cho file private', () => {
+  it('backup.mjs ghi manifest SHA256 và danh sách file private', () => {
     const src = fs.readFileSync(backupScriptPath, 'utf8');
-    assert.match(src, /storage_manifest\.json/,
-      'backup.mjs phải tạo storage_manifest.json');
+    assert.match(src, /backup_manifest\.sha256/);
+    assert.match(src, /storage:\{archiveDirectory:'storage_backup',sourceDirectory:source,files/);
   });
 
   it('backup.mjs tính SHA-256 cho từng file', () => {
@@ -140,19 +142,20 @@ describe('W6-Q2 S2: Backup script và manifest backup', () => {
 
   it('restore.mjs có P1-fix containment check', () => {
     const src = fs.readFileSync(restoreScriptPath, 'utf8');
-    assert.match(src, /resolvedBackupRoot.*path\.sep|path\.sep.*resolvedBackupRoot/s,
-      'Cần containment check resolvedBackupRoot trong restore.mjs');
+    assert.throws(() => safeFile(ROOT, '../outside'), /Unsafe|escapes/);
+    assert.match(src, /safeFile\(archive\.archiveStorage,file\.storageKey\)/);
   });
 
   it('restore.mjs có fail-hard khi downloadCheck.allPassed false', () => {
     const src = fs.readFileSync(restoreScriptPath, 'utf8');
-    assert.match(src, /if\s*\(\s*!downloadCheck\.allPassed\s*\)/,
-      'restore.mjs phải throw khi downloadCheck.allPassed false');
+    assert.throws(() => checkReferences([{storage_key:'missing.pdf'}], []), /Missing\/mismatched/);
+    assert.match(src, /checkReferences\(references,archive\.manifest\.storage\.files\)/);
   });
 
   it('restore.mjs có safety guard chặn ghi đè DB làm việc', () => {
     const src = fs.readFileSync(restoreScriptPath, 'utf8');
-    assert.match(src, /PHÁT HIỆN NGUY HIỂM|KHÔNG RESTORE ĐÈ DB/);
+    assert.throws(() => validateTargetName('PTUD_restore_primary', ['PTUD_restore_primary']), /differ/);
+    assert.match(src, /Restore target already exists/);
   });
 });
 

@@ -3,27 +3,19 @@ import { useSelectionOptions } from '../hooks/useSelections';
 import { EntitySelect, lecturerLabel } from '../components/common/EntityPicker';
 import UnderlineTabs from '../components/common/UnderlineTabs';
 import PageHeader from '../components/common/PageHeader';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import EvaluationResults from '../components/ai/EvaluationResults';
 import {
   Cpu,
   History,
   FileCheck2,
-  AlertTriangle,
   CheckCircle2,
-  XCircle,
-  HelpCircle,
   RefreshCw,
   Search,
-  BookOpen,
-  ShieldCheck,
   ChevronRight,
-  Database,
-  Calendar,
   User,
   Building2,
-  ExternalLink,
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import { aiEvaluationApi } from '../services/aiEvaluationApi';
 import { LoadingState, ErrorState, EmptyState } from '../components/common/AsyncState';
 import fixtures from '../../../docs/ai/eval-dev/EvaluationRun.fixtures.json';
@@ -34,17 +26,25 @@ const conclusions = {
   SATISFIED: 'Đủ điều kiện tiêu chuẩn',
   FAILED: 'Chưa đạt tiêu chuẩn',
 };
+const runStatuses = { COMPLETED: 'Đã hoàn tất', FLAGGED_UNCONFIRMED: 'Cần rà soát thêm', FAILED: 'Đánh giá không thành công' };
 
 export default function AIForecast() {
-  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('live'); // 'live' | 'history' | 'fixtures'
 
   // Form State
   const [subjectType, setSubjectType] = useState('LECTURER');
   const [subjectId, setSubjectId] = useState('');
   const choices = useSelectionOptions('AI');
+  const subjectName = (type, id) => {
+    const list = type === 'LECTURER' ? choices.lecturers : choices.subjectUnits;
+    const item = list.find(option => String(option.id) === String(id));
+    return item?.name || `${type === 'LECTURER' ? 'Giảng viên' : 'Đơn vị'} (mã ${id ?? 'chưa rõ'})`;
+  };
   const [asOfDate, setAsOfDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [provider, setProvider] = useState('auto');
+  const [configurationCollapsed, setConfigurationCollapsed] = useState(false);
+  const configurationSummary = useRef(null);
+  useEffect(() => { if (configurationCollapsed) configurationSummary.current?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); }, [configurationCollapsed]);
   const [availableCriteria, setAvailableCriteria] = useState([]);
   const [criteriaError, setCriteriaError] = useState(null);
   const [loadingCriteria, setLoadingCriteria] = useState(true);
@@ -61,9 +61,14 @@ export default function AIForecast() {
   const [staleInfo, setStaleInfo] = useState(null);
 
   // RAG Explanation State
-  const [explainingCriterionId, setExplainingCriterionId] = useState(null);
   const [explanations, setExplanations] = useState({}); // { [criterionId]: explanationData }
-  const [ragError, setRagError] = useState(null);
+  const [aiStates, setAiStates] = useState({});
+  const [progress, setProgress] = useState(null);
+  const operation = useRef(false);
+  const runContext = useRef(null);
+  const mounted = useRef(true);
+  const currentRunId = useRef(null);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
 
   // History State
   const [historyRuns, setHistoryRuns] = useState([]);
@@ -88,7 +93,7 @@ export default function AIForecast() {
     setCriteriaError(null);
     async function loadCriteria() {
       try {
-        const res = await aiEvaluationApi.listCriteria({}, criteriaRevision > 0);
+        const res = await aiEvaluationApi.listCriteria({ confirmedOnly: true }, criteriaRevision > 0);
         const items = res?.items || res?.data || (Array.isArray(res) ? res : []);
         if (isMounted) {
           setAvailableCriteria(items);
@@ -137,44 +142,77 @@ export default function AIForecast() {
   };
 
   // Run Evaluation
-  const handleRunEvaluation = async (e) => {
+  const explainBatch = async (run, results, context) => {
+    for (let index = 0; index < results.length; index++) {
+      if (!mounted.current) return;
+      const result = results[index];
+      setProgress({ stage: 'ai', done: index, total: results.length });
+      setAiStates(previous => ({ ...previous, [result.criterionId]: { status: 'running' } }));
+      try {
+        const response = await aiEvaluationApi.explainEvaluation({ criterionResult: result, runId: run.runId, asOfDate: context.asOfDate, provider: context.provider });
+        if (!mounted.current) return;
+        setExplanations(previous => ({ ...previous, [result.criterionId]: response }));
+        const status = response.providerError ? 'error' : response.provider === 'none' || response.model === 'none' ? 'noSource' : response.isMock ? 'mock' : !response.isSufficientData ? 'rejected' : 'success';
+        setAiStates(previous => ({ ...previous, [result.criterionId]: { status, provider: response.provider } }));
+      } catch (error) {
+        if (!mounted.current) return;
+        setAiStates(previous => ({ ...previous, [result.criterionId]: { status: 'error', message: error.message || 'Dịch vụ AI chưa phản hồi.' } }));
+      }
+    }
+  };
+
+  const handleRunEvaluation = async (e, withAI = true) => {
     e?.preventDefault();
-    if (loadingCriteria || criteriaError || !selectedCriteriaIds.length) return;
+    if (operation.current || loadingCriteria || criteriaError || !selectedCriteriaIds.length) return;
     if (!subjectId) {
       setEvalError(new Error('Vui lòng chọn chủ thể thẩm định'));
       return;
     }
+    operation.current = true;
+    const context = { asOfDate, provider, subjectType, subjectId, criteriaCount: selectedCriteriaIds.length };
+    setConfigurationCollapsed(true);
+    runContext.current = context;
     setEvaluating(true);
     setEvalError(null);
     setStaleInfo(null);
     setExplanations({});
+    setCurrentRun(null);
+    currentRunId.current = null;
+    setAiStates({});
+    setProgress({ stage: 'data' });
     try {
       const payload = {
         subjectType,
         subjectId: Number(subjectId),
         criteriaVersionIds: selectedCriteriaIds.map(Number),
-        asOfDate,
-        forcedProvider: provider,
+        asOfDate: context.asOfDate,
+        forcedProvider: context.provider,
       };
       const result = await aiEvaluationApi.evaluateStructured(payload);
+      if (!mounted.current) return;
       setCurrentRun(result);
+      currentRunId.current = result.runId;
+      const results = result.criterionResults || [];
+      setAiStates(Object.fromEntries(results.map(item => [item.criterionId, { status: withAI ? 'queued' : 'idle' }])));
+      if (withAI) await explainBatch(result, results, context);
+      if (mounted.current) setProgress({ stage: withAI ? 'complete' : 'dataOnly' });
     } catch (err) {
-      setEvalError(err);
+      if (mounted.current) { setEvalError(err); setProgress(null); setConfigurationCollapsed(false); }
     } finally {
-      setEvaluating(false);
+      operation.current = false;
+      if (mounted.current) setEvaluating(false);
     }
   };
 
   // Run Stale Check
   const handleCheckStale = async (runId) => {
-    if (!runId) return;
+    if (!runId || checkingStale) return;
     setCheckingStale(true);
     try {
       const res = await aiEvaluationApi.checkEvaluationStale(runId);
+      if (!mounted.current || currentRunId.current !== runId) return;
       setStaleInfo(res);
-      if (currentRun && currentRun.runId === runId) {
-        setCurrentRun((prev) => ({ ...prev, isStale: res.isStale }));
-      }
+      setCurrentRun(prev => prev?.runId === runId ? { ...prev, isStale: res.isStale } : prev);
     } catch (err) {
       alert(`Kiểm tra dữ liệu thất bại: ${err.message || 'Lỗi hệ thống'}`);
     } finally {
@@ -182,46 +220,38 @@ export default function AIForecast() {
     }
   };
 
-  // Trigger RAG explanation for a criterion
-  const handleExplainCriterion = async (criterionResult) => {
-    const criterionId = criterionResult.criterionId;
-    setExplainingCriterionId(criterionId);
-    setRagError(null);
-    try {
-      const payload = {
-        criterionResult,
-        asOfDate: asOfDate || new Date().toISOString().slice(0, 10),
-        provider,
-        runId: currentRun?.runId,
-      };
-      const res = await aiEvaluationApi.explainEvaluation(payload);
-      setExplanations((prev) => ({
-        ...prev,
-        [criterionId]: res,
-      }));
-    } catch (err) {
-      setRagError({ criterionId, error: err });
-    } finally {
-      setExplainingCriterionId(null);
-    }
+  const handleExplainCriterion = async (onlyResult) => {
+    if (operation.current || !currentRun) return;
+    const pending = (onlyResult ? [onlyResult] : currentRun.criterionResults || []).filter(result => !['success', 'mock'].includes(aiStates[result.criterionId]?.status));
+    if (!pending.length) return;
+    operation.current = true; setEvaluating(true);
+    const context = runContext.current || { asOfDate: currentRun.inputSnapshot?.asOfDate || currentRun.asOfDate, provider };
+    try { await explainBatch(currentRun, pending, context); }
+    finally { operation.current = false; if (mounted.current) { setEvaluating(false); setProgress({ stage: 'complete' }); } }
   };
 
   // Select historical run to view
   const handleSelectHistoryRun = async (runId) => {
+    if (operation.current) return;
+    operation.current = true;
     try {
       setEvaluating(true);
       const fullRun = await aiEvaluationApi.getEvaluationRun(runId);
+      if (!mounted.current) return;
       setExplanations({});
       setStaleInfo(null);
-      setRagError(null);
       setCurrentRun(fullRun);
+      currentRunId.current = fullRun.runId;
+      setAiStates({}); setProgress(null); setConfigurationCollapsed(true);
+      runContext.current = { asOfDate: fullRun.inputSnapshot?.asOfDate || fullRun.asOfDate, provider, subjectType: fullRun.targetSubject?.subjectType, subjectId: fullRun.targetSubject?.subjectId, criteriaCount: fullRun.criterionResults?.length || 0 };
       setActiveTab('live');
       // Automatically check stale status
-      handleCheckStale(runId);
+      await handleCheckStale(runId);
     } catch (err) {
       alert(`Không thể tải phiên đánh giá: ${err.message}`);
     } finally {
-      setEvaluating(false);
+      operation.current = false;
+      if (mounted.current) setEvaluating(false);
     }
   };
 
@@ -229,40 +259,26 @@ export default function AIForecast() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Phân tích & Thẩm định AI" description="Thẩm định tiêu chí, kiểm tra hồ sơ và truy xuất trích dẫn từ quy định." icon={Cpu} onRefresh={activeTab === 'fixtures' ? undefined : () => activeTab === 'history' ? loadHistory() : setCriteriaRevision(v => v + 1)} refreshing={activeTab === 'history' ? loadingHistory : loadingCriteria} tabs={<UnderlineTabs label="Nội dung phân tích AI" value={activeTab} onChange={setActiveTab} items={[
+      <PageHeader title="Phân tích & Thẩm định AI" description="Thẩm định tiêu chí, kiểm tra hồ sơ và truy xuất trích dẫn từ quy định." icon={Cpu} onRefresh={evaluating || activeTab === 'fixtures' ? undefined : () => activeTab === 'history' ? loadHistory() : setCriteriaRevision(v => v + 1)} refreshing={activeTab === 'history' ? loadingHistory : loadingCriteria} tabs={<UnderlineTabs label="Nội dung phân tích AI" value={activeTab} disabled={evaluating} onChange={setActiveTab} items={[
         {id: 'live', label: 'Thẩm định Trực tiếp', icon: Cpu},
         {id: 'history', label: 'Lịch sử Phiên AI', icon: History},
-        {id: 'fixtures', label: '12 Hồ sơ Thử nghiệm (W3-Q4)', icon: FileCheck2},
+        {id: 'fixtures', label: 'Hồ sơ mẫu', icon: FileCheck2},
       ]} />} />
 
-      <div className="soft-card p-5 text-sm text-slate-600 dark:text-slate-300"><strong>Chức năng thẩm định:</strong> đối chiếu thành tích với tiêu chí tại ngày đánh giá, chỉ ra điều kiện đạt/chưa đạt, giải thích căn cứ quy định và lưu lịch sử. Chế độ mô phỏng dùng dữ liệu trả lời mẫu; Groq/OpenRouter cần cấu hình ở máy chủ. Kết quả hỗ trợ rà soát, quyết định khen thưởng do người có thẩm quyền thực hiện.</div>
-      {/* Mandatory Disclaimer Banner */}
-      <div
-        role="status"
-        className="rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/80 p-4 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-3 shadow-soft-sm"
-      >
-        <ShieldCheck className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-        <div className="space-y-1">
-          <p className="font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wide">
-            Cơ chế Hỗ trợ Thẩm định — Quyền quyết định thuộc Hội đồng LHU
-          </p>
-          <p>
-            Mọi kết quả do AI Evaluator tính toán chỉ mang tính chất tham khảo, hỗ trợ Hội đồng Thi đua - Khen thưởng đối chiếu với quy chế hiện hành. Tuyệt đối không có cơ chế tự động công nhận hay trao danh hiệu khen thưởng. Hồ sơ bị thu hồi hoặc thiếu minh chứng sẽ được chuyển cho người có thẩm quyền rà soát theo quy định.
-          </p>
-        </div>
-      </div>
+      <p className="text-sm text-slate-600 dark:text-slate-300">Chọn hồ sơ → kiểm tra dữ liệu → AI giải thích kết quả và căn cứ. Kết quả hỗ trợ rà soát, không tự công nhận hoặc trao thưởng.</p>
 
       {/* ================= TAB 1: LIVE EVALUATION ================= */}
       {activeTab === 'live' && (
         <div className="space-y-6">
           {/* Form Filter & Run Action */}
-          <form onSubmit={handleRunEvaluation} className="soft-card p-6 space-y-5">
+          {configurationCollapsed && <div ref={configurationSummary} data-configuration-summary className="soft-card scroll-mt-5 flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-sm"><p className="min-w-0 break-words text-slate-700 dark:text-slate-200"><strong>{evaluating ? 'Đang phân tích' : 'Đang xem kết quả'}: {subjectName(runContext.current?.subjectType, runContext.current?.subjectId)}</strong><span className="mx-2 text-slate-400">·</span>{runContext.current?.criteriaCount ?? currentRun?.criterionResults?.length ?? 0} tiêu chí đã chọn</p><button type="button" disabled={evaluating} onClick={() => setConfigurationCollapsed(false)} className="soft-btn-secondary shrink-0 text-sm disabled:opacity-50">Thay đổi</button></div>}
+          {!configurationCollapsed && <form onSubmit={handleRunEvaluation} className="soft-card p-6 space-y-5">
             <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <Search className="w-4 h-4 text-brand-500" />
-              Thiết lập Tham số Thẩm định Hồ sơ
+              Chọn hồ sơ và tiêu chí đánh giá
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <fieldset disabled={evaluating} className="grid min-w-0 grid-cols-1 md:grid-cols-3 gap-4">
               {/* Subject Type */}
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
@@ -272,35 +288,32 @@ export default function AIForecast() {
                   <button
                     type="button"
                     onClick={() => {setSubjectType('LECTURER');setSubjectId('');}}
-                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition-all ${
+                    className={`flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition-all ${
                       subjectType === 'LECTURER'
                         ? 'bg-[#008080] text-white border-[#008080]'
                         : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                     }`}
                   >
                     <User className="w-3.5 h-3.5" />
-                    Cá nhân (Giảng viên)
+                    Cá nhân
                   </button>
                   <button
                     type="button"
                     onClick={() => {setSubjectType('UNIT');setSubjectId('');}}
-                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition-all ${
+                    className={`flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition-all ${
                       subjectType === 'UNIT'
                         ? 'bg-[#008080] text-white border-[#008080]'
                         : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                     }`}
                   >
                     <Building2 className="w-3.5 h-3.5" />
-                    Tập thể (Đơn vị)
+                    Tập thể
                   </button>
                 </div>
               </div>
 
               {/* Subject ID */}
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
-                  Chủ thể thẩm định
-                </label>
                 <EntitySelect label={subjectType==='LECTURER' ? 'Giảng viên được thẩm định' : 'Đơn vị được thẩm định'} options={subjectType==='LECTURER' ? choices.lecturers : choices.subjectUnits} value={subjectId} onChange={setSubjectId} required disabled={choices.loading || evaluating} placeholder="Chọn chủ thể" getLabel={subjectType==='LECTURER' ? lecturerLabel : o=>o.name}/>
                 {choices.error && <p role="alert" className="text-xs text-rose-600">{choices.error}</p>}
               </div>
@@ -322,32 +335,38 @@ export default function AIForecast() {
               </div>
 
               {/* AI Provider */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
-                  Provider giải thích AI
+              <details className="md:col-span-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                <summary className="cursor-pointer text-sm font-semibold text-slate-600 dark:text-slate-300">Tùy chọn kỹ thuật · nguồn giải thích AI</summary>
+                <label htmlFor="ai-explanation-provider" className="mt-3 block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+                  Dịch vụ tạo giải thích
                 </label>
                 <Select
+                  id="ai-explanation-provider"
+                  disabled={evaluating}
                   value={provider}
                   onChange={(e) => setProvider(e.target.value)}
                   className="soft-input w-full text-xs"
                 >
-                  <option value="auto">Tự động (Groq → OpenRouter)</option>
-                  <option value="mock">Mô phỏng provider (không gọi LLM thật)</option>
+                  <option value="auto">Tự động chọn dịch vụ</option>
+                  <option value="mock">Mô phỏng bằng câu trả lời mẫu</option>
                   <option value="groq">Groq</option>
                   <option value="openrouter">OpenRouter (Free Tier)</option>
                 </Select>
-              </div>
-            </div>
+                <p className="mt-2 text-xs text-slate-500">Mặc định ưu tiên Groq, sau đó OpenRouter. Các dịch vụ cần được cấu hình trên máy chủ; mô phỏng không gọi dịch vụ AI.</p>
+              </details>
+            </fieldset>
 
             {loadingCriteria && <LoadingState label="Đang tải tiêu chí..." layout="cards" rows={3} />}
             {criteriaError && <ErrorState error={criteriaError} onRetry={() => setCriteriaRevision((value) => value + 1)} />}
-            {!loadingCriteria && !criteriaError && !availableCriteria.length && <p role="status">Chưa có tiêu chí xác nhận. Liên hệ cán bộ quản lý quy chế.</p>}
+            {!loadingCriteria && !criteriaError && !availableCriteria.length && <p role="status">Chưa có tiêu chí đủ điều kiện. Cần duyệt cả tiêu chí và phiên bản văn bản nguồn trong Kho quy định.</p>}
             {/* Criteria Selection */}
             <div>
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">
-                Chọn Tiêu chí Thẩm định Quy chế ({selectedCriteriaIds.length}/{availableCriteria.length} đã chọn):
+                Chọn tiêu chí đánh giá ({selectedCriteriaIds.length}/{availableCriteria.length} đã chọn):
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-48 overflow-y-auto p-1">
+              {availableCriteria.some(c => !c.source_rules) && <p role="note" data-source-warning className="mb-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">{availableCriteria.filter(c => !c.source_rules).length === availableCriteria.length ? 'Các tiêu chí hiện có đều' : availableCriteria.filter(c => !c.source_rules).length + ' tiêu chí'} chưa cấu hình nguồn dữ liệu. Người quản lý cần chọn loại hồ sơ được tính trước khi hệ thống có thể kết luận.</p>}
+              {availableCriteria.some(c => c.lhu_application_status === 'SIMULATION_ONLY' || /^SIM-|^SCN-/i.test(c.criterion_code || '')) && <p className="mb-3 text-xs text-slate-600 dark:text-slate-300">Danh sách có tiêu chí mô phỏng; kết quả của các mục này chỉ dùng tham khảo.</p>}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-80 overflow-y-auto p-1">
                 {availableCriteria.map((c) => {
                   const id = c.criteria_version_id;
                   const isChecked = selectedCriteriaIds.includes(id);
@@ -361,6 +380,7 @@ export default function AIForecast() {
                       }`}
                     >
                       <input
+                        disabled={evaluating}
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => handleToggleCriterion(id)}
@@ -370,9 +390,10 @@ export default function AIForecast() {
                         <span className="font-bold text-slate-900 dark:text-slate-100 block truncate">
                           {c.criterion_code}
                         </span>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                        <span className="text-xs text-slate-600 dark:text-slate-300">
                           {c.name || c.criterionName}
                         </span>
+                        <span title={`Văn bản: ${c.document_title || c.document_code || 'Chưa rõ'} · Phiên bản: ${c.version_number || 'Chưa rõ'}`} className="mt-1 block text-xs text-slate-500 dark:text-slate-400">{c.document_code || 'Chưa rõ văn bản nguồn'}</span>
                       </div>
                     </label>
                   );
@@ -381,295 +402,35 @@ export default function AIForecast() {
             </div>
 
             {/* Submit Action */}
-            <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <button type="button" onClick={() => handleRunEvaluation(null, false)} disabled={evaluating || loadingCriteria || !!criteriaError || !selectedCriteriaIds.length || !subjectId} className="soft-btn-secondary text-sm">Chỉ kiểm tra dữ liệu</button>
               <button
                 type="submit"
-                disabled={evaluating || loadingCriteria || !!criteriaError || !selectedCriteriaIds.length}
+                disabled={evaluating || loadingCriteria || !!criteriaError || !selectedCriteriaIds.length || !subjectId}
                 className="soft-btn-primary text-xs px-6 py-2.5 font-semibold"
               >
                 {evaluating ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    Đang Thẩm định Dữ liệu...
+                    {progress?.stage === 'ai' ? 'Đang phân tích bằng AI…' : 'Đang kiểm tra dữ liệu…'}
                   </>
                 ) : (
                   <>
                     <Cpu className="w-4 h-4" />
-                    Thực hiện Thẩm định AI
+                    Kiểm tra & phân tích bằng AI
                   </>
                 )}
               </button>
             </div>
-          </form>
+          </form>}
 
           {/* Error Banner */}
           {evalError && <ErrorState error={evalError} onRetry={handleRunEvaluation} />}
-          {evaluating && <LoadingState label="Đang phân tích hồ sơ..." layout="cards" rows={3} />}
-
-          {/* Evaluation Run Result Display */}
-          {!evaluating && currentRun && (
-            <article className="soft-card p-6 space-y-6">
-              {/* Header result info */}
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono uppercase bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300">
-                      RUN ID: {currentRun.runId}
-                    </span>
-                    {currentRun.isStale ? (
-                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-300 flex items-center gap-1">
-                        <AlertTriangle className="w-3 h-3" />
-                        DỮ LIỆU ĐÃ ĐỔI (STALE)
-                      </span>
-                    ) : (
-                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300 flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" />
-                        {staleInfo?.isStale === false ? 'DỮ LIỆU ĐỒNG NHẤT' : 'CHƯA KIỂM TRA DỮ LIỆU ĐỔI'}
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="text-lg font-bold mt-1 text-slate-900 dark:text-white">
-                    Kết quả Thẩm định Đối tượng {currentRun.targetSubject?.subjectType} #{currentRun.targetSubject?.subjectId}
-                  </h3>
-                </div>
-
-                {/* Stale Check Action */}
-                <button
-                  type="button"
-                  onClick={() => handleCheckStale(currentRun.runId)}
-                  disabled={checkingStale}
-                  className="soft-btn-secondary text-xs px-3 py-1.5 self-start md:self-auto"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${checkingStale ? 'animate-spin' : ''}`} />
-                  Kiểm tra Dữ liệu Đổi (Stale Check)
-                </button>
-              </div>
-
-              {/* Stale Alert Detail if changed */}
-              {staleInfo && staleInfo.isStale && (
-                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-xs text-rose-800 dark:text-rose-200 flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold">{staleInfo.reason}</p>
-                    <p className="text-[11px] mt-0.5 opacity-90">
-                      Số bản ghi lúc đánh giá: {staleInfo.totalSavedRecords} | Số bản ghi hiện tại: {staleInfo.totalCurrentRecords}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Overall Summary Details */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs">
-                <div>
-                  <span className="text-slate-400 block mb-0.5">Trạng thái Phiên</span>
-                  <strong className="text-slate-800 dark:text-slate-100">{currentRun.overallStatus}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block mb-0.5">Kết luận Tổng quan</span>
-                  <strong className="text-slate-800 dark:text-slate-100">
-                    {conclusions[currentRun.overallConclusion] || currentRun.overallConclusion}
-                  </strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block mb-0.5">Mã băm Input (SHA-256)</span>
-                  <code className="text-[10px] text-slate-600 dark:text-slate-300 truncate block" title={currentRun.inputHash}>
-                    {currentRun.inputHash ? currentRun.inputHash.slice(0, 16) + '...' : 'N/A'}
-                  </code>
-                </div>
-                <div>
-                  <span className="text-slate-400 block mb-0.5">Tự động Trao thưởng</span>
-                  <span className="text-rose-600 dark:text-rose-400 font-bold">KHÔNG (Bị vô hiệu)</span>
-                </div>
-              </div>
-
-              {/* Criterion Results List */}
-              <div className="space-y-4">
-                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                  Chi tiết Kết quả Từng Tiêu chí ({currentRun.criterionResults?.length || 0}):
-                </h4>
-
-                {currentRun.criterionResults?.map((res) => {
-                  const isExplaining = explainingCriterionId === res.criterionId;
-                  const explanation = explanations[res.criterionId];
-                  const hasExplainError = ragError && ragError.criterionId === res.criterionId;
-
-                  return (
-                    <div
-                      key={res.criterionCode || res.criterionId}
-                      className="rounded-2xl border border-slate-200 dark:border-slate-800 p-4 space-y-3 bg-white dark:bg-slate-900/40 shadow-soft-sm"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <div>
-                          <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mr-2">
-                            {res.criterionCode}
-                          </span>
-                          <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                            {res.criterionName}
-                          </span>
-                        </div>
-
-                        {/* Status Badge */}
-                        <div className="flex items-center gap-2">
-                          {res.thresholdMetric?.isSatisfied === true ? (
-                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 flex items-center gap-1">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Đạt
-                            </span>
-                          ) : res.thresholdMetric?.isSatisfied === false ? (
-                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 flex items-center gap-1">
-                              <XCircle className="w-3.5 h-3.5" /> Chưa đạt
-                            </span>
-                          ) : (
-                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 flex items-center gap-1">
-                              <HelpCircle className="w-3.5 h-3.5" /> Chưa xác định
-                            </span>
-                          )}
-
-                          {res.humanReviewRequired && (
-                            <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200">
-                              Cần rà soát
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Threshold metric stats */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs bg-slate-50 dark:bg-slate-800/30 p-2.5 rounded-xl">
-                        <div>
-                          <span className="text-slate-400">Chỉ số thực tế ghi nhận:</span>{' '}
-                          <strong className="text-slate-800 dark:text-slate-100">
-                            {res.thresholdMetric?.actualRecorded ?? 'N/A'}{' '}
-                            {res.thresholdMetric?.unitMetric || ''}
-                          </strong>
-                        </div>
-                        <div>
-                          <span className="text-slate-400">Yêu cầu tối thiểu:</span>{' '}
-                          <strong className="text-slate-800 dark:text-slate-100">
-                            {res.thresholdMetric?.targetMin ?? 'N/A'}{' '}
-                            {res.thresholdMetric?.unitMetric || ''}
-                          </strong>
-                        </div>
-                        <div>
-                          <span className="text-slate-400">Xác nhận LHU:</span>{' '}
-                          <span className={res.isConfirmedByLhu ? 'text-emerald-600 font-semibold' : 'text-amber-600 font-semibold'}>
-                            {res.isConfirmedByLhu ? 'Đã duyệt' : 'Mô phỏng/Chưa duyệt'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* AI Deterministic Analysis Logic */}
-                      <div className="text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                        <strong className="text-slate-700 dark:text-slate-200 block mb-1">
-                          Phân tích Logic Tiêu chuẩn:
-                        </strong>
-                        {res.aiAnalysis}
-                      </div>
-
-                      {/* Action: RAG Explanation with Citations */}
-                      <div className="pt-1">
-                        {!explanation ? (
-                          <button
-                            type="button"
-                            onClick={() => handleExplainCriterion(res)}
-                            disabled={isExplaining}
-                            className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 flex items-center gap-1.5 transition-colors"
-                          >
-                            {isExplaining ? (
-                              <>
-                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                                Đang truy xuất trích dẫn RAG & giải thích pháp lý...
-                              </>
-                            ) : (
-                              <>
-                                <BookOpen className="w-3.5 h-3.5" />
-                                Giải thích kết quả với Trích dẫn Điều/Khoản quy chế (RAG)
-                              </>
-                            )}
-                          </button>
-                        ) : (
-                          /* RAG Explanation Display */
-                          <div className="rounded-xl border border-indigo-100 dark:border-indigo-900 bg-indigo-50/40 dark:bg-indigo-950/20 p-4 space-y-3">
-                            <div className="flex items-center justify-between">
-                              <h5 className="text-xs font-bold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
-                                <BookOpen className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                                Giải thích có Trích dẫn Pháp lý (RAG Service)
-                              </h5>
-                              <span className="text-[10px] text-slate-500 font-mono">
-                                Model: {explanation.model} | Prompt v{explanation.promptVersion}
-                              </span>
-                            </div>
-
-                            <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
-                              {explanation.explanationText}
-                            </p>
-
-                            {explanation.isMock && <p role="status">Mô phỏng hoặc dự phòng; không phải LLM thật.</p>}
-                            {!explanation.isSufficientData && <p role="alert">Chưa đủ căn cứ kiểm chứng. Bổ sung nguồn xác nhận hoặc yêu cầu Hội đồng rà soát.</p>}
-                            {explanation.providerError && <p role="alert">Provider lỗi hoặc hết quota. Thử lại sau hoặc chuyển provider; kết quả tiêu chí vẫn được giữ.</p>}
-                            {/* Citations List */}
-                            {explanation.citations && explanation.citations.length > 0 && (
-                              <div className="space-y-1.5 pt-2 border-t border-indigo-100 dark:border-indigo-900/60">
-                                <strong className="text-[11px] text-indigo-900 dark:text-indigo-300 block">
-                                  Trích dẫn Căn cứ Quy chế ({explanation.citations.length}):
-                                </strong>
-                                <ul className="space-y-1">
-                                  {explanation.citations.map((c, i) => (
-                                    <li
-                                      key={i}
-                                      className="text-[11px] bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 flex items-start gap-2"
-                                    >
-                                      <span className="font-mono text-indigo-600 dark:text-indigo-400 font-bold">
-                                        [CHUNK_ID: {c.chunkId}]
-                                      </span>
-                                      <div className="flex-1">
-                                        <span>
-                                          {c.documentCode} — {c.articleNo || ''} {c.clauseNo || ''} (Trang {c.pageNo ?? 'N/A'})
-                                        </span>
-                                        {c.sourceUrl && /^https?:\/\//i.test(c.sourceUrl) && <a className="block underline" href={c.sourceUrl} target="_blank" rel="noopener noreferrer">Mở tài liệu nguồn — phiên bản {c.versionNumber}</a>}
-                                        {!c.sourceUrl && <span className="block">Chưa có link nguồn; yêu cầu cán bộ cung cấp tài liệu gốc.</span>}
-                                        {c.chunkHash && (
-                                          <code className="block text-[9px] text-slate-400 mt-0.5 truncate">
-                                            SHA-256: {c.chunkHash}
-                                          </code>
-                                        )}
-                                      </div>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {hasExplainError && (
-                          <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
-                            Lỗi khi gọi RAG: {ragError.error?.message || 'Không thể tạo giải thích'}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Input Snapshot View (Reproducibility) */}
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                <details className="text-xs group">
-                  <summary className="font-semibold text-slate-700 dark:text-slate-300 cursor-pointer flex items-center gap-1.5">
-                    <Database className="w-3.5 h-3.5 text-slate-500" />
-                    Xem Phiên bản Input Snapshot Lưu trữ (Tái hiện Nguyên trạng & Tamper-Evident)
-                  </summary>
-                  <div className="mt-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
-                    <div className="text-[11px] text-slate-500">
-                      Input Hash: <code className="text-slate-700 dark:text-slate-300">{currentRun.inputHash}</code>
-                    </div>
-                    <pre className="overflow-auto text-[11px] font-mono p-3 bg-white dark:bg-slate-950 rounded-lg max-h-64">
-                      {JSON.stringify(currentRun.inputSnapshot || currentRun, null, 2)}
-                    </pre>
-                  </div>
-                </details>
-              </div>
-            </article>
-          )}
+          {progress && <div role="status" aria-live="polite" data-ai-progress className="soft-card px-6 py-4 text-sm text-slate-700 dark:text-slate-200 flex items-center gap-3">
+            {evaluating ? <RefreshCw className="h-4 w-4 motion-safe:animate-spin shrink-0" /> : <CheckCircle2 className="h-4 w-4 shrink-0 text-teal-600" />}
+            {progress.stage === 'data' ? 'Đang kiểm tra hồ sơ theo tiêu chí…' : progress.stage === 'ai' ? `Đã kiểm tra dữ liệu · AI đang giải thích ${progress.done + 1}/${progress.total} tiêu chí…` : progress.stage === 'dataOnly' ? 'Đã kiểm tra dữ liệu · Chưa gọi AI. Chọn “Tạo giải thích AI” trong kết quả để tiếp tục.' : 'Đã xử lý yêu cầu. Xem trạng thái AI của từng tiêu chí bên dưới.'}
+          </div>}
+          {currentRun && <EvaluationResults run={currentRun} subjectName={subjectName(currentRun.targetSubject?.subjectType, currentRun.targetSubject?.subjectId)} explanations={explanations} aiStates={aiStates} busy={evaluating} onExplain={handleExplainCriterion} onRetry={() => handleExplainCriterion()} staleInfo={staleInfo} checkingStale={checkingStale} onCheckStale={() => handleCheckStale(currentRun.runId)} />}
         </div>
       )}
 
@@ -684,7 +445,7 @@ export default function AIForecast() {
                   Lịch sử Các Phiên Thẩm định AI
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Danh sách các phiên đánh giá đã lưu trong cơ sở dữ liệu. Bấm vào phiên để tái hiện nguyên trạng snapshot.
+                  Chọn một phiên để xem lại kết quả và dữ liệu tại thời điểm đánh giá.
                 </p>
               </div>
 
@@ -715,11 +476,11 @@ export default function AIForecast() {
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 uppercase tracking-wider">
                     <tr>
-                      <th className="p-3">Mã Phiên (Run ID)</th>
+                      <th className="p-3">Mã phiên</th>
                       <th className="p-3">Thời gian</th>
                       <th className="p-3">Chủ thể</th>
                       <th className="p-3">Kết luận</th>
-                      <th className="p-3">Trạng thái Stale</th>
+                      <th className="p-3">Thay đổi dữ liệu</th>
                       <th className="p-3 text-right">Thao tác</th>
                     </tr>
                   </thead>
@@ -734,7 +495,7 @@ export default function AIForecast() {
                         </td>
                         <td className="p-3">
                           <span className="font-semibold text-slate-800 dark:text-slate-200">
-                            {r.targetSubject?.subjectType || r.subject_type} #{r.targetSubject?.subjectId || r.subject_id}
+                            {subjectName(r.targetSubject?.subjectType || r.subject_type, r.targetSubject?.subjectId || r.subject_id)}
                           </span>
                         </td>
                         <td className="p-3">
@@ -745,7 +506,7 @@ export default function AIForecast() {
                         <td className="p-3">
                           {r.isStale || r.is_stale ? (
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
-                              STALE (ĐÃ ĐỔI)
+                              ĐÃ THAY ĐỔI
                             </span>
                           ) : (
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
@@ -778,14 +539,14 @@ export default function AIForecast() {
         <div className="space-y-6">
           <div className="soft-card p-6 space-y-4">
             <h2 className="text-base font-bold text-slate-900 dark:text-white">
-              Bộ 12 Hồ sơ Thử nghiệm Kỹ thuật (W3-Q4 Fixtures)
+              Hồ sơ mẫu để tham khảo
             </h2>
             <p className="text-xs text-slate-500">
-              12 ca thử nghiệm trạng thái, phiên bản và cảnh báo dữ liệu phục vụ đối chiếu và kiểm thử tự động.
+              12 tình huống minh họa kết quả và cảnh báo. Đây là dữ liệu mô phỏng, không phải hồ sơ thực tế.
             </p>
 
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Chọn hồ sơ mẫu fixture:
+              Chọn tình huống mẫu:
               <Select
                 className="soft-input w-full mt-1.5 text-xs"
                 value={selectedFixtureCase}
@@ -806,7 +567,7 @@ export default function AIForecast() {
                   <div className="grid sm:grid-cols-2 gap-2 text-xs">
                     <div>
                       <span className="text-slate-400">Trạng thái:</span>{' '}
-                      <strong>{fixtureItem.run.overallStatus}</strong>
+                      <strong>{runStatuses[fixtureItem.run.overallStatus] || fixtureItem.run.overallStatus}</strong>
                     </div>
                     <div>
                       <span className="text-slate-400">Kết luận:</span>{' '}
@@ -815,19 +576,19 @@ export default function AIForecast() {
                     <div>
                       <span className="text-slate-400">Chủ thể:</span>{' '}
                       <strong>
-                        {fixtureItem.run.targetSubject.subjectType} #{fixtureItem.run.targetSubject.subjectId}
+                        {fixtureItem.run.targetSubject.subjectType === 'LECTURER' ? 'Giảng viên mẫu' : 'Đơn vị mẫu'} #{fixtureItem.run.targetSubject.subjectId}
                       </strong>
                     </div>
                     <div>
                       <span className="text-slate-400">Vấn đề dữ liệu:</span>{' '}
-                      <span>{fixtureItem.observed.issues.join(', ') || 'Đủ input mô phỏng'}</span>
+                      <span>{fixtureItem.observed.issues.join(', ') || 'Đủ dữ liệu mô phỏng'}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-3">
                   <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                    Kết quả Tiêu chí Fixture:
+                    Kết quả đối chiếu tiêu chí:
                   </h4>
                   {fixtureItem.run.criterionResults.map((result) => (
                     <div

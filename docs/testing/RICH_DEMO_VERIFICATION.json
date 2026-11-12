@@ -1,0 +1,212 @@
+{
+  "checkedAt": "2026-11-12T04:16:53.152Z",
+  "database": "PTUD_LHU_Demo",
+  "url": "http://127.0.0.1:5175",
+  "counts": {
+    "users": 40,
+    "organization_units": 18,
+    "achievements": 238,
+    "kpi_goals": 134,
+    "award_applications": 69,
+    "award_records": 44,
+    "regulation_documents": 6,
+    "regulation_document_versions": 7,
+    "award_criteria_versions": 6,
+    "evaluation_runs": 41,
+    "ai_rag_explanations": 39,
+    "lecturer_cvs": 8,
+    "notifications": 668
+  },
+  "privateReferences": 281,
+  "checks": [
+    {
+      "name": "40 active/base accounts and organization hierarchy",
+      "status": "PASS"
+    },
+    {
+      "name": "Login an.nv",
+      "status": "PASS"
+    },
+    {
+      "name": "Login bich.tt",
+      "status": "PASS"
+    },
+    {
+      "name": "Login cuong.lh",
+      "status": "PASS"
+    },
+    {
+      "name": "Login council.demo",
+      "status": "PASS"
+    },
+    {
+      "name": "Login records.demo",
+      "status": "PASS"
+    },
+    {
+      "name": "Login duc.pm",
+      "status": "PASS"
+    },
+    {
+      "name": "Login linh.pharm",
+      "status": "PASS"
+    },
+    {
+      "name": "Login rep.expired",
+      "status": "PASS"
+    },
+    {
+      "name": "Login mai.cntt",
+      "status": "PASS"
+    },
+    {
+      "name": "Login huy.cntt",
+      "status": "PASS"
+    },
+    {
+      "name": "Login hoidong.truong",
+      "status": "PASS"
+    },
+    {
+      "name": "Login thidua.truong",
+      "status": "PASS"
+    },
+    {
+      "name": "Login quanly.duoc",
+      "status": "PASS"
+    },
+    {
+      "name": "Locked account rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "Achievements and dashboard an.nv",
+      "status": "PASS"
+    },
+    {
+      "name": "Achievements and dashboard bich.tt",
+      "status": "PASS"
+    },
+    {
+      "name": "Achievements and dashboard linh.pharm",
+      "status": "PASS"
+    },
+    {
+      "name": "Achievements and dashboard quanly.duoc",
+      "status": "PASS"
+    },
+    {
+      "name": "Award applications an.nv",
+      "status": "PASS"
+    },
+    {
+      "name": "Award applications cuong.lh",
+      "status": "PASS"
+    },
+    {
+      "name": "Award applications bich.tt",
+      "status": "PASS"
+    },
+    {
+      "name": "Award applications council.demo",
+      "status": "PASS"
+    },
+    {
+      "name": "Award applications hoidong.truong",
+      "status": "PASS"
+    },
+    {
+      "name": "Award applications records.demo",
+      "status": "PASS"
+    },
+    {
+      "name": "Award applications thidua.truong",
+      "status": "PASS"
+    },
+    {
+      "name": "An KPI includes draft, completed, partial and overdue",
+      "status": "PASS"
+    },
+    {
+      "name": "An CV draft and public snapshot",
+      "status": "PASS"
+    },
+    {
+      "name": "Mai CV is private until published",
+      "status": "PASS"
+    },
+    {
+      "name": "Live structured analysis returns pass, fail, review",
+      "status": "PASS"
+    },
+    {
+      "name": "Manager cannot read Pharmacy achievement",
+      "status": "PASS"
+    },
+    {
+      "name": "Lecturer cannot read another lecturer CV through own endpoint",
+      "status": "PASS"
+    },
+    {
+      "name": "Award ledger visible to scoped and university officers",
+      "status": "PASS"
+    },
+    {
+      "name": "Regulations list has real source metadata and demo criteria",
+      "status": "PASS"
+    },
+    {
+      "name": "All private references match file size and SHA-256",
+      "status": "PASS"
+    },
+    {
+      "name": "Submitted applications have immutable input snapshots",
+      "status": "PASS"
+    },
+    {
+      "name": "No untrusted or disabled FK constraints",
+      "status": "PASS"
+    },
+    {
+      "name": "Historical award sources match owner and year",
+      "status": "PASS"
+    },
+    {
+      "name": "Showcase application links to recorded award",
+      "status": "PASS"
+    },
+    {
+      "name": "SQL Server CHECKDB",
+      "status": "PASS"
+    }
+  ],
+  "liveAnalysis": {
+    "runId": "F7A9ABAD-A53B-4F68-A996-B789A83852B9",
+    "overallConclusion": "NEEDS_HUMAN_REVIEW",
+    "metrics": [
+      {
+        "targetMin": 2,
+        "actualRecorded": 3,
+        "unitMetric": "sản phẩm",
+        "isSatisfied": true
+      },
+      {
+        "targetMin": 5,
+        "actualRecorded": 3,
+        "unitMetric": "sản phẩm",
+        "isSatisfied": false
+      },
+      {
+        "targetMin": 2,
+        "actualRecorded": 2,
+        "unitMetric": "sản phẩm",
+        "isSatisfied": "UNCONFIRMED"
+      }
+    ]
+  },
+  "limitations": [
+    "Structured evaluation is deterministic; live LLM explanation verification is recorded separately in RICH_DEMO_BROWSER.json.",
+    "Demo confirmed criteria are synthetic, not actual LHU policies.",
+    "Attached evidence/decision PDFs are generic explicitly labeled simulation files."
+  ]
+}

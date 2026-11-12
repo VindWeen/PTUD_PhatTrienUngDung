@@ -68,7 +68,7 @@ if (process.argv.includes('--verify')) {
   for (const file of await walk(path.join(root, 'output/w6-p3'))) {
     if (/\.(webm|png|json|log|csv|pdf)$/.test(file)) await add(path.relative(root, file), 'W6-P3', /\.webm$/.test(file) ? 'REAL_BROWSER_VIDEO' : /\.png$/.test(file) ? 'REAL_BROWSER_SCREENSHOT' : 'LOCAL_RUN_ARTIFACT', null, 'UNCOMMITTED_W6_P3_RUN');
   }
-  for (const file of ['docs/weekly/WEEK_06_W6_P2.md', 'docs/weekly/WEEK_06_W6_Q2.md', 'docs/weekly/WEEK_05_W5_Q4.md', 'docs/testing/w6-p2/REHEARSAL_CHECKLIST.md', 'docs/USER_GUIDE.md', 'docs/report-inputs/RELEASE_CHECKLIST_W6Q2.json']) await add(file, tasks(file)[0] || 'W6-P2', 'COMMITTED_DEPENDENCY_DOCUMENT', git(['log', '-1', '--format=%H', '--', file]));
+  for (const file of ['docs/archive/weekly/WEEK_06_W6_P2.md', 'docs/archive/weekly/WEEK_06_W6_Q2.md', 'docs/archive/weekly/WEEK_05_W5_Q4.md', 'docs/testing/w6-p2/REHEARSAL_CHECKLIST.md', 'docs/USER_GUIDE.md', 'docs/report-inputs/RELEASE_CHECKLIST_W6Q2.json']) await add(file, tasks(file)[0] || 'W6-P2', 'COMMITTED_DEPENDENCY_DOCUMENT', git(['log', '-1', '--format=%H', '--', file]));
   for (const file of ['output/w6-p2/rehearsal-restore.log', 'output/w6-p2/ui-loaded-final.log', 'output/w6-p2/ui/result.json']) await add(file, 'W6-P2', 'HISTORICAL_LOCAL_EVIDENCE', null, 'HISTORICAL_UNCOMMITTED_MEDIA; RUN_BASELINE_16ee566; DOCUMENTATION_COMMIT_2774075');
   for (const file of ['scripts/w6-p3-video.mjs', 'scripts/w6-p3-recorder.mjs', 'scripts/w6-p3-evidence.mjs', 'backend/tests/w5-p3.integration.js']) await add(file, 'W6-P3', 'CAPTURE_OR_EXPORT_SOURCE', null, 'UNCOMMITTED_W6_P3_SOURCE');
   const result = await fs.readFile(path.join(root, 'output/w6-p3/recording-result.json'), 'utf8').then(JSON.parse).catch(() => null);
@@ -99,7 +99,7 @@ if (process.argv.includes('--verify')) {
     await fs.writeFile(path.join(docs, 'TIMELINE.md'), timeline);
   }
   for (const file of ['commits.json', 'commits.csv', 'prs.json', 'CONTRIBUTIONS.md', 'TIMELINE.md', 'REVIEW_RELEASE.md', 'README.md']) await add('docs/testing/w6-p3/' + file, 'W6-P3', 'EVIDENCE_INDEX_OR_REVIEW', null, 'UNCOMMITTED_W6_P3_DOCUMENT');
-  await add('docs/weekly/WEEK_06_W6_P3.md', 'W6-P3', 'HANDOFF_REPORT', null, 'UNCOMMITTED_W6_P3_DOCUMENT');
+  await add('docs/archive/weekly/WEEK_06_W6_P3.md', 'W6-P3', 'HANDOFF_REPORT', null, 'UNCOMMITTED_W6_P3_DOCUMENT');
   await add('docs/api/AWARDS_W2_P2.md', 'W6-P3', 'API_USAGE_MULTIPART_ERRATUM', null, 'UNCOMMITTED_W6_P3_DOCUMENT');
   await add('scripts/w6-p3-verify-video.mjs', 'W6-P3', 'VIDEO_DECODER_SOURCE', null, 'UNCOMMITTED_W6_P3_SOURCE');
   await add('frontend/src/services/awardsApi.js', 'W6-P3', 'NECESSARY_MULTIPART_UPLOAD_FIX', null, 'UNCOMMITTED_W6_P3_SOURCE');

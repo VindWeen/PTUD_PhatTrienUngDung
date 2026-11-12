@@ -26,6 +26,7 @@ export function buildInputSnapshot({
     .map((r) => ({
       id: Number(r.id || r.achievementId || r.recordId),
       type: r.type || (r.recordId ? 'AWARD_RECORD' : 'ACHIEVEMENT'),
+      sourceTypeId: r.sourceTypeId == null ? null : Number(r.sourceTypeId),
       subjectId: Number(r.subjectId || r.lecturerId || r.unitId),
       year: Number(r.year || r.recognitionYear || (r.achievementDate ? new Date(r.achievementDate).getFullYear() : null)),
       status: r.status,
@@ -44,15 +45,16 @@ export function buildInputSnapshot({
   const mapCriterion = (c) => {
     if (!c) return null;
     return {
-      criterionId: Number(c.criteriaVersionId || c.criterionId || c.id || 0),
-      criterionCode: c.criterionCode || c.code || '',
+      criterionId: Number(c.criteriaVersionId || c.criteria_version_id || c.criterionId || c.id || 0),
+      criterionCode: c.criterionCode || c.criterion_code || c.code || '',
       criterionName: c.name || c.criterionName || '',
       targetType: c.targetType || c.target_type || 'INDIVIDUAL',
-      minThreshold: c.minThreshold !== undefined && c.minThreshold !== null ? Number(c.minThreshold) : null,
+      minThreshold: (c.minThreshold ?? c.min_threshold) != null ? Number(c.minThreshold ?? c.min_threshold) : null,
       unitMetric: c.unitMetric || c.unit_metric || null,
       isConfirmed: Boolean(c.isConfirmed ?? c.is_confirmed),
       versionId: Number(c.versionId || c.version_id || 0),
-      rules: rules || c.rules || null,
+      rules: c.source_rules ?? c.rules ?? rules ?? null,
+      sourceRulesRevision: Number(c.source_rules_revision ?? c.sourceRulesRevision ?? 0),
     };
   };
 
@@ -130,9 +132,20 @@ export function evaluateStructuredCriterion({
   const issues = new Set();
   const subjectId = Number(subject.subjectId);
   const activeRecords = [];
+  const expectedTarget = subject.subjectType === 'LECTURER' ? 'INDIVIDUAL' : 'COLLECTIVE';
+  const target = criterion.targetType || criterion.target_type;
+  if (target && !['BOTH', expectedTarget].includes(target)) issues.add('WRONG_TARGET_TYPE');
+  // Only a configured source mapping may determine which records satisfy a criterion.
+  const sourceType = rules?.sourceType;
+  const permittedIds = sourceType === 'ACHIEVEMENT' ? rules?.achievementTypeIds : rules?.awardTypeIds;
+  const hasSourceRule = ['ACHIEVEMENT', 'AWARD_RECORD'].includes(sourceType) &&
+    Array.isArray(permittedIds) && permittedIds.length > 0 && permittedIds.every(id => Number.isSafeInteger(Number(id)) && Number(id) > 0);
+  if (!hasSourceRule) issues.add('CRITERION_SOURCE_UNMAPPED');
 
   // 1. Phân loại và sàng lọc từng bản ghi hồ sơ
   for (const record of records) {
+    if (!hasSourceRule) continue;
+    if (record.type !== sourceType || !permittedIds.some(id => String(id) === String(record.sourceTypeId))) continue;
     const recSubId = Number(record.subjectId || record.lecturerId || record.unitId);
     if (recSubId !== subjectId) {
       issues.add('WRONG_SUBJECT');
@@ -229,10 +242,10 @@ export function evaluateStructuredCriterion({
     ? (rules?.minimumDistinctYears || Number(criterion.minThreshold || criterion.min_threshold || 1))
     : Number(criterion.minThreshold || criterion.min_threshold || 1);
   
-  const actualRecorded = isYearBased ? distinctYears.length : activeRecords.length;
+  const actualRecorded = hasSourceRule ? (isYearBased ? distinctYears.length : activeRecords.length) : null;
 
   // 7. So sánh ngưỡng theo nguyên tắc: THIẾU CHỨNG CỨ KHÔNG MẶC ĐỊNH KHÔNG ĐẠT
-  const hasDataIntegrityIssue = ['MISSING_DATA', 'REVOKED_SOURCE', 'WRONG_SUBJECT'].some((issue) => issues.has(issue));
+  const hasDataIntegrityIssue = ['MISSING_DATA', 'REVOKED_SOURCE', 'WRONG_SUBJECT', 'WRONG_TARGET_TYPE', 'CRITERION_SOURCE_UNMAPPED'].some((issue) => issues.has(issue));
   if (actualRecorded < targetMin && !hasDataIntegrityIssue) {
     issues.add('BELOW_THRESHOLD');
   }
@@ -258,7 +271,9 @@ export function evaluateStructuredCriterion({
       isSatisfied = 'UNCONFIRMED';
       humanReviewRequired = true;
       overallConclusion = 'NEEDS_HUMAN_REVIEW';
-      warningNotice = `Hồ sơ có dấu hiệu cần rà soát bổ sung (${[...issues].join(', ')}). Cần chuyên viên thẩm định lại.`;
+      warningNotice = issues.has('CRITERION_SOURCE_UNMAPPED')
+        ? 'Chưa có quy tắc xác định loại hồ sơ áp dụng cho tiêu chí này. Cần người có thẩm quyền rà soát.'
+        : `Hồ sơ có dấu hiệu cần rà soát bổ sung (${[...issues].join(', ')}). Cần chuyên viên thẩm định lại.`;
     } else if (issues.has('BELOW_THRESHOLD')) {
       // Dữ liệu đầy đủ nhưng không đạt ngưỡng số lượng/năm
       isSatisfied = false;
@@ -274,7 +289,9 @@ export function evaluateStructuredCriterion({
 
   // 9. Diễn giải logic AI / Rule Analysis (Deterministic summary)
   const analysisParts = [];
-  analysisParts.push(`Đánh giá tiêu chí [${criterion.criterionCode}]: Ghi nhận ${actualRecorded}/${targetMin} (${criterion.unitMetric || 'bản ghi/năm'}).`);
+  analysisParts.push(hasSourceRule
+    ? `Đánh giá tiêu chí [${criterion.criterionCode}]: Ghi nhận ${actualRecorded}/${targetMin} (${criterion.unitMetric || 'bản ghi/năm'}).`
+    : `Tiêu chí [${criterion.criterionCode}] chưa có quy tắc xác định nguồn dữ liệu; chưa thể tính số lượng.`);
   if (distinctYears.length > 0) {
     analysisParts.push(`Các năm ghi nhận hợp lệ: [${distinctYears.join(', ')}] (${isConsecutive ? 'liên tiếp' : 'không liên tiếp'}).`);
   }

@@ -20,7 +20,7 @@ import { portfolioApi } from '../services/portfolioApi';
 
 const actionCards = [
   { title: 'Thành tích', subtitle: 'Kê khai và quản lý thành tích', icon: Award, tone: 'teal', route: '/achievements' },
-  { title: 'Hồ sơ đề nghị', subtitle: 'Lập và theo dõi đề nghị khen thưởng', icon: FileText, tone: 'blue', route: '/award-applications' },
+  { title: 'Đề nghị khen thưởng', subtitle: 'Lập và theo dõi đề nghị khen thưởng', icon: FileText, tone: 'blue', route: '/award-applications' },
   { title: 'Mục tiêu / KPI', subtitle: 'Theo dõi mục tiêu và tiến độ thực hiện', icon: Target, tone: 'amber', route: '/kpi' },
 ];
 
@@ -29,17 +29,6 @@ const toneStyles = {
   blue: 'bg-[#e7f0fc] text-[#7da8e7]',
   amber: 'bg-[#fff6da] text-[#ffc83d]',
 };
-
-function ProgressMetric({ label, value, percent, color }) {
-  return <div>
-    <div className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-slate-600 dark:text-slate-300">
-      <span>{label}</span><span>{value}</span>
-    </div>
-    <div className="h-1.5 overflow-hidden rounded-full bg-white/75 dark:bg-slate-700">
-      <div className={`h-full ${color}`} style={{ width: `${Math.max(6, Math.min(100, percent))}%` }} />
-    </div>
-  </div>;
-}
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -68,7 +57,6 @@ export default function Dashboard() {
     day: '2-digit', month: 'long', year: 'numeric', weekday: 'long',
   }).format(new Date()), []);
 
-  const researchCount = summary?.categories?.RESEARCH || 0;
   const awardCount = summary?.awards?.RecordedCount || 0;
 
   return <div className="animate-fadeIn space-y-6 pb-3">
@@ -91,8 +79,8 @@ export default function Dashboard() {
     <section className="grid gap-6 lg:grid-cols-12">
       <div className="relative min-h-[250px] overflow-hidden rounded-[30px] bg-[#e7ccae] px-7 py-6 dark:bg-[#382f27] sm:px-9 lg:col-span-8">
         <div className="absolute inset-0 bg-gradient-to-r from-[#f1e6d3] via-[#e7ccae] to-[#e7ccae] dark:from-[#382f27] dark:via-[#382f27] dark:to-[#382f27]" />
-        <div className="absolute -right-3 -top-20 h-64 w-[62%] rounded-[50%] bg-[#bd8d3d] dark:bg-[#946a2e]" />
-        <div className="absolute bottom-[-120px] right-[24%] h-64 w-72 rounded-full bg-[#bd8d3d] dark:bg-[#946a2e]" />
+        <div className="absolute hidden sm:block -right-3 -top-20 h-64 w-[62%] rounded-[50%] bg-[#bd8d3d] dark:bg-[#946a2e]" />
+        <div className="absolute hidden sm:block bottom-[-120px] right-[24%] h-64 w-72 rounded-full bg-[#bd8d3d] dark:bg-[#946a2e]" />
         <div className="relative z-10 max-w-[290px]">
           <h2 className="text-[27px] font-black leading-[1.08] text-slate-800 dark:text-amber-50 sm:text-[31px]">
             Hệ thống Quản lý<br />Thành tích & Dự<br />báo AI
@@ -101,17 +89,17 @@ export default function Dashboard() {
             Chúng tôi giúp bạn theo dõi tiến độ nghiên cứu và giảng dạy một cách trực quan nhất.
           </p>
         </div>
-        <img src="/dashboard-student.png" alt="Sinh viên áo xanh đang học cùng các chồng sách" className="absolute bottom-0 right-0 z-10 h-full w-[62%] object-cover object-[70%_54%] drop-shadow-xl" />
+        <img src="/dashboard-student.png" alt="Sinh viên áo xanh đang học cùng các chồng sách" className="absolute bottom-0 right-0 z-10 hidden sm:block h-full w-[48%] object-cover object-[70%_54%] drop-shadow-xl" />
       </div>
 
       <div className="flex min-h-[240px] flex-col rounded-[30px] bg-[#d7eff4] p-7 dark:bg-[#19313b] lg:col-span-4">
-        <h2 className="text-base font-extrabold text-slate-700 dark:text-cyan-50">Khám sức khỏe thành tích (AI)</h2>
-        <p className="mt-1 text-[10px] text-slate-500 dark:text-cyan-100/60">Các tham số cần được cải thiện!</p>
+        <h2 className="text-base font-extrabold text-slate-700 dark:text-cyan-50">Tổng quan hồ sơ</h2>
+        <p className="mt-1 text-xs text-slate-500 dark:text-cyan-100/60">Số bản ghi trong phạm vi bạn được xem.</p>
         <div className="mt-6 space-y-4">
           {loading ? <LoadingState label="Đang tải tổng quan..." rows={1} /> : error ? <ErrorState error={error} onRetry={loadSummary} /> : !summary ? <EmptyState message="Chưa có dữ liệu tổng quan." /> : <>
-          <ProgressMetric label="Nghiên cứu khoa học" value={`${Math.min(100, researchCount * 7)}%`} percent={researchCount * 7} color="bg-[#78a5d1]" />
-          <ProgressMetric label="Giảng dạy" value="65%" percent={65} color="bg-[#96aa70]" />
-          <ProgressMetric label="Dự báo CSTĐ Cơ sở" value={`${Math.min(100, awardCount * 28)}%`} percent={awardCount * 28} color="bg-[#e28b8c]" />
+          <p className="flex justify-between text-sm"><span>Thành tích đã xác nhận</span><strong>{summary.achievements?.VerifiedCount || 0}</strong></p>
+          <p className="flex justify-between text-sm"><span>Khen thưởng đã ghi nhận</span><strong>{awardCount}</strong></p>
+          <p className="text-xs text-slate-500 dark:text-cyan-100/60">Thẩm định tiêu chí cần căn cứ và người có thẩm quyền rà soát.</p>
           </>}
         </div>
       </div>

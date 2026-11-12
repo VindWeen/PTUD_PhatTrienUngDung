@@ -25,6 +25,7 @@ import {
   NotFoundError,
 } from '../../utils/errors.js';
 import { recordAuditLog } from '../audit/auditService.js';
+import { withTransaction } from '../../utils/dbHelper.js';
 
 /**
  * Đăng nhập người dùng bằng Username/Email và Password
@@ -85,6 +86,7 @@ export async function login({ username, password, rememberMe = false, ip = null,
     username: user.Username,
     email: user.Email,
     roles: roleCodes,
+    passwordChangedAt: user.PasswordChangedAt ? new Date(user.PasswordChangedAt).toISOString() : null,
   });
 
   // Ghi nhận nhật ký kiểm toán đăng nhập an toàn (che bí mật)
@@ -130,6 +132,11 @@ export async function login({ username, password, rememberMe = false, ip = null,
 /**
  * Làm mới Access Token thông qua Refresh Token (Token Rotation)
  */
+export function refreshLifetimeDays(token) {
+  const lifetime = new Date(token.ExpiresAt).getTime() - new Date(token.CreatedAt).getTime();
+  return Number.isFinite(lifetime) && lifetime > 20 * 24 * 60 * 60 * 1000 ? 30 : 7;
+}
+
 export async function refreshToken(rawRefreshToken, { ip = null, userAgent = null } = {}) {
   if (!rawRefreshToken) {
     throw new UnauthorizedError('Refresh Token không tồn tại hoặc đã bị thu hồi');
@@ -162,7 +169,8 @@ export async function refreshToken(rawRefreshToken, { ip = null, userAgent = nul
   // Xoay vòng Refresh Token (Token Rotation)
   const newRawRefreshToken = generateRefreshTokenString();
   const newTokenHash = hashToken(newRawRefreshToken);
-  const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const rememberMe = refreshLifetimeDays(existingToken) === 30;
+  const newExpiresAt = new Date(Date.now() + (rememberMe ? 30 : 7) * 24 * 60 * 60 * 1000);
 
   await rotateRefreshToken(existingToken.RefreshTokenId, {
     userId: user.UserId,
@@ -182,6 +190,7 @@ export async function refreshToken(rawRefreshToken, { ip = null, userAgent = nul
     username: user.Username,
     email: user.Email,
     roles: roleCodes,
+    passwordChangedAt: user.PasswordChangedAt ? new Date(user.PasswordChangedAt).toISOString() : null,
   });
 
   return {
@@ -189,6 +198,7 @@ export async function refreshToken(rawRefreshToken, { ip = null, userAgent = nul
     tokenType: 'Bearer',
     expiresIn: 7200,
     newRawRefreshToken,
+    rememberMe,
   };
 }
 
@@ -244,10 +254,11 @@ export async function changePassword(userId, oldPassword, newPassword) {
 
   // Băm mật khẩu mới và cập nhật
   const newHash = await hashPassword(newPassword);
-  await updatePassword(userId, newHash);
-
-  // Thu hồi tất cả Refresh Token của người dùng này để buộc đăng nhập lại trên mọi thiết bị
-  await revokeAllUserTokens(userId);
+  // Publish the password change and revoke refresh sessions atomically.
+  await withTransaction(async ({ client }) => {
+    await updatePassword(userId, newHash, client);
+    await revokeAllUserTokens(userId, client);
+  });
 
   // Ghi nhận nhật ký kiểm toán đổi mật khẩu (tuyệt đối không ghi mật khẩu)
   await recordAuditLog({

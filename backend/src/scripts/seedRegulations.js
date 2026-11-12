@@ -9,20 +9,21 @@ export async function seedRegulations() {
   const pool = await connectDB();
   const client = await pool.connect();
   try {
+    await client.query('BEGIN');
     console.log('🌱 Bắt đầu nạp dữ liệu Quy định & Tiêu chí khen thưởng W3-Q2...');
 
     // Lấy user admin (VD: quangttv hoặc user_id 1)
     const adminUserRes = await client.query(
-      `SELECT user_id FROM app.users ORDER BY user_id ASC LIMIT 1`
+      `SELECT TOP (1) user_id FROM app.users ORDER BY user_id ASC`
     );
     const adminUserId = adminUserRes.rows[0]?.user_id || 1;
 
     // 1. Văn bản 1: VN-LAW-002 (Luật 06/2026/QH16)
     const lawRes = await client.query(
-      `INSERT INTO app.regulation_documents (document_code, title, issuing_authority, document_type, description)
-       VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (document_code) DO UPDATE SET title = EXCLUDED.title
-       RETURNING document_id`,
+      `UPDATE app.regulation_documents WITH (UPDLOCK, HOLDLOCK) SET title=$2 WHERE document_code=$1;
+       IF @@ROWCOUNT=0 INSERT INTO app.regulation_documents(document_code,title,issuing_authority,document_type,description)
+       VALUES($1,$2,$3,$4,$5);
+       SELECT document_id FROM app.regulation_documents WHERE document_code=$1`,
       [
         'VN-LAW-002',
         'Luật số 06/2026/QH16 - Luật Thi đua, Khen thưởng (sửa đổi)',
@@ -34,12 +35,12 @@ export async function seedRegulations() {
     const lawDocId = lawRes.rows[0].document_id;
 
     const lawVerRes = await client.query(
-      `INSERT INTO app.regulation_document_versions (
+      `UPDATE app.regulation_document_versions WITH (UPDLOCK, HOLDLOCK) SET sha256_hash=$3 WHERE document_id=$1 AND version_number=$2;
+       IF @@ROWCOUNT=0 INSERT INTO app.regulation_document_versions (
          document_id, version_number, sha256_hash, source_url, signed_date,
          effective_from, is_official, is_confirmed, lhu_application_status, created_by
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-       ON CONFLICT (document_id, version_number) DO UPDATE SET sha256_hash = EXCLUDED.sha256_hash
-       RETURNING version_id`,
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
+       SELECT version_id FROM app.regulation_document_versions WHERE document_id=$1 AND version_number=$2`,
       [
         lawDocId,
         '06/2026/QH16, 23/04/2026',
@@ -66,18 +67,17 @@ export async function seedRegulations() {
       const hash = computeSha256(`${c.article}:${c.clause}:${c.content}`);
       await client.query(
         `INSERT INTO app.regulation_chunks (version_id, article_no, clause_no, page_no, content, chunk_hash)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         ON CONFLICT DO NOTHING`,
+         SELECT $1,$2,$3,$4,$5,$6 WHERE NOT EXISTS (SELECT 1 FROM app.regulation_chunks WITH (UPDLOCK, HOLDLOCK) WHERE version_id=$1 AND chunk_hash=$6)`,
         [lawVerId, c.article, c.clause, c.page, c.content, hash]
       );
     }
 
     // 2. Văn bản 2: VN-EDU-001 (Thông tư 07/2026/TT-BGDĐT)
     const eduRes = await client.query(
-      `INSERT INTO app.regulation_documents (document_code, title, issuing_authority, document_type, description)
-       VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (document_code) DO UPDATE SET title = EXCLUDED.title
-       RETURNING document_id`,
+      `UPDATE app.regulation_documents WITH (UPDLOCK, HOLDLOCK) SET title=$2 WHERE document_code=$1;
+       IF @@ROWCOUNT=0 INSERT INTO app.regulation_documents(document_code,title,issuing_authority,document_type,description)
+       VALUES($1,$2,$3,$4,$5);
+       SELECT document_id FROM app.regulation_documents WHERE document_code=$1`,
       [
         'VN-EDU-001',
         'Thông tư 07/2026/TT-BGDĐT - Hướng dẫn công tác thi đua, khen thưởng ngành Giáo dục',
@@ -89,12 +89,12 @@ export async function seedRegulations() {
     const eduDocId = eduRes.rows[0].document_id;
 
     const eduVerRes = await client.query(
-      `INSERT INTO app.regulation_document_versions (
+      `UPDATE app.regulation_document_versions WITH (UPDLOCK, HOLDLOCK) SET sha256_hash=$3 WHERE document_id=$1 AND version_number=$2;
+       IF @@ROWCOUNT=0 INSERT INTO app.regulation_document_versions (
          document_id, version_number, sha256_hash, source_url, signed_date,
          effective_from, is_official, is_confirmed, lhu_application_status, created_by, confirmation_notes
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-       ON CONFLICT (document_id, version_number) DO UPDATE SET sha256_hash = EXCLUDED.sha256_hash
-       RETURNING version_id`,
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);
+       SELECT version_id FROM app.regulation_document_versions WHERE document_id=$1 AND version_number=$2`,
       [
         eduDocId,
         '07/2026/TT-BGDĐT, 15/02/2026',
@@ -123,18 +123,17 @@ export async function seedRegulations() {
       const hash = computeSha256(`${c.article}:${c.clause}:${c.content}`);
       await client.query(
         `INSERT INTO app.regulation_chunks (version_id, article_no, clause_no, page_no, content, chunk_hash)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         ON CONFLICT DO NOTHING`,
+         SELECT $1,$2,$3,$4,$5,$6 WHERE NOT EXISTS (SELECT 1 FROM app.regulation_chunks WITH (UPDLOCK, HOLDLOCK) WHERE version_id=$1 AND chunk_hash=$6)`,
         [eduVerId, c.article, c.clause, c.page, c.content, hash]
       );
     }
 
     // 3. Văn bản 3: W1-P4-SIMULATION (Mô phỏng KPI Demo)
     const simRes = await client.query(
-      `INSERT INTO app.regulation_documents (document_code, title, issuing_authority, document_type, description)
-       VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (document_code) DO UPDATE SET title = EXCLUDED.title
-       RETURNING document_id`,
+      `UPDATE app.regulation_documents WITH (UPDLOCK, HOLDLOCK) SET title=$2 WHERE document_code=$1;
+       IF @@ROWCOUNT=0 INSERT INTO app.regulation_documents(document_code,title,issuing_authority,document_type,description)
+       VALUES($1,$2,$3,$4,$5);
+       SELECT document_id FROM app.regulation_documents WHERE document_code=$1`,
       [
         'W1-P4-SIMULATION',
         'Bộ tiêu chí mô phỏng KPI và Khung xét thưởng Demo W1-P4',
@@ -146,12 +145,12 @@ export async function seedRegulations() {
     const simDocId = simRes.rows[0].document_id;
 
     const simVerRes = await client.query(
-      `INSERT INTO app.regulation_document_versions (
+      `UPDATE app.regulation_document_versions WITH (UPDLOCK, HOLDLOCK) SET sha256_hash=$3 WHERE document_id=$1 AND version_number=$2;
+       IF @@ROWCOUNT=0 INSERT INTO app.regulation_document_versions (
          document_id, version_number, sha256_hash, source_url,
          effective_from, is_official, is_confirmed, lhu_application_status, created_by, confirmation_notes
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-       ON CONFLICT (document_id, version_number) DO UPDATE SET sha256_hash = EXCLUDED.sha256_hash
-       RETURNING version_id`,
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
+       SELECT version_id FROM app.regulation_document_versions WHERE document_id=$1 AND version_number=$2`,
       [
         simDocId,
         'bb6eb73-W1-P4',
@@ -178,8 +177,7 @@ export async function seedRegulations() {
       const hash = computeSha256(`${c.article}:${c.clause}:${c.content}`);
       await client.query(
         `INSERT INTO app.regulation_chunks (version_id, article_no, clause_no, page_no, content, chunk_hash)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         ON CONFLICT DO NOTHING`,
+         SELECT $1,$2,$3,$4,$5,$6 WHERE NOT EXISTS (SELECT 1 FROM app.regulation_chunks WITH (UPDLOCK, HOLDLOCK) WHERE version_id=$1 AND chunk_hash=$6)`,
         [simVerId, c.article, c.clause, c.page, c.content, hash]
       );
     }
@@ -230,14 +228,10 @@ export async function seedRegulations() {
 
     for (const cr of criteria) {
       await client.query(
-        `INSERT INTO app.award_criteria_versions (
-           version_id, criterion_code, name, target_type, min_threshold,
-           unit_metric, legal_references, is_confirmed, notes
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-         ON CONFLICT (version_id, criterion_code) DO UPDATE
-         SET name = EXCLUDED.name,
-             legal_references = EXCLUDED.legal_references,
-             notes = EXCLUDED.notes`,
+        `UPDATE app.award_criteria_versions WITH (UPDLOCK, HOLDLOCK)
+         SET name=$3, legal_references=$7, notes=$9 WHERE version_id=$1 AND criterion_code=$2;
+         IF @@ROWCOUNT=0 INSERT INTO app.award_criteria_versions(version_id,criterion_code,name,target_type,min_threshold,unit_metric,legal_references,is_confirmed,notes)
+         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
         [
           simVerId,
           cr.code,
@@ -252,7 +246,11 @@ export async function seedRegulations() {
       );
     }
 
+    await client.query('COMMIT');
     console.log('✅ Đã nạp thành công 3 văn bản quy định, 13 chunks và 4 tiêu chí khen thưởng vào CSDL!');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
   } finally {
     client.release();
   }

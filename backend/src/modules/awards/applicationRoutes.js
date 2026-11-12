@@ -32,6 +32,10 @@ router.get(
   "/award-applications/:id",
   handle((r) => service.detail(r.params.id, r.user)),
 );
+router.patch(
+  "/award-applications/:id",
+  handle((r) => service.update(r.params.id, r.body, r.user)),
+);
 router.post(
   "/award-applications/:id/submit",
   handle((r) => service.transition(r.params.id, r.body, r.user, "submit")),

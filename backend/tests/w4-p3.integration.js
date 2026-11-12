@@ -258,18 +258,38 @@ try {
     }
     await post("request-correction", 5);
     await post("recommend", 6, 2, {}, 409);
-    await post("resubmit", 6, 1);
+    const correction = {version: 6, purpose: 'SYNTHETIC corrected proposal', achievementIds: [Number(aid)], awardRecordIds: []};
+    await call('PATCH', path, correction, 2, 403);
+    await call('PATCH', path, {...correction, cycleId: cycle.award_period_id}, 1, 400);
+    await call('PATCH', path, {...correction, achievementIds: []}, 1, 400);
+    await call('PATCH', path, {...correction, version: 5}, 1, 409);
+    const edited = await call('PATCH', path, correction, 1);
+    assert.equal(Number(edited.version), 7);
+    // A withdrawn source must stop resubmission, retaining the previous immutable input.
+    await client.query(rewrite("UPDATE app.achievements SET status='REVOKED' WHERE achievement_id=$1"), [aid]);
+    await post('resubmit', 7, 1, {}, 400);
+    const rejected = await call('GET', path, null, 1);
+    assert.equal(Number(rejected.version), 7);
+    assert.deepEqual(rejected.input, frozen.input);
+    await client.query(rewrite("UPDATE app.achievements SET status='VERIFIED' WHERE achievement_id=$1"), [aid]);
+    await post("resubmit", 7, 1);
     await call(
       "POST",
       path + "/forward",
-      { version: 7, reason: "SYNTHETIC unit recheck" },
+      { version: 8, reason: "SYNTHETIC unit recheck" },
       2,
     );
-    await post("recommend", 8);
+    await post("recommend", 9);
     const completed = await call("GET", path, null, 2);
     assert.equal(completed.status, "RECOMMENDED");
-    assert.deepEqual(completed.input, frozen.input);
-    await post("recommend", 9, 2, {}, 409);
+    assert.equal(Number(completed.input.input_version), 2);
+    assert.equal(completed.input.snapshot.inputVersion, 2);
+    assert.equal(completed.input.snapshot.purpose, correction.purpose);
+    const original = (await client.query(rewrite('SELECT * FROM app.award_application_inputs WHERE application_id=$1 AND input_version=1'), [application.application_id])).rows[0];
+    assert.deepEqual(original.snapshot, frozen.input.snapshot);
+    assert.equal(completed.canEdit, false);
+    await call('PATCH', path, {...correction, version: 10}, 1, 409);
+    await post("recommend", 10, 2, {}, 409);
     const inbox = await call("GET", "/notifications", null, 2);
     assert.ok(inbox.items.some((n) => n.entityType === "APPLICATION"));
     assert.equal(

@@ -5,7 +5,7 @@ SHA-256 và baseline nằm candidate-manifest.json. Không chỉnh ảnh/ERD/wor
 | Bộ | Loại / phiên bản | Dùng trong báo cáo |
 |---|---|---|
 | docs/testing/week-4/media/*.png | Ảnh UI test W4: loading/error/quota desktop/mobile | Chỉ minh họa trạng thái UI; xem ui-result.json, không khẳng định provider live |
-| docs/weekly/images/W2_P4_*.png | Fixture/report W2 | Luôn ghi FIXTURE, không là dữ liệu người dùng thật |
+| docs/archive/weekly/images/W2_P4_*.png | Fixture/report W2 | Luôn ghi FIXTURE, không là dữ liệu người dùng thật |
 | Page_Design/*.png | Mockup thiết kế ban đầu | Chỉ dùng phụ lục thiết kế, không là ảnh nghiệm thu chức năng |
 | docs/database/ERD.md + DATA_DICTIONARY.md + SCHEMA_DDL.sql | Thiết kế W1 | Nguồn lịch sử; chưa bao phủ migrations W2–W5 hoặc drift live verified_by |
 | database/migrations/*.sql | Schema code ứng viên | Nguồn đối chiếu ERD hiện hành, chưa đồng nghĩa schema live |

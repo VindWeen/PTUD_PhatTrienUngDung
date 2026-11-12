@@ -45,6 +45,7 @@ export function createAchievementService(
   async function listAchievements(user, queryParams = {}) {
     const roles = await getUserRoles(user);
     const filters = { ...queryParams };
+    filters.statuses = { ACTIONABLE: ['DRAFT', 'NEED_CORRECTION'], PENDING: ['SUBMITTED'], VERIFIED: ['VERIFIED'], ENDED: ['REJECTED', 'REVOKED', 'CANCELLED'] }[queryParams.workflow];
 
     const isAdmin = roles.includes('ADMIN');
     const isManager = roles.includes('MANAGER');
@@ -70,7 +71,7 @@ export function createAchievementService(
       if (isUnitRep) {
         const representedUnitIds = await repo.listUserRepresentedUnitIds(user.userId);
         if (representedUnitIds.length > 0) {
-          orConditions.push(`a.unit_id = ANY(ARRAY[${representedUnitIds.join(',')}]::bigint[])`);
+          orConditions.push(`a.unit_id IN (${representedUnitIds.map(id => Number(id)).filter(Number.isSafeInteger).join(',') || 'NULL'})`);
         }
       }
 
@@ -83,7 +84,7 @@ export function createAchievementService(
         const scopedUnitIds = [...new Set([...applicableScopes.map(s => Number(s.unitId)), ...descendants])];
         if (scopedUnitIds.length > 0) {
           // Bao gồm cả đơn vị con nếu includeDescendants
-          orConditions.push(`a.context_unit_id = ANY(ARRAY[${scopedUnitIds.join(',')}]::bigint[])`);
+          orConditions.push(`a.context_unit_id IN (${scopedUnitIds.map(id => Number(id)).filter(Number.isSafeInteger).join(',') || 'NULL'})`);
         }
       }
 
@@ -207,6 +208,10 @@ export function createAchievementService(
           `Chỉ có thể tạo bản thay thế cho hồ sơ đã kết thúc (REJECTED, CANCELLED, REVOKED). Trạng thái hiện tại của hồ sơ #${payload.replacesAchievementId}: [${targetOld.status}]`
         );
       }
+      if (String(targetOld.lecturerId || '') !== String(lecturerId || '') ||
+          String(targetOld.organizationUnitId || '') !== String(organizationUnitId || '')) {
+        throw new ForbiddenError('Bản thay thế phải thuộc cùng chủ thể với hồ sơ cũ');
+      }
       replacesAchievementId = payload.replacesAchievementId;
     }
 
@@ -317,7 +322,7 @@ export function createAchievementService(
     }
 
     // Nghiệm thu: "chỉ nháp chưa gửi được xóa"
-    if (existing.status !== 'DRAFT') {
+    if (existing.status !== 'DRAFT' || existing.submissions?.length) {
       throw new ConflictError(
         `Không thể xóa hồ sơ ở trạng thái [${existing.status}]. Quy tắc hệ thống chỉ cho phép xóa hồ sơ Bản nháp (DRAFT) chưa từng gửi duyệt.`
       );
@@ -340,7 +345,7 @@ export function createAchievementService(
       }
     }
 
-    const deleted = await repo.deleteAchievement(id);
+    const deleted = await repo.deleteAchievement(id, user.userId, existing.version);
     if (!deleted) {
       throw new ConflictError('Không thể xóa bản ghi thành tích');
     }
@@ -354,13 +359,27 @@ export function createAchievementService(
       oldValues: existing,
     });
 
-    return { message: 'Đã xóa bản nháp thành tích thành công' };
+    return { message: 'Đã chuyển bản nháp vào thùng rác. Có thể khôi phục trong 30 ngày.' };
   }
 
   /**
    * W2-Q3: Gửi duyệt hồ sơ thành tích (DRAFT hoặc NEED_CORRECTION -> SUBMITTED)
    * Yêu cầu: Đủ dữ liệu, ít nhất 1 file, snapshot nội dung/phiên bản file, transaction ghi trạng thái/history/audit/notification, UPDATE với id+version+status
    */
+  async function restoreAchievement(user, id) {
+    const existing = await repo.findAchievementById(id, null, true);
+    if (!existing || !existing.deletedAt) throw new NotFoundError('Không tìm thấy bản nháp trong thùng rác');
+    const activeRoles = await getUserRoles(user);
+    const owner = existing.subjectType === 'LECTURER'
+      ? String(existing.lecturer?.userId) === String(user.userId)
+      : Boolean(await repo.findActiveRepresentative(user.userId, existing.organizationUnitId));
+    if (!activeRoles.includes('ADMIN') && !owner) throw new ForbiddenError('Bạn không có quyền khôi phục bản nháp này');
+    if (new Date(existing.expiresAt).getTime() <= Date.now()) throw new ConflictError('Bản nháp đã hết thời hạn khôi phục 30 ngày');
+    if (!await repo.restoreAchievement(id, existing.version)) throw new ConflictError('Bản nháp đã thay đổi hoặc hết thời hạn khôi phục. Vui lòng làm mới.');
+    await recordAuditLog({ userId: user.userId, action: 'ACHIEVEMENT_RESTORE', entityName: 'achievements', entityId: id });
+    return repo.findAchievementById(id);
+  }
+
   async function submitAchievement(user, id, payload) {
     const existing = await repo.findAchievementById(id);
     if (!existing) {
@@ -1061,6 +1080,7 @@ export function createAchievementService(
     createAchievement,
     updateAchievement,
     deleteAchievement,
+    restoreAchievement,
     submitAchievement,
     verifyAchievement,
     requestCorrection,

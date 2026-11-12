@@ -3,7 +3,7 @@ import authenticate from '../../middlewares/authenticate.js';
 import requireRoles from '../../middlewares/requireRoles.js';
 import { hashPassword } from '../../utils/crypto.js';
 import * as repo from './adminRepository.js';
-import { assignmentSchema, representativeSchema, userSchema, userUpdateSchema, catalogDefinitions, parseId } from './adminSchemas.js';
+import { assignmentSchema, representativeSchema, userSchema, userUpdateSchema, catalogDefinitions, parseId, permissionsSchema } from './adminSchemas.js';
 const router = express.Router();
 router.use(authenticate, requireRoles('ADMIN'));
 const handle = fn => async (req,res,next) => { try { res.json({ success: true, data: await fn(req) }); } catch (e) { next(e); } };
@@ -12,6 +12,8 @@ for (const resource of ['users','roles','scopes','user-roles','representatives',
 }
 router.post('/users', handle(async r => { const v = userSchema.parse(r.body); return repo.createUser(r.user.userId,v,await hashPassword(v.password)); }));
 router.patch('/users/:id', handle(r => repo.updateUser(r.user.userId,parseId(r.params.id),userUpdateSchema.parse(r.body))));
+router.get('/users/:id/permissions', handle(r => repo.getPermissions(parseId(r.params.id))));
+router.post('/users/:id/permissions', handle(r => repo.savePermissions(r.user.userId,parseId(r.params.id),permissionsSchema.parse(r.body))));
 for (const resource of ['scopes','user-roles','representatives']) {
   router.post(`/${resource}`, handle(r => repo.assign(r.user.userId,resource,(resource === 'representatives' ? representativeSchema : assignmentSchema).parse(r.body))));
   router.delete(`/${resource}/:id`, handle(r => repo.revoke(r.user.userId,resource,parseId(r.params.id))));

@@ -8,7 +8,18 @@ import {
   confirmCriteriaSchema,
   queryRegulationsSchema,
   queryCriteriaSchema,
+  updateSourceRulesSchema,
 } from './regulationSchemas.js';
+
+export async function getSourceCatalogs(req, res, next) {
+  try { ok(res, await regulationService.getSourceCatalogs(req.user)); } catch (err) { next(err); }
+}
+
+export async function configureSourceRules(req, res, next) {
+  try {
+    ok(res, await regulationService.configureSourceRules(Number(req.params.id), updateSourceRulesSchema.parse(req.body), req.user));
+  } catch (err) { next(err); }
+}
 
 const ok = (res, data, status = 200) =>
   res.status(status).json({ success: true, ...(data === undefined ? {} : { data }) });

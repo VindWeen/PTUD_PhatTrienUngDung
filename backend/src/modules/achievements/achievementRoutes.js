@@ -42,6 +42,8 @@ router.delete(
   controller.remove
 );
 
+router.post('/achievements/:id/restore', requireRoles('LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'), controller.restore);
+
 // 6. Xem lịch sử chuyển trạng thái
 router.get('/achievements/:id/history', controller.getHistory);
 

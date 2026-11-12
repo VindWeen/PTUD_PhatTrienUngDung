@@ -1,5 +1,5 @@
 import Select from '../components/common/Select';
-import RegulationEditor from '../components/RegulationEditor';
+import RegulationEditor, { CriterionSources } from '../components/RegulationEditor';
 import UnderlineTabs from '../components/common/UnderlineTabs';
 import PageHeader from '../components/common/PageHeader';
 import React, { useState, useEffect, useCallback } from 'react';
@@ -174,6 +174,7 @@ export default function Regulations() {
     try {
       await regulationsApi.confirmCriteria(criterionId, {
         isConfirmed,
+        expectedSourceRulesRevision: criteria.find(c => c.criteria_version_id === criterionId)?.source_rules_revision || 0,
         notes: isConfirmed ? 'Xác nhận áp dụng tiêu chuẩn cho Hội đồng và Đánh giá' : 'Đưa về bản nháp chưa xác nhận',
       });
       fetchData();
@@ -249,7 +250,7 @@ export default function Regulations() {
 
   const pageHeader = (<PageHeader title="Kho quy định" description="Quản lý văn bản, phiên bản, trích đoạn và tiêu chí xét khen thưởng." icon={BookOpen} onRefresh={fetchData} refreshing={loading} primaryAction={isManagerOrAdmin ? {label: 'Thêm Văn bản mới', onClick: () => setShowDocModal(true)} : null} tabs={<UnderlineTabs label="Nội dung kho quy định" value={activeTab} onChange={setActiveTab} items={[
         {id: 'documents', label: `Văn bản & Phiên bản (${documents.length})`, icon: FileText},
-        {id: 'chunks', label: 'Trích đoạn Tra cứu (Chunks)', icon: Layers},
+        {id: 'chunks', label: 'Tra cứu trích đoạn', icon: Layers},
         {id: 'criteria', label: `Tiêu chí Khen thưởng (${criteria.length})`, icon: FileCheck},
       ]} />} />);
   if (loading && documents.length === 0) return <div className="space-y-6">{pageHeader}<LoadingState label="Đang tải kho văn bản và tiêu chí quy định..." /></div>;
@@ -259,12 +260,13 @@ export default function Regulations() {
     <div className="space-y-6">
       {pageHeader}
 
-      <div className="soft-card p-5 text-sm text-slate-600 dark:text-slate-300 space-y-2">
+      <details className="soft-card p-4 text-sm text-slate-600 dark:text-slate-300 space-y-2">
+        <summary className="cursor-pointer font-semibold">Hướng dẫn quản lý và cập nhật quy định</summary>
         <p><strong>Quy định mới:</strong> người có quyền quản lý chọn Thêm văn bản mới, tạo phiên bản với ngày hiệu lực và nguồn gốc, rồi bổ sung trích đoạn và tiêu chí. Hội đồng hoặc quản trị viên phê duyệt để áp dụng.</p>
         <p><strong>Quy định thay đổi:</strong> chọn văn bản và tạo phiên bản mới thay thế phiên bản đang chọn. Hệ thống giữ lịch sử và kết thúc hiệu lực phiên bản cũ từ ngày phiên bản thay thế có hiệu lực.</p>
         <p>AI sử dụng các trích đoạn và tiêu chí đã được ghi nhận; việc thêm đường dẫn hoặc nội dung để tính mã toàn vẹn chưa tự tạo tiêu chí hay tự phê duyệt quy định.</p>
-      </div>
-      {isManagerOrAdmin && selectedVersion && ['chunks','criteria'].includes(activeTab) && <RegulationEditor key={selectedVersion.version_id + activeTab} version={selectedVersion} mode={activeTab} onSaved={async () => { await fetchData(); }} />}
+      </details>
+      {isManagerOrAdmin && selectedVersion && ['chunks','criteria'].includes(activeTab) && <RegulationEditor key={selectedVersion.version_id + activeTab} version={selectedVersion} mode={activeTab} canConfigureSources={canApprove} onSaved={async () => { await fetchData(); }} />}
 
       {/* Notice Banner */}
       <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
@@ -272,7 +274,7 @@ export default function Regulations() {
         <div className="text-sm text-amber-800 dark:text-amber-300 space-y-1">
           <p className="font-semibold">Áp dụng quy định đã được phê duyệt:</p>
           <p>
-            Chỉ những phiên bản văn bản và tiêu chí được Hội đồng LHU thẩm định phê duyệt chính thức  mới được cấp phép cho bộ phân tích AI và quy trình xét khen thưởng. Mọi dữ liệu mô phỏng đều được cô lập và gắn nhãn cảnh báo rõ ràng.
+            Chỉ văn bản và tiêu chí đã được phê duyệt mới được dùng để phân tích AI và xét khen thưởng. Dữ liệu mô phỏng có nhãn riêng.
           </p>
         </div>
       </div>
@@ -367,7 +369,7 @@ export default function Regulations() {
                 {/* Danh sách các phiên bản */}
                 <div>
                   <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-4">
-                    Lịch sử Phiên bản (Bất biến & Quan hệ Thay thế)
+                    Lịch sử phiên bản
                   </h3>
                   <div className="space-y-4">
                     {(selectedDoc.versions || []).map((ver) => {
@@ -432,7 +434,9 @@ export default function Regulations() {
                           </div>
 
                           {/* SHA-256 Hash */}
-                          <div className="flex items-center justify-between gap-2 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-mono">
+                          <details className="text-xs text-slate-500 dark:text-slate-400">
+                            <summary className="cursor-pointer">Thông tin kiểm tra tính toàn vẹn</summary>
+                          <div className="mt-2 flex items-center justify-between gap-2 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-mono">
                             <div className="flex items-center gap-1.5 overflow-hidden text-slate-500">
                               <Hash className="w-3.5 h-3.5 flex-shrink-0 text-slate-400" />
                               <span className="truncate" title={ver.sha256_hash}>
@@ -451,6 +455,7 @@ export default function Regulations() {
                               )}
                             </button>
                           </div>
+                          </details>
 
                           {/* Link nguồn chính thức */}
                           {ver.source_url && (
@@ -530,13 +535,11 @@ export default function Regulations() {
                       {chunk.clause_no && <span>{chunk.clause_no}</span>}
                       {chunk.page_no && <span className="text-slate-400">Trang {chunk.page_no}</span>}
                     </div>
-                    <span className="font-mono text-[11px] text-slate-400">
-                      Hash: {chunk.chunk_hash.substring(0, 16)}...
-                    </span>
                   </div>
                   <p className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
                     {chunk.content}
                   </p>
+                  <details className="text-xs text-slate-500 dark:text-slate-400"><summary className="cursor-pointer">Thông tin kiểm tra tính toàn vẹn</summary><code className="mt-2 block break-all">SHA-256: {chunk.chunk_hash || 'Chưa có mã kiểm tra'}</code></details>
                 </div>
               ))
             )}
@@ -584,6 +587,7 @@ export default function Regulations() {
                     <td className="px-4 py-3 max-w-xs">
                       <div className="font-medium text-slate-900 dark:text-white">{c.name}</div>
                       {c.notes && <div className="text-xs text-slate-400 mt-0.5">{c.notes}</div>}
+                      <CriterionSources key={`${c.criteria_version_id}:${c.source_rules_revision}`} criterion={c} canConfigure={canApprove} onSaved={fetchData} />
                     </td>
                     <td className="px-4 py-3 text-xs">
                       <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-medium">

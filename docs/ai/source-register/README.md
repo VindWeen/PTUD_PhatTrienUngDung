@@ -1,6 +1,6 @@
 # Sổ nguồn nghiệp vụ W1-P4
 
-Ngày chốt trạng thái: **01/10/2026**. Bảng máy đọc được nằm tại [06_Nguon.csv](./06_Nguon.csv). Repo không có workbook/sheet `06_Nguon` sẵn, vì vậy CSV này là bản tương thích để nhập thẳng vào sheet `06_Nguon` mà không tạo hoặc sửa nhầm workbook của thành viên khác.
+Ngày chốt trạng thái: **01/10/2026**. Bảng máy đọc được nằm tại [06_Nguon.csv](06_Nguon.csv). Repo không có workbook/sheet `06_Nguon` sẵn, vì vậy CSV này là bản tương thích để nhập thẳng vào sheet `06_Nguon` mà không tạo hoặc sửa nhầm workbook của thành viên khác.
 
 ## Kết luận áp dụng tại ngày chuyển tiếp
 

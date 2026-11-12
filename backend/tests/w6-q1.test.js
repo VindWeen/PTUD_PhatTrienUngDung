@@ -14,6 +14,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
+import { safeFile, within, checkReferences } from '../../scripts/backup.mjs';
+import { validateTargetName } from '../../scripts/restore.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '../..');
@@ -84,51 +86,31 @@ describe('W6-Q1 S1: Migration 009 — schema drift fix verified_by', () => {
 // ============================================================================
 // Suite 2: restore.mjs — P1 Fixes Kiểm chứng
 // ============================================================================
-describe('W6-Q1 S2: restore.mjs — P1 blockers đã được sửa', () => {
-  const restorePath = path.join(ROOT, 'scripts/restore.mjs');
-  let restoreSource;
-
-  before(() => {
-    restoreSource = fs.readFileSync(restorePath, 'utf8');
+describe('W6-Q1 S2: Native restore preserves containment, file integrity and database isolation', () => {
+  const root = path.resolve(ROOT, 'tmp/sqlserver-migration/unit-containment');
+  it('resolves private keys inside the selected root', () => {
+    assert.equal(safeFile(root, 'evidences/test.pdf'), path.resolve(root, 'evidences/test.pdf'));
+    assert.equal(within(root, safeFile(root, 'evidences/test.pdf')), true);
   });
-
-  it('restore.mjs tồn tại', () => {
-    assert.ok(fs.existsSync(restorePath));
+  it('rejects parent traversal from the backup root', () => {
+    assert.throws(() => safeFile(root, '../outside.pdf'), /Unsafe|escapes/);
   });
-
-  it('P1-fix: containment check path.resolve có trong restorePrivateStorage', () => {
-    assert.match(restoreSource, /path\.resolve\(backupStorageDir,\s*item\.storageKey\)/,
-      'Cần dùng path.resolve thay path.join khi tính srcPath để containment check hoạt động');
+  it('rejects Windows traversal from the target root', () => {
+    assert.throws(() => safeFile(root, '..\\outside.pdf'), /Unsafe|escapes/);
   });
-
-  it('P1-fix: containment guard chặn srcPath thoát backup root', () => {
-    assert.match(restoreSource, /srcPath\.startsWith\(resolvedBackupRoot/,
-      'Cần kiểm tra srcPath.startsWith(resolvedBackupRoot ...) để chặn path traversal');
+  it('fails hard when a DB-referenced private file is missing', () => {
+    assert.throws(() => checkReferences([{storage_key:'a.pdf'}], []), /Missing\/mismatched/);
   });
-
-  it('P1-fix: containment guard chặn dstPath thoát target root', () => {
-    assert.match(restoreSource, /dstPath\.startsWith\(resolvedTargetRoot/,
-      'Cần kiểm tra dstPath.startsWith(resolvedTargetRoot ...) để chặn path traversal');
+  it('fails hard when a referenced file has a different size', () => {
+    assert.throws(() => checkReferences([{storage_key:'a.pdf',file_size:'5',sha256_hash:'a'}],
+      [{storageKey:'a.pdf',fileSizeBytes:4,checksumSha256:'a'}]), /Missing\/mismatched/);
   });
-
-  it('P1-fix: fail hard khi downloadCheck.allPassed false', () => {
-    assert.match(restoreSource, /if\s*\(\s*!downloadCheck\.allPassed\s*\)/,
-      'Cần throw khi downloadCheck.allPassed là false');
+  it('fails hard when a referenced file has a different SHA256', () => {
+    assert.throws(() => checkReferences([{storage_key:'a.pdf',file_size:'5',sha256_hash:'a'}],
+      [{storageKey:'a.pdf',fileSizeBytes:5,checksumSha256:'b'}]), /Missing\/mismatched/);
   });
-
-  it('P1-fix: throw sau !downloadCheck.allPassed có chứa thông báo lỗi rõ ràng', () => {
-    const failBlock = restoreSource.match(/if\s*\(\s*!downloadCheck\.allPassed\s*\)([\s\S]{0,500}?throw\s+new\s+Error)/);
-    assert.ok(failBlock, 'Không tìm thấy block "throw new Error" sau !downloadCheck.allPassed');
-  });
-
-  it('P1-fix: restorePrivateStorage throw khi storageKey traversal nguồn', () => {
-    assert.match(restoreSource, /Chặn path traversal.*backup root/,
-      'Cần message lỗi rõ khi storageKey thoát backup root');
-  });
-
-  it('P1-fix: restorePrivateStorage throw khi storageKey traversal đích', () => {
-    assert.match(restoreSource, /Chặn path traversal.*target root/,
-      'Cần message lỗi rõ khi storageKey thoát target root');
+  it('refuses to overwrite the protected source database', () => {
+    assert.throws(() => validateTargetName('PTUD_restore_primary',['PTUD_restore_primary']), /differ/);
   });
 });
 
@@ -266,8 +248,8 @@ describe('W6-Q1 S5: Regression — các file test liên quan vẫn tồn tại v
 
   it('restore.mjs vẫn có safety guard chặn ghi đè DB làm việc', () => {
     const src = fs.readFileSync(path.join(ROOT, 'scripts/restore.mjs'), 'utf8');
-    assert.match(src, /PHÁT HIỆN NGUY HIỂM|KHÔNG RESTORE ĐÈ DB/,
-      'Safety guard không được bị xóa khi sửa P1');
+    assert.throws(() => validateTargetName('PTUD_restore_primary', ['PTUD_restore_primary']), /differ/);
+    assert.match(src, /Restore target already exists/);
   });
 
   it('migration 009 không chứa DROP TABLE hoặc TRUNCATE', () => {

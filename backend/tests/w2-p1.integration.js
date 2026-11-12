@@ -114,6 +114,27 @@ try {
   const login = await call('POST','/auth/login',{ username:'test.synthetic',password:'TestDemo12345!' });
   tokens[created.id] = login.accessToken;
   await call('GET','/auth/me',null,created.id);
+  await call('GET','/me/profile',null,created.id,404);
+  const lecturerRoleId = (await client.query(rewrite("SELECT role_id FROM app.roles WHERE code='LECTURER'"))).rows[0].role_id;
+  const provision = { userId:created.id,roleId:Number(lecturerRoleId),unitId:2,employeeCode:'TEST_PROVISIONED',...period };
+  await call('POST','/admin/user-roles',provision,created.id,403);
+  const lecturerGrant = await call('POST','/admin/user-roles',provision);
+  const profile = await call('GET','/me/profile',null,created.id);
+  assert.equal(profile.employeeCode,'TEST_PROVISIONED');
+  assert.equal(profile.fullName,'Test');
+  assert.equal(Number(profile.workHistory[0].unitId),2);
+  await call('GET','/me/cv',null,created.id);
+  const newType = await call('POST','/admin/achievement-types',{code:'PROVISIONED_TYPE',name:'Provisioning test',applicableSubjectType:'LECTURER'});
+  const achievement = await call('POST','/achievements',{subjectType:'LECTURER',achievementTypeId:Number(newType.id),title:'Provisioned lecturer achievement',recognitionYear:2026},created.id,201);
+  assert.equal(Number(achievement.contextUnitId),2);
+  // Regranting never duplicates the identity or resets an established unit.
+  await call('DELETE',`/admin/user-roles/${lecturerGrant.id}`);
+  await call('POST','/admin/user-roles',provision);
+  assert.equal(Number((await client.query(rewrite('SELECT COUNT(*) FROM app.lecturers WHERE user_id=$1'),[created.id])).rows[0].count),1);
+  assert.equal(Number((await client.query(rewrite('SELECT COUNT(*) FROM app.lecturer_assignments WHERE lecturer_id=$1'),[profile.lecturerId])).rows[0].count),1);
+  const grantCount = Number((await client.query(rewrite('SELECT COUNT(*) FROM app.user_roles WHERE user_id=$1'),[created.id])).rows[0].count);
+  await call('POST','/admin/user-roles',{...provision,employeeCode:'WRONG_IDENTITY'},3,409);
+  assert.equal(Number((await client.query(rewrite('SELECT COUNT(*) FROM app.user_roles WHERE user_id=$1'),[created.id])).rows[0].count),grantCount,'Failed provisioning rolls back role grant');
   await call('PATCH',`/admin/users/${created.id}`,{ email:created.email,displayName:'Test',version:Number(created.version),status:'INACTIVE' });
   await call('GET','/auth/me',null,created.id,401);
   await call('PATCH',`/admin/users/${created.id}`,{ email:created.email,displayName:'Test',version:Number(created.version),status:'ACTIVE' },3,409);

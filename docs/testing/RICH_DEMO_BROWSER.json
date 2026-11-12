@@ -1,0 +1,33 @@
+{
+  "success": true,
+  "checkedAt": "2026-11-12T04:15:06.939Z",
+  "url": "http://127.0.0.1:5175",
+  "loginThroughUI": true,
+  "aiThreeCasesVisible": true,
+  "liveAI": true,
+  "explanations": [
+    {
+      "provider": "groq",
+      "model": "openai/gpt-oss-20b",
+      "isMock": false,
+      "citations": 1
+    },
+    {
+      "provider": "groq",
+      "model": "openai/gpt-oss-20b",
+      "isMock": false,
+      "citations": 1
+    },
+    {
+      "provider": "groq",
+      "model": "openai/gpt-oss-20b",
+      "isMock": false,
+      "citations": 1
+    }
+  ],
+  "cvEditor": true,
+  "cvPreview": true,
+  "publicCvWithoutLogin": true,
+  "pageErrors": [],
+  "summary": "Kết quả: Nguyễn Văn An\n\nChưa thể kết luận · 1/3 tiêu chí cần rà soát\n\nMở từng tiêu chí để xem dữ liệu, lý do và căn cứ. Kết quả hỗ trợ người có thẩm quyền rà soát.\n\nAI thật: 3/3 giải thích hoàn tất"
+}

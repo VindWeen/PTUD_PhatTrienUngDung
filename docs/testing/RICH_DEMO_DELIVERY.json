@@ -1,0 +1,34 @@
+{
+  "aiCredentialCopiedToDemoFile": false,
+  "primaryDatabaseChanged": false,
+  "browserVerification": "RICH_DEMO_BROWSER.json",
+  "restoreChecks": [
+    {
+      "sourceDatabaseTouched": false,
+      "storage": "C:\\DriveD\\EverythingElse\\LHU\\PTUD_PhatTrienUngDung\\backend\\storage\\demo\\reset_20261112_112116_b72a8c",
+      "tableCountsMatch": true,
+      "restoredAt": "2026-11-12T11:21:19.234369+07:00",
+      "success": true,
+      "privateFiles": 282,
+      "target": "PTUD_LHU_Demo",
+      "dbccCheckDb": true
+    },
+    {
+      "sourceDatabaseTouched": false,
+      "storage": "C:\\DriveD\\EverythingElse\\LHU\\PTUD_PhatTrienUngDung\\backend\\storage\\demo\\reset_20261112_112056_83e408",
+      "tableCountsMatch": true,
+      "restoredAt": "2026-11-12T11:21:02.1982461+07:00",
+      "success": true,
+      "privateFiles": 282,
+      "target": "PTUD_LHU_Demo_RichRestoreTest",
+      "dbccCheckDb": true
+    }
+  ],
+  "demoBackendPort": 5001,
+  "liveAiConfiguredByRuntimeReference": true,
+  "finalReadinessThrough5175": "UP",
+  "baseline": "backups/rich-demo-baseline",
+  "database": "PTUD_LHU_Demo",
+  "apiVerification": "RICH_DEMO_VERIFICATION.json",
+  "subagentsUsed": 0
+}

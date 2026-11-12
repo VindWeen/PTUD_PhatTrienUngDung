@@ -1,4 +1,5 @@
 import app from './app.js';
+import { startAchievementTrashCleanup } from './modules/achievements/achievementTrashCleanup.js';
 import config from './config/env.js';
 import { connectDB, closeDB } from './config/database.js';
 
@@ -7,13 +8,15 @@ let server;
 async function bootstrap() {
   console.log('🚀 Đang khởi động PTUD Backend REST API v1...');
 
-  // 1. Thử kết nối tới Supabase PostgreSQL qua pg
+  // 1. Connect to the configured SQL Server database.
   try {
     await connectDB();
   } catch (error) {
-    console.warn('⚠️ Cảnh báo: Chưa kết nối được Supabase PostgreSQL ngay lúc này.');
+    console.warn('⚠️ Cảnh báo: Chưa kết nối được SQL Server ngay lúc này.');
     console.warn('   Server vẫn sẽ khởi động để phục vụ các yêu cầu liveness health check và báo lỗi khi truy cập database.');
   }
+
+  const stopTrashCleanup = startAchievementTrashCleanup();
 
   // 2. Khởi chạy Express Server
   server = app.listen(config.PORT, () => {
@@ -33,6 +36,7 @@ async function bootstrap() {
         console.log('🔌 Đã dừng máy chủ HTTP Express.');
       });
     }
+    stopTrashCleanup();
     await closeDB();
     process.exit(0);
   };

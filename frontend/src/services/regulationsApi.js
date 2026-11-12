@@ -29,6 +29,8 @@ export const regulationsApi = {
     request({ method: 'POST', url: `/regulations/versions/${versionId}/chunks`, data: { chunks } }),
 
   // Criteria
+  getSourceCatalogs: () => request({ method: 'GET', url: '/regulations/criteria/source-catalogs' }),
+  configureSourceRules: (id, data) => request({ method: 'PATCH', url: `/regulations/criteria/${id}/source-rules`, data }),
   listCriteria: (params = {}, fresh = false) =>
     request({ method: 'GET', url: '/regulations/criteria', params, fresh }),
 

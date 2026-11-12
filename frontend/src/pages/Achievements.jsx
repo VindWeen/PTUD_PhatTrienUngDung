@@ -58,16 +58,16 @@ export default function Achievements() {
   const canCreate = userRoles.some(role => ['LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'].includes(role));
 
   const [items, setItems] = useState([]);
+  const [trashActionId, setTrashActionId] = useState(null);
   const [pagination, setPagination] = useState({ page: 1, pageSize: 10, total: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Workflow Tabs: 'ALL' | 'PENDING' (W2-Q3: Hàng chờ thẩm định)
-  const [activeTab, setActiveTab] = useState('ALL');
+  // Workflow tabs keep drafts and corrections ahead of completed records.
+  const [activeTab, setActiveTab] = useState(canReview ? 'PENDING' : 'ACTIONABLE');
 
   // Filters
   const [subjectFilter, setSubjectFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState(() => (routeParams.get('search') || '').slice(0, 100));
   const [yearFilter, setYearFilter] = useState('');
 
@@ -130,12 +130,12 @@ export default function Achievements() {
     setLoading(true);
     setError(null);
     try {
-      const effectiveStatus = activeTab === 'PENDING' ? 'SUBMITTED' : (statusFilter || undefined);
       const res = await achievementsApi.list({
         page: pagination.page,
         pageSize: pagination.pageSize,
         subjectType: subjectFilter || undefined,
-        status: effectiveStatus,
+        workflow: ['ALL', 'TRASH'].includes(activeTab) ? undefined : activeTab,
+        trash: activeTab === 'TRASH' ? 'true' : undefined,
         search: searchQuery || undefined,
         recognitionYear: yearFilter || undefined,
       }, fresh);
@@ -148,7 +148,7 @@ export default function Achievements() {
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, pagination.pageSize, subjectFilter, statusFilter, searchQuery, yearFilter, activeTab]);
+  }, [pagination.page, pagination.pageSize, subjectFilter, searchQuery, yearFilter, activeTab]);
 
   useEffect(() => {
     loadData(false);
@@ -511,15 +511,27 @@ export default function Achievements() {
   };
 
   const handleDelete = async (ach) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa bản nháp thành tích "${ach.title}" không?`)) {
+    if (!window.confirm(`Chuyển bản nháp "${ach.title}" vào thùng rác? Bạn có thể khôi phục trong 30 ngày.`)) {
       return;
     }
     try {
+      setTrashActionId(ach.achievementId);
       await achievementsApi.remove(ach.achievementId);
-      loadData();
+      if (items.length === 1 && pagination.page > 1) setPagination(prev => ({ ...prev, page: prev.page - 1 }));
+      else await loadData();
     } catch (err) {
-      alert(`Xóa thất bại: ${err.message}`);
-    }
+      setError(err);
+    } finally { setTrashActionId(null); }
+  };
+
+  const handleRestore = async (ach) => {
+    try {
+      setTrashActionId(ach.achievementId);
+      await achievementsApi.restore(ach.achievementId);
+      if (items.length === 1 && pagination.page > 1) setPagination(prev => ({ ...prev, page: prev.page - 1 }));
+      else await loadData();
+    } catch (err) { setError(err); }
+    finally { setTrashActionId(null); }
   };
 
   const handleCreateReplacement = async (ach) => {
@@ -538,35 +550,68 @@ export default function Achievements() {
     }
   };
 
+  const renderActions = ach => {
+    if (ach.deletedAt) return canAct(ach, 'restore') ? <button type="button" className="soft-btn-secondary text-sm disabled:opacity-50" disabled={trashActionId === ach.achievementId} aria-busy={trashActionId === ach.achievementId} onClick={() => handleRestore(ach)}><RotateCcw className="h-4 w-4" />Khôi phục</button> : <span className="text-xs text-slate-500">Chỉ chủ sở hữu được khôi phục</span>;
+
+    const actions = [
+      { key: 'edit', label: 'Chỉnh sửa', icon: Edit2, run: () => openEditModal(ach) },
+      { key: 'submit', label: 'Nộp thẩm định', icon: Send, run: () => openActionModal(ach, 'SUBMIT') },
+      { key: 'cancel', label: 'Rút hồ sơ', icon: RotateCcw, run: () => openActionModal(ach, 'CANCEL') },
+      { key: 'review', label: 'Xác nhận', icon: Check, run: () => openActionModal(ach, 'VERIFY') },
+      { key: 'review', label: 'Yêu cầu bổ sung', icon: AlertCircle, run: () => openActionModal(ach, 'REQUEST_CORRECTION') },
+      { key: 'review', label: 'Từ chối', icon: X, run: () => openActionModal(ach, 'REJECT') },
+      { key: 'revoke', label: 'Thu hồi xác nhận', icon: ShieldAlert, run: () => openActionModal(ach, 'REVOKE') },
+      { key: 'replace', label: 'Tạo bản thay thế', icon: RotateCcw, run: () => handleCreateReplacement(ach) },
+      { key: 'remove', label: 'Xóa bản nháp', icon: Trash2, run: () => handleDelete(ach) },
+    ].filter(action => canAct(ach, action.key));
+    const tones = {
+      'Xem chi tiết': 'border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-950 dark:text-teal-300',
+      'Chỉnh sửa': 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300',
+      'Nộp thẩm định': 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950 dark:text-indigo-300',
+      'Xác nhận': 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
+      'Rút hồ sơ': 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300',
+      'Yêu cầu bổ sung': 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300',
+      'Tạo bản thay thế': 'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-300',
+    };
+    const dangerTone = 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-300';
+    return <div className="flex flex-wrap items-center gap-1.5">
+      {[{label: 'Xem chi tiết', icon: Eye, run: () => openDetailModal(ach)}, ...actions].map(({label, icon: Icon, run}) => <button type="button" key={label} onClick={run} disabled={trashActionId === ach.achievementId} aria-label={label} title={label} className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${tones[label] || dangerTone}`}><Icon aria-hidden="true" className="h-4 w-4" /></button>)}
+    </div>;
+  };
+
   return (
     <div className="space-y-6">
-      <PageHeader title="Thành tích" description="Kê khai, theo dõi và quản lý thành tích cá nhân và tập thể." icon={Award} onRefresh={loadData} refreshing={loading} primaryAction={canCreate ? {label: 'Kê khai Thành tích', onClick: openCreateModal, disabled: catalogLoading || !types.length} : null} tabs={<UnderlineTabs label="Danh sách thành tích" value={activeTab} onChange={setActiveTab} items={[
-        {id: 'ALL', label: 'Tất cả thành tích', icon: Award},
-        ...(canReview ? [{id: 'PENDING', label: 'Hàng chờ thẩm định', icon: Clock}] : []),
+      <PageHeader title="Thành tích" description="Kê khai, theo dõi và quản lý thành tích cá nhân và tập thể." icon={Award} onRefresh={loadData} refreshing={loading} secondaryActions={<button type="button" aria-pressed={activeTab === 'TRASH'} onClick={() => { setActiveTab(activeTab === 'TRASH' ? (canReview ? 'PENDING' : 'ACTIONABLE') : 'TRASH'); setPagination(prev => ({ ...prev, page: 1 })); }} className="soft-btn-secondary h-11 text-sm"><Trash2 className="h-4 w-4" />Thùng rác</button>} primaryAction={canCreate ? {label: 'Kê khai Thành tích', onClick: openCreateModal, disabled: catalogLoading || !types.length} : null} tabs={<UnderlineTabs label="Danh sách thành tích" value={activeTab} onChange={tab => { setActiveTab(tab); setPagination(prev => ({ ...prev, page: 1 })); }} items={[
+        {id: 'ACTIONABLE', label: 'Cần hoàn thiện', icon: Edit2},
+        {id: 'PENDING', label: canReview ? 'Chờ thẩm định' : 'Đang xét', icon: Clock},
+        {id: 'VERIFIED', label: 'Đã xác nhận', icon: CheckCircle2},
+        {id: 'ENDED', label: 'Từ chối / Thu hồi / Hủy', icon: ShieldAlert},
+        {id: 'ALL', label: 'Tất cả', icon: Award},
+        ...(activeTab === 'TRASH' ? [{id: 'TRASH', label: 'Thùng rác', icon: Trash2}] : []),
       ]} />} />
 
+      {activeTab === 'TRASH' && <p className="text-sm text-slate-600 dark:text-slate-300">Bản nháp được giữ trong 30 ngày kể từ lúc xóa. Khôi phục trước hạn để tiếp tục chỉnh sửa; sau hạn, hệ thống tự động xóa vĩnh viễn.</p>}
       {catalogError && <ErrorState error={catalogError} onRetry={() => setCatalogRetry(value => value + 1)} />}
       {!catalogLoading && !catalogError && !types.length && <p className="text-sm text-amber-700">Chưa có loại thành tích đang hoạt động. Liên hệ quản trị viên bổ sung danh mục trước khi kê khai.</p>}
 
       {/* 2. Bộ lọc & Tìm kiếm */}
-      <div className="bg-white dark:bg-slate-800/80 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm flex flex-col md:flex-row gap-3">
+      <div className="bg-white dark:bg-slate-800/80 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm flex flex-col xl:flex-row gap-3">
         {/* Search */}
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Tìm theo tiêu đề hoặc nội dung thành tích..."
+            aria-label="Tìm thành tích" placeholder="Tìm theo tiêu đề hoặc nội dung thành tích..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => { setSearchQuery(e.target.value); setPagination(prev => ({ ...prev, page: 1 })); }}
             className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 dark:text-white"
           />
         </div>
 
         {/* Filter: Subject Type */}
-        <div className="flex items-center gap-2">
-          <Select
-            value={subjectFilter}
-            onChange={(e) => setSubjectFilter(e.target.value)}
+        <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[1fr_6rem] xl:w-[360px]">
+          <Select aria-label="Lọc theo chủ thể" value={subjectFilter}
+            onChange={(e) => { setSubjectFilter(e.target.value); setPagination(prev => ({ ...prev, page: 1 })); }}
             className="px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 focus:outline-none"
           >
             <option value="">Tất cả chủ thể</option>
@@ -574,27 +619,13 @@ export default function Achievements() {
             <option value="UNIT">Tập thể (Đơn vị)</option>
           </Select>
 
-          {/* Filter: Status */}
-          <Select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 focus:outline-none"
-          >
-            <option value="">Tất cả trạng thái</option>
-            <option value="DRAFT">Bản nháp (DRAFT)</option>
-            <option value="SUBMITTED">Chờ duyệt (SUBMITTED)</option>
-            <option value="NEED_CORRECTION">Cần bổ sung (NEED_CORRECTION)</option>
-            <option value="VERIFIED">Đã xác nhận (VERIFIED)</option>
-            <option value="REJECTED">Từ chối (REJECTED)</option>
-          </Select>
-
           {/* Filter: Year */}
           <input
             type="number"
-            placeholder="Năm"
+            aria-label="Lọc theo năm" placeholder="Năm"
             value={yearFilter}
-            onChange={(e) => setYearFilter(e.target.value)}
-            className="w-24 px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 focus:outline-none"
+            onChange={(e) => { setYearFilter(e.target.value); setPagination(prev => ({ ...prev, page: 1 })); }}
+            className="w-full min-w-0 px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 focus:outline-none"
           />
 
 
@@ -610,16 +641,28 @@ export default function Achievements() {
         <EmptyState message="Không tìm thấy thành tích nào phù hợp với bộ lọc." />
       ) : (
         <div className="bg-white dark:bg-slate-800/80 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 overflow-hidden shadow-soft-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+          <div className="divide-y divide-slate-200 dark:divide-slate-700 lg:hidden">
+            {items.map(ach => {
+              const badge = STATUS_BADGES[ach.status] || { label: ach.status, color: 'bg-slate-100 text-slate-700' };
+              return <article key={ach.achievementId} className="space-y-3 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-xs font-medium text-slate-500 dark:text-slate-400">{ach.subjectType === 'LECTURER' ? 'Cá nhân' : 'Tập thể'} · {ach.recognitionYear}</span><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${badge.color}`}>{ach.deletedAt ? 'Trong thùng rác' : badge.label}</span></div>
+                <h2 className="break-words text-sm font-semibold text-slate-900 dark:text-white">{ach.title}</h2>
+                <dl className="space-y-1 text-sm text-slate-600 dark:text-slate-300"><div><dt className="inline font-medium">Chủ thể: </dt><dd className="inline">{ach.subjectName || (ach.subjectType === 'LECTURER' ? 'Giảng viên' : 'Đơn vị')}</dd></div><div><dt className="inline font-medium">Loại: </dt><dd className="inline">{ach.achievementTypeName || ach.achievementTypeCode || '—'}</dd></div><div><dt className="inline font-medium">Đơn vị: </dt><dd className="inline">{ach.contextUnitName || 'Chưa có thông tin'}</dd></div></dl>
+                {ach.deletedAt && <p className="text-xs text-slate-600 dark:text-slate-300">Hạn khôi phục: {new Date(ach.expiresAt).toLocaleDateString('vi-VN')}</p>}
+                {renderActions(ach)}
+              </article>;
+            })}
+          </div>
+          <div className="hidden overflow-x-auto lg:block">
+            <table className="w-full min-w-[1080px] text-left text-sm">
               <thead className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200/80 dark:border-slate-700/80">
                 <tr>
-                  <th className="px-6 py-4">Chủ thể & Tiêu đề</th>
-                  <th className="px-6 py-4">Loại thành tích</th>
-                  <th className="px-6 py-4">Đơn vị quản lý</th>
-                  <th className="px-6 py-4">Năm</th>
-                  <th className="px-6 py-4">Trạng thái</th>
-                  <th className="px-6 py-4 text-right">Thao tác</th>
+                  <th className="min-w-[260px] px-4 py-4">Chủ thể & Tiêu đề</th>
+                  <th className="min-w-[180px] px-4 py-4">Loại thành tích</th>
+                  <th className="min-w-[160px] px-4 py-4">Đơn vị quản lý</th>
+                  <th className="px-4 py-4">{activeTab === 'TRASH' ? 'Hạn khôi phục' : 'Năm'}</th>
+                  <th className="min-w-[110px] px-4 py-4">Trạng thái</th>
+                  <th className="min-w-[240px] px-4 py-4">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/60 dark:divide-slate-700/60">
@@ -632,10 +675,10 @@ export default function Achievements() {
                       key={ach.achievementId}
                       className="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors"
                     >
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4">
                         <div className="flex items-start gap-3">
                           <span
-                            className={`mt-0.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium ${
+                            className={`mt-0.5 shrink-0 whitespace-nowrap inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium ${
                               isPersonal
                                 ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300'
                                 : 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
@@ -645,7 +688,7 @@ export default function Achievements() {
                             {isPersonal ? 'Cá nhân' : 'Tập thể'}
                           </span>
                           <div>
-                            <div className="font-semibold text-slate-900 dark:text-white line-clamp-1">
+                            <div className="font-semibold text-slate-900 dark:text-white line-clamp-2">
                               {ach.title}
                             </div>
                             <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -655,115 +698,21 @@ export default function Achievements() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-300">
                         {ach.achievementTypeName || ach.achievementTypeCode || '—'}
                       </td>
-                      <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-300">
                         {ach.contextUnitName || `Unit #${ach.contextUnitId}`}
                       </td>
-                      <td className="px-6 py-4 font-medium text-slate-700 dark:text-slate-200">
+                      <td className="px-4 py-4 font-medium text-slate-700 dark:text-slate-200">
                         {ach.recognitionYear}
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${statusInfo.color}`}>
-                          {statusInfo.label}
+                      <td className="px-4 py-4">
+                        <span className={`inline-block whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-semibold ${statusInfo.color}`}>
+                          {ach.deletedAt ? 'Trong thùng rác' : statusInfo.label}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="inline-flex items-center gap-1.5">
-                          <button
-                            onClick={() => openDetailModal(ach)}
-                            title="Xem chi tiết"
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-slate-700 transition"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          {canAct(ach, 'edit') && (
-                            <>
-                              <button
-                                onClick={() => openEditModal(ach)}
-                                title="Chỉnh sửa bản nháp"
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-700 transition"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                              {canAct(ach, 'submit') && <button
-                                onClick={() => openActionModal(ach, 'SUBMIT')}
-                                title="Nộp thẩm định (Yêu cầu có ít nhất 1 minh chứng)"
-                                className="p-1.5 rounded-lg text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/40 transition"
-                              >
-                                <Send className="w-4 h-4" />
-                              </button>}
-                            </>
-                          )}
-                          {canAct(ach, 'cancel') && (
-                            <button
-                              onClick={() => openActionModal(ach, 'CANCEL')}
-                              title="Hủy yêu cầu nộp hồ sơ"
-                              className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition"
-                            >
-                              <RotateCcw className="w-4 h-4" />
-                            </button>
-                          )}
-                          {canAct(ach, 'review') && (
-                            <>
-                              <button
-                                onClick={() => openActionModal(ach, 'VERIFY')}
-                                title="Xác nhận / Phê duyệt (VERIFY)"
-                                className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition"
-                              >
-                                <Check className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => openActionModal(ach, 'REQUEST_CORRECTION')}
-                                title="Yêu cầu bổ sung (NEED_CORRECTION)"
-                                className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition"
-                              >
-                                <AlertCircle className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => openActionModal(ach, 'REJECT')}
-                                title="Từ chối hồ sơ (REJECT)"
-                                className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </>
-                          )}
-                          {ach.status === 'VERIFIED' && (
-                            <span title="Đã xác nhận & Khóa nội dung (Immutability)" className="p-1 text-emerald-600">
-                              <Lock className="w-4 h-4" />
-                            </span>
-                          )}
-                          {canAct(ach, 'revoke') && (
-                            <button
-                              onClick={() => openActionModal(ach, 'REVOKE')}
-                              title="Thu hồi quyết định xác nhận (Manager có thẩm quyền)"
-                              className="p-1.5 rounded-lg text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition"
-                            >
-                              <ShieldAlert className="w-4 h-4" />
-                            </button>
-                          )}
-                          {canAct(ach, 'replace') && (
-                            <button
-                              onClick={() => handleCreateReplacement(ach)}
-                              title="Tạo bản kê khai thay thế (Liên kết với hồ sơ đã kết thúc)"
-                              className="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition"
-                            >
-                              <RotateCcw className="w-4 h-4" />
-                            </button>
-                          )}
-                          {canAct(ach, 'remove') && (
-                            <button
-                              onClick={() => handleDelete(ach)}
-                              title="Xóa bản nháp"
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-700 transition"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
+                      <td className="px-4 py-4">{renderActions(ach)}</td>
                     </tr>
                   );
                 })}
@@ -772,7 +721,7 @@ export default function Achievements() {
           </div>
 
           {/* Phân trang */}
-          <div className="px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+          <div className="px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200/80 dark:border-slate-700/80 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
             <div>
               Tổng số <span className="font-semibold text-slate-800 dark:text-slate-200">{pagination.total}</span> thành tích
             </div>

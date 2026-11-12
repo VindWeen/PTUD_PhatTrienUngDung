@@ -26,7 +26,7 @@ Harness apply toàn bộ Supabase migrations và seed vào schema ngẫu nhiên 
 
 Đủ ca thiếu dữ liệu, đứt/trùng chuỗi năm, revoke/replacement, đổi quy định, tài liệu/tiêu chí chưa duyệt và KPI mô phỏng. Nhãn expectedIssues là kỹ thuật, luôn ghi UNCONFIRMED_BY_DOMAIN_EXPERT. Basis có đường dẫn/source/hash/phiên bản; legalReferences rỗng để không bịa điều khoản cho ngưỡng mô phỏng. Subject/group/file identities không trùng dev-final; không dùng final trong UI hoặc unit guard prediction.
 
-API v1/v2/revoke tuần tự giữ snapshot/file; UI khóa VERIFIED. Review còn R01 DB snapshot thiếu guard, R02 file mutation race trước transaction, R03 biên regulation overlap, R05 replace audit ngoài transaction. AI gate R04 đã sửa và kiểm thử: quyền đọc, VERIFIED, criterion+parent confirmation/effective/target và provider mapping; mock không nói đạt điều kiện. Chi tiết/mức độ/tái hiện tại `docs/reviews/W3_P4_REVISION_AI_REVIEW.md`.
+API v1/v2/revoke tuần tự giữ snapshot/file; UI khóa VERIFIED. Review còn R01 DB snapshot thiếu guard, R02 file mutation race trước transaction, R03 biên regulation overlap, R05 replace audit ngoài transaction. AI gate R04 đã sửa và kiểm thử: quyền đọc, VERIFIED, criterion+parent confirmation/effective/target và provider mapping; mock không nói đạt điều kiện. Chi tiết/mức độ/tái hiện tại `docs/archive/reviews/W3_P4_REVISION_AI_REVIEW.md`.
 
 ## File đổi
 
@@ -36,7 +36,7 @@ API v1/v2/revoke tuần tự giữ snapshot/file; UI khóa VERIFIED. Review còn
 - Holdout: `docs/ai/eval-final/README.md`, `cases.final.json`, `freeze-manifest.json`.
 - Scripts: `scripts/w3-p4-eval.mjs`, `scripts/w3-p4-freeze.mjs`.
 - `.gitattributes`: chỉ khóa LF của JSON corpus/script W3-P4 để frozen checksum ổn định giữa các checkout.
-- API/plan/review: `docs/api/AI_EVALUATION_W3_P4.md`, `docs/api/W3_P4.openapi.json`, `docs/weekly/WEEK_03_W3_P4.md`, `docs/reviews/W3_P4_REVISION_AI_REVIEW.md`.
+- API/plan/review: `docs/api/AI_EVALUATION_W3_P4.md`, `docs/api/W3_P4.openapi.json`, `docs/archive/weekly/WEEK_03_W3_P4.md`, `docs/archive/reviews/W3_P4_REVISION_AI_REVIEW.md`.
 - Bàn giao/demo: báo cáo này, `DEMO_W3_P4.md` và ba RESULT.json.
 
 ## Tự kiểm tra và phần còn lại

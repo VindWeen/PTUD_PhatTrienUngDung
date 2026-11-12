@@ -2,6 +2,8 @@
 
 Hai bộ gồm plan riêng, thứ tự thao tác, bảng tra từng ca, dữ liệu copy theo form, file upload hợp lệ/lỗi và mẫu ghi bug. Người 1 có 72 ca; người 2 có 73 ca, không trùng ID. Mỗi người tự chuyển các tài khoản trong môi trường của mình, không chờ người kia xử lý hồ sơ.
 
+**Theo dõi bằng Excel:** [test plan Phước, Quang và dashboard Tổng hợp](../UI_TEST_TRACKER.xlsx). Chọn trạng thái từng ca ở cột D; dashboard tự cập nhật số lượng và tỷ lệ. Phước nhận bộ người 1, Quang nhận bộ người 2. File Excel theo dõi được tải riêng, không nằm trong hai ZIP.
+
 - [Tải bộ người 1](packages/tester-1.zip) — luồng hồ sơ, đề nghị, sổ thưởng, lịch, hồ sơ năng lực, thông báo.
 - [Tải bộ người 2](packages/tester-2.zip) — kê khai, KPI/import, AI/quy chế, báo cáo, tổ chức, quản trị và UX.
 - [Chuẩn bị môi trường và thứ tự seed](ENV_SETUP.md) — dành cho người phụ trách trước buổi test.
@@ -25,7 +27,7 @@ Hai bộ gồm plan riêng, thứ tự thao tác, bảng tra từng ca, dữ li�
 | kpi/ (chỉ T2) | CSV/TSV/XLSX hợp lệ và file cố ý lỗi để chọn upload |
 | MANIFEST.json | Danh sách ca và dấu kiểm toàn vẹn file |
 
-XLSX trong bộ người 2 là **file đầu vào nhập KPI**; test plan vẫn là Markdown như đã thống nhất. Không import sẵn các hồ sơ cần tự tạo trong ca test. Mẫu mô phỏng không thay thế văn bản quy chế chính thức cho AI.
+XLSX trong bộ người 2 là **file đầu vào nhập KPI**; khác với file Excel theo dõi test case ở liên kết phía trên. Các bản Markdown giữ nội dung kế hoạch gốc. Không import sẵn các hồ sơ cần tự tạo trong ca test. Mẫu mô phỏng không thay thế văn bản quy chế chính thức cho AI.
 
 ## Tạo lại bộ file sau khi clone
 

@@ -26,7 +26,7 @@ import {
 } from '../src/utils/crypto.js';
 
 console.log('================================================================');
-console.log('CHẠY KIỂM THỬ TỰ ĐỘNG TOÀN DIỆN BACKEND, SUPABASE AUTH & SCOPES [W1-Q3]');
+console.log('CHẠY KIỂM THỬ TỰ ĐỘNG TOÀN DIỆN BACKEND, SQL SERVER AUTH & SCOPES [W1-Q3]');
 console.log('Tác giả: Tạ Trần Vinh Quang (Phụ trách W1-Q3)');
 console.log('================================================================\n');
 
@@ -59,13 +59,14 @@ async function itAsync(desc, fn) {
 
 // 1. Kiểm thử Config & Validation
 console.log('1. KIỂM THỬ CẤU HÌNH VÀ BIẾN MÔI TRƯỜNG (CONFIG & ZOD):');
-it('Config nạp đầy đủ các giá trị mặc định hợp lệ cho Supabase PostgreSQL', () => {
+it('Config nạp đầy đủ các giá trị hợp lệ cho SQL Server', () => {
   assert.strictEqual(typeof config.PORT, 'number');
   assert.strictEqual(config.PORT, 5000);
   assert.strictEqual(config.API_PREFIX, '/api/v1');
-  assert.strictEqual(config.DB_NAME, 'postgres');
+  assert.ok(config.DB_NAME.length > 0);
+  assert.equal(config.DB_NAME, process.env.DB_NAME || 'PTUD_LHU');
   assert.strictEqual(typeof config.DB_PORT, 'number');
-  assert.strictEqual(config.DB_PORT, 5432);
+  assert.equal(config.DB_PORT, Number(process.env.DB_PORT || 1433));
   assert.ok(config.JWT_ACCESS_SECRET, 'Có JWT_ACCESS_SECRET');
   assert.ok(config.JWT_REFRESH_SECRET, 'Có JWT_REFRESH_SECRET');
 });
@@ -117,18 +118,10 @@ it('formatQuery tự động suy diễn và tham số hóa an toàn chống SQL 
 });
 
 // 4. Kiểm thử Migration Runner Files
-console.log('\n4. KIỂM THỬ DANH SÁCH MIGRATIONS (SUPABASE):');
-it('Các file migration trong supabase/migrations được đánh số tuần tự', () => {
+console.log('\n4. KIỂM THỬ DANH SÁCH MIGRATIONS (SQL SERVER):');
+it('SQL Server migrations gồm baseline và trigger theo đúng thứ tự', () => {
   const files = getMigrationFiles();
-  assert.ok(files.length >= 8, `Có ít nhất 8 file migration (thực tế: ${files.length})`);
-  assert.ok(files[0].includes('create_schema_and_security.sql'));
-  assert.ok(files[1].includes('create_identity_tables.sql'));
-  assert.ok(files[2].includes('create_organization_tables.sql'));
-  assert.ok(files[3].includes('create_lecturers_and_catalogs.sql'));
-  assert.ok(files[4].includes('create_achievement_tables.sql'));
-  assert.ok(files[5].includes('create_evidence_and_verification_tables.sql'));
-  assert.ok(files[6].includes('create_award_tables.sql'));
-  assert.ok(files[7].includes('create_system_tables.sql'));
+  assert.deepStrictEqual(files, ['001_final_schema.sql', '002_integrity_triggers.sql']);
 });
 
 // 5. Kiểm thử Mật mã & Token (Crypto & Token Hashing)
@@ -209,7 +202,7 @@ function makeRequest(port, reqPath, options = {}) {
  * Khởi tạo In-Memory Mock Driver cho Supabase PostgreSQL
  * Đảm bảo test runner chạy 100% độc lập khi chưa có database thật
  */
-function createInMemorySupabaseMock() {
+function createInMemorySqlServerMock() {
   const defaultPasswordHash = '$2a$10$YvuV3ek5NZd4o.bokur7bOktk2T7iV4a0B3HMb3Jx..tp77Y7AfSK'; // demo1234
 
   const state = {
@@ -255,7 +248,7 @@ function createInMemorySupabaseMock() {
     }
 
     // 2. findUserByUsernameOrEmail
-    if (text.includes('FROM app.users') && text.includes('(username = $1 OR email = $1)')) {
+    if (text.includes('FROM app.users') && text.includes('WHERE username = $1 OR (lower(email)')) {
       const id = values[0];
       const user = state.users.find((u) => u.Username === id || u.Email === id);
       return { rows: user ? [{ ...user }] : [], rowCount: user ? 1 : 0 };
@@ -274,6 +267,7 @@ function createInMemorySupabaseMock() {
       const user = state.users.find((u) => u.UserId === Number(uid));
       if (user) {
         user.PasswordHash = newHash;
+        user.PasswordChangedAt = new Date().toISOString();
         user.Version = (user.Version || 1) + 1;
         return { rows: [], rowCount: 1 };
       }
@@ -281,12 +275,12 @@ function createInMemorySupabaseMock() {
     }
 
     // 5. updateLastLogin
-    if (text.includes('UPDATE app.users') && text.includes('last_login_at = NOW()')) {
+    if (text.includes('UPDATE app.users') && text.includes('last_login_at = SYSUTCDATETIME()')) {
       return { rows: [], rowCount: 1 };
     }
 
     // 6. getActiveRoles
-    if (text.includes('FROM app.user_roles ur') && !text.includes('WITH RECURSIVE') && !text.includes('user_unit_scopes')) {
+    if (text.includes('FROM app.user_roles ur') && !text.includes('WITH ScopeHierarchy') && !text.includes('user_unit_scopes')) {
       const uid = Number(values[0]);
       const uRoles = state.userRoles.filter((ur) => ur.UserId === uid);
       const rows = uRoles.map((ur) => {
@@ -304,7 +298,7 @@ function createInMemorySupabaseMock() {
     }
 
     // 8. getActiveScopes
-    if (text.includes('FROM app.user_unit_scopes s') && !text.includes('WITH RECURSIVE')) {
+    if (text.includes('FROM app.user_unit_scopes s') && !text.includes('WITH ScopeHierarchy')) {
       const uid = Number(values[0]);
       const rows = state.scopes.filter((s) => s.UserId === uid);
       return { rows, rowCount: rows.length };
@@ -337,6 +331,13 @@ function createInMemorySupabaseMock() {
     }
 
     // 11. rotateRefreshToken
+    if (text.includes('UPDATE app.refresh_tokens') && text.includes('WHERE refresh_token_id=$1')) {
+      const [tokenId, userId] = values;
+      const old = state.refreshTokens.find(t => t.RefreshTokenId === Number(tokenId) && t.UserId === Number(userId) && !t.RevokedAt && new Date(t.ExpiresAt) > new Date());
+      if (!old) return { rows: [], rowCount: 0 };
+      old.RevokedAt = new Date().toISOString();
+      return { rows: [{ refresh_token_id: old.RefreshTokenId }], rowCount: 1 };
+    }
     if (text.includes('UPDATE app.refresh_tokens') && text.includes('replaced_by_token_id = $1')) {
       const [newTokenId, oldTokenId] = values;
       const old = state.refreshTokens.find((t) => t.RefreshTokenId === Number(oldTokenId));
@@ -378,7 +379,7 @@ function createInMemorySupabaseMock() {
     }
 
     // 14. CTE ScopeHierarchy
-    if (text.includes('WITH RECURSIVE ScopeHierarchy')) {
+    if (text.includes('WITH ScopeHierarchy')) {
       const userId = Number(values[0]);
       const roleCode = values[1];
       const targetUnitId = Number(values[2]);
@@ -427,16 +428,8 @@ function createInMemorySupabaseMock() {
 // 6. Kiểm thử HTTP Endpoints & Auth Flow
 console.log('\n6. KIỂM THỬ TOÀN DIỆN AUTH FLOW & RBAC SCOPES QUA HTTP:');
 async function runHttpTests() {
-  // Thử kết nối live database
-  try {
-    await connectDB();
-    console.log('⚡ Đang chạy kiểm thử với kết nối Live Supabase PostgreSQL.');
-  } catch (err) {
-    console.log('ℹ️  Chưa phát hiện PostgreSQL/Supabase đang chạy trên localhost:5432.');
-    console.log('🚀 Tự động kích hoạt In-Memory PostgreSQL Mock Engine để kiểm thử 100% hợp đồng API & RBAC.');
-    const mock = createInMemorySupabaseMock();
-    setPool(mock);
-  }
+  // npm test is deterministic: live database checks have separate integration commands.
+  setPool(await createInMemorySqlServerMock());
 
   const server = http.createServer(app);
   await new Promise((resolve) => server.listen(0, resolve));

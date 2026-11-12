@@ -21,7 +21,7 @@ export const applicationSchema = z
     cycleId: id,
     targetAwardTypeId: id,
     purpose: z.string().trim().min(5).max(2000),
-    achievementIds: ids.default([]),
+    achievementIds: ids.refine((a) => a.length > 0, "Chọn ít nhất một thành tích VERIFIED"),
     awardRecordIds: ids.default([]),
   })
   .strict()
@@ -32,6 +32,12 @@ export const applicationSchema = z
 export const applicationTransitionSchema = z
   .object({ version: id, reason: z.string().trim().max(1000).optional() })
   .strict();
+export const applicationUpdateSchema = z.object({
+  version: id,
+  purpose: z.string().trim().min(5).max(2000),
+  achievementIds: ids.refine((a) => a.length > 0, "Chọn ít nhất một thành tích VERIFIED"),
+  awardRecordIds: ids,
+}).strict();
 const date = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -101,7 +107,9 @@ export class ApplicationService extends AwardService {
         throw e;
       }
       await c.query(
-        `INSERT INTO app.notifications(user_id,entity_type,entity_id,entity_version,from_status,to_status,audience) VALUES($1,'APPLICATION',$2,$3,$4,$5,'SUBJECT') ON CONFLICT DO NOTHING`,
+        `INSERT INTO app.notifications(user_id,entity_type,entity_id,entity_version,from_status,to_status,audience)
+         SELECT $1,'APPLICATION',$2,$3,$4,$5,'SUBJECT' WHERE NOT EXISTS (
+          SELECT 1 FROM app.notifications WITH (UPDLOCK,HOLDLOCK) WHERE user_id=$1 AND entity_type='APPLICATION' AND entity_id=$2 AND entity_version=$3 AND audience='SUBJECT')`,
         [u.user_id, r.application_id, r.version, from, r.status],
       );
     }
@@ -126,6 +134,7 @@ export class ApplicationService extends AwardService {
         await this.applicant(user, r, c);
         if (r.status !== "NEED_CORRECTION")
           throw new ConflictError("Chỉ bổ sung hồ sơ NEED_CORRECTION");
+        await this.captureInput(c, r, user);
         target = "SUBMITTED";
       } else {
         await this.council(user, r, c, action !== "assign");
@@ -152,7 +161,7 @@ export class ApplicationService extends AwardService {
       );
       const updated = (
         await c.query(
-          "UPDATE app.award_applications SET status=$2,version=version+1,updated_at=NOW() WHERE application_id=$1 AND version=$3 AND status=$4 RETURNING *",
+          "UPDATE app.award_applications SET status=$2,version=version+1,updated_at=SYSUTCDATETIME() OUTPUT INSERTED.* WHERE application_id=$1 AND version=$3 AND status=$4",
           [r.application_id, target, b.version, r.status],
         )
       ).rows[0];
@@ -173,7 +182,7 @@ export class ApplicationService extends AwardService {
     if (r.lecturer_id && roles.includes("LECTURER")) {
       const own = (
         await c.query(
-          "SELECT 1 FROM app.lecturers WHERE lecturer_id=$1 AND user_id=$2 AND is_active=TRUE",
+          "SELECT 1 FROM app.lecturers WHERE lecturer_id=$1 AND user_id=$2 AND is_active=1",
           [r.lecturer_id, user.userId],
         )
       ).rows.length;
@@ -238,7 +247,7 @@ export class ApplicationService extends AwardService {
       async (c) =>
         (
           await c.query(
-            "INSERT INTO app.award_periods(code,name,start_date,end_date,status) VALUES($1,$2,$3,$4,'OPEN') RETURNING *",
+            "INSERT INTO app.award_periods(code,name,start_date,end_date,status) OUTPUT INSERTED.* VALUES($1,$2,$3,$4,'OPEN')",
             [b.code, b.name, b.startDate, b.endDate],
           )
         ).rows[0],
@@ -247,7 +256,7 @@ export class ApplicationService extends AwardService {
   async validateTarget(c, r) {
     const cycle = (
       await c.query(
-        "SELECT * FROM app.award_periods WHERE award_period_id=$1 FOR SHARE",
+        "SELECT * FROM app.award_periods WITH (HOLDLOCK) WHERE award_period_id=$1",
         [r.award_period_id],
       )
     ).rows[0];
@@ -255,14 +264,14 @@ export class ApplicationService extends AwardService {
       throw new ValidationError("Kỳ không tồn tại hoặc chưa mở");
     const open = (
       await c.query(
-        "SELECT 1 FROM app.award_periods WHERE award_period_id=$1 AND CURRENT_DATE BETWEEN start_date AND end_date",
+        "SELECT 1 FROM app.award_periods WHERE award_period_id=$1 AND CAST(DATEADD(HOUR,7,SYSUTCDATETIME()) AS DATE) BETWEEN start_date AND end_date",
         [r.award_period_id],
       )
     ).rows.length;
     if (!open) throw new ValidationError("Ngoài thời gian nộp của kỳ");
     const type = (
       await c.query(
-        "SELECT * FROM app.award_types WHERE award_type_id=$1 AND is_active=TRUE",
+        "SELECT * FROM app.award_types WHERE award_type_id=$1 AND is_active=1",
         [r.target_award_type_id],
       )
     ).rows[0];
@@ -290,7 +299,7 @@ export class ApplicationService extends AwardService {
       if (r.lecturer_id) {
         const rows = (
           await c.query(
-            "SELECT unit_id FROM app.lecturer_assignments WHERE lecturer_id=$1 AND is_primary=TRUE AND valid_from<=NOW() AND (valid_to IS NULL OR valid_to>NOW())",
+            "SELECT unit_id FROM app.lecturer_assignments WHERE lecturer_id=$1 AND is_primary=1 AND valid_from<=SYSUTCDATETIME() AND (valid_to IS NULL OR valid_to>SYSUTCDATETIME())",
             [r.lecturer_id],
           )
         ).rows;
@@ -300,7 +309,7 @@ export class ApplicationService extends AwardService {
       }
       const created = (
         await c.query(
-          `INSERT INTO app.award_applications(award_period_id,lecturer_id,unit_id,target_award_type_id,context_unit_id,created_by,purpose,achievement_ids,award_record_ids,status) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'DRAFT') RETURNING *`,
+          `INSERT INTO app.award_applications(award_period_id,lecturer_id,unit_id,target_award_type_id,context_unit_id,created_by,purpose,achievement_ids,award_record_ids,status) OUTPUT INSERTED.* VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'DRAFT')`,
           [
             b.cycleId,
             r.lecturer_id,
@@ -324,10 +333,39 @@ export class ApplicationService extends AwardService {
       [r.application_id, from, r.status, user.userId, reason || null],
     );
   }
+  async update(rawId, body, user) {
+    const b = applicationUpdateSchema.parse(body);
+    return this.transaction(user, "UPDATE_AWARD_APPLICATION", async (c) => {
+      const r = await this.get(rawId, user, c, true);
+      await this.applicant(user, r, c);
+      if (!['DRAFT', 'NEED_CORRECTION'].includes(r.status) || String(r.version) !== String(b.version))
+        throw new ConflictError("Chỉ sửa hồ sơ nháp/cần bổ sung đúng phiên bản");
+      const updated = (await c.query(
+        "UPDATE app.award_applications SET purpose=$2,achievement_ids=$3,award_record_ids=$4,version=version+1,updated_at=SYSUTCDATETIME() OUTPUT INSERTED.* WHERE application_id=$1 AND version=$5 AND status=$6",
+        [r.application_id, b.purpose, b.achievementIds, b.awardRecordIds, b.version, r.status],
+      )).rows[0];
+      if (!updated) throw new ConflictError("Sai phiên bản hoặc trạng thái");
+      await this.history(c, updated, r.status, user, "Cập nhật mục đích và hồ sơ nguồn");
+      return updated;
+    });
+  }
+  async captureInput(c, r, user) {
+    // The caller holds the application row lock, serializing all revisions.
+    const snapshot = await this.snapshot(c, r, user);
+    const next = (await c.query(
+      "SELECT COALESCE(MAX(input_version),0)+1 AS next_version FROM app.award_application_inputs WHERE application_id=$1",
+      [r.application_id],
+    )).rows[0].next_version;
+    snapshot.inputVersion = Number(next);
+    await c.query(
+      "INSERT INTO app.award_application_inputs(application_id,input_version,snapshot,submitted_by) VALUES($1,$2,$3,$4)",
+      [r.application_id, next, JSON.stringify(snapshot), user.userId],
+    );
+  }
   async get(rawId, user, c = this.pool(), lock = false) {
     const r = (
       await c.query(
-        `SELECT * FROM app.award_applications WHERE application_id=$1 ${lock ? "FOR UPDATE" : ""}`,
+        `SELECT * FROM app.award_applications ${lock ? "WITH (UPDLOCK,HOLDLOCK)" : ""} WHERE application_id=$1`,
         [id.parse(rawId)],
       )
     ).rows[0];
@@ -352,7 +390,7 @@ export class ApplicationService extends AwardService {
     )) {
       const a = (
         await c.query(
-          "SELECT * FROM app.achievements WHERE achievement_id=$1 FOR SHARE",
+          "SELECT * FROM app.achievements WITH (HOLDLOCK) WHERE achievement_id=$1",
           [aid],
         )
       ).rows[0];
@@ -362,7 +400,7 @@ export class ApplicationService extends AwardService {
         );
       const submission = (
         await c.query(
-          "SELECT * FROM app.achievement_submissions WHERE achievement_id=$1 ORDER BY revision_no DESC LIMIT 1",
+          "SELECT TOP (1) * FROM app.achievement_submissions WHERE achievement_id=$1 ORDER BY revision_no DESC",
           [aid],
         )
       ).rows[0];
@@ -372,7 +410,7 @@ export class ApplicationService extends AwardService {
         );
       const files = (
         await c.query(
-          `SELECT f.evidence_file_id,f.version_no,f.original_file_name,f.sha256_hash,f.mime_type,f.file_size,f.storage_key FROM app.submission_evidence_files s JOIN app.evidence_files f USING(evidence_file_id) WHERE s.submission_id=$1 ORDER BY f.evidence_file_id`,
+          `SELECT f.evidence_file_id,f.version_no,f.original_file_name,f.sha256_hash,f.mime_type,f.file_size,f.storage_key FROM app.submission_evidence_files s JOIN app.evidence_files f ON f.evidence_file_id=s.evidence_file_id WHERE s.submission_id=$1 ORDER BY f.evidence_file_id`,
           [submission.submission_id],
         )
       ).rows;
@@ -394,7 +432,7 @@ export class ApplicationService extends AwardService {
     )) {
       const a = (
         await c.query(
-          "SELECT * FROM app.award_records WHERE record_id=$1 FOR SHARE",
+          "SELECT * FROM app.award_records WITH (HOLDLOCK) WHERE record_id=$1",
           [rid],
         )
       ).rows[0];
@@ -432,7 +470,7 @@ export class ApplicationService extends AwardService {
     return {
       schemaVersion: 1,
       inputVersion: 1,
-      source: "SUPABASE_POSTGRESQL",
+      source: "SQL_SERVER",
       capturedBy: user.userId,
       capturedAt: new Date().toISOString(),
       purpose: r.purpose,
@@ -454,11 +492,7 @@ export class ApplicationService extends AwardService {
         await this.applicant(user, r, c);
         if (r.status !== "DRAFT")
           throw new ConflictError("Chỉ nộp hồ sơ DRAFT");
-        const snapshot = await this.snapshot(c, r, user);
-        await c.query(
-          "INSERT INTO app.award_application_inputs(application_id,input_version,snapshot,submitted_by) VALUES($1,1,$2,$3)",
-          [r.application_id, JSON.stringify(snapshot), user.userId],
-        );
+        await this.captureInput(c, r, user);
       } else if (action === "forward") {
         await this.noSelf(user, r, c);
         const roles = await this.roleCodes(user);
@@ -482,7 +516,7 @@ export class ApplicationService extends AwardService {
       } else throw new ValidationError("Hành động không hỗ trợ");
       const updated = (
         await c.query(
-          "UPDATE app.award_applications SET status=$2,version=version+1,updated_at=NOW() WHERE application_id=$1 AND version=$3 AND status=$4 RETURNING *",
+          "UPDATE app.award_applications SET status=$2,version=version+1,updated_at=SYSUTCDATETIME() OUTPUT INSERTED.* WHERE application_id=$1 AND version=$3 AND status=$4",
           [
             r.application_id,
             action === "submit" ? "SUBMITTED" : "COUNCIL_PENDING",
@@ -506,13 +540,22 @@ export class ApplicationService extends AwardService {
     const [reviews, comments, input, histories] = await Promise.all([
       c.query("SELECT review.*,reviewer.display_name AS reviewer_name,assigner.display_name AS assigned_by_name FROM app.application_reviews review JOIN app.users reviewer ON reviewer.user_id=review.reviewer_id JOIN app.users assigner ON assigner.user_id=review.assigned_by WHERE application_id=$1 ORDER BY review_id", [r.application_id]),
       c.query("SELECT comment.*,actor.display_name AS actor_name FROM app.application_review_comments comment JOIN app.users actor ON actor.user_id=comment.actor_id WHERE application_id=$1 ORDER BY comment_id", [r.application_id]),
-      c.query("SELECT * FROM app.award_application_inputs WHERE application_id=$1", [r.application_id]),
+      c.query("SELECT TOP (1) * FROM app.award_application_inputs WHERE application_id=$1 ORDER BY input_version DESC", [r.application_id]),
       c.query("SELECT * FROM app.award_application_histories WHERE application_id=$1 ORDER BY history_id", [r.application_id]),
     ]);
     r.reviews = reviews.rows;
     r.comments = comments.rows;
     r.input = input.rows[0] || null;
     r.histories = histories.rows;
+    r.canEdit = false;
+    if (["DRAFT", "NEED_CORRECTION"].includes(r.status)) {
+      try {
+        await this.applicant(user, r, c);
+        r.canEdit = true;
+      } catch (e) {
+        if (!(e instanceof ForbiddenError)) throw e;
+      }
+    }
     r.canCouncil = false;
     try {
       await this.council(user, r, c);
@@ -546,7 +589,7 @@ export class ApplicationService extends AwardService {
       if (!allowed) throw new ForbiddenError("Cần quyền đọc đơn vị");
       const candidates = (
         await c.query(
-          "SELECT * FROM app.award_applications WHERE context_unit_id=$1 ORDER BY application_id DESC LIMIT $2 OFFSET $3",
+          "SELECT * FROM app.award_applications WHERE context_unit_id=$1 ORDER BY application_id DESC OFFSET $3 ROWS FETCH NEXT $2 ROWS ONLY",
           [unit, pageSize, (page - 1) * pageSize],
         )
       ).rows;
@@ -563,12 +606,13 @@ export class ApplicationService extends AwardService {
         items,
         page,
         pageSize,
+        hasMore: candidates.length === pageSize,
       };
     }
     await this.roleCodes(user);
     const rows = (
       await c.query(
-        "SELECT * FROM app.award_applications WHERE created_by=$1 ORDER BY application_id DESC LIMIT $2 OFFSET $3",
+        "SELECT * FROM app.award_applications WHERE created_by=$1 ORDER BY application_id DESC OFFSET $3 ROWS FETCH NEXT $2 ROWS ONLY",
         [user.userId, pageSize, (page - 1) * pageSize],
       )
     ).rows;
@@ -581,7 +625,7 @@ export class ApplicationService extends AwardService {
         if (!(e instanceof ForbiddenError)) throw e;
       }
     }
-    return { items, page, pageSize };
+    return { items, page, pageSize, hasMore: rows.length === pageSize };
   }
 }
 export default new ApplicationService();

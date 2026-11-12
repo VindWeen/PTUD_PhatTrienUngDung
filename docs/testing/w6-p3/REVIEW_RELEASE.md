@@ -10,9 +10,9 @@ Võ Nhạc Phước · 09/10/2026 (Asia/Saigon). Mục tiêu release **28/10/202
 
 | Người/phạm vi | Bằng chứng trong repo | Kết luận dùng được | Điều chưa thể nhận thay |
 |---|---|---|---|
-| Quang review Phước W5-P2/P4 | [W5-Q4](../../weekly/WEEK_05_W5_Q4.md), commit `d3986f0813590b3505c874a213e3548405f0d706` | Ghi nhận fallback quyền đã sửa, KPI mô phỏng, benchmark offline và blocker restore | Đây là review lịch sử, không duyệt video/W6-P2/W6-P3 mới |
-| Quang W6-Q1/Q2 | [W6-Q2](../../weekly/WEEK_06_W6_Q2.md), [release checklist](../../report-inputs/RELEASE_CHECKLIST_W6Q2.json) | Test cấu trúc/script, containment/fail-hard; restore integration NOT_RUN trong báo cáo Quang | Không là bằng chứng HTTP restored/file quyết định hoặc máy thứ hai |
-| Phước review Quang W6-P2 | [W6-P2](../../weekly/WEEK_06_W6_P2.md), commit `2774075b319964a9fd4839070a428bd4fe667a09` | Restore thật gói cục bộ FAIL 42703 verified_by; chỉ ra nguồn supabase/migrations khác legacy 009 và literal table_schema không rewrite | Không bỏ cột dữ liệu để lấy PASS; chưa sửa/duyệt thay Quang |
+| Quang review Phước W5-P2/P4 | [W5-Q4](../../archive/weekly/WEEK_05_W5_Q4.md), commit `d3986f0813590b3505c874a213e3548405f0d706` | Ghi nhận fallback quyền đã sửa, KPI mô phỏng, benchmark offline và blocker restore | Đây là review lịch sử, không duyệt video/W6-P2/W6-P3 mới |
+| Quang W6-Q1/Q2 | [W6-Q2](../../archive/weekly/WEEK_06_W6_Q2.md), [release checklist](../../report-inputs/RELEASE_CHECKLIST_W6Q2.json) | Test cấu trúc/script, containment/fail-hard; restore integration NOT_RUN trong báo cáo Quang | Không là bằng chứng HTTP restored/file quyết định hoặc máy thứ hai |
+| Phước review Quang W6-P2 | [W6-P2](../../archive/weekly/WEEK_06_W6_P2.md), commit `2774075b319964a9fd4839070a428bd4fe667a09` | Restore thật gói cục bộ FAIL 42703 verified_by; chỉ ra nguồn supabase/migrations khác legacy 009 và literal table_schema không rewrite | Không bỏ cột dữ liệu để lấy PASS; chưa sửa/duyệt thay Quang |
 | Phước W6-P3 | [Video và test evidence](README.md), [manifest](evidence-manifest.json) | Công cụ chạy/ghi hình cho task Phước, dùng API/DB thật và kiểm status/hash | Không khẳng định hai người cùng ngồi chạy hoặc Quang đã xem/đồng ý |
 | Quang review W6-P2/video và ký release | Chưa có artefact trong checkout | **PENDING** | Không điền chữ ký, approval, ngày hoặc SHA thay Quang |
 

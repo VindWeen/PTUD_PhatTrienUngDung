@@ -1,0 +1,89 @@
+{
+  "total_pages": 64,
+  "content_pages": 55,
+  "content_physical_pages": [
+    8,
+    62
+  ],
+  "sparse_pages": [],
+  "margin_violations": [],
+  "field_errors": [],
+  "sections": [
+    {
+      "page": 54,
+      "heading": "3.21 Quản lý tài khoản và khôi phục thành tích nháp  "
+    },
+    {
+      "page": 55,
+      "heading": "3.22 Bộ dữ liệu mô phỏng nhiều năm và nhiều vai trò  "
+    },
+    {
+      "page": 56,
+      "heading": "3.23 Kết quả đối chiếu và giải thích bằng AI thật "
+    },
+    {
+      "page": 58,
+      "heading": "3.24 Tạo CV từ hồ sơ thành tích cá nhân "
+    },
+    {
+      "page": 60,
+      "heading": "3.25 Kiểm tra demo và khôi phục toàn bộ dữ liệu "
+    },
+    {
+      "page": 61,
+      "heading": "3.26 Tổ chức trình diễn dưới mười phút "
+    },
+    {
+      "page": 62,
+      "heading": "3.27 Tổng kết kết quả và hạn chế "
+    }
+  ],
+  "chapter_headings": [
+    "CHƯƠNG 1 TỔNG QUAN ĐỀ TÀI",
+    "CHƯƠNG 2 CƠ SỞ LÝ THUYẾT VÀ CÔNG NGHỆ",
+    "CHƯƠNG 3 PHÂN TÍCH THIẾT KẾ VÀ KẾT QUẢ TRIỂN KHAI"
+  ],
+  "figures": [
+    "Hình 3.1 Các tác nhân và nhóm ca sử dụng",
+    "Hình 3.2 Luồng nộp và xác nhận thành tích",
+    "Hình 3.3 Luồng hồ sơ đề nghị qua đơn vị và Hội đồng",
+    "Hình 3.4 Quan hệ hồ sơ thành tích và phiên bản minh chứng",
+    "Hình 3.5 Quan hệ đề nghị Hội đồng và quyết định khen thưởng",
+    "Hình 3.6 Giao diện thành tích với dữ liệu minh họa",
+    "Hình 3.7 Kết quả đạt chưa đạt và yêu cầu rà soát trên hồ sơ An",
+    "Hình 3.8 Giải thích AI và nguồn tham chiếu của tiêu chí thực hành",
+    "Hình 3.9 CV của An được xem trước từ trang chỉnh sửa"
+  ],
+  "geometry": [
+    {
+      "width_cm": 21.0,
+      "height_cm": 29.7,
+      "left_cm": 3.1,
+      "right_cm": 2.0
+    },
+    {
+      "width_cm": 21.0,
+      "height_cm": 29.7,
+      "left_cm": 3.1,
+      "right_cm": 2.0
+    },
+    {
+      "width_cm": 21.0,
+      "height_cm": 29.7,
+      "left_cm": 3.0,
+      "right_cm": 2.0
+    },
+    {
+      "width_cm": 21.0,
+      "height_cm": 29.7,
+      "left_cm": 3.0,
+      "right_cm": 2.0
+    }
+  ],
+  "word_count_approx": 20369,
+  "reference_unchanged": true,
+  "output": "C:\\DriveD\\EverythingElse\\LHU\\PTUD_PhatTrienUngDung\\docs\\bao-cao\\BaoCaoHocPhan_LHU_HienTrang_20261112.docx",
+  "sha256": "9a4fdfa3a10f772bc3edba58750c8d3466a1b20ad155b8c69c01b72098f22bab",
+  "visual_review": "64 pages reviewed using page images and byte-identical page comparison across layout iterations",
+  "final_render_directory": "C:\\DriveD\\EverythingElse\\LHU\\PTUD_PhatTrienUngDung\\tmp\\report-20261112\\verified-final"
+}

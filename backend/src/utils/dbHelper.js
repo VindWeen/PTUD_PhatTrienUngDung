@@ -85,7 +85,7 @@ export async function withTransaction(callback) {
     }
     throw error;
   } finally {
-    client.release();
+    await client.release();
   }
 }
 

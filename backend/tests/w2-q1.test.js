@@ -187,7 +187,7 @@ test('4. [W2-Q1 Nghiệm thu] Manager xem hồ sơ theo ContextUnitId; chặn tr
   setPool({
     end: async () => {},
     query: async (text, values) => {
-      if (text.includes('WITH RECURSIVE ScopeHierarchy')) {
+      if (text.includes('WITH ScopeHierarchy')) {
         const targetUnitId = Number(values[2]);
         // Unit #2 nằm trong scope, Unit #4 không nằm trong scope
         return { rows: targetUnitId === 2 ? [{ HasScope: 1 }] : [], rowCount: targetUnitId === 2 ? 1 : 0 };

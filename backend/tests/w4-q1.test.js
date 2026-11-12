@@ -64,8 +64,8 @@ test('W4-Q1 [Ca 1]: Bộ đếm năm phân biệt bằng code xác định đạ
     subject: mockSubject,
     criterion: mockCriterion,
     documentVersion: mockDocVersion,
-    records,
-    rules: { minimumDistinctYears: 3, requireConsecutive: true },
+    records: records.map(record => ({ ...record, type: 'ACHIEVEMENT', sourceTypeId: 1 })),
+    rules: { minimumDistinctYears: 3, requireConsecutive: true, sourceType: 'ACHIEVEMENT', achievementTypeIds: [1] },
   });
 
   assert.equal(result.distinctYears, 3);
@@ -105,8 +105,8 @@ test('W4-Q1 [Ca 2]: Phát hiện gián đoạn chuỗi năm liên tiếp (YEAR_G
     subject: mockSubject,
     criterion: mockCriterion,
     documentVersion: mockDocVersion,
-    records,
-    rules: { minimumDistinctYears: 3, requireConsecutive: true },
+    records: records.map(record => ({ ...record, type: 'ACHIEVEMENT', sourceTypeId: 1 })),
+    rules: { minimumDistinctYears: 3, requireConsecutive: true, sourceType: 'ACHIEVEMENT', achievementTypeIds: [1] },
   });
 
   assert.equal(result.distinctYears, 3);
@@ -146,8 +146,8 @@ test('W4-Q1 [Ca 3]: Loại trừ tuyệt đối hồ sơ thu hồi (REVOKED / CA
     subject: mockSubject,
     criterion: mockCriterion,
     documentVersion: mockDocVersion,
-    records,
-    rules: { minimumDistinctYears: 3, requireConsecutive: true },
+    records: records.map(record => ({ ...record, type: 'ACHIEVEMENT', sourceTypeId: 1 })),
+    rules: { minimumDistinctYears: 3, requireConsecutive: true, sourceType: 'ACHIEVEMENT', achievementTypeIds: [1] },
   });
 
   // Hồ sơ thu hồi bị loại bỏ, chỉ còn 2 năm hợp lệ
@@ -188,8 +188,8 @@ test('W4-Q1 [Ca 4]: Quy tắc nghiệm thu: Thiếu chứng cứ KHÔNG mặc đ
     subject: mockSubject,
     criterion: mockCriterion,
     documentVersion: mockDocVersion,
-    records,
-    rules: { minimumDistinctYears: 3, requireConsecutive: true },
+    records: records.map(record => ({ ...record, type: 'ACHIEVEMENT', sourceTypeId: 1 })),
+    rules: { minimumDistinctYears: 3, requireConsecutive: true, sourceType: 'ACHIEVEMENT', achievementTypeIds: [1] },
   });
 
   assert.ok(result.issues.includes('MISSING_DATA'));

@@ -6,7 +6,7 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const dirs = ['docs/report-inputs', 'docs/testing/week-4/media', 'docs/weekly/images', 'Page_Design', 'database/migrations'];
+const dirs = ['docs/report-inputs', 'docs/testing/week-4/media', 'docs/archive/weekly/images', 'Page_Design', 'database/migrations'];
 const files = [
   'backend/src/modules/evidences/evidenceService.js', 'backend/tests/w5-p4.test.js',
   'backend/tests/w5-p3.integration.js', 'scripts/backup.mjs', 'scripts/restore.mjs',
@@ -19,8 +19,8 @@ const files = [
   'docs/testing/week-4/ui-result.json', 'docs/testing/w5-p1/load-result.json',
   'docs/testing/w5-p1/overlapping-load-result.json',
   'docs/ai/recommender-eval/README.md', 'docs/ai/recommender-eval/results.json',
-  'docs/weekly/WEEK_05_W5_Q1.md', 'docs/weekly/WEEK_05_W5_Q3.md', 'docs/weekly/WEEK_05_W5_P3.md',
-  'docs/weekly/WEEK_05_W5_P4.md',
+  'docs/archive/weekly/WEEK_05_W5_Q1.md', 'docs/archive/weekly/WEEK_05_W5_Q3.md', 'docs/archive/weekly/WEEK_05_W5_P3.md',
+  'docs/archive/weekly/WEEK_05_W5_P4.md',
 ];
 for (const dir of dirs) {
   for (const item of await fs.readdir(path.join(root, dir), { withFileTypes: true })) {

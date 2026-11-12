@@ -136,8 +136,19 @@ async function checkedRun(client, user, runId) {
   const run = await evaluations.getEvaluationRunById(client, runId);
   if (!run) throw new NotFoundError("Không tìm thấy run");
   await authorized(client, user, run);
-  if (run.isStale || run.overallStatus !== "COMPLETED")
-    throw new ConflictError("Run cũ/chưa hoàn tất; đánh giá lại");
+  if (run.isStale)
+    throw new ConflictError("Dữ liệu hồ sơ hoặc quy định đã thay đổi; thực hiện thẩm định mới trước khi tạo gợi ý KPI.");
+  if (run.overallStatus !== "COMPLETED") {
+    const blocked = (run.criterionResults || [])
+      .filter(c => c.isSimulation || !c.isConfirmedByLhu || c.humanReviewRequired || c.thresholdMetric?.isSatisfied === "UNCONFIRMED")
+      .map(c => c.criterionName || c.criterionCode)
+      .filter(Boolean);
+    throw new ConflictError(
+      run.overallStatus === "FAILED"
+        ? "Phiên thẩm định không thành công; thực hiện lại ở trang thẩm định."
+        : `Phiên còn căn cứ chưa xác nhận, mô phỏng hoặc cần rà soát${blocked.length ? `: ${blocked.join(', ')}` : ''}. Hoàn thiện căn cứ và hồ sơ rồi thẩm định lại; chạy lại với dữ liệu cũ sẽ không giải quyết được.`,
+    );
+  }
   const stale = await ai.checkEvaluationStale(runId, user, client);
   if (stale.isStale)
     throw new ConflictError("Dữ liệu nguồn đã thay đổi; đánh giá lại");
@@ -275,7 +286,7 @@ export async function generate(user, raw) {
         (
           await client.query(
             `INSERT INTO app.kpi_recommendations(recommendation_id,run_id,criterion_id,created_by,payload,provider_evidence)
-        VALUES($1,$2,$3,$4,$5,$6) RETURNING *`,
+        OUTPUT INSERTED.* VALUES($1,$2,$3,$4,$5,$6)`,
             [randomUUID(), p.runId, c.criterionId, user.userId, c, evidence],
           )
         ).rows[0],
@@ -310,7 +321,7 @@ export async function decide(user, rawId, raw) {
     return await withTransaction(async ({ client }) => {
       const r = (
         await client.query(
-          "SELECT * FROM app.kpi_recommendations WHERE recommendation_id=$1 FOR UPDATE",
+          "SELECT * FROM app.kpi_recommendations WITH (UPDLOCK, HOLDLOCK) WHERE recommendation_id=$1",
           [recommendationId],
         )
       ).rows[0];
@@ -346,7 +357,7 @@ export async function decide(user, rawId, raw) {
         goal = await repo.createGoal(client, user.userId, s, fields, "MANUAL");
         goal = (
           await client.query(
-            `UPDATE app.kpi_goals SET status='ACCEPTED',accepted_by=$2,accepted_at=NOW(),version=version+1 WHERE goal_id=$1 RETURNING *`,
+            `UPDATE app.kpi_goals SET status='ACCEPTED',accepted_by=$2,accepted_at=SYSUTCDATETIME(),version=version+1 OUTPUT INSERTED.* WHERE goal_id=$1`,
             [goal.goal_id, user.userId],
           )
         ).rows[0];
@@ -354,12 +365,12 @@ export async function decide(user, rawId, raw) {
       const result = (
         await client.query(
           `UPDATE app.kpi_recommendations SET status=$2,goal_id=$3,version=version+1,
-      payload=payload || $4::jsonb WHERE recommendation_id=$1 RETURNING *`,
+      payload=$4 OUTPUT INSERTED.* WHERE recommendation_id=$1`,
           [
             recommendationId,
             p.action === "accept" ? "ACCEPTED" : "REJECTED",
             goal?.goal_id || null,
-            JSON.stringify(p.edits || {}),
+            JSON.stringify({ ...r.payload, ...(p.edits || {}) }),
           ],
         )
       ).rows[0];

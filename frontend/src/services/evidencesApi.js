@@ -2,6 +2,7 @@ import { USE_FIXTURES } from './apiConfig.js';
 import { fixtureClient } from './fixtureClient.js';
 import apiClient from './apiClient.js';
 import { request } from './request.js';
+import { normalizeFileName } from './fileName.js';
 
 export function validateEvidenceFile(file) {
   if (!file) throw new Error('Vui lòng chọn tệp minh chứng.');
@@ -17,10 +18,11 @@ export const evidencesApi = {
     if (USE_FIXTURES) {
       return fixtureClient.getEvidencesByAchievement(achievementId);
     }
-    return request({
+    const evidences = await request({
       method: 'GET',
       url: `/achievements/${achievementId}/evidences`,
     });
+    return evidences.map(evidence => ({ ...evidence, latestFileName: normalizeFileName(evidence.latestFileName) }));
   },
 
   /**
@@ -83,7 +85,7 @@ export const evidencesApi = {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', originalFileName || `evidence_file_${evidenceFileId}`);
+    link.setAttribute('download', normalizeFileName(originalFileName) || `evidence_file_${evidenceFileId}`);
     document.body.appendChild(link);
     link.click();
     link.remove();

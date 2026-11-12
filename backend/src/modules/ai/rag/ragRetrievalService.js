@@ -17,7 +17,7 @@ export async function indexConfirmedChunks(client = null) {
            c.content, c.chunk_hash, v.lhu_application_status, v.is_confirmed
     FROM app.regulation_chunks c
     JOIN app.regulation_document_versions v ON v.version_id = c.version_id
-    WHERE v.is_confirmed = TRUE AND v.lhu_application_status = 'CONFIRMED_LHU_POLICY'
+    WHERE v.is_confirmed = 1 AND v.lhu_application_status = 'CONFIRMED_LHU_POLICY'
     ORDER BY c.chunk_id ASC
   `;
 
@@ -28,19 +28,20 @@ export async function indexConfirmedChunks(client = null) {
   for (const chunk of chunks) {
     const vector = generateEmbedding(chunk.content, DEFAULT_EMBEDDING_DIM);
     const upsertSql = `
-      INSERT INTO app.regulation_chunk_embeddings (
-        chunk_id, embedding_model, embedding_dim, embedding_vector, chunk_hash, indexed_at
-      ) VALUES ($1, $2, $3, $4, $5, NOW())
-      ON CONFLICT (chunk_id) DO UPDATE SET
-        embedding_model = EXCLUDED.embedding_model,
-        embedding_vector = EXCLUDED.embedding_vector,
-        chunk_hash = EXCLUDED.chunk_hash,
-        indexed_at = NOW()
+      SET XACT_ABORT ON;
+      BEGIN TRANSACTION;
+      UPDATE app.regulation_chunk_embeddings WITH (UPDLOCK, HOLDLOCK)
+      SET embedding_model=$2, embedding_dim=$3, embedding_vector=$4, chunk_hash=$5, indexed_at=SYSUTCDATETIME()
+      WHERE chunk_id=$1;
+      IF @@ROWCOUNT=0
+        INSERT INTO app.regulation_chunk_embeddings(chunk_id,embedding_model,embedding_dim,embedding_vector,chunk_hash,indexed_at)
+        VALUES($1,$2,$3,$4,$5,SYSUTCDATETIME());
+      COMMIT TRANSACTION;
     `;
 
     await query(
       upsertSql,
-      [chunk.chunk_id, EMBEDDING_MODEL_NAME, DEFAULT_EMBEDDING_DIM, vector, chunk.chunk_hash],
+      [chunk.chunk_id, EMBEDDING_MODEL_NAME, DEFAULT_EMBEDDING_DIM, JSON.stringify(vector), chunk.chunk_hash],
       client
     );
     indexedCount++;
@@ -77,15 +78,15 @@ export async function retrieveRelevantChunks(
   let sql = `
     SELECT c.chunk_id, c.version_id, c.article_no, c.clause_no, c.page_no,
            c.content, c.chunk_hash,
-           v.source_url, v.version_number, v.effective_from::text as effective_from,
-           v.effective_to::text as effective_to,
+           v.source_url, v.version_number, CONVERT(varchar(10), v.effective_from, 23) as effective_from,
+           CONVERT(varchar(10), v.effective_to, 23) as effective_to,
            d.document_code, d.title as document_title,
            e.embedding_vector
     FROM app.regulation_chunks c
     JOIN app.regulation_document_versions v ON v.version_id = c.version_id
     JOIN app.regulation_documents d ON d.document_id = v.document_id
     LEFT JOIN app.regulation_chunk_embeddings e ON e.chunk_id = c.chunk_id
-    WHERE v.is_confirmed = TRUE AND v.lhu_application_status = 'CONFIRMED_LHU_POLICY'
+    WHERE v.is_confirmed = 1 AND v.lhu_application_status = 'CONFIRMED_LHU_POLICY'
   `;
 
   if (asOfDate) {

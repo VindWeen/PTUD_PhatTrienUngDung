@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
+import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import { Pool, getDbPoolConfig, setPool } from '../src/config/database.js';
@@ -123,7 +124,8 @@ finally {
  if(server){server.closeAllConnections();await new Promise(r=>server.close(r));}setPool(null);
  if(created)await pool.query(`DROP SCHEMA ${schema} CASCADE`);
  await pool.end();
- await fs.mkdir(new URL('../../output/w5-p1/',import.meta.url),{recursive:true});
+ const resultPath = process.env.W5_P1_RESULT_PATH ? path.resolve(process.env.W5_P1_RESULT_PATH) : fileURLToPath(new URL(`../../output/w5-p1/${result.mode}-result.json`,import.meta.url));
+ await fs.mkdir(path.dirname(resultPath),{recursive:true});
  result.finishedAt=new Date().toISOString();
- await fs.writeFile(new URL(`../../output/w5-p1/${result.mode}-result.json`,import.meta.url),JSON.stringify(result,null,2));
+ await fs.writeFile(resultPath,JSON.stringify(result,null,2));
 }

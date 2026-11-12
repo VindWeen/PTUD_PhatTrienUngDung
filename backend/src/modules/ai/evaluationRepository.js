@@ -1,7 +1,7 @@
 import { query } from '../../utils/dbHelper.js';
 
 /**
- * Lưu trữ phiên đánh giá và chi tiết tiêu chí vào CSDL (Supabase/PostgreSQL)
+ * Lưu trữ phiên đánh giá và chi tiết tiêu chí vào CSDL SQL Server
  */
 export async function saveEvaluationRun(client, runData, criterionResults = []) {
   const runSql = `
@@ -12,15 +12,14 @@ export async function saveEvaluationRun(client, runData, criterionResults = []) 
       automatic_award_granted, input_snapshot, input_hash,
       prompt_tokens, completion_tokens, total_tokens, latency_ms,
       is_stale, executed_by, executed_at
-    ) VALUES (
+    ) OUTPUT INSERTED.* VALUES (
       $1, $2, $3, $4,
       $5, $6, $7,
       $8, $9, $10, $11, $12,
       $13, $14, $15,
       $16, $17, $18, $19,
       $20, $21, $22
-    )
-    RETURNING *;
+    );
   `;
 
   const runValues = [
@@ -60,14 +59,13 @@ export async function saveEvaluationRun(client, runData, criterionResults = []) 
         target_min, actual_recorded, unit_metric, is_satisfied,
         distinct_years, consecutive_years, legal_references,
         ai_analysis, human_review_required, warning_notice
-      ) VALUES (
+      ) OUTPUT INSERTED.* VALUES (
         $1, $2, $3, $4,
         $5, $6,
         $7, $8, $9, $10,
         $11, $12, $13,
         $14, $15, $16
-      )
-      RETURNING *;
+      );
     `;
 
     const critValues = [
@@ -168,9 +166,49 @@ export async function getEvaluationRunById(client, runId) {
 /**
  * Danh sách lịch sử các phiên đánh giá
  */
-export async function listEvaluationRuns(client, { subjectType, subjectId, applicationId, limit = 20, offset = 0 } = {}) {
+export async function listEvaluationRuns(client, { subjectType, subjectId, applicationId, limit = 20, offset = 0, officerUserId } = {}) {
   const params = [];
-  let sql = `SELECT * FROM app.evaluation_runs WHERE 1=1`;
+  let sql = `SELECT er.* FROM app.evaluation_runs er WHERE 1=1`;
+
+  if (officerUserId) {
+    params.push(officerUserId);
+    const uid = `$${params.length}`;
+    sql = `;WITH ancestors AS (
+      SELECT u.unit_id AS subject_unit_id, u.unit_id, u.parent_id, 0 AS depth
+      FROM app.organization_units u WHERE u.is_active=1
+      UNION ALL
+      SELECT a.subject_unit_id, p.unit_id, p.parent_id, a.depth+1
+      FROM ancestors a JOIN app.organization_units p ON p.unit_id=a.parent_id
+      WHERE p.is_active=1 AND a.depth<100
+    ) ` + sql;
+    sql += ` AND (
+      (er.subject_type='LECTURER' AND EXISTS (
+        SELECT 1 FROM app.lecturers l JOIN app.user_roles ur ON ur.user_id=l.user_id
+        JOIN app.roles r ON r.role_id=ur.role_id AND r.code='LECTURER' AND r.is_active = 1
+        WHERE l.lecturer_id=er.subject_id AND l.user_id=${uid} AND l.is_active = 1
+          AND ur.revoked_at IS NULL AND ur.valid_from<=SYSUTCDATETIME() AND (ur.valid_to IS NULL OR ur.valid_to>SYSUTCDATETIME())
+      )) OR
+      (er.subject_type='UNIT' AND EXISTS (
+        SELECT 1 FROM app.unit_representatives rep JOIN app.organization_units u ON u.unit_id=rep.unit_id AND u.is_active = 1
+        JOIN app.user_roles ur ON ur.user_id=rep.user_id JOIN app.roles r ON r.role_id=ur.role_id AND r.code='UNIT_REPRESENTATIVE' AND r.is_active = 1
+        WHERE rep.unit_id=er.subject_id AND rep.user_id=${uid} AND rep.revoked_at IS NULL
+          AND rep.valid_from<=SYSUTCDATETIME() AND (rep.valid_to IS NULL OR rep.valid_to>SYSUTCDATETIME())
+          AND ur.revoked_at IS NULL AND ur.valid_from<=SYSUTCDATETIME() AND (ur.valid_to IS NULL OR ur.valid_to>SYSUTCDATETIME())
+      )) OR EXISTS (
+      SELECT 1 FROM ancestors a JOIN app.user_unit_scopes s ON s.unit_id=a.unit_id
+      JOIN app.roles r ON r.role_id=s.role_id AND r.code IN ('MANAGER','RECORDS_OFFICER') AND r.is_active = 1
+      JOIN app.user_roles ur ON ur.user_id=s.user_id AND ur.role_id=r.role_id
+      WHERE a.subject_unit_id IN (
+          SELECT er.subject_id WHERE er.subject_type='UNIT'
+          UNION ALL
+          SELECT la.unit_id FROM app.lecturer_assignments la
+          WHERE er.subject_type='LECTURER' AND la.lecturer_id=er.subject_id AND la.is_primary=1
+            AND la.valid_from<=SYSUTCDATETIME() AND (la.valid_to IS NULL OR la.valid_to>SYSUTCDATETIME())
+        ) AND s.user_id=${uid} AND s.revoked_at IS NULL AND s.valid_from<=SYSUTCDATETIME()
+        AND (s.valid_to IS NULL OR s.valid_to>SYSUTCDATETIME()) AND (a.depth=0 OR s.include_descendants = 1)
+        AND ur.revoked_at IS NULL AND ur.valid_from<=SYSUTCDATETIME() AND (ur.valid_to IS NULL OR ur.valid_to>SYSUTCDATETIME())
+    ))`;
+  }
 
   if (subjectType) {
     params.push(subjectType);
@@ -185,7 +223,7 @@ export async function listEvaluationRuns(client, { subjectType, subjectId, appli
     sql += ` AND application_id = $${params.length}`;
   }
 
-  sql += ` ORDER BY executed_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+  sql += ` ORDER BY executed_at DESC OFFSET $${params.length + 2} ROWS FETCH NEXT $${params.length + 1} ROWS ONLY${officerUserId ? " OPTION (MAXRECURSION 101)" : ""}`;
   params.push(limit, offset);
 
   const res = await query(sql, params, client);
@@ -209,7 +247,7 @@ export async function listEvaluationRuns(client, { subjectType, subjectId, appli
  * Cập nhật trạng thái stale khi input data bị thay đổi
  */
 export async function markRunStale(client, runId, isStale = true) {
-  const sql = `UPDATE app.evaluation_runs SET is_stale = $1 WHERE run_id = $2 RETURNING *`;
+  const sql = `UPDATE app.evaluation_runs SET is_stale = $1 OUTPUT INSERTED.* WHERE run_id = $2`;
   const res = await query(sql, [isStale, runId], client);
   return res.rows[0] || null;
 }

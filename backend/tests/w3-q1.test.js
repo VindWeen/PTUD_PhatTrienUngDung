@@ -9,7 +9,7 @@ import {
   ConflictError,
   NotFoundError,
 } from '../src/utils/errors.js';
-import { closeDB } from '../src/config/database.js';
+import { closeDB, setPool } from '../src/config/database.js';
 
 test.after(async () => {
   await closeDB();
@@ -251,6 +251,8 @@ test('5. [W3-Q1 Resubmit] Gửi lại hồ sơ từ NEED_CORRECTION được ch�
 });
 
 test('6. [W3-Q1 Replace] Tạo bản thay thế có liên kết: chỉ cho hồ sơ kết thúc (REJECTED/CANCELLED/REVOKED)', async () => {
+  // This is a mock-repository unit test: audit must not write to the configured DB.
+  setPool({ query: async () => ({ rows: [{ audit_id: 1 }], rowCount: 1 }), end: async () => {} });
   const lecturerUser = { userId: 10, email: 'lecturer@lhu.edu.vn', roles: ['LECTURER'] };
   let createdData = null;
 

@@ -54,7 +54,7 @@ OCC test kiểm tra version cũ và trạng thái trùng; chưa thử nhiều co
 - `supabase/migrations/20261006000019_w3_p3_award_applications.sql`.
 - `scripts/update-w3-p3-contract.mjs`, `docs/api/W3_P3.openapi.json`.
 - `docs/api/AWARD_APPLICATIONS_W3_P3.md`: hợp đồng/quyền/giới hạn và 6 bước tự kiểm tra.
-- `docs/weekly/WEEK_03_W3_P3.md`: plan Supabase thay DB cũ và bàn giao.
+- `docs/archive/weekly/WEEK_03_W3_P3.md`: plan Supabase thay DB cũ và bàn giao.
 - `docs/testing/week-3/W3_P3_TEST_REPORT.md`: báo cáo này.
 
 ## Phần còn lại

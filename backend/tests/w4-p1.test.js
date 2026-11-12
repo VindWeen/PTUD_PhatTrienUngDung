@@ -94,6 +94,7 @@ test("pg Date effective windows behave like ISO dates in integrated evaluator", 
       effectiveTo: new Date(2030, 11, 31),
     },
     records: [],
+    rules: { sourceType: 'ACHIEVEMENT', achievementTypeIds: [1] },
     asOfDate: "2026-10-07",
   };
   const r = evaluateStructuredCriterion(input);

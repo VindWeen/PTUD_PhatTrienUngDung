@@ -139,10 +139,10 @@ export default function Reports({ dashboard = false }) {
         <div className="bg-amber-50 dark:bg-amber-950/40 p-4 rounded-2xl border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200">
           <div className="flex items-center gap-2 font-bold text-sm">
             <Info className="w-4 h-4 text-amber-600" />
-            Đang chạy chế độ dữ liệu mẫu (Fixtures)
+            Đang chạy chế độ dữ liệu mẫu
           </div>
           <p className="mt-1">
-            Tính năng Báo cáo W3-P1 yêu cầu API thật để đối soát cơ sở dữ liệu. Hãy đảm bảo{' '}
+            Để xem báo cáo thực tế, quản trị viên cần kết nối nguồn dữ liệu. Cấu hình{' '}
             <code className="font-mono bg-amber-100 dark:bg-amber-900/60 px-1.5 py-0.5 rounded">VITE_DATA_SOURCE=api</code>{' '}
             trong frontend để trải nghiệm đầy đủ.
           </p>
@@ -382,10 +382,10 @@ export default function Reports({ dashboard = false }) {
                 {/* 5. Data Table */}
                 <div className="bg-white dark:bg-slate-800/80 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm overflow-hidden">
                   <div className="overflow-x-auto">
-                    <table className="w-full min-w-[760px] text-left text-xs">
+                    <table className="w-full min-w-[760px] text-left text-sm">
                       <thead>
                         <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-700 font-semibold text-slate-600 dark:text-slate-400">
-                          <th className="p-3.5">Nguồn / ID</th>
+                          <th className="p-3.5">Loại bản ghi</th>
                           <th className="p-3.5">Chủ thể</th>
                           <th className="p-3.5">Tiêu đề & Danh mục</th>
                           <th className="p-3.5">Đơn vị lịch sử</th>
@@ -403,7 +403,7 @@ export default function Reports({ dashboard = false }) {
                               key={row.kind + row.id}
                               className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition"
                             >
-                              <td className="p-3.5">
+                              <td className="p-3.5" title={`Mã bản ghi: ${row.id}`}>
                                 <span
                                   className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-bold text-[11px] ${
                                     row.kind === 'ACHIEVEMENT'
@@ -411,7 +411,7 @@ export default function Reports({ dashboard = false }) {
                                       : 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
                                   }`}
                                 >
-                                  {labels[row.kind]} #{row.id}
+                                  {labels[row.kind]}
                                 </span>
                               </td>
 
@@ -428,7 +428,7 @@ export default function Reports({ dashboard = false }) {
                                     <div className="font-semibold text-slate-900 dark:text-white">
                                       {row.subject_name}
                                     </div>
-                                    <div className="text-[10px] text-slate-400">
+                                    <div className="text-xs text-slate-500 dark:text-slate-400">
                                       {labels[row.subject_type]}
                                     </div>
                                   </div>
@@ -439,7 +439,7 @@ export default function Reports({ dashboard = false }) {
                                 <div className="font-semibold text-slate-800 line-clamp-2 dark:text-white">
                                   {row.title}
                                 </div>
-                                <div className="mt-0.5 text-[11px] text-slate-400 flex items-center gap-1.5 flex-wrap">
+                                <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 flex-wrap">
                                   <span>{row.type_name}</span>
                                   {row.decision_number && (
                                     <span className="font-mono bg-slate-100 px-1 py-0.2 rounded text-[10px] dark:bg-slate-700">
@@ -453,9 +453,7 @@ export default function Reports({ dashboard = false }) {
                                 <span className="font-medium text-slate-700 dark:text-slate-300">
                                   {row.context_unit_name}
                                 </span>
-                                <div className="text-[10px] text-slate-400">
-                                  ID: #{row.context_unit_id}
-                                </div>
+                                
                               </td>
 
                               <td className="p-3.5 whitespace-nowrap">
@@ -463,7 +461,7 @@ export default function Reports({ dashboard = false }) {
                                   <Calendar className="w-3.5 h-3.5 text-slate-400" />
                                   <span>{row.recognition_year}</span>
                                 </div>
-                                <div className="text-[10px] text-slate-400">
+                                <div className="text-xs text-slate-500 dark:text-slate-400">
                                   {row.academic_year_code || '—'}
                                 </div>
                               </td>
@@ -471,18 +469,18 @@ export default function Reports({ dashboard = false }) {
                               <td className="p-3.5 whitespace-nowrap">
                                 <div className="space-y-1">
                                   <span
-                                    className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${statusPill}`}
+                                    className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusPill}`}
                                   >
                                     {STATUS_LABELS[row.status] || row.status}
                                   </span>
                                   <div>
                                     {row.is_valid ? (
-                                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                                        <CheckCircle2 className="w-3 h-3" /> Hợp lệ
+                                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                                        <CheckCircle2 className="w-3 h-3" /> Được tính vào thống kê
                                       </span>
                                     ) : (
-                                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-400">
-                                        <XCircle className="w-3 h-3 text-slate-400" /> Không tính hợp lệ
+                                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                                        <XCircle className="w-3 h-3 text-slate-400" /> Chưa tính vào thống kê
                                       </span>
                                     )}
                                   </div>

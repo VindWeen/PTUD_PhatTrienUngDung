@@ -15,7 +15,7 @@ Commit dưới đây là bằng chứng thay đổi trong lịch sử local theo
 | W4-P4 `82dfd48` | Citation fail closed, UI states | docs/testing/week-4/results.json; ui-result.json | docs/testing/week-4/DEMO_AI.md |
 | W5-P1 `e777e70` | Scale fixture, đo hiệu năng và scope | docs/testing/w5-p1/*result.json | docs/api/PERFORMANCE_W5_P1.md; dashboard p95 còn chưa đạt |
 | W5-P2 `99a94bf` | Provider/quota/connector/CSV review | docs/ai/recommender-eval/results.json; WEEK_05_W5_P2.md | Live LLM còn thiếu key; KPI upstream mô phỏng |
-| W5-P3 `37a381e` | Cài sạch, role guide, runner restore HTTP | docs/weekly/WEEK_05_W5_P3.md | docs/DEMO_SCRIPT.md; docs/USER_GUIDE.md |
+| W5-P3 `37a381e` | Cài sạch, role guide, runner restore HTTP | docs/archive/weekly/WEEK_05_W5_P3.md | docs/DEMO_SCRIPT.md; docs/USER_GUIDE.md |
 | W5-P4 diff chưa commit | Review quyền/file, thử restore, khóa tư liệu | verification.json; backend/tests/w5-p4.test.js | README.md và checklist trong thư mục này |
 
 Kết quả lịch sử phải ghi ngày/commit của nguồn, không trình bày như vừa chạy lại trong W5-P4. Demo đề xuất: đăng nhập → file chính chủ/ngoài quyền → khóa VERIFIED → dashboard/export → restore (hiện trình bày lỗi thật) → KPI mô phỏng. Không gọi LLM hay tự trao thưởng để hoàn tất báo cáo.

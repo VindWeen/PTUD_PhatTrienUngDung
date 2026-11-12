@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import path from 'path';
 import { z } from 'zod';
 import { ValidationError } from '../../utils/errors.js';
+import { normalizeFileName } from '../../utils/fileName.js';
 
 export const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB = 10,485,760 bytes
 
@@ -102,7 +103,7 @@ export function validateUploadedFile(file) {
   }
 
   // 2. Chống Path Traversal trong tên tệp gốc
-  const rawFileName = file.originalname || 'unnamed_file';
+  const rawFileName = normalizeFileName(file.originalname) || 'unnamed_file';
   if (rawFileName.includes('\0') || rawFileName.includes('..') || rawFileName.includes('/') || rawFileName.includes('\\')) {
     // Làm sạch và lấy basename an toàn
     const cleanedBase = path.basename(rawFileName).replace(/[^a-zA-Z0-9._\- \u00C0-\u024F\u1E00-\u1EFF]/g, '_');

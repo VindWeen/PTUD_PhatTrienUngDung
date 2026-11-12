@@ -77,7 +77,7 @@ export default function CvEditor() {
     ['intro', 'Thông tin cơ bản'], ['profile', 'Hồ sơ LHU'], ['education', 'Học vấn'],
     ['experience', 'Kinh nghiệm'], ['details', 'Thông tin bổ sung'], ['sharing', 'Chia sẻ CV'],
   ];
-  const card = 'rounded-[24px] border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-7';
+  const card = 'scroll-mt-36 rounded-[24px] border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-7';
   const label = 'block text-sm font-semibold text-slate-700 dark:text-slate-200';
   const textArea = 'soft-input mt-2 min-h-[100px] w-full resize-y text-sm';
   const reorder = (key, index) => <div className="flex items-center gap-1">
@@ -90,6 +90,10 @@ export default function CvEditor() {
       <Link to="/me/profile" className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-teal-700 dark:text-slate-400"><ArrowLeft className="h-4 w-4" /> Hồ sơ năng lực</Link>
       <div className="mt-5 flex flex-wrap items-end justify-between gap-5"><div><div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">CV cá nhân</h1><span className={`rounded-full px-3 py-1 text-xs font-semibold ${data.isPublished ? 'bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}>{data.isPublished ? 'Đang chia sẻ' : 'Chưa chia sẻ'}</span></div><p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">Tạo một hồ sơ giới thiệu theo cách riêng của bạn.</p></div><button type="button" disabled={busy} className="soft-btn-secondary text-sm" onClick={openPreview}><Eye className="h-4 w-4" /> Xem trước trong tab mới</button></div>
     </header>
+    <div className="sticky top-2 z-20 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-900/95" aria-label="Thao tác bản nháp CV">
+      <p role="status" className={`text-sm font-medium ${edited ? 'text-amber-700 dark:text-amber-300' : 'text-slate-600 dark:text-slate-300'}`}>{busy ? 'Đang xử lý…' : edited ? 'Có thay đổi chưa lưu' : 'Bản nháp đã được lưu'}</p>
+      <div className="flex flex-wrap gap-2"><button type="button" disabled={busy} className="soft-btn-secondary text-sm" onClick={openPreview}><Eye className="h-4 w-4" /> Xem trước</button><button type="button" disabled={busy || !edited} className="soft-btn-primary text-sm" onClick={() => run('save')}><Save className="h-4 w-4" /> Lưu bản nháp</button><a href="#sharing" className="soft-btn-secondary text-sm">Chia sẻ CV</a></div>
+    </div>
     {error && <p role="alert" className="rounded-2xl bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-950/50 dark:text-rose-200">{error}</p>}
     {notice && <p role="status" className="rounded-2xl bg-teal-50 p-4 text-sm text-teal-800 dark:bg-teal-950/50 dark:text-teal-200">{notice}</p>}
     {data.isPublished && (edited || data.unpublishedChanges) && <p className="rounded-2xl bg-amber-50 p-4 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">Bạn có thay đổi chưa công khai. Bấm Cập nhật CV công khai để người xem thấy nội dung mới.</p>}

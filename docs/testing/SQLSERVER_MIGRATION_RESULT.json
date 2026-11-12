@@ -1,0 +1,55 @@
+{
+  "date": "2026-11-11",
+  "databaseEngine": "SQL Server 2022",
+  "database": "PTUD_LHU",
+  "migrationCount": 2,
+  "businessTables": 53,
+  "checkpointRows": 609,
+  "dataComparison": {
+    "tables": 53,
+    "mismatches": 0,
+    "integrity": {
+      "bad_fks": 0,
+      "bad_checks": 0,
+      "disabled_triggers": 0
+    },
+    "status": "PASS"
+  },
+  "nativeTests": {
+    "passed": 16,
+    "failed": 0,
+    "skipped": 1,
+    "concurrency": 1
+  },
+  "unitTests": {
+    "passed": 339,
+    "failed": 2,
+    "total": 341,
+    "unresolved": [
+      "w5-q2 evaluator accuracy",
+      "w5-q2 expected YEAR_GAP for unmapped legacy fixture"
+    ]
+  },
+  "httpChecks": 85,
+  "frontend": {
+    "build": "PASS",
+    "lint": "PASS",
+    "browser": "Edge login + achievements API"
+  },
+  "privateFiles": {
+    "total": 14,
+    "matched": 13,
+    "missing": [
+      "evidences/2026/ach_8_ev_1793176346648_v1_a0658cbd.pdf"
+    ]
+  },
+  "databaseRestore": {
+    "verifyOnly": "PASS",
+    "restore": "PASS",
+    "dbccCheckDb": "PASS",
+    "target": "PTUD_LHU_RestoreTest",
+    "sourceCheckpointRows": 609
+  },
+  "fullBackup": "BLOCKED_MISSING_SOURCE_FILE",
+  "supabaseSourceMutated": false
+}

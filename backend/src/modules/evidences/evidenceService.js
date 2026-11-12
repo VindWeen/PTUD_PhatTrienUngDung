@@ -360,7 +360,7 @@ export class EvidenceService {
   }
 
   /**
-   * Xóa mềm danh mục minh chứng (is_removed = TRUE)
+   * Xóa mềm danh mục minh chứng (is_removed = 1)
    */
   async deleteEvidence({ evidenceId, user, ipAddress, userAgent }) {
     if (!user || !user.userId) {

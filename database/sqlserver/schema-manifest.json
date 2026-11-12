@@ -1,0 +1,1027 @@
+{
+  "sourceFiles": [
+    {
+      "file": "20260925000001_create_schema_and_security.sql",
+      "sha256": "2c271911a8bde329886ebc2d125b4753e9f8b07648397f3b92461d1c56bbbee6"
+    },
+    {
+      "file": "20260925000002_create_identity_tables.sql",
+      "sha256": "9ed8ca9eaead4df7c10322cd7ff37e44f6de35bb1ff9c241f5e189ccf825353a"
+    },
+    {
+      "file": "20260925000003_create_organization_tables.sql",
+      "sha256": "7f2d8f9e10f00547e216941b5b847fad08beb2bd925dc792700ebc0c0fc033b2"
+    },
+    {
+      "file": "20260925000004_create_lecturers_and_catalogs.sql",
+      "sha256": "a374ccad4e1f64fcf2d9734d3c061ad041b4ce8b02a3b083978f6fad1dd04cec"
+    },
+    {
+      "file": "20260925000005_create_achievement_tables.sql",
+      "sha256": "f88504311a57788747718bf130988747db4886f2981170dabc7c7ff438f0d709"
+    },
+    {
+      "file": "20260925000006_create_evidence_and_verification_tables.sql",
+      "sha256": "858bfbfd98ac6746425a0eed9429c19eed97edf39a5ae1ed1fd44020d068c1eb"
+    },
+    {
+      "file": "20260925000007_create_award_tables.sql",
+      "sha256": "14d2293bb36fbb46493aed6efe742340f9895a06f6834046ffdbb70124127765"
+    },
+    {
+      "file": "20260925000008_create_system_tables.sql",
+      "sha256": "7b036f57b0ce096edd3d09f0b79103215c75e0146b15afcf38a518f6e23d55da"
+    },
+    {
+      "file": "20261001000009_w1_p2_profiles_catalogs.sql",
+      "sha256": "8a5892be61a17b801505b61a962e583f69bf9425391f7bce7a9fc4e9466b1804"
+    },
+    {
+      "file": "20261001000010_w1_p3_organization_integrity.sql",
+      "sha256": "dd22cbfcf7acc1c7de1a63b30ec7585ec555fadc28e8ab540ceb6c5dda403bee"
+    },
+    {
+      "file": "20261002000011_w2_p1_assignment_revocation.sql",
+      "sha256": "96a5d81cec04430657c7c306c097373e9ecec0063ba05e736c00fd5aae71abaa"
+    },
+    {
+      "file": "20261005000012_w2_q1_achievements_crud.sql",
+      "sha256": "6e59d0bc13e1020e91c6ae84d9e8bda4125cd42a82b4a2b8a743ae9178c95f91"
+    },
+    {
+      "file": "20261005000013_w2_q2_evidence_files.sql",
+      "sha256": "5a01eeb383ca1ce4dbd97fcff3a85b858e69cc9587c1b05008825691937c5937"
+    },
+    {
+      "file": "20261005000014_w2_p2_award_decisions.sql",
+      "sha256": "51065b1ff9f33196b97a36943828280504b2ceba5223cf284870bd0296517028"
+    },
+    {
+      "file": "20261005000015_w2_p3_notifications.sql",
+      "sha256": "32b79cfd2f8b06b8c9140812765f975f258028c1b75d3415207344714e58dacc"
+    },
+    {
+      "file": "20261005000016_w2_q3_submissions_and_verifications.sql",
+      "sha256": "043d3c5d346b1e73df3cd210d7684769326ca1395776888726fb68ab07476688"
+    },
+    {
+      "file": "20261006000017_w3_p2_kpi.sql",
+      "sha256": "a04317aaf851c4ec8cbb08ed6a7e0d5c1a27bc51159d581b239bdb0891ead3bb"
+    },
+    {
+      "file": "20261006000018_w3_q2_regulations_and_criteria.sql",
+      "sha256": "9d5d86861e8ca9a32be530fb2e5f1c636c683c38740e25f9c47e7205bd779417"
+    },
+    {
+      "file": "20261006000019_w3_p3_award_applications.sql",
+      "sha256": "2d6cabdf85590629d97f33e241cda3547f0603610e127a15c7194b8fdea3f6d9"
+    },
+    {
+      "file": "20261007000020_w4_q1_evaluation_runs.sql",
+      "sha256": "b2ec8f8471df01cc79e6dd7a12c7f9f426cebfe3b2b2647db9998c49a8fa7f72"
+    },
+    {
+      "file": "20261007000021_w4_q2_rag_and_embeddings.sql",
+      "sha256": "243abecffad3ee91c23bfc54eb66bd18aaac17ef14ee308c9a04db1462f07f44"
+    },
+    {
+      "file": "20261007000022_w4_p1_kpi_recommendations.sql",
+      "sha256": "2844749d4038a842cf451cffc19f95758225b331462df8c0e560e58710dce2b7"
+    },
+    {
+      "file": "20261007000023_w4_p2_external_kpi.sql",
+      "sha256": "7ddb7302a74fcbd2e302b570b16c8830060da726cd60ae4942c9fec3f4fd391b"
+    },
+    {
+      "file": "20261007000024_w4_p3_council.sql",
+      "sha256": "25a3a626020386c706c8a9f407c335043cd2330c4b759ed2cf233b5bbd154fa5"
+    },
+    {
+      "file": "20261008000025_w5_p1_list_order.sql",
+      "sha256": "de1ad29b49c007741e8497ddcce44901382d3c9c8a9a38d0a994ef60412dbd8a"
+    },
+    {
+      "file": "20261015000026_personal_calendar.sql",
+      "sha256": "c0d87d1cc692d4c953972f449865b608e274911bfe7ef93365d5b7c667682245"
+    },
+    {
+      "file": "20261028000027_lecturer_cvs.sql",
+      "sha256": "f81a0f1bce71a92af57833279036c1034f65c55d54de5d7dde58f8bd9b5f4a76"
+    },
+    {
+      "file": "20261028000028_cv_publish_state.sql",
+      "sha256": "4e44ba70cb716de409a5a64707d1ea19dd0bfb1e1c2a3308112874a1bddab8ac"
+    },
+    {
+      "file": "20261103000029_criteria_source_rules.sql",
+      "sha256": "c4e1d5dd71bafcabd8649a37b942a0b440728f544e921f7a2d247eded7947c26"
+    },
+    {
+      "file": "20261103000030_application_input_versions.sql",
+      "sha256": "e4bce459db601568a3a88e25e04b23ba230c5a86f92cd48322d7f7167d157e03"
+    },
+    {
+      "file": "20261103000031_award_application_handoff.sql",
+      "sha256": "dfaae45c9429f713ba93edeace8b178afcc0af6bc51732a36940f1a7c3241497"
+    }
+  ],
+  "tables": {
+    "users": [
+      "user_id",
+      "username",
+      "email",
+      "password_hash",
+      "display_name",
+      "status",
+      "must_change_password",
+      "password_changed_at",
+      "last_login_at",
+      "version",
+      "created_at",
+      "updated_at"
+    ],
+    "roles": [
+      "role_id",
+      "code",
+      "name",
+      "description",
+      "is_active",
+      "created_at"
+    ],
+    "user_roles": [
+      "user_role_id",
+      "user_id",
+      "role_id",
+      "valid_from",
+      "valid_to",
+      "created_at",
+      "revoked_at"
+    ],
+    "organization_units": [
+      "unit_id",
+      "code",
+      "name",
+      "parent_id",
+      "type",
+      "is_active",
+      "version",
+      "created_at",
+      "updated_at",
+      "description"
+    ],
+    "user_unit_scopes": [
+      "user_unit_scope_id",
+      "user_id",
+      "role_id",
+      "unit_id",
+      "include_descendants",
+      "valid_from",
+      "valid_to",
+      "created_at",
+      "revoked_at"
+    ],
+    "lecturers": [
+      "lecturer_id",
+      "user_id",
+      "employee_code",
+      "full_name",
+      "email",
+      "phone",
+      "title",
+      "degree",
+      "is_active",
+      "version",
+      "created_at",
+      "updated_at"
+    ],
+    "lecturer_assignments": [
+      "assignment_id",
+      "lecturer_id",
+      "unit_id",
+      "is_primary",
+      "valid_from",
+      "valid_to",
+      "created_at",
+      "assigned_by"
+    ],
+    "achievement_categories": [
+      "category_id",
+      "code",
+      "name",
+      "description",
+      "is_active",
+      "created_at"
+    ],
+    "criteria": [
+      "criterion_id",
+      "category_id",
+      "code",
+      "name",
+      "points",
+      "requires_evidence",
+      "is_active",
+      "created_at"
+    ],
+    "achievements": [
+      "achievement_id",
+      "criterion_id",
+      "lecturer_id",
+      "unit_id",
+      "context_unit_id",
+      "title",
+      "description",
+      "achievement_date",
+      "status",
+      "submitted_at",
+      "verified_at",
+      "version",
+      "created_at",
+      "updated_at",
+      "achievement_type_id",
+      "academic_year_id",
+      "created_by",
+      "submitted_by",
+      "contribution_role",
+      "start_date",
+      "end_date",
+      "recognition_year",
+      "replaces_achievement_id",
+      "verified_by"
+    ],
+    "evidence_files": [
+      "evidence_file_id",
+      "evidence_id",
+      "version_no",
+      "original_file_name",
+      "storage_key",
+      "mime_type",
+      "file_extension",
+      "file_size",
+      "sha256_hash",
+      "uploaded_by",
+      "uploaded_at"
+    ],
+    "achievement_verifications": [
+      "verification_id",
+      "achievement_id",
+      "verifier_user_id",
+      "action",
+      "comments",
+      "verified_at"
+    ],
+    "award_periods": [
+      "award_period_id",
+      "code",
+      "name",
+      "start_date",
+      "end_date",
+      "status",
+      "created_at",
+      "updated_at"
+    ],
+    "award_criteria": [
+      "award_criterion_id",
+      "award_period_id",
+      "criterion_id",
+      "min_points",
+      "weight",
+      "created_at"
+    ],
+    "award_applications": [
+      "application_id",
+      "award_period_id",
+      "lecturer_id",
+      "unit_id",
+      "total_points",
+      "status",
+      "version",
+      "created_at",
+      "updated_at",
+      "target_award_type_id",
+      "context_unit_id",
+      "created_by",
+      "purpose",
+      "achievement_ids",
+      "award_record_ids"
+    ],
+    "award_records": [
+      "record_id",
+      "award_period_id",
+      "lecturer_id",
+      "unit_id",
+      "decision_number",
+      "decision_date",
+      "status",
+      "version",
+      "created_at",
+      "updated_at",
+      "award_type_id",
+      "context_unit_id",
+      "decision_id",
+      "recognition_year",
+      "recorded_by",
+      "recorded_at",
+      "created_by",
+      "replaces_award_record_id",
+      "application_id",
+      "application_input_version"
+    ],
+    "refresh_tokens": [
+      "refresh_token_id",
+      "user_id",
+      "token_hash",
+      "expires_at",
+      "created_at",
+      "created_ip",
+      "user_agent",
+      "revoked_at",
+      "replaced_by_token_id"
+    ],
+    "audit_logs": [
+      "audit_id",
+      "user_id",
+      "action",
+      "entity_name",
+      "entity_id",
+      "old_values",
+      "new_values",
+      "ip_address",
+      "user_agent",
+      "created_at"
+    ],
+    "unit_representatives": [
+      "unit_representative_id",
+      "user_id",
+      "unit_id",
+      "valid_from",
+      "valid_to",
+      "assigned_by",
+      "created_at",
+      "revoked_at"
+    ],
+    "academic_years": [
+      "academic_year_id",
+      "code",
+      "name",
+      "start_date",
+      "end_date",
+      "is_current",
+      "is_active",
+      "created_at",
+      "updated_at"
+    ],
+    "achievement_types": [
+      "achievement_type_id",
+      "code",
+      "name",
+      "description",
+      "applicable_subject_type",
+      "is_active",
+      "created_at",
+      "updated_at"
+    ],
+    "award_types": [
+      "award_type_id",
+      "code",
+      "name",
+      "category",
+      "level",
+      "applicable_subject_type",
+      "description",
+      "is_active",
+      "created_at",
+      "updated_at"
+    ],
+    "evidences": [
+      "evidence_id",
+      "achievement_id",
+      "title",
+      "description",
+      "is_removed",
+      "created_by",
+      "created_at",
+      "updated_at"
+    ],
+    "award_decisions": [
+      "decision_id",
+      "decision_number",
+      "decision_date",
+      "issuer",
+      "title",
+      "created_by",
+      "created_at"
+    ],
+    "award_decision_files": [
+      "decision_file_id",
+      "decision_id",
+      "version_no",
+      "original_file_name",
+      "storage_key",
+      "mime_type",
+      "file_extension",
+      "file_size",
+      "sha256_hash",
+      "uploaded_by",
+      "uploaded_at"
+    ],
+    "award_record_achievements": [
+      "record_id",
+      "achievement_id",
+      "linked_by"
+    ],
+    "award_record_histories": [
+      "history_id",
+      "record_id",
+      "from_status",
+      "to_status",
+      "actor_id",
+      "reason",
+      "created_at"
+    ],
+    "notifications": [
+      "notification_id",
+      "user_id",
+      "entity_type",
+      "entity_id",
+      "entity_version",
+      "from_status",
+      "to_status",
+      "audience",
+      "created_at",
+      "read_at"
+    ],
+    "achievement_submissions": [
+      "submission_id",
+      "achievement_id",
+      "revision_no",
+      "snapshot_data",
+      "submitted_by",
+      "submitted_at",
+      "created_at"
+    ],
+    "submission_evidence_files": [
+      "submission_id",
+      "evidence_file_id",
+      "attached_at"
+    ],
+    "achievement_status_histories": [
+      "history_id",
+      "achievement_id",
+      "submission_id",
+      "from_status",
+      "to_status",
+      "actor_id",
+      "reason",
+      "created_at"
+    ],
+    "kpi_goals": [
+      "goal_id",
+      "lecturer_id",
+      "unit_id",
+      "context_unit_id",
+      "code",
+      "title",
+      "measure_unit",
+      "period_start",
+      "period_end",
+      "target",
+      "plan",
+      "source",
+      "source_note",
+      "status",
+      "accepted_by",
+      "accepted_at",
+      "created_by",
+      "version",
+      "created_at",
+      "updated_at"
+    ],
+    "kpi_results": [
+      "result_id",
+      "goal_id",
+      "actual",
+      "source",
+      "source_note",
+      "evidence_note",
+      "achievement_id",
+      "created_by",
+      "version",
+      "created_at",
+      "updated_at"
+    ],
+    "regulation_documents": [
+      "document_id",
+      "document_code",
+      "title",
+      "issuing_authority",
+      "document_type",
+      "description",
+      "is_active",
+      "created_at",
+      "updated_at"
+    ],
+    "regulation_document_versions": [
+      "version_id",
+      "document_id",
+      "version_number",
+      "sha256_hash",
+      "source_url",
+      "signed_date",
+      "effective_from",
+      "effective_to",
+      "supersedes_version_id",
+      "is_official",
+      "is_confirmed",
+      "confirmed_by",
+      "confirmed_at",
+      "confirmation_notes",
+      "lhu_application_status",
+      "created_by",
+      "created_at"
+    ],
+    "regulation_chunks": [
+      "chunk_id",
+      "version_id",
+      "article_no",
+      "clause_no",
+      "page_no",
+      "content",
+      "chunk_hash",
+      "created_at"
+    ],
+    "award_criteria_versions": [
+      "criteria_version_id",
+      "version_id",
+      "criterion_code",
+      "name",
+      "target_type",
+      "academic_year_id",
+      "min_threshold",
+      "unit_metric",
+      "legal_references",
+      "is_confirmed",
+      "confirmed_by",
+      "confirmed_at",
+      "notes",
+      "created_at",
+      "source_rules",
+      "source_rules_revision",
+      "source_rules_by"
+    ],
+    "award_application_inputs": [
+      "application_id",
+      "input_version",
+      "snapshot",
+      "submitted_by",
+      "submitted_at"
+    ],
+    "award_application_histories": [
+      "history_id",
+      "application_id",
+      "from_status",
+      "to_status",
+      "actor_id",
+      "reason",
+      "created_at"
+    ],
+    "evaluation_runs": [
+      "run_id",
+      "evaluation_type",
+      "subject_type",
+      "subject_id",
+      "achievement_id",
+      "application_id",
+      "kpi_goal_id",
+      "provider",
+      "model",
+      "is_mock",
+      "overall_status",
+      "overall_conclusion",
+      "automatic_award_granted",
+      "input_snapshot",
+      "input_hash",
+      "prompt_tokens",
+      "completion_tokens",
+      "total_tokens",
+      "latency_ms",
+      "is_stale",
+      "executed_by",
+      "executed_at"
+    ],
+    "evaluation_criterion_results": [
+      "result_id",
+      "run_id",
+      "criterion_id",
+      "criterion_code",
+      "criterion_name",
+      "is_confirmed_by_lhu",
+      "is_simulation",
+      "target_min",
+      "actual_recorded",
+      "unit_metric",
+      "is_satisfied",
+      "distinct_years",
+      "consecutive_years",
+      "legal_references",
+      "ai_analysis",
+      "human_review_required",
+      "warning_notice",
+      "created_at"
+    ],
+    "regulation_chunk_embeddings": [
+      "chunk_id",
+      "embedding_model",
+      "embedding_dim",
+      "embedding_vector",
+      "chunk_hash",
+      "indexed_at"
+    ],
+    "ai_rag_explanations": [
+      "explanation_id",
+      "run_id",
+      "criterion_id",
+      "query_text",
+      "retrieved_chunk_ids",
+      "citations",
+      "explanation_text",
+      "model",
+      "provider",
+      "prompt_version",
+      "retrieval_version",
+      "is_sufficient_data",
+      "created_at"
+    ],
+    "kpi_recommendations": [
+      "recommendation_id",
+      "run_id",
+      "criterion_id",
+      "created_by",
+      "payload",
+      "provider_evidence",
+      "status",
+      "goal_id",
+      "version",
+      "created_at"
+    ],
+    "external_kpi_mappings": [
+      "employee_id",
+      "lecturer_id",
+      "created_by",
+      "created_at"
+    ],
+    "external_kpi_runs": [
+      "run_id",
+      "retry_of",
+      "created_by",
+      "status",
+      "attempts",
+      "summary",
+      "created_at",
+      "finished_at"
+    ],
+    "external_kpi_records": [
+      "record_id",
+      "external_id",
+      "source_version",
+      "payload",
+      "payload_hash",
+      "lecturer_id",
+      "status",
+      "reason",
+      "achievement_id",
+      "version"
+    ],
+    "external_kpi_run_items": [
+      "run_id",
+      "item_index",
+      "record_id",
+      "outcome"
+    ],
+    "application_reviews": [
+      "review_id",
+      "application_id",
+      "reviewer_id",
+      "assigned_by",
+      "assigned_at"
+    ],
+    "application_review_comments": [
+      "comment_id",
+      "application_id",
+      "actor_id",
+      "action",
+      "content",
+      "created_at"
+    ],
+    "personal_calendar_events": [
+      "event_id",
+      "user_id",
+      "title",
+      "description",
+      "location",
+      "category",
+      "starts_at",
+      "ends_at",
+      "all_day",
+      "completed",
+      "version",
+      "created_at",
+      "updated_at"
+    ],
+    "lecturer_cvs": [
+      "lecturer_id",
+      "public_id",
+      "draft",
+      "published",
+      "version",
+      "updated_at",
+      "published_draft",
+      "published_at"
+    ],
+    "criteria_source_rule_history": [
+      "history_id",
+      "criteria_version_id",
+      "revision",
+      "previous_rules",
+      "source_rules",
+      "changed_by",
+      "changed_at"
+    ]
+  },
+  "jsonColumns": [
+    "award_applications.achievement_ids",
+    "award_applications.award_record_ids",
+    "audit_logs.old_values",
+    "audit_logs.new_values",
+    "achievement_submissions.snapshot_data",
+    "award_criteria_versions.source_rules",
+    "award_application_inputs.snapshot",
+    "evaluation_runs.input_snapshot",
+    "evaluation_criterion_results.legal_references",
+    "regulation_chunk_embeddings.embedding_vector",
+    "ai_rag_explanations.retrieved_chunk_ids",
+    "ai_rag_explanations.citations",
+    "kpi_recommendations.payload",
+    "kpi_recommendations.provider_evidence",
+    "external_kpi_runs.summary",
+    "external_kpi_records.payload",
+    "lecturer_cvs.draft",
+    "lecturer_cvs.published",
+    "lecturer_cvs.published_draft",
+    "criteria_source_rule_history.previous_rules",
+    "criteria_source_rule_history.source_rules"
+  ],
+  "arrayColumns": [
+    "award_applications.achievement_ids",
+    "award_applications.award_record_ids",
+    "regulation_chunk_embeddings.embedding_vector",
+    "ai_rag_explanations.retrieved_chunk_ids"
+  ],
+  "foreignKeyDeleteDifferences": [
+    {
+      "table": "user_roles",
+      "column": "user_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "user_roles",
+      "column": "role_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "user_unit_scopes",
+      "column": "user_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "user_unit_scopes",
+      "column": "role_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "user_unit_scopes",
+      "column": "unit_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "lecturers",
+      "column": "user_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "lecturer_assignments",
+      "column": "lecturer_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "lecturer_assignments",
+      "column": "unit_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "achievements",
+      "column": "lecturer_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "achievements",
+      "column": "unit_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "achievements",
+      "column": "submitted_by",
+      "previous": "SET NULL",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "achievements",
+      "column": "replaces_achievement_id",
+      "previous": "SET NULL",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "achievements",
+      "column": "verified_by",
+      "previous": "SET NULL",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "achievement_verifications",
+      "column": "achievement_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "award_criteria",
+      "column": "award_period_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "award_applications",
+      "column": "award_period_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "award_applications",
+      "column": "lecturer_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "award_applications",
+      "column": "unit_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "award_records",
+      "column": "award_period_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "award_records",
+      "column": "lecturer_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "award_records",
+      "column": "unit_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "refresh_tokens",
+      "column": "user_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "audit_logs",
+      "column": "user_id",
+      "previous": "SET NULL",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "unit_representatives",
+      "column": "unit_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "achievement_status_histories",
+      "column": "submission_id",
+      "previous": "SET NULL",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "regulation_document_versions",
+      "column": "supersedes_version_id",
+      "previous": "SET NULL",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "regulation_document_versions",
+      "column": "confirmed_by",
+      "previous": "SET NULL",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "regulation_chunks",
+      "column": "version_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "award_criteria_versions",
+      "column": "academic_year_id",
+      "previous": "SET NULL",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "award_criteria_versions",
+      "column": "confirmed_by",
+      "previous": "SET NULL",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "award_criteria_versions",
+      "column": "source_rules_by",
+      "previous": "SET NULL",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "evaluation_runs",
+      "column": "achievement_id",
+      "previous": "SET NULL",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "evaluation_runs",
+      "column": "application_id",
+      "previous": "SET NULL",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "evaluation_runs",
+      "column": "kpi_goal_id",
+      "previous": "SET NULL",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "evaluation_criterion_results",
+      "column": "run_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "regulation_chunk_embeddings",
+      "column": "chunk_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "ai_rag_explanations",
+      "column": "run_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "ai_rag_explanations",
+      "column": "criterion_id",
+      "previous": "SET NULL",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "personal_calendar_events",
+      "column": "user_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "lecturer_cvs",
+      "column": "lecturer_id",
+      "previous": "CASCADE",
+      "sqlServer": "NO ACTION"
+    },
+    {
+      "table": "criteria_source_rule_history",
+      "column": "changed_by",
+      "previous": "SET NULL",
+      "sqlServer": "NO ACTION"
+    }
+  ]
+}

@@ -21,13 +21,13 @@ test('calendar-year requirement distinct from numeric target',()=>{
  assert.equal(many.target,20);assert.equal(many.requiredCalendarYears,5);
 });
 test('real recommender mode rejects absent keys before mock/cache access',async()=>{
- const s=new AiService();s.groqProvider.apiKey='';s.openrouterProvider.apiKey='';
+ const s=new AiService({poolUrl:'',poolToken:'',groqApiKey:'',openrouterApiKey:''});
  s.getProvider=()=>{throw new Error('must not reach fallback');};
  for(const forcedProvider of ['groq','openrouter','mock'])
   await assert.rejects(s.completeWithRetry({prompt:'SIM',forcedProvider,requireRealProvider:true}),{code:'AI_PROVIDER_UNAVAILABLE'});
 });
 test('cache isolates provider; invalid default cannot use cached response; stale TTL/hash/version miss',async()=>{
- cache.clear();const s=new AiService({providerName:'groq',groqApiKey:'SYNTHETIC-NOT-A-KEY'});let calls=0;
+ cache.clear();const s=new AiService({poolUrl:'',poolToken:'',providerName:'groq',groqApiKey:'SYNTHETIC-NOT-A-KEY',openrouterApiKey:''});let calls=0;
  s.groqProvider.defaultModel='llama-3.1-8b-instant';
  s.groqProvider.complete=async()=>({content:'SIM',model:'llama-3.1-8b-instant',provider:'groq',isMock:false});
  const original=s.groqProvider.complete;
@@ -61,7 +61,7 @@ test('provider adapters: 429, timeout and malformed JSON never become success',a
    const evidence=await p.complete({prompt:'SIM'});
    assert.equal(evidence.model,p.defaultModel);assert.equal(evidence.modelReportedByProvider,true);
   }
-  const s=new AiService({groqApiKey:'SYNTHETIC-NOT-A-KEY'});let calls=0;
+  const s=new AiService({poolUrl:'',poolToken:'',groqApiKey:'SYNTHETIC-NOT-A-KEY',openrouterApiKey:''});let calls=0;
   s.groqProvider.complete=async()=>{calls++;const e=new Error('quota');e.name='AiRateLimitError';throw e;};
   cache.clear();await assert.rejects(s.completeWithRetry({prompt:'SIM-quota',forcedProvider:'groq'}));assert.equal(calls,1);
   assert.equal(cache.getStats().size,0);

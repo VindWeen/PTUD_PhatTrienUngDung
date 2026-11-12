@@ -6,6 +6,7 @@ import { ThemeSwitch } from '../components/auth/ThemeSwitch';
 import { useTheme } from '../hooks/useTheme';
 import { useDemoAuth } from '../hooks/useDemoAuth';
 import { USE_FIXTURES } from '../services/apiConfig';
+import { authApi } from '../services/authApi';
 import './auth.css';
 
 // Tài khoản thử nghiệm từ supabase/seed.sql và database/scripts/seedScenario.js.
@@ -36,8 +37,8 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const timers = useRef([]);
-  const registerLoading = false;
-  const resetLoading = false;
+  const [registerLoading, setRegisterLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
   const switchMode = next => {
     setMode(next); setError(null); setSuccess(null);
@@ -69,19 +70,23 @@ export default function AuthPage() {
     setPassword(quickPass);
     setError(null);
   };
-  const handleRegister = event => {
-    event.preventDefault();
-    if (!fullName.trim()) { setError('Vui lòng nhập họ tên.'); return; }
-    setError(null); setPassword('');
-    setSuccess('Đã hoàn tất bước đăng ký mô phỏng. Chưa tạo tài khoản hay gửi email. Chọn Đăng nhập để trải nghiệm.');
+  const handleRegister = async event => {
+    event.preventDefault(); setError(null); setSuccess(null); setRegisterLoading(true);
+    try {
+      const result = await authApi.register({ fullName, email, password });
+      setPassword(''); setSuccess(result.message);
+    } catch (err) { setError(err.message || 'Không thể đăng ký tài khoản.'); }
+    finally { setRegisterLoading(false); }
   };
-  const handleForgotPassword = () => {
+  const handleForgotPassword = async () => {
     setError(null); setSuccess(null);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setError('Nhập email hợp lệ trước khi dùng quên mật khẩu.'); return;
     }
-    setPassword('');
-    setSuccess('Đây là mô phỏng quên mật khẩu; chưa gửi email. Bạn có thể quay lại đăng nhập demo.');
+    setResetLoading(true);
+    try { const result = await authApi.requestPasswordReset(email.trim()); setPassword(''); setSuccess(result.message); }
+    catch (err) { setError(err.message || 'Không thể gửi yêu cầu khôi phục mật khẩu.'); }
+    finally { setResetLoading(false); }
   };
   const isLogin = mode === 'login';
   const isPendingTransition = transitionStage !== 'idle';
@@ -233,7 +238,7 @@ export default function AuthPage() {
                 <LockKeyhole size={18} aria-hidden="true" />
                 <input 
                   type={showPassword ? "text" : "password"} 
-                  placeholder="Mật khẩu" aria-label="Mật khẩu" minLength={6} autoComplete={isLogin ? "current-password" : "new-password"}
+                  placeholder="Mật khẩu" aria-label="Mật khẩu" minLength={isLogin ? 1 : 8} autoComplete={isLogin ? "current-password" : "new-password"}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
@@ -270,7 +275,7 @@ export default function AuthPage() {
               >
                 {registerLoading || resetLoading ? 'Đang xử lý...' : isLogin ? 'Đăng nhập' : 'Đăng ký'}
               </button>
-              {isLogin && USE_FIXTURES && (
+              {isLogin && (
                 <button
                   type="button"
                   className="forgot-password-link"
@@ -282,25 +287,23 @@ export default function AuthPage() {
               )}
 
               {isLogin && (
-                <div className="quick-accounts-section my-3 text-left">
-                  <div className="text-[11px] font-semibold text-slate-500 mb-1.5 flex items-center justify-between">
-                    <span>Tài khoản thử nghiệm:</span>
-                    <span className="text-[10px] text-brand-600 font-mono">pass: demo1234</span>
-                  </div>
-                  <div className="flex max-h-28 flex-wrap gap-1.5 overflow-y-auto">
+                <details className="quick-accounts-section my-3 text-left rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                  <summary className="cursor-pointer text-sm font-semibold text-slate-600 dark:text-slate-300">Chọn tài khoản thử nghiệm</summary>
+                  <p className="my-2 text-xs text-slate-500">Mật khẩu chung: <code>demo1234</code>. Chọn tài khoản để điền sẵn form.</p>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     {QUICK_ACCOUNTS.map(({ username, label }) => (
                       <button
                         key={username}
                         type="button"
                         onClick={() => fillQuickAccount(username)}
                         disabled={isPendingTransition}
-                        className="px-2 py-1 text-[11px] rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-700 border border-slate-200 transition-colors disabled:opacity-50"
+                        className="px-3 py-2 text-xs text-left rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-700 border border-slate-200 transition-colors disabled:opacity-50"
                       >
                         {label} ({username})
                       </button>
                     ))}
                   </div>
-                </div>
+                </details>
               )}
             </form>
           )}

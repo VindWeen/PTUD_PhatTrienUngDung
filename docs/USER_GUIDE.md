@@ -8,7 +8,7 @@ Chạy migration mới trước khi dùng. Trên Cloudflare Pages, triển khai 
 
 Xem trước mở trong tab riêng, có thể chọn **In hoặc lưu PDF** bằng hộp thoại trình duyệt. **Đổi link chia sẻ** làm link cũ không còn truy cập được. Thành tích không còn ở trạng thái đã xác nhận sẽ tự ẩn khỏi CV công khai; bản CV công khai được tạo trước khi bổ sung kiểm tra này cần công khai lại để hiện thành tích. Các thông tin khác lấy theo bản chụp tại lần công khai, kể cả phân công công tác; cần công khai lại để cập nhật.
 
-Đối chiếu giao diện và kiểm tra quyền trong code ngày 14/10/2026. Các tài khoản, file và dữ liệu SCN là MÔ PHỎNG.
+Đối chiếu source và cập nhật luồng sử dụng ngày 03/11/2026, gồm các sửa đổi mới cần migration 29–30. Các tài khoản, file và dữ liệu SCN là MÔ PHỎNG.
 
 ## 1. Hiểu hệ thống trước khi dùng
 
@@ -52,7 +52,7 @@ KPI là nhánh lập kế hoạch: mục tiêu → kết quả thực hiện →
 
 Khi trang đang mở, hệ thống kiểm tra thông báo mỗi 10 giây. Thông báo chuyển trạng thái thành tích sẽ tự cập nhật danh sách, chi tiết đang mở và các thao tác được phép, không cần F5. Nếu hồ sơ thay đổi khi đang mở hộp xác nhận thao tác, đóng hộp và chọn lại từ trạng thái mới.
 
-Đăng ký và Quên mật khẩu trên trang đăng nhập hiện chỉ mô phỏng, chưa tạo tài khoản/gửi email thật. Đổi mật khẩu thật nằm trong Hồ sơ năng lực: mật khẩu hiện tại, mật khẩu mới tối thiểu 8 ký tự, nhập lại mật khẩu mới. Đổi thành công thu hồi phiên cũ và yêu cầu đăng nhập lại. Tài khoản chỉ có Hội đồng/Chuyên viên/Admin chưa có trang đổi mật khẩu riêng trong menu hiện tại.
+Đăng ký trên trang đăng nhập tạo tài khoản và hồ sơ giảng viên thật; người dùng cần nhờ Admin xác nhận thông tin và phân công đơn vị trước khi kê khai. Quên mật khẩu có API gửi email thật khi backend đã cấu hình dịch vụ email và URL ứng dụng; chưa cấu hình thì chưa dùng được luồng này. Đổi mật khẩu nằm trong Hồ sơ năng lực: mật khẩu hiện tại, mật khẩu mới tối thiểu 8 ký tự, nhập lại mật khẩu mới. Đổi thành công thu hồi phiên cũ và yêu cầu đăng nhập lại. Tài khoản chỉ có Hội đồng/Chuyên viên/Admin chưa có trang đổi mật khẩu riêng trong menu hiện tại.
 
 Giảng viên, đơn vị, loại thành tích/loại thưởng, người xét, quyết định, năm học và bản ghi liên quan chọn bằng tên; không phải nhớ ID. Mã kỳ, Mã KPI, Số quyết định, Mã đơn vị khi tạo mới là mã nghiệp vụ cần đặt/chép từ nguồn thực tế, nên vẫn nhập bằng chữ.
 
@@ -91,7 +91,7 @@ Nháp sửa/xóa theo điều kiện hệ thống. Nháp/cần bổ sung/đã n�
 
 ### B. Tạo đề nghị cá nhân
 
-Cần kỳ đang mở và trong thời gian nhận; ít nhất một nguồn hợp lệ của chính mình: thành tích VERIFIED và/hoặc thưởng RECORDED. File nguồn cần tồn tại để chụp dữ liệu lúc nộp.
+Cần kỳ đang mở và trong thời gian nhận; ít nhất một thành tích VERIFIED của chính mình. Có thể chọn thêm thưởng RECORDED làm căn cứ, nhưng không thay thế thành tích bắt buộc. File nguồn cần tồn tại để chụp dữ liệu lúc nộp.
 
 | Trường | Cách điền/chọn |
 |---|---|
@@ -107,7 +107,7 @@ Tạo hồ sơ nháp → kiểm tra chi tiết → Nộp hồ sơ xét duyệt. 
 
 SUBMITTED chờ Quản lý → COUNCIL_PENDING chờ Hội đồng → UNDER_REVIEW đang xét → RECOMMENDED được đề nghị hoặc NOT_RECOMMENDED không đề nghị.
 
-Hội đồng yêu cầu bổ sung: mở hồ sơ, đọc ý kiến, nhập giải trình ít nhất 5 ký tự → Gửi bổ sung qua đơn vị → chờ Quản lý chuyển lại. Giới hạn hiện tại: bước này gửi nội dung bằng chữ và đổi trạng thái; chưa có sửa bộ nguồn, đính kèm file bổ sung riêng hoặc tạo lại bản chụp nguồn trong giao diện. Không sửa một thành tích đã xác nhận để thay nguồn của đề nghị cũ.
+Hội đồng yêu cầu bổ sung: mở hồ sơ, đọc ý kiến, sửa mục đích/danh sách thành tích và khen thưởng nguồn tại chi tiết, nhập giải trình ít nhất 5 ký tự → Gửi bổ sung qua đơn vị → chờ Quản lý chuyển lại. Mỗi lần nộp lại kiểm tra nguồn và lưu bản chụp mới, giữ nguyên bản cũ. Không sửa trực tiếp một thành tích đã xác nhận; kê khai/xác nhận nguồn mới theo đúng luồng trước khi chọn vào đề nghị. Hồ sơ đề nghị chưa có tải file bổ sung độc lập; file minh chứng đi qua nguồn thành tích/quyết định liên quan.
 
 ### C. Lập KPI
 
@@ -150,7 +150,7 @@ Demo cuong.lh công tác tại Bộ môn Khoa học Máy tính nhưng đại di�
 3. Thành tích: chọn Tập thể, đơn vị, loại áp dụng tập thể, tiêu đề/mô tả/thời gian/năm → lưu nháp → tải minh chứng → nộp.
 4. Chờ Quản lý xác nhận; cần bổ sung thì sửa và nộp lại.
 5. Hồ sơ đề nghị: Tập thể tôi đại diện → đơn vị → kỳ mở → loại thưởng tập thể, ví dụ Tập thể lao động xuất sắc → mục đích → nguồn hợp lệ của đúng đơn vị.
-6. Tạo nháp → nộp → chờ Quản lý/Hội đồng. Nếu cần bổ sung, ghi giải trình và gửi lại qua đơn vị.
+6. Chọn ít nhất một thành tích VERIFIED của đúng chủ thể; khen thưởng RECORDED là nguồn bổ sung, không thay thế thành tích bắt buộc. Tạo nháp → mở chi tiết để sửa mục đích/danh sách nguồn nếu cần → nộp → chờ Quản lý/Hội đồng. Khi NEED_CORRECTION, sửa nội dung và nguồn tại chi tiết, nhập giải trình rồi gửi lại qua đơn vị. Mỗi lần nộp lại tạo snapshot mới và giữ nguyên snapshot cũ.
 7. Tổ chức: xem hồ sơ đơn vị trong quyền; Báo cáo: xem/xuất CSV dữ liệu được phép.
 
 Đại diện không tự xác nhận, không tự kết luận Hội đồng, không tự ghi thưởng. Hết hạn phân công sẽ mất quyền đại diện; hồ sơ/lịch sử cũ được giữ.
@@ -212,7 +212,7 @@ flowchart TD
 
 ## 7. Hội đồng xét duyệt
 
-Tài khoản chỉ có Hội đồng bắt đầu ở Hồ sơ đề nghị; hiện chỉ có trang đó trong menu. Không xác nhận thành tích thay Quản lý hoặc ghi thưởng thay Chuyên viên.
+Tài khoản chỉ có Hội đồng bắt đầu ở Hồ sơ đề nghị; menu có thêm Kho quy định để cấu hình nguồn tiêu chí và phê duyệt theo quyền. Không xác nhận thành tích thay Quản lý hoặc ghi thưởng thay Chuyên viên.
 
 Cần vai trò, phạm vi đúng đơn vị, còn hiệu lực. Ghi ý kiến/yêu cầu bổ sung/kết luận cần được phân công trên chính hồ sơ. Cùng phạm vi không đồng nghĩa được xét mọi hồ sơ.
 
@@ -263,7 +263,9 @@ Thực tế cần quyết định đã ban hành và file. Demo dùng quyết đ
 
 Ví dụ An: Cá nhân → Nguyễn Văn An → Chiến sĩ thi đua cơ sở → 2026 → Nhập quyết định mới → SCN-MAIN-2026-DEMO → ngày test → Đơn vị mô phỏng PTUD → tiêu đề có MÔ PHỎNG → A01 → không thay thế → tạo nháp → tải decision-demo.pdf → ghi nhận.
 
-Hệ thống hiện chưa tự chuyển RECOMMENDED thành bản ghi thưởng và chưa bắt buộc liên kết trực tiếp một đề nghị khi tạo bản ghi. Chuyên viên phải đối chiếu và chọn đúng chủ thể, loại, nguồn, quyết định.
+Với hồ sơ Hội đồng đã kết luận RECOMMENDED: mở Khen thưởng → danh sách “Hồ sơ đã được đề nghị – chờ chuẩn bị khen thưởng” → Chuẩn bị khen thưởng. Hệ thống lấy cố định chủ thể, loại thưởng và nguồn từ bản chụp đã được xét; chuyên viên chọn/nhập quyết định và năm ghi nhận, tạo nháp, tải file quyết định rồi ghi nhận. Backend giữ liên kết tới hồ sơ/lần nộp, chặn sửa lệch thông tin và chặn tạo trùng bản nháp/đã ghi nhận. Hồ sơ đã có bản ghi sẽ hiện nút mở bản ghi đó. Danh sách tuân theo phạm vi chuyên viên và có nút tải lại.
+
+Quyết định chưa có hồ sơ đề nghị trong hệ thống vẫn có thể nhập tại mục “Nhập khen thưởng theo quyết định ngoài luồng đề nghị”, được thu gọn riêng. Hội đồng kết luận đề nghị không tự ghi nhận thưởng: vẫn phải có quyết định, file và thao tác xác nhận của chuyên viên. Nếu bản ghi liên kết bị thu hồi, có thể chuẩn bị bản thay thế từ hồ sơ gốc và giữ lịch sử.
 
 ### C. Thu hồi/sửa sai
 
@@ -291,16 +293,16 @@ Admin chuẩn bị tài khoản/dữ liệu nền để các vai trò nghiệp v
 
 1. Tổ chức: tạo đơn vị bằng mã nghiệp vụ, tên, loại, chọn đơn vị cha, mô tả. Chuyển công tác: chọn giảng viên, đơn vị mới, thời điểm hiệu lực; giữ lịch sử.
 2. Quản trị → Tài khoản: tên đăng nhập, email, tên hiển thị, mật khẩu ban đầu ít nhất 10 ký tự → lưu. Sửa thông tin/trạng thái hoạt động/khóa khi cần.
-3. Vai trò tài khoản: chọn tài khoản, vai trò, hiệu lực từ/đến.
+3. Vai trò tài khoản: chọn tài khoản, vai trò, hiệu lực từ/đến. Với vai trò Giảng viên, hệ thống tạo/liên kết hồ sơ cùng lúc cấp quyền; có thể nhập mã giảng viên và chọn đơn vị công tác chính ngay tại đây. Bỏ trống mã sẽ dùng mã tạm nội bộ `ADMIN_<userId>`; bỏ trống đơn vị thì phân công tiếp tại trang Tổ chức trước khi kê khai. Hồ sơ đã có không bị đổi mã hoặc chuyển đơn vị ngầm.
 4. Quản lý/Hội đồng/Chuyên viên: Phạm vi quản lý → tài khoản, đúng vai trò, đơn vị, Bao gồm đơn vị con nếu cần, thời hạn nằm trong thời hạn vai trò.
 5. Đại diện: Đại diện có hạn → tài khoản có vai trò đại diện, đơn vị, ngày bắt đầu và ngày kết thúc bắt buộc. Đây khác phạm vi quản lý.
 6. Năm học: mã/tên, ngày bắt đầu/kết thúc, năm hiện tại, hoạt động.
 7. Loại thành tích: mã/tên/mô tả, áp dụng cá nhân/tập thể/cả hai, hoạt động.
 8. Loại thưởng: mã/tên/mô tả, nhóm Danh hiệu/Hình thức, cấp, đối tượng, hoạt động.
-9. Kho quy định: thêm văn bản và phiên bản, xem trích đoạn/tiêu chí, xác nhận/bỏ xác nhận theo quyền. Hiện chưa có form đầy đủ tạo/sửa trích đoạn, quy tắc tiêu chí hay mọi trạng thái nguồn; cần công cụ dữ liệu/API hiện có để chuẩn bị các phần đó.
+9. Kho quy định: thêm văn bản, phiên bản, trích đoạn và tiêu chí theo quyền. Admin/Hội đồng có thể cấu hình nguồn cho tiêu chí mới hoặc hiện có: chọn Thành tích/Khen thưởng và các loại hồ sơ được tính. Đổi nguồn sẽ bỏ xác nhận tiêu chí; xem lại cấu hình rồi xác nhận lại trước khi đánh giá. Quy định/tiêu chí chưa xác nhận hoặc thiếu ánh xạ vẫn yêu cầu người thẩm định rà soát, không tự kết luận đạt.
 10. Mục tiêu / KPI của Admin: nguồn KPI ngoài, ánh xạ mã nhân viên nguồn sang giảng viên bằng tên, đồng bộ, xem lỗi/xung đột. Mã nhân viên bên ngoài nhập đúng hệ thống nguồn. Đồng bộ không tự xác nhận thành tích.
 
-Giới hạn tạo tài khoản: form Tài khoản chưa có tạo hồ sơ giảng viên và liên kết tài khoản ngay trong form. Nhánh cá nhân cần hồ sơ giảng viên liên kết và dữ liệu nơi công tác; cấp vai trò Giảng viên không tự tạo đủ hồ sơ. Demo đã có liên kết cần thiết.
+Luồng tài khoản giảng viên mới: Tạo tài khoản → cấp vai trò Giảng viên kèm mã/đơn vị nếu có → đăng nhập và mở Hồ sơ năng lực/CV → kê khai khi có đơn vị công tác chính hiệu lực. Việc cấp lại vai trò giữ nguyên hồ sơ và lịch sử công tác; chuyển đơn vị đã có dùng trang Tổ chức.
 
 Người dùng thiếu quyền: kiểm tra tài khoản hoạt động → vai trò hiệu lực → phạm vi/phân công đúng đơn vị → trạng thái hồ sơ → phân công người xét → quy tắc chống tự duyệt. Menu xuất hiện không đảm bảo thao tác mọi dữ liệu.
 
@@ -326,13 +328,13 @@ Các vai trò trong bảng là quyền mở trang; dữ liệu/hành động bê
 
 | Trang | Vai trò mở được | Chức năng và cách bắt đầu |
 |---|---|---|
-| Trang chủ | Giảng viên, Đại diện, Quản lý, Chuyên viên, Admin | Tổng quan/lối vào nhanh; một số chỉ số, lịch, gợi ý đang minh họa. Dùng trang nghiệp vụ kiểm tra trạng thái thật. |
+| Trang chủ | Giảng viên, Đại diện, Quản lý, Chuyên viên, Admin | Tổng quan/lối vào nhanh; lịch chung hiển thị hạn của các đợt khen thưởng đang mở; lịch cá nhân do người dùng quản lý. |
 | Hồ sơ năng lực | Giảng viên, Đại diện, Quản lý | Hồ sơ giảng viên chính tài khoản; lịch sử công tác, thành tích/danh hiệu/minh chứng; sửa điện thoại/chức danh/học vị, đổi mật khẩu. Cần hồ sơ liên kết. |
 | Thành tích | Giảng viên, Đại diện, Quản lý, Chuyên viên, Admin | Tìm/lọc, kê khai, minh chứng, lịch sử, nộp/duyệt/thu hồi/thay thế tùy quyền và trạng thái. Chuyên viên không xác nhận chỉ vì có menu. |
 | Mục tiêu / KPI | Giảng viên, Đại diện, Admin | Cá nhân/tập thể: lập/nhập mục tiêu, chấp nhận, kết quả, tạo thành tích nháp, gợi ý AI, dữ liệu ngoài được phép. Admin đơn lẻ quản trị nguồn/ánh xạ/đồng bộ. Quản lý đơn lẻ không có trang này. |
 | Hồ sơ đề nghị | Giảng viên, Đại diện, Quản lý, Hội đồng, Chuyên viên | Người đề nghị tạo/nộp; Quản lý chuyển; Hội đồng phân công/xét; Chuyên viên mở kỳ/tra cứu. Admin đơn lẻ không có menu. |
 | Khen thưởng | Chuyên viên | Chọn chủ thể/loại/năm/quyết định; nháp, tải file, ghi nhận, thu hồi/thay thế, lịch sử. |
-| Kho quy định | Giảng viên, Đại diện, Quản lý, Chuyên viên, Admin | Văn bản, phiên bản, trích đoạn, tiêu chí; Quản lý/Admin thêm văn bản/phiên bản; Admin xác nhận trên UI. Hội đồng đơn lẻ chưa có menu dù API có một số quyền quy định. |
+| Kho quy định | Giảng viên, Đại diện, Quản lý, Chuyên viên, Hội đồng, Admin | Văn bản, phiên bản, trích đoạn, tiêu chí; thêm theo quyền; Admin/Hội đồng cấu hình nguồn tiêu chí và xác nhận trên UI. |
 | Phân tích & Thẩm định AI | Giảng viên, Đại diện, Quản lý, Chuyên viên, Admin | Chọn chủ thể có quyền, phân tích/đánh giá, tiêu chí/căn cứ/lịch sử khi được phép. Chuyên viên đơn lẻ có menu nhưng có thể không có chủ thể hợp lệ. |
 | Báo cáo / CSV | Giảng viên, Đại diện, Quản lý, Chuyên viên, Admin | Lọc năm học/năm/đơn vị/loại/chủ thể/trạng thái, áp dụng, xem thống kê/bảng. Đại diện/Quản lý/Chuyên viên/Admin xuất CSV trong quyền; Giảng viên đơn lẻ chỉ xem. |
 | Tổ chức | Giảng viên, Đại diện, Quản lý, Chuyên viên, Admin | Cây/danh sách đơn vị. Chi tiết hồ sơ đơn vị cần Admin hoặc phân công/phạm vi hợp lệ; Giảng viên đơn lẻ không tự có quyền chi tiết. Admin quản lý đơn vị, đại diện, chuyển công tác. |
@@ -342,6 +344,8 @@ Các vai trò trong bảng là quyền mở trang; dữ liệu/hành động bê
 ### AI
 
 Chọn Cá nhân/Tập thể → chọn chủ thể được phép → chọn tiêu chí khi thẩm định → đánh giá → đọc kết quả, nguồn, dữ liệu thiếu, mô phỏng/xác nhận và lịch sử. Không coi mọi kết quả là phản hồi của mô hình thật. AI không tự xác nhận thành tích, kết luận Hội đồng, ban hành quyết định hay ghi thưởng. Nguồn mô phỏng/chưa xác nhận không là quy định thật của trường; dữ liệu thay đổi có thể khiến kết quả cũ không còn phù hợp. Gợi ý KPI cần kiểm tra và chấp nhận theo điều kiện nguồn.
+
+Hiện chưa có quy tắc được xác nhận để ánh xạ từng tiêu chí với loại hồ sơ tương ứng. Vì vậy hệ thống yêu cầu người có thẩm quyền rà soát thay vì tự đếm mọi thành tích và kết luận đạt hoặc không đạt. Gợi ý KPI dựa trên kết luận tự động cũng chưa khả dụng với các tiêu chí chưa có ánh xạ này.
 
 ### Báo cáo
 
@@ -404,3 +408,13 @@ Xem [Kịch bản đầy đủ và fixture](testing/scenario/README.md). File m�
 Menu: frontend/src/routes/AppRoutes.jsx, frontend/src/components/common/Sidebar.jsx. Biểu mẫu: frontend/src/pages/ và các component KPI. Quyền/trạng thái: backend/src/modules/achievements/, awards/, kpi/, reports/, regulations/, organizations/, admin/; backend/src/middlewares/requireUnitRead.js.
 
 Xem [Tài khoản, vai trò và phạm vi](requirements/ACCOUNT_ROLES_AND_SCOPES.md).
+
+### Khôi phục mật khẩu qua email
+
+Đặt `RESET_EMAIL_API_KEY`, `RESET_EMAIL_FROM` và `APP_PUBLIC_URL` trong `backend/.env` (hoặc biến môi trường của máy chủ). Khóa là API key của Resend, địa chỉ gửi phải thuộc miền đã được xác thực với nhà cung cấp. `APP_PUBLIC_URL` là URL công khai của frontend; khi chạy production phải dùng HTTPS. Cấu hình `JWT_REFRESH_SECRET` ngẫu nhiên, riêng cho môi trường triển khai. Không đưa khóa vào mã nguồn hoặc frontend.
+
+Liên kết có hiệu lực 30 phút và chỉ dùng được một lần; sau khi đổi mật khẩu các phiên đăng nhập cũ bị thu hồi. Khi chưa cấu hình dịch vụ email, API trả lỗi 503. Giới hạn yêu cầu trong ứng dụng áp dụng theo IP và theo từng tiến trình; nếu triển khai nhiều tiến trình cần cấu hình thêm giới hạn tập trung tại reverse proxy hoặc gateway. Việc gửi và nhận email thật cần được nghiệm thu trên môi trường có cấu hình nhà cung cấp.
+
+### Tự đăng ký tài khoản
+
+Trên trang đăng nhập chọn **Đăng ký**, nhập họ tên, email và mật khẩu từ 8 ký tự (tối đa 72 byte), rồi đăng nhập bằng email. Tài khoản tự đăng ký được tạo với quyền giảng viên cơ bản và hồ sơ riêng; mã nhân sự `SELF_…` là mã tạm do hệ thống tạo, không xác nhận danh tính nhân viên. Quản trị viên cần xác minh hồ sơ và phân công đơn vị trước khi người dùng có thể khai thành tích gắn với đơn vị. Đăng ký hiện chưa xác minh quyền sở hữu email; cần bổ sung xác thực email trước khi vận hành công khai nếu tổ chức yêu cầu xác minh danh tính. Giới hạn số yêu cầu đăng ký theo IP ở từng tiến trình, và nên cấu hình giới hạn tập trung tại gateway khi triển khai nhiều tiến trình.

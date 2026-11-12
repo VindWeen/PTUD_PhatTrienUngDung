@@ -216,19 +216,17 @@ export async function saveExplanationRecord(client, data) {
       run_id, criterion_id, query_text, retrieved_chunk_ids, citations,
       explanation_text, model, provider, prompt_version, retrieval_version,
       is_sufficient_data, created_at
-    ) VALUES (
+    ) OUTPUT INSERTED.* VALUES (
       $1, $2, $3, $4, $5,
       $6, $7, $8, $9, $10,
-      $11, NOW()
-    )
-    RETURNING *
-  `;
+      $11, SYSUTCDATETIME()
+    )`;
 
   const values = [
     data.runId || null,
     data.criterionId || null,
     data.queryText,
-    data.retrievedChunkIds || [],
+    JSON.stringify(data.retrievedChunkIds || []),
     JSON.stringify(data.citations || []),
     data.explanationText,
     data.model,

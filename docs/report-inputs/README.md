@@ -1,4 +1,12 @@
-# W5-P4 — Bộ tư liệu báo cáo ứng viên
+# Tư liệu báo cáo học phần
+
+**Điểm bắt đầu hiện tại — 04/11/2026:** xem [khung báo cáo theo mẫu học phần](REPORT_AND_SLIDES.md) để áp dụng bố cục 4 chương cho dự án Quản lý Hồ sơ Thành tích Số & Khen thưởng LHU. Mẫu được đọc là file Word người dùng cung cấp; nội dung thuê xe và công nghệ trong mẫu chỉ là ví dụ, không phải yêu cầu đổi công nghệ của dự án.
+
+Bản báo cáo Word cho lớp **23CT112**, GVHD **Hồ Ngọc Hoàng Long**, thành viên **Tạ Trần Vinh Quang — 123000033** và **Võ Nhạc Phước — 123000034**, thời gian **11/2026**, được tạo tại [output/reports/BaoCao_PhatTrienUngDung_23CT112.docx](../../output/reports/BaoCao_PhatTrienUngDung_23CT112.docx). Tên đề tài trên bìa để trống theo yêu cầu; file đầu ra nằm trong workspace, có thể không được Git theo dõi.
+
+Phạm vi triển khai hiện tại tra [README gốc](../../README.md), luồng sử dụng tra [USER_GUIDE](../USER_GUIDE.md), cải thiện giao diện và ảnh mới tra [UI_VISUAL_AUDIT](../testing/UI_VISUAL_AUDIT.md). Các đoạn và bộ tư liệu W5-P4 dưới đây giữ làm lịch sử tại mốc bàn giao, không mô tả trạng thái live ngày 04/11.
+
+## Bộ tư liệu ứng viên tại mốc W5-P4
 
 Võ Nhạc Phước · 08/10/2026 (Asia/Saigon). Trạng thái: **đóng bộ tư liệu ứng viên, chưa nghiệm thu restore**.
 

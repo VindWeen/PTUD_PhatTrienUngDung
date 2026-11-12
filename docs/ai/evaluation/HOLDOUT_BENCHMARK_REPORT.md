@@ -1,4 +1,6 @@
 # BÁO CÁO ĐÁNH GIÁ VALIDATOR VÀ NGUỒN TRUY XUẤT TRÊN TẬP GIỮ LẠI (W5-Q2)
+
+> **Cập nhật 29/10/2026:** Kết quả dưới đây thuộc phiên bản evaluator trước khi bổ sung kiểm tra ánh xạ loại nguồn theo tiêu chí. Dữ liệu holdout này chưa có ánh xạ đó; số liệu lịch sử không chứng minh độ chính xác của evaluator hiện tại. Cần xây dựng bộ dữ liệu có ánh xạ được xác nhận và đánh giá lại trước khi công bố số liệu mới.
 ## BENCHMARK EVALUATOR-ONLY vs EVALUATOR + RAG TRÊN UNSEEN HOLDOUT DATASET
 
 **Dự án:** PTUD_PhatTrienUngDung  

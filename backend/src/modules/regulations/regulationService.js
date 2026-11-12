@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { withTransaction } from '../../utils/dbHelper.js';
 import * as regulationRepo from './regulationRepository.js';
+import { sourceRulesSchema } from './regulationSchemas.js';
 import {
   ValidationError,
   NotFoundError,
@@ -102,7 +103,7 @@ export async function createVersion(documentId, data, user) {
     if (data.supersedesVersionId) {
       await client.query(
         `UPDATE app.regulation_document_versions
-         SET effective_to = LEAST(COALESCE(effective_to, $1::date), $1::date)
+         SET effective_to = CASE WHEN effective_to IS NULL OR effective_to > CAST($1 AS date) THEN CAST($1 AS date) ELSE effective_to END
          WHERE version_id = $2`,
         [data.effectiveFrom, data.supersedesVersionId]
       );
@@ -196,9 +197,42 @@ export async function createCriteriaVersion(versionId, data, user) {
     throw new NotFoundError(`Không tìm thấy phiên bản quy định với ID #${versionId}`);
   }
 
+  if (data.sourceRules) {
+    if (!checkHasRole(user.roles, APPROVAL_ROLES)) throw new ForbiddenError('Chỉ Hội đồng hoặc Quản trị hệ thống được cấu hình nguồn tiêu chí');
+    await validateSourceRules(data.sourceRules, data.targetType);
+  }
+
   return await regulationRepo.createCriteriaVersion(null, {
     ...data,
     versionId,
+    sourceRulesBy: data.sourceRules ? user.userId : null,
+  });
+}
+
+export async function getSourceCatalogs() {
+  return regulationRepo.listSourceCatalogs(null);
+}
+
+async function validateSourceRules(rules, targetType, client = null) {
+  const parsed = sourceRulesSchema.parse(rules);
+  const catalogs = await regulationRepo.listSourceCatalogs(client);
+  const ids = parsed.achievementTypeIds || parsed.awardTypeIds;
+  const expectedSubject = targetType === 'INDIVIDUAL' ? 'LECTURER' : targetType === 'COLLECTIVE' ? 'UNIT' : 'BOTH';
+  if (!ids.every(id => catalogs[parsed.sourceType].some(row => row.is_active && Number(row.id) === id &&
+    (row.applicable_subject_type === 'BOTH' || row.applicable_subject_type === expectedSubject)))) {
+    throw new ValidationError('Loại hồ sơ không tồn tại, đã ngừng dùng hoặc không phù hợp đối tượng của tiêu chí');
+  }
+}
+
+export async function configureSourceRules(criteriaVersionId, data, user) {
+  if (!checkHasRole(user.roles, APPROVAL_ROLES)) throw new ForbiddenError('Chỉ Hội đồng hoặc Quản trị hệ thống được cấu hình nguồn tiêu chí');
+  return withTransaction(async ({ client }) => {
+    const criterion = await regulationRepo.findCriteriaVersionById(client, criteriaVersionId);
+    if (!criterion) throw new NotFoundError('Không tìm thấy tiêu chí');
+    if (data.sourceRules) await validateSourceRules(data.sourceRules, criterion.target_type, client);
+    const updated = await regulationRepo.updateSourceRules(client, criteriaVersionId, data, user.userId);
+    if (!updated) throw new ConflictError('Cấu hình đã được thay đổi bởi người khác. Vui lòng tải lại');
+    return updated;
   });
 }
 
@@ -217,9 +251,15 @@ export async function confirmCriterion(criteriaVersionId, data, user) {
     // Cho phép xác nhận nhưng yêu cầu ghi chú rõ ràng về tính chất chuyển tiếp hoặc độc lập
   }
 
-  return await regulationRepo.confirmCriteriaVersion(null, criteriaVersionId, {
+  if (data.isConfirmed && criterion.source_rules_revision > 0 && data.expectedSourceRulesRevision !== criterion.source_rules_revision) {
+    throw new ConflictError('Vui lòng tải lại và kiểm tra cấu hình nguồn trước khi phê duyệt');
+  }
+  const updated = await regulationRepo.confirmCriteriaVersion(null, criteriaVersionId, {
     isConfirmed: data.isConfirmed,
     notes: data.notes,
     confirmedBy: user.userId,
+    expectedSourceRulesRevision: criterion.source_rules_revision,
   });
+  if (!updated) throw new ConflictError('Cấu hình nguồn đã thay đổi. Vui lòng tải lại');
+  return updated;
 }

@@ -120,65 +120,63 @@ export default function ProfilePortfolio() {
   if (!profile) return <div className="space-y-6">{pageHeader}<EmptyState message="Chưa có hồ sơ năng lực." /></div>;
 
   return (
-    <div className="space-y-7 animate-fadeIn">
+    <div className="space-y-6">
       {pageHeader}
 
-      <form onSubmit={handleProfileSave} className="soft-card p-5 sm:p-6 space-y-4">
+      <form onSubmit={handleProfileSave} className="soft-card p-5 sm:p-6 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div><h2 className="font-bold text-slate-900 dark:text-white">Thông tin hồ sơ cá nhân</h2><p className="text-xs text-slate-500">Mã {profile.employeeCode} · {profile.fullName} · {profile.email}</p></div>
+          <div className="min-w-0"><h2 className="text-lg font-bold text-slate-900 dark:text-white">{profile.fullName}</h2><p className="mt-1 break-words text-sm text-slate-600 dark:text-slate-400">{profile.employeeCode} · {profile.email}</p></div>
           <button type="submit" disabled={profileSaving} className="soft-btn-primary text-xs">{profileSaving ? 'Đang lưu...' : 'Lưu thay đổi'}</button>
         </div>
         {profileSaveMessage && <p className="text-xs text-emerald-600">{profileSaveMessage}</p>}
         {profileError && <p role="alert" className="text-xs text-rose-600">{profileError.message || 'Không thể cập nhật hồ sơ.'}</p>}
         <div className="grid sm:grid-cols-3 gap-4">
-          {[['phone', 'Số điện thoại'], ['title', 'Chức danh'], ['degree', 'Học vị']].map(([field, label]) => <label key={field} className="text-xs font-semibold text-slate-600 dark:text-slate-300">{label}<input value={profileDraft[field]} onChange={(e) => setProfileDraft((value) => ({ ...value, [field]: e.target.value }))} maxLength={field === 'phone' ? 20 : 50} className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" /></label>)}
+          {[['phone', 'Số điện thoại'], ['title', 'Chức danh'], ['degree', 'Học vị']].map(([field, label]) => <label key={field} className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}<input value={profileDraft[field]} onChange={(e) => setProfileDraft((value) => ({ ...value, [field]: e.target.value }))} maxLength={field === 'phone' ? 20 : 50} className="soft-input mt-2 w-full text-sm" /></label>)}
         </div>
       </form>
 
       {/* 2. Main Two Columns Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-7">
+      <div className="grid grid-cols-1 items-start lg:grid-cols-12 gap-6">
         {/* LEFT COLUMN (4 cols): Quá trình công tác + Danh hiệu */}
         <div className="lg:col-span-4 space-y-6">
           {/* Card 1: Quá trình công tác */}
-          <div className="soft-card p-6 sm:p-7">
+          <div className="soft-card p-5 sm:p-6">
             <div className="flex items-center gap-2.5 mb-6">
-              <span className="w-1.5 h-6 rounded-full bg-slate-800 dark:bg-slate-300" />
               <h2 className="text-base font-bold text-slate-900 dark:text-white">
                 Quá trình công tác
               </h2>
             </div>
 
-            <p className="mb-4 text-xs text-slate-500">Lịch sử được lấy từ phân công đơn vị công tác trong hệ thống. Việc đổi phân công cần cán bộ quản trị cập nhật; hiện chưa có biểu mẫu thêm/sửa/xóa tại hồ sơ cá nhân.</p>
+            <p className="mb-5 text-xs leading-5 text-slate-600 dark:text-slate-400">Lịch sử từ phân công đơn vị trong hệ thống. Liên hệ cán bộ quản trị khi cần cập nhật.</p>
             <div className="relative pl-6 space-y-7 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-700">
               {(profile.workHistory || []).map((item, index) => <div className="relative" key={item.assignmentId}>
                 <div className={`absolute -left-[27px] top-1 w-3.5 h-3.5 rounded-full ${index === 0 ? 'bg-slate-800 dark:bg-slate-200' : 'bg-slate-300 dark:bg-slate-500'} ring-4 ring-white dark:ring-soft-darkCard`} />
-                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{item.period}</div>
+                <div className="text-xs font-medium tabular-nums text-slate-600 dark:text-slate-400">{item.period}</div>
                 <div className="text-sm font-bold text-slate-900 dark:text-white mt-1">{item.position}</div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{item.department || item.unitName}</div>
+                <div className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">{item.department || item.unitName}</div>
               </div>)}
               {!profile.workHistory?.length && <p className="text-xs text-slate-500">Chưa có lịch sử công tác.</p>}
             </div>
           </div>
 
           {/* Card 2: Danh hiệu */}
-          <div className="soft-card p-6 sm:p-7">
+          <div className="soft-card p-5 sm:p-6">
             <div className="flex items-center gap-2.5 mb-5">
-              <span className="w-1.5 h-6 rounded-full bg-amber-500" />
               <h2 className="text-base font-bold text-slate-900 dark:text-white">Danh hiệu</h2>
             </div>
 
-            <div className="space-y-3.5">
-              {(profile.titlesAndHonors || []).map((award) => <div key={award.awardRecordId} className="p-4 rounded-2xl bg-[#fdf9e8] dark:bg-[#2b271b] border border-amber-200/50 dark:border-amber-900/40 flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-2xl bg-white dark:bg-amber-950/60 text-amber-500 flex items-center justify-center"><Medal className="w-6 h-6" /></div>
-                <div><div className="text-xs sm:text-sm font-bold">{award.awardTypeName} ({award.recognitionYear})</div><div className="text-[11px] text-amber-700 dark:text-amber-300/80">{award.level} · {award.decisionNumber}</div></div>
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {(profile.titlesAndHonors || []).map((award) => <div key={award.awardRecordId} className="flex items-start gap-3 py-4 first:pt-0 last:pb-0">
+                <Medal className={`mt-1 h-5 w-5 shrink-0 ${award.status === 'REVOKED' ? 'text-slate-400' : 'text-teal-700 dark:text-teal-400'}`} />
+                <div className="min-w-0"><div className="text-sm font-semibold leading-6 text-slate-900 dark:text-slate-100">{award.awardTypeName} ({award.recognitionYear})</div><p className={`my-1.5 text-xs font-medium ${award.status === 'REVOKED' ? 'text-slate-600 dark:text-slate-400' : 'text-teal-700 dark:text-teal-400'}`}>{award.status === 'REVOKED' ? 'Đã thu hồi · chỉ lưu lịch sử' : 'Đã ghi nhận'}</p><div className="break-words text-xs leading-5 text-slate-600 dark:text-slate-400">{{FACULTY:'Cấp khoa', UNIVERSITY:'Cấp trường', MINISTRY:'Cấp bộ', STATE:'Cấp nhà nước'}[award.level] || award.level} · {award.decisionNumber}</div></div>
               </div>)}
               {!profile.titlesAndHonors?.length && <p className="text-xs text-slate-500">Chưa có danh hiệu được ghi nhận.</p>}
             </div>
-            <p className="mt-4 text-xs text-slate-500">Danh hiệu được cán bộ phụ trách ghi nhận tại trang Khen thưởng, dựa trên quyết định chính thức.</p>
+            <p className="mt-5 border-t border-slate-100 pt-4 text-xs leading-5 text-slate-600 dark:border-slate-800 dark:text-slate-400">Danh hiệu được cán bộ phụ trách ghi nhận tại trang Khen thưởng, dựa trên quyết định chính thức.</p>
           </div>
         </div>
 
-        <div className="lg:col-span-8"><PortfolioAchievements key={profile.updatedAt} profile={profile} activeTab={activeTab} /></div>
+        <div className="min-w-0 lg:col-span-8"><PortfolioAchievements key={profile.updatedAt} profile={profile} activeTab={activeTab} /></div>
       </div>
 
       {/* Change Password Modal */}
