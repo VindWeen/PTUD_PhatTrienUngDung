@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { EmptyState, ErrorState, LoadingState } from '../components/common/AsyncState';
 import { portfolioApi } from '../services/portfolioApi';
+import { kpiApi } from '../services/kpiApi';
 
 const actionCards = [
   { title: 'Thành tích', subtitle: 'Kê khai và quản lý thành tích', icon: Award, tone: 'teal', route: '/achievements' },
@@ -37,6 +38,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [kpiGoals, setKpiGoals] = useState([]);
+  const [kpiLoading, setKpiLoading] = useState(true);
 
   function searchAchievements(event) {
     event.preventDefault();
@@ -51,11 +54,62 @@ export default function Dashboard() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { loadSummary(false); }, [loadSummary]);
+  const loadKpiGoals = useCallback(async () => {
+    setKpiLoading(true);
+    try {
+      const res = await kpiApi.list({ subjectType: 'LECTURER' }, true);
+      setKpiGoals(res?.items || []);
+    } catch {
+      setKpiGoals([]);
+    } finally {
+      setKpiLoading(false);
+    }
+  }, []);
 
-  const todayLabel = useMemo(() => new Intl.DateTimeFormat('vi-VN', {
-    day: '2-digit', month: 'long', year: 'numeric', weekday: 'long',
-  }).format(new Date()), []);
+  useEffect(() => {
+    loadSummary(false);
+    loadKpiGoals();
+  }, [loadSummary, loadKpiGoals]);
+
+  const roadmapItems = useMemo(() => {
+    if (!kpiGoals || kpiGoals.length === 0) return [];
+    const colors = ['bg-[#78a5d1]', 'bg-[#97aa70]', 'bg-[#e28b8c]', 'bg-[#d8975a]'];
+    const icons = [BookOpen, GraduationCap, Users, Target];
+    return kpiGoals.slice(0, 4).map((g, idx) => {
+      let actualNum = 0;
+      if (g.result) {
+        try {
+          const resObj = typeof g.result === 'string' ? JSON.parse(g.result) : g.result;
+          actualNum = Number(resObj?.actual) || 0;
+        } catch {
+          actualNum = Number(g.result?.actual) || 0;
+        }
+      }
+      const targetNum = Number(g.target) || 0;
+      const percent = targetNum > 0 ? Math.min(100, Math.round((actualNum / targetNum) * 100)) : 0;
+      
+      let dueLabel = 'Chưa có hạn';
+      if (g.period_end) {
+        const d = new Date(g.period_end);
+        if (!isNaN(d.getTime())) {
+          dueLabel = `Hạn: ${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+        }
+      }
+
+      return {
+        id: g.goal_id,
+        title: g.title,
+        due: dueLabel,
+        percent,
+        target: targetNum,
+        actual: actualNum,
+        unit: g.measure_unit,
+        width: `${percent}%`,
+        color: colors[idx % colors.length],
+        icon: icons[idx % icons.length],
+      };
+    });
+  }, [kpiGoals]);
 
   const awardCount = summary?.awards?.RecordedCount || 0;
 
@@ -119,18 +173,53 @@ export default function Dashboard() {
       </div>
 
       <aside className="flex min-h-[500px] flex-col rounded-[30px] bg-white p-5 shadow-[0_8px_28px_rgba(55,78,107,0.05)] dark:bg-slate-900 xl:col-span-3">
-        <h2 className="mt-2 text-center text-lg font-extrabold text-slate-700 dark:text-white">Gợi ý lộ trình KPI 2026-2027</h2>
-        <p className="mt-1.5 text-center text-[11px] font-medium leading-4 text-amber-600">Gợi ý mô phỏng, chưa phải dữ liệu xét thưởng</p>
-        <div className="mt-5 space-y-3">
-          {[
-            { icon: BookOpen, title: 'Xuất bản 02 giáo trình', due: 'Hạn: 02/2027', width: '76%', color: 'bg-[#78a5d1]' },
-            { icon: GraduationCap, title: 'Hướng dẫn 03 nghiên cứu sinh', due: 'Hạn: 02/2027', width: '62%', color: 'bg-[#97aa70]' },
-            { icon: Users, title: 'Hoàn thiện hồ sơ hội đồng', due: 'Hạn: 02/2027', width: '28%', color: 'bg-[#e28b8c]' },
-          ].map(({ icon: Icon, title, due, width, color }) => <div key={title} className="rounded-2xl bg-white p-3.5 shadow-[0_3px_8px_rgba(15,23,42,0.18)] dark:bg-slate-800">
-            <div className="flex gap-3"><Icon className="mt-0.5 h-6 w-6 shrink-0 text-slate-500" /><div className="min-w-0 flex-1"><div className="text-[13px] font-extrabold leading-4 text-slate-700 dark:text-slate-200">{title}</div><div className="mt-1 text-[10px] font-medium text-slate-400">{due}</div><div className="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-slate-700"><div className={`h-full rounded-full ${color}`} style={{ width }} /></div></div></div>
-          </div>)}
-        </div>
-        <button onClick={() => navigate('/me/ai-forecast')} className="mt-auto flex items-center justify-center gap-2 pb-1 text-xs font-bold text-slate-600 dark:text-slate-300">Xem toàn bộ lộ trình <ChevronDown className="h-5 w-5" /></button>
+        <h2 className="mt-2 text-center text-lg font-extrabold text-slate-700 dark:text-white">Lộ trình Mục tiêu & KPI</h2>
+        <p className="mt-1.5 text-center text-[11px] font-medium leading-4 text-teal-600 dark:text-teal-400">Tiến độ thực hiện mục tiêu cá nhân</p>
+        
+        {kpiLoading ? (
+          <div className="mt-6">
+            <LoadingState label="Đang tải lộ trình KPI..." rows={3} />
+          </div>
+        ) : roadmapItems.length === 0 ? (
+          <div className="my-auto py-8 text-center text-xs text-slate-400">
+            Chưa có mục tiêu KPI nào được thiết lập.
+          </div>
+        ) : (
+          <div className="mt-5 space-y-3">
+            {roadmapItems.map(({ id, icon: Icon, title, due, percent, target, actual, unit, width, color }) => (
+              <div
+                key={id || title}
+                onClick={() => navigate('/kpi')}
+                className="cursor-pointer rounded-2xl bg-white p-3.5 shadow-[0_3px_8px_rgba(15,23,42,0.08)] transition hover:shadow-md dark:bg-slate-800"
+              >
+                <div className="flex gap-3">
+                  <Icon className="mt-0.5 h-6 w-6 shrink-0 text-slate-500" />
+                  <div className="min-w-0 flex-1">
+                    <div className="line-clamp-2 text-[13px] font-extrabold leading-4 text-slate-700 dark:text-slate-200" title={title}>
+                      {title}
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-[10px] font-medium text-slate-400">
+                      <span>{due}</span>
+                      <span className="font-semibold text-slate-600 dark:text-slate-300">
+                        {actual}/{target} {unit || ''} ({percent}%)
+                      </span>
+                    </div>
+                    <div className="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                      <div className={`h-full rounded-full transition-all duration-300 ${color}`} style={{ width }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button
+          onClick={() => navigate('/kpi')}
+          className="mt-auto flex items-center justify-center gap-2 pb-1 text-xs font-bold text-slate-600 hover:text-teal-600 transition dark:text-slate-300 dark:hover:text-teal-400"
+        >
+          Xem toàn bộ mục tiêu <ChevronDown className="h-5 w-5" />
+        </button>
       </aside>
     </section>
   </div>;
