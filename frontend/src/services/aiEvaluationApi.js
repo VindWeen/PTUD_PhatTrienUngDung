@@ -34,6 +34,18 @@ export const aiEvaluationApi = {
   /**
    * Danh sách tiêu chí quy chế
    */
+  /**
+   * Auto-Discovery: Khám ngược tiềm năng danh hiệu
+   */
+  autoDiscovery: (data = {}) =>
+    request({ method: 'POST', url: '/ai/auto-discovery', data }),
+
+  /**
+   * Đóng gói và tải file zip minh chứng (.ZIP)
+   */
+  exportDossierZip: (data = {}) =>
+    request({ method: 'POST', url: '/ai/export-dossier-zip', data, responseType: 'blob' }),
+
   listCriteria: (params = {}, fresh = false) =>
     request({ method: 'GET', url: '/regulations/criteria', params, fresh }),
 };

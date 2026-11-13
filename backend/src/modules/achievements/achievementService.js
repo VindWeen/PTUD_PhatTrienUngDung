@@ -26,7 +26,7 @@ export function createAchievementService(
 ) {
   async function listCatalogs(user) {
     const active = (await roles(user.userId)).map(r => typeof r === 'string' ? r : r.Code || r.code);
-    if (!active.some(r => ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'].includes(r)))
+    if (!active.some(r => ['MEMBER', 'LECTURER', 'DEPARTMENT_HEAD', 'FACULTY_LEAD', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'].includes(r)))
       throw new ForbiddenError('Không có quyền đọc danh mục thành tích');
     return repo.listActiveTypes();
   }
@@ -45,27 +45,31 @@ export function createAchievementService(
   async function listAchievements(user, queryParams = {}) {
     const roles = await getUserRoles(user);
     const filters = { ...queryParams };
-    filters.statuses = { ACTIONABLE: ['DRAFT', 'NEED_CORRECTION'], PENDING: ['SUBMITTED'], VERIFIED: ['VERIFIED'], ENDED: ['REJECTED', 'REVOKED', 'CANCELLED'] }[queryParams.workflow];
+    filters.statuses = { ACTIONABLE: ['ACTIVE', 'DRAFT', 'NEED_CORRECTION'], PENDING: ['SUBMITTED'], VERIFIED: ['VERIFIED'], ENDED: ['REJECTED', 'REVOKED', 'CANCELLED'] }[queryParams.workflow];
 
     const isAdmin = roles.includes('ADMIN');
     const isManager = roles.includes('MANAGER');
     const isRecordsOfficer = roles.includes('RECORDS_OFFICER');
     const isUnitRep = roles.includes('UNIT_REPRESENTATIVE');
     const isLecturer = roles.includes('LECTURER');
+    const isIndividual = roles.some(r => ['MEMBER', 'LECTURER', 'DEPARTMENT_HEAD', 'FACULTY_LEAD', 'MANAGER', 'UNIT_REPRESENTATIVE'].includes(r));
 
     // 1. Phân quyền hiển thị danh sách theo vai trò
     if (!isAdmin) {
       const orConditions = [];
 
-      // A. Nếu là Giảng viên: Thấy thành tích cá nhân của chính mình
+      // A. Nếu là Cá nhân / Giảng viên / Lãnh đạo đơn vị: Thấy thành tích cá nhân của chính mình
       let myLecturerId = null;
-      if (isLecturer || isManager || isUnitRep) {
+      if (isIndividual) {
         const lecturerProfile = await repo.findLecturerByUserId(user.userId);
         if (lecturerProfile) {
           myLecturerId = lecturerProfile.lecturerId;
           orConditions.push(`a.lecturer_id = ${myLecturerId}`);
+        } else if (user.userId && Number.isSafeInteger(Number(user.userId))) {
+          orConditions.push(`a.created_by = ${Number(user.userId)}`);
         }
       }
+
 
       // B. Nếu là Đại diện đơn vị: Thấy thành tích của các đơn vị mình đại diện
       if (isUnitRep) {
@@ -252,7 +256,7 @@ export function createAchievementService(
     }
 
     // Nghiệm thu: Chỉ được sửa khi đang ở DRAFT hoặc NEED_CORRECTION
-    if (!['DRAFT', 'NEED_CORRECTION'].includes(existing.status)) {
+    if (!['ACTIVE', 'DRAFT', 'NEED_CORRECTION'].includes(existing.status)) {
       throw new ConflictError(
         `Không thể chỉnh sửa hồ sơ đang ở trạng thái [${existing.status}]. Chỉ hồ sơ [DRAFT] hoặc [NEED_CORRECTION] mới được phép sửa.`
       );
@@ -322,7 +326,7 @@ export function createAchievementService(
     }
 
     // Nghiệm thu: "chỉ nháp chưa gửi được xóa"
-    if (existing.status !== 'DRAFT' || existing.submissions?.length) {
+    if (!['ACTIVE', 'DRAFT'].includes(existing.status) || (existing.status === 'DRAFT' && existing.submissions?.length)) {
       throw new ConflictError(
         `Không thể xóa hồ sơ ở trạng thái [${existing.status}]. Quy tắc hệ thống chỉ cho phép xóa hồ sơ Bản nháp (DRAFT) chưa từng gửi duyệt.`
       );
@@ -386,7 +390,7 @@ export function createAchievementService(
       throw new NotFoundError(`Không tìm thấy hồ sơ thành tích với ID #${id}`);
     }
 
-    if (!['DRAFT', 'NEED_CORRECTION'].includes(existing.status)) {
+    if (!['ACTIVE', 'DRAFT', 'NEED_CORRECTION'].includes(existing.status)) {
       throw new ConflictError(
         `Không thể nộp hồ sơ đang ở trạng thái [${existing.status}]. Chỉ hồ sơ [DRAFT] hoặc [NEED_CORRECTION] mới được phép nộp duyệt.`
       );

@@ -2,6 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cvSchema, emptyDraft, buildPublicCv, filterPublishedAchievements } from '../src/modules/cv/cvSchemas.js';
 import app from '../src/app.js';
+import { closeDB } from '../src/config/database.js';
+
+test.after(async () => {
+  await closeDB().catch(() => {});
+});
 
 test('CV only exposes selected profile data and achievements', () => {
   const draft = cvSchema.parse({ ...emptyDraft, showEmail: true, workHistoryIds: [2], achievementIds: [3], experiences: [{ organization: 'Công ty A', position: 'Kỹ sư', period: '2020', description: 'Dự án' }] });

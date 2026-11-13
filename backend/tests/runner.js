@@ -121,7 +121,7 @@ it('formatQuery tự động suy diễn và tham số hóa an toàn chống SQL 
 console.log('\n4. KIỂM THỬ DANH SÁCH MIGRATIONS (SQL SERVER):');
 it('SQL Server migrations gồm baseline và trigger theo đúng thứ tự', () => {
   const files = getMigrationFiles();
-  assert.deepStrictEqual(files, ['001_final_schema.sql', '002_integrity_triggers.sql']);
+  assert.deepStrictEqual(files, ['001_final_schema.sql', '002_integrity_triggers.sql', '003_achievement_trash.sql', '004_achievement_trash_file_collation.sql', '005_refactor_personal_vault_and_cv.sql']);
 });
 
 // 5. Kiểm thử Mật mã & Token (Crypto & Token Hashing)

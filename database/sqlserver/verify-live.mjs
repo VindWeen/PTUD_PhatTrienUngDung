@@ -29,7 +29,7 @@ try {
     (SELECT COUNT(*) FROM sys.tables t JOIN sys.schemas s ON s.schema_id=t.schema_id WHERE s.name=N'app' AND t.name<>N'_schema_migrations') AS tables,
     (SELECT COUNT(*) FROM sys.triggers WHERE parent_class=1 AND is_disabled=0 AND OBJECT_SCHEMA_NAME(object_id)=N'app') AS enabled_triggers,
     (SELECT COUNT(*) FROM sys.foreign_keys WHERE is_disabled=1 OR is_not_trusted=1) AS invalid_foreign_keys;`);
-  assert.equal(Number(metadata.rows[0].tables),53);
+  assert.equal(Number(metadata.rows[0].tables),56);
   assert.equal(Number(metadata.rows[0].enabled_triggers),5);
   assert.equal(Number(metadata.rows[0].invalid_foreign_keys),0);
   console.log('PASS live schema metadata',metadata.rows[0]);

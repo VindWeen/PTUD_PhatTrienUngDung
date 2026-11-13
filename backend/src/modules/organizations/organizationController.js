@@ -29,4 +29,19 @@ export async function update(req, res, next) { try { ok(res, await service.updat
 export async function remove(req, res, next) { try { await service.removeUnit(Number(req.params.id), req.user?.userId); ok(res, undefined); } catch (e) { next(e); } }
 export async function appoint(req, res, next) { try { ok(res, await assign(req.user.userId, 'representatives', adminRepresentativeSchema.parse({ ...req.body, unitId: Number(req.params.id) })), 201); } catch (e) { next(e); } }
 export async function transfer(req, res, next) { try { ok(res, await service.transferLecturer({ lecturerId: Number(req.params.id), ...transferSchema.parse(req.body) }, req.user.userId), 201); } catch (e) { next(e); } }
-export default { list, profile, create, update, remove, appoint, transfer };
+
+export async function aiScan(req, res, next) {
+  try {
+    const unitId = Number(req.params.id);
+    const regulationId = Number(req.body.regulationId || req.body.awardPeriodId);
+    if (!regulationId) {
+      return res.status(400).json({ success: false, message: 'Vui lòng cung cấp regulationId' });
+    }
+    const result = await service.scanUnitWithAi(unitId, regulationId, req.user);
+    ok(res, result);
+  } catch (e) {
+    next(e);
+  }
+}
+
+export default { list, profile, create, update, remove, appoint, transfer, aiScan };

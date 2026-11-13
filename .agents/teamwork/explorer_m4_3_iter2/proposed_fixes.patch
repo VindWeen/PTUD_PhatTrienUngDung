@@ -1,0 +1,68 @@
+--- frontend/src/pages/Calendar.jsx
++++ frontend/src/pages/Calendar.jsx
+@@ -415,7 +415,7 @@
+             {reminders.length === 0 ? (
+               <div className="py-8 text-center space-y-2">
+                 <Bookmark className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" />
+-                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+-                  Chưa có hạn nộp nào được nhắc nhở. Khi chạy "Khám theo quy chế" và chuyển tiêu chí thiếu thành mục tiêu KPI, bạn có thể chọn thêm vào lịch nhắc nhở tại đây.
++                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
++                  Chưa có hạn nộp nào được nhắc nhở. Khi chạy &ldquo;Khám theo quy chế&rdquo; và chuyển tiêu chí thiếu thành mục tiêu KPI, bạn có thể chọn thêm vào lịch nhắc nhở tại đây.
+                 </p>
+               </div>
+             ) : (
+
+--- frontend/src/pages/AIForecast.jsx
++++ frontend/src/pages/AIForecast.jsx
+@@ -87,5 +87,5 @@
+         const docs = Array.isArray(res) ? res : res?.items || res?.data || [];
+         setRegulations(docs);
+-        if (docs.length && !selectedRegulationId) {
+-          setSelectedRegulationId(String(docs[0].document_id || docs[0].id));
++        if (docs.length) {
++          setSelectedRegulationId(curr => curr || String(docs[0].document_id || docs[0].id));
+         }
+       })
+
+--- frontend/src/pages/Reports.jsx
++++ frontend/src/pages/Reports.jsx
+@@ -114,4 +114,4 @@
+         const docs = Array.isArray(res) ? res : res?.items || res?.data || [];
+         setRegulationsList(docs);
+-        if (docs.length && !scanRegulationId) {
+-          setScanRegulationId(String(docs[0].document_id || docs[0].id));
++        if (docs.length) {
++          setScanRegulationId(curr => curr || String(docs[0].document_id || docs[0].id));
+         }
+       })
+       .catch(() => {});
+ 
+     organizationsApi.list()
+       .then(res => {
+         const orgs = Array.isArray(res) ? res : res?.items || res?.data || [];
+         setAllUnits(orgs);
+-        if (orgs.length && !scanUnitId) {
+-          setScanUnitId(String(orgs[0].unit_id || orgs[0].organization_unit_id || orgs[0].id));
++        if (orgs.length) {
++          setScanUnitId(curr => curr || String(orgs[0].unit_id || orgs[0].organization_unit_id || orgs[0].id));
+         }
+       })
+
+--- frontend/src/pages/Achievements.jsx
++++ frontend/src/pages/Achievements.jsx
+@@ -175,13 +175,5 @@
+       }
+-      if (actionModalOpen && targetAchievement?.achievementId) {
+-        try {
+-          const target = await achievementsApi.getById(targetAchievement.achievementId, true);
+-          if (active && String(target.version) !== String(targetAchievement.version)) {
+-            setActionConflict(true);
+-            setActionError('Hồ sơ vừa được cập nhật. Đóng hộp thao tác và chọn lại thao tác từ trạng thái mới.');
+-          }
+-        } catch (err) { if (active) setActionError(err.message); }
+-      }
+     };
+     window.addEventListener('workflow-updated', refresh);
+     return () => { active = false; window.removeEventListener('workflow-updated', refresh); };
+-  }, [loadData, detailModalOpen, selectedAchievement?.achievementId, actionModalOpen, targetAchievement?.achievementId, targetAchievement?.version]);
++  }, [loadData, detailModalOpen, selectedAchievement?.achievementId]);

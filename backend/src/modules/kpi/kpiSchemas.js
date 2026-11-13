@@ -78,6 +78,36 @@ export const draftSchema = versionSchema
 export const importSchema = z
   .object({ csv: z.string().min(1).max(500000) })
   .strict();
+export const aiGapCriterionSchema = z
+  .object({
+    code: text(80).transform((v) => v.toUpperCase()),
+    name: text(255),
+    missingCount: z.coerce.number().finite().min(0).default(1),
+    unit: z.string().trim().max(80).optional().default("tiêu chí"),
+    periodStart: date.optional(),
+    periodEnd: date.optional(),
+    plan: z.string().trim().max(4000).optional(),
+  })
+  .strict()
+  .refine(
+    (v) => !v.periodStart || !v.periodEnd || v.periodEnd >= v.periodStart,
+    "Kỳ kết thúc phải sau kỳ bắt đầu",
+  );
+export const fromAiGapSchema = z
+  .object({
+    regulationId: id,
+    missingCriteria: z
+      .array(aiGapCriterionSchema)
+      .min(1, "Danh sách tiêu chí thiếu không được rỗng"),
+    periodStart: date.optional(),
+    periodEnd: date.optional(),
+    plan: z.string().trim().max(4000).optional(),
+  })
+  .strict()
+  .refine(
+    (v) => !v.periodStart || !v.periodEnd || v.periodEnd >= v.periodStart,
+    "Kỳ kết thúc phải sau kỳ bắt đầu",
+  );
 export function parse(schema, raw) {
   const out = schema.safeParse(raw);
   if (!out.success)

@@ -338,7 +338,7 @@ export async function listAchievements({ filters = {}, limit = 10, offset = 0, s
     LEFT JOIN app.achievement_types at ON a.achievement_type_id = at.achievement_type_id
     LEFT JOIN app.academic_years ay ON a.academic_year_id = ay.academic_year_id
     ${whereSql}
-    ORDER BY CASE a.status WHEN 'NEED_CORRECTION' THEN 0 WHEN 'DRAFT' THEN 1 WHEN 'SUBMITTED' THEN 2 WHEN 'VERIFIED' THEN 3 WHEN 'REJECTED' THEN 4 WHEN 'REVOKED' THEN 5 ELSE 6 END, ${sortCol} ${order}, a.achievement_id ${order}
+    ORDER BY CASE a.status WHEN 'NEED_CORRECTION' THEN 0 WHEN 'ACTIVE' THEN 1 WHEN 'DRAFT' THEN 2 WHEN 'SUBMITTED' THEN 3 WHEN 'VERIFIED' THEN 4 WHEN 'REJECTED' THEN 5 WHEN 'REVOKED' THEN 6 ELSE 7 END, ${sortCol} ${order}, a.achievement_id ${order}
     OFFSET $${paramIdx++} ROWS FETCH NEXT $${paramIdx++} ROWS ONLY
   `;
 
@@ -395,7 +395,7 @@ export async function createAchievement(data) {
      ) OUTPUT INSERTED.achievement_id AS "achievementId", INSERTED.version, INSERTED.replaces_achievement_id AS "replacesAchievementId", INSERTED.created_at AS "createdAt", INSERTED.updated_at AS "updatedAt" VALUES (
         $1, $2, $3, $4,
         $5, $6, $7, $8, $9,
-        $10, $11, 'DRAFT', $12, 1,
+        $10, $11, 'ACTIVE', $12, 1,
         $13,
         SYSUTCDATETIME(), SYSUTCDATETIME()
      )`,
@@ -471,13 +471,13 @@ export async function updateAchievement(id, currentVersion, fields) {
 
 export async function deleteAchievement(id, userId, version) {
   const result = await query(`UPDATE app.achievements SET deleted_at = SYSUTCDATETIME(), deleted_by = $2, updated_at = SYSUTCDATETIME(), version = version + 1
-    OUTPUT INSERTED.achievement_id WHERE achievement_id = $1 AND version = $3 AND status = 'DRAFT' AND deleted_at IS NULL
+    OUTPUT INSERTED.achievement_id WHERE achievement_id = $1 AND version = $3 AND status IN ('ACTIVE', 'DRAFT') AND deleted_at IS NULL
     AND NOT EXISTS (SELECT 1 FROM app.achievement_submissions s WHERE s.achievement_id = app.achievements.achievement_id)`, [id, userId, version]);
   return result.rowCount > 0;
 }
 export async function restoreAchievement(id, version) {
   const result = await query(`UPDATE app.achievements SET deleted_at = NULL, deleted_by = NULL, updated_at = SYSUTCDATETIME(), version = version + 1
-    OUTPUT INSERTED.achievement_id WHERE achievement_id = $1 AND version = $2 AND status = 'DRAFT'
+    OUTPUT INSERTED.achievement_id WHERE achievement_id = $1 AND version = $2 AND status IN ('ACTIVE', 'DRAFT')
     AND deleted_at > DATEADD(day, -30, SYSUTCDATETIME())`, [id, version]);
   return result.rowCount > 0;
 }

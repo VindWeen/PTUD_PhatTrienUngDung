@@ -123,6 +123,7 @@ export async function connectDB(){
   try{await current.ready();return current;}catch(e){await current.end().catch(()=>{});if(pool===current)pool=null;throw e;}
 }
 export function getPool(){if(!pool)throw new Error('SQL Server chưa kết nối; gọi connectDB() trước');return pool;}
+export async function query(text, values = []) { return (await connectDB()).query(text, values); }
 export function setPool(value){pool=value;}
 export async function closeDB(){const p=pool;pool=null;if(p)await p.end();}
 export async function checkHealth(){const start=Date.now();try{const p=await connectDB();const r=await p.query('SELECT 1 AS is_alive,SYSUTCDATETIME() AS server_time');return {status:'UP',isConnected:true,databaseEngine:'SQL Server',latencyMs:Date.now()-start,serverTime:r.rows[0].server_time};}catch(e){return {status:'DOWN',isConnected:false,latencyMs:Date.now()-start,error:e.message};}}

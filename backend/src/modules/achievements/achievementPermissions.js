@@ -16,8 +16,8 @@ export function createPermissionResolver(user, roles, { representative, scope })
     const self = personalOwner || sameUser(achievement.createdBy) || sameUser(achievement.submittedBy);
     const manager = roles.includes('MANAGER') && Boolean(await cached(scopes,
       String(achievement.contextUnitId), () => scope(user.userId, achievement.contextUnitId, 'MANAGER')));
-    const editable = ['DRAFT', 'NEED_CORRECTION'].includes(achievement.status);
-    const canMutate = roles.some(r => ['LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'].includes(r));
+    const editable = ['ACTIVE', 'DRAFT', 'NEED_CORRECTION'].includes(achievement.status);
+    const canMutate = roles.some(r => ['MEMBER', 'DEPARTMENT_HEAD', 'FACULTY_LEAD', 'ADMIN', 'LECTURER', 'UNIT_REPRESENTATIVE'].includes(r));
     const actions = {
       isSelf: self,
       edit: canMutate && editable && (owner || roles.includes('ADMIN')),
@@ -27,7 +27,7 @@ export function createPermissionResolver(user, roles, { representative, scope })
       review: manager && !self && achievement.status === 'SUBMITTED',
       revoke: manager && achievement.status === 'VERIFIED',
       replace: canMutate && owner && ['REJECTED', 'CANCELLED', 'REVOKED'].includes(achievement.status),
-      remove: canMutate && (owner || roles.includes('ADMIN')) && achievement.status === 'DRAFT'
+      remove: canMutate && (owner || roles.includes('ADMIN')) && ['ACTIVE', 'DRAFT'].includes(achievement.status)
         && !(achievement.latestRevisionNo || achievement.submissions?.length),
     };
     if (achievement.deletedAt) {

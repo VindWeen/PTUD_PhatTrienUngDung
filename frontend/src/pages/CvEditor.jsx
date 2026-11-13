@@ -1,138 +1,586 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Award, BriefcaseBusiness, Check, ChevronDown, ChevronUp, Clipboard, Eye, FileText, GraduationCap, Link2, Plus, Save, Sparkles, Trash2, UserRound } from 'lucide-react';
+import {
+  ArrowLeft,
+  Award,
+  Check,
+  Copy,
+  ExternalLink,
+  FileDown,
+  Globe,
+  Lock,
+  Save,
+  Sparkles,
+  User,
+  RefreshCw,
+  AlertCircle,
+  FileText,
+  ShieldCheck,
+  GraduationCap,
+  Layers,
+} from 'lucide-react';
 import { request } from '../services/request';
+import apiClient from '../services/apiClient';
+import {
+  SLUG_REGEX,
+  RESERVED_SLUGS,
+  validateCvSlug,
+  buildPublicCvUrl,
+} from '../services/cvValidation';
 
-const input = 'soft-input mt-1 w-full';
+export { SLUG_REGEX, RESERVED_SLUGS, validateCvSlug, buildPublicCvUrl };
+
 export default function CvEditor() {
-  const [data, setData] = useState(null);
-  const [draft, setDraft] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
-  const [edited, setEdited] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [slug, setSlug] = useState('');
+  const [templateId, setTemplateId] = useState('Modern');
+  const [isPublic, setIsPublic] = useState(false);
+  const [headline, setHeadline] = useState('');
+  const [bio, setBio] = useState('');
+  const [selectedAchievementIds, setSelectedAchievementIds] = useState([]);
+  const [achievements, setAchievements] = useState([]);
+  const [contact, setContact] = useState({});
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [exportingDocx, setExportingDocx] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
+  const [slugError, setSlugError] = useState('');
+  const [copySuccess, setCopySuccess] = useState(false);
+
+  // 1. Fetch current CV Profile
   useEffect(() => {
-    let active = true;
-    request({ url: '/me/cv', fresh: true }).then(result => { if (active) { setData(result); setDraft({ education: [], specialties: '', skills: '', certificates: '', projects: '', researchLinks: '', ...result.draft }); } }).catch(e => { if (active) setError(e.message); });
-    return () => { active = false; };
+    loadCvData();
   }, []);
-  const update = (key, value) => { setEdited(true); setDraft(previous => ({ ...previous, [key]: value })); };
-  const toggle = (key, id) => update(key, draft[key].includes(Number(id)) ? draft[key].filter(v => v !== Number(id)) : [...draft[key], Number(id)]);
-  const save = async () => {
-    const result = await request({ method: 'PUT', url: '/me/cv', data: draft });
-    setDraft(previous => ({ ...previous, version: result.version }));
-    setData(previous => ({ ...previous, publicId: result.publicId, unpublishedChanges: previous.isPublished ? (previous.unpublishedChanges || edited) : false }));
-    setEdited(false);
-    return result;
-  };
-  const run = async action => {
-    setBusy(true); setError(''); setNotice('');
+
+  const loadCvData = async () => {
+    setLoading(true);
     try {
-      if (action === 'save') { await save(); setNotice('Đã lưu bản nháp. Bản đang chia sẻ chỉ thay đổi khi bạn công khai lại.'); }
-      if (action === 'publish') {
-        const saved = await save();
-        const result = await request({ method: 'POST', url: '/me/cv/publish', data: { version: saved.version } });
-        setDraft(previous => ({ ...previous, version: result.version }));
-        setData(previous => ({ ...previous, isPublished: true, publicId: result.publicId, unpublishedChanges: false, publishedAt: result.publishedAt, unavailableAchievements: [] }));
-        setNotice('Đã công khai CV. Ai có đường dẫn đều có thể xem.');
+      const res = await request({ url: '/me/cv', fresh: true });
+      if (res) {
+        setProfile(res);
+        setSlug(res.slug || '');
+        setTemplateId(res.templateId || 'Modern');
+        setIsPublic(Boolean(res.isPublic));
+        setHeadline(res.headline || '');
+        setBio(res.bio || '');
+        setSelectedAchievementIds(Array.isArray(res.selectedAchievementIds) ? res.selectedAchievementIds : []);
+        setAchievements(Array.isArray(res.achievements) ? res.achievements : []);
+        setContact(res.contact || {});
       }
-      if (action === 'unpublish') {
-        const result = await request({ method: 'POST', url: '/me/cv/unpublish', data: { version: draft.version } });
-        setDraft(previous => ({ ...previous, version: result.version }));
-        setData(previous => ({ ...previous, isPublished: false }));
-        setNotice('Đã ngừng chia sẻ CV.');
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Không thể tải thông tin CV' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 2. Validate Slug
+  const handleSlugChange = (val) => {
+    const cleaned = val.trim().toLowerCase();
+    setSlug(cleaned);
+    const result = validateCvSlug(cleaned);
+    setSlugError(result.error || '');
+  };
+
+  // 3. Save CV Profile
+  const handleSave = async (e) => {
+    if (e) e.preventDefault();
+    if (slug.trim()) {
+      const validation = validateCvSlug(slug);
+      if (!validation.valid) {
+        setSlugError(validation.error);
+        return;
       }
-      if (action === 'rotate') {
-        const result = await request({ method: 'POST', url: '/me/cv/rotate-link', data: { version: draft.version } });
-        setDraft(previous => ({ ...previous, version: result.version }));
-        setData(previous => ({ ...previous, publicId: result.publicId }));
-        setNotice('Đã đổi link. Link cũ không còn xem được.');
-      }
-    } catch (e) { setError(e.message || 'Không thể lưu CV.'); } finally { setBusy(false); }
-  };
-  if (!data || !draft) return <div className="soft-card p-6">{error ? <p role="alert">{error}</p> : 'Đang tải CV...'}</div>;
-  const cv = {
-    ...draft, fullName: data.profile.fullName,
-    email: draft.showEmail ? data.profile.email : null, phone: draft.showPhone ? data.profile.phone : null,
-    workHistory: data.profile.workHistory.filter(item => draft.workHistoryIds.includes(Number(item.assignmentId))),
-    achievements: data.achievements.filter(item => draft.achievementIds.includes(Number(item.achievementId))),
-  };
-  const publicLink = data.publicId ? `${window.location.origin}/cv/${data.publicId}` : '';
-  const move = (key, index, direction) => {
-    const next = [...draft[key]]; const target = index + direction;
-    if (target < 0 || target >= next.length) return;
-    [next[index], next[target]] = [next[target], next[index]]; update(key, next);
-  };
-  const copyLink = async () => { try { await navigator.clipboard.writeText(publicLink); setNotice('Đã sao chép link CV.'); } catch { setError('Không sao chép được. Hãy chọn và sao chép link bên dưới.'); } };
-  const openPreview = () => {
+    }
+    if (slugError) return;
+    setSaving(true);
+    setMessage({ type: '', text: '' });
     try {
-      sessionStorage.setItem('ptud-cv-preview', JSON.stringify(cv));
-      const tab = window.open('/me/cv/preview', '_blank');
-      sessionStorage.removeItem('ptud-cv-preview');
-      if (!tab) setError('Trình duyệt đã chặn tab xem trước. Hãy cho phép mở cửa sổ mới và thử lại.');
-    } catch { setError('Không thể mở bản xem trước. Vui lòng thử lại.'); }
+      const payload = {
+        slug: slug.trim() || null,
+        templateId,
+        isPublic,
+        headline: headline.trim() || null,
+        bio: bio.trim() || null,
+        selectedAchievementIds,
+      };
+      const res = await request({ method: 'PUT', url: '/me/cv', data: payload });
+      if (res) {
+        setProfile(prev => ({
+          ...prev,
+          slug: res.slug || payload.slug,
+          isPublic: res.isPublic !== undefined ? res.isPublic : payload.isPublic,
+          templateId: res.templateId || payload.templateId,
+          headline: res.headline || payload.headline,
+          bio: res.bio || payload.bio,
+          profileId: res.profileId || prev?.profileId,
+        }));
+      }
+      setMessage({ type: 'success', text: 'Đã lưu thay đổi hồ sơ CV thành công!' });
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Lỗi khi lưu CV' });
+    } finally {
+      setSaving(false);
+    }
   };
-  const fields = [['organization', 'Nơi làm việc'], ['position', 'Vị trí'], ['period', 'Thời gian'], ['description', 'Mô tả']];
-  const sections = [
-    ['intro', 'Thông tin cơ bản'], ['profile', 'Hồ sơ LHU'], ['education', 'Học vấn'],
-    ['experience', 'Kinh nghiệm'], ['details', 'Thông tin bổ sung'], ['sharing', 'Chia sẻ CV'],
-  ];
-  const card = 'scroll-mt-36 rounded-[24px] border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-7';
-  const label = 'block text-sm font-semibold text-slate-700 dark:text-slate-200';
-  const textArea = 'soft-input mt-2 min-h-[100px] w-full resize-y text-sm';
-  const reorder = (key, index) => <div className="flex items-center gap-1">
-    <button type="button" aria-label="Di chuyển lên" title="Di chuyển lên" disabled={index === 0} onClick={() => move(key, index, -1)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-200 disabled:opacity-30 dark:hover:bg-slate-700"><ChevronUp className="h-4 w-4" /></button>
-    <button type="button" aria-label="Di chuyển xuống" title="Di chuyển xuống" disabled={index === draft[key].length - 1} onClick={() => move(key, index, 1)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-200 disabled:opacity-30 dark:hover:bg-slate-700"><ChevronDown className="h-4 w-4" /></button>
-  </div>;
-  const heading = (Icon, title, subtitle) => <div className="mb-6 flex items-start gap-3"><span className="rounded-xl bg-teal-50 p-2.5 text-teal-700 dark:bg-teal-950 dark:text-teal-300"><Icon className="h-5 w-5" /></span><div><h2 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h2><p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">{subtitle}</p></div></div>;
-  return <main className="space-y-6 pb-20 text-slate-800 dark:text-slate-100">
-    <header className="rounded-[26px] border border-slate-200/70 bg-white px-5 py-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:px-8">
-      <Link to="/me/profile" className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-teal-700 dark:text-slate-400"><ArrowLeft className="h-4 w-4" /> Hồ sơ năng lực</Link>
-      <div className="mt-5 flex flex-wrap items-end justify-between gap-5"><div><div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">CV cá nhân</h1><span className={`rounded-full px-3 py-1 text-xs font-semibold ${data.isPublished ? 'bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}>{data.isPublished ? 'Đang chia sẻ' : 'Chưa chia sẻ'}</span></div><p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">Tạo một hồ sơ giới thiệu theo cách riêng của bạn.</p></div><button type="button" disabled={busy} className="soft-btn-secondary text-sm" onClick={openPreview}><Eye className="h-4 w-4" /> Xem trước trong tab mới</button></div>
-    </header>
-    <div className="sticky top-2 z-20 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-900/95" aria-label="Thao tác bản nháp CV">
-      <p role="status" className={`text-sm font-medium ${edited ? 'text-amber-700 dark:text-amber-300' : 'text-slate-600 dark:text-slate-300'}`}>{busy ? 'Đang xử lý…' : edited ? 'Có thay đổi chưa lưu' : 'Bản nháp đã được lưu'}</p>
-      <div className="flex flex-wrap gap-2"><button type="button" disabled={busy} className="soft-btn-secondary text-sm" onClick={openPreview}><Eye className="h-4 w-4" /> Xem trước</button><button type="button" disabled={busy || !edited} className="soft-btn-primary text-sm" onClick={() => run('save')}><Save className="h-4 w-4" /> Lưu bản nháp</button><a href="#sharing" className="soft-btn-secondary text-sm">Chia sẻ CV</a></div>
-    </div>
-    {error && <p role="alert" className="rounded-2xl bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-950/50 dark:text-rose-200">{error}</p>}
-    {notice && <p role="status" className="rounded-2xl bg-teal-50 p-4 text-sm text-teal-800 dark:bg-teal-950/50 dark:text-teal-200">{notice}</p>}
-    {data.isPublished && (edited || data.unpublishedChanges) && <p className="rounded-2xl bg-amber-50 p-4 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">Bạn có thay đổi chưa công khai. Bấm Cập nhật CV công khai để người xem thấy nội dung mới.</p>}
-    {!!data.unavailableAchievements?.length && <div className="rounded-2xl bg-amber-50 p-4 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">Một số thành tích đã chọn không còn được xác nhận và đã bị ẩn khỏi CV công khai. <button className="underline" onClick={() => { update('achievementIds', draft.achievementIds.filter(id => !data.unavailableAchievements.includes(id))); setData(previous => ({ ...previous, unavailableAchievements: [] })); }}>Bỏ các thành tích này khỏi bản nháp</button></div>}
-    <div className="grid items-start gap-6 xl:grid-cols-[220px_minmax(0,1fr)]">
-      <aside className="hidden xl:sticky xl:top-6 xl:block"><nav aria-label="Các phần của CV" className="rounded-2xl border border-slate-200/80 bg-white p-3 dark:border-slate-700 dark:bg-slate-900"><p className="px-3 pb-3 pt-2 text-xs font-bold uppercase tracking-wider text-slate-400">Nội dung CV</p>{sections.map(([id, name], index) => <a key={id} href={`#${id}`} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-600 transition hover:bg-teal-50 hover:text-teal-700 dark:text-slate-300 dark:hover:bg-slate-800"><span className="text-xs text-slate-400">{String(index + 1).padStart(2, '0')}</span>{name}</a>)}</nav><p className="px-3 pt-4 text-xs leading-5 text-slate-400">Bản nháp chỉ hiển thị với bạn cho đến khi công khai.</p></aside>
-      <div className="min-w-0 space-y-5">
-        <section id="intro" className={card}>
-          {heading(UserRound, 'Thông tin cơ bản', 'Chọn một mẫu và viết vài dòng để giới thiệu bản thân.')}
-          <fieldset><legend className="text-sm font-semibold text-slate-700 dark:text-slate-200">Mẫu CV</legend><div className="mt-3 grid gap-3 sm:grid-cols-2">{[['classic','Tối giản','Gọn gàng, tập trung vào nội dung'],['modern','Hiện đại','Tiêu đề nổi bật, bố cục hai cột']].map(([value,name,description]) => <label key={value} className={`relative flex cursor-pointer items-center gap-4 rounded-2xl border p-4 transition ${draft.template === value ? 'border-teal-500 bg-teal-50/60 ring-1 ring-teal-500 dark:bg-teal-950/30' : 'border-slate-200 hover:border-teal-300 dark:border-slate-700'}`}><input className="sr-only" type="radio" name="template" value={value} checked={draft.template === value} onChange={() => update('template', value)} /><span aria-hidden="true" className={`flex h-16 w-12 shrink-0 flex-col gap-1 overflow-hidden rounded border border-slate-200 bg-white p-1.5 shadow-sm ${value === 'modern' ? 'border-t-[10px] border-t-slate-800' : ''}`}><span className="h-1 w-6 rounded bg-slate-500"/><span className="h-1 w-full rounded bg-slate-200"/><span className="h-1 w-4/5 rounded bg-slate-200"/><span className="mt-1 h-1 w-full rounded bg-slate-200"/></span><span className="min-w-0"><span className="block text-sm font-bold">{name}</span><span className="mt-1 block text-xs leading-5 text-slate-500 dark:text-slate-400">{description}</span></span>{draft.template === value && <Check aria-hidden="true" className="ml-auto h-5 w-5 shrink-0 text-teal-600" />}</label>)}</div></fieldset>
-          <div className="mt-6 grid gap-5"><label className={label}>Chức danh hoặc lĩnh vực<input className={input} maxLength={150} value={draft.headline} onChange={e => update('headline', e.target.value)} placeholder="Ví dụ: Giảng viên Công nghệ thông tin" /></label><label className={label}>Giới thiệu<textarea className={textArea} rows={4} maxLength={2000} value={draft.summary} onChange={e => update('summary', e.target.value)} placeholder="Chia sẻ ngắn về công việc, hướng nghiên cứu hoặc điều bạn quan tâm." /></label><label className={label}>Lĩnh vực chuyên môn<input className={input} maxLength={500} value={draft.specialties} onChange={e => update('specialties', e.target.value)} placeholder="Ví dụ: Kỹ thuật phần mềm, trí tuệ nhân tạo" /></label></div>
-          <div className="mt-6 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/70"><p className="text-sm font-semibold">Thông tin liên hệ</p><p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Chỉ những thông tin được chọn mới xuất hiện trên CV chia sẻ.</p><div className="mt-4 grid gap-3 text-sm sm:grid-cols-2"><label className="flex items-start gap-2"><input className="mt-1 accent-teal-600" type="checkbox" checked={draft.showEmail} onChange={e => update('showEmail', e.target.checked)} /><span>Hiển thị email <span className="block break-all text-xs text-slate-500">{data.profile.email || 'Chưa có email'}</span></span></label><label className="flex items-start gap-2"><input className="mt-1 accent-teal-600" type="checkbox" checked={draft.showPhone} onChange={e => update('showPhone', e.target.checked)} /><span>Hiển thị số điện thoại <span className="block text-xs text-slate-500">{data.profile.phone || 'Chưa có số điện thoại'}</span></span></label></div></div>
-        </section>
-        <section id="profile" className={card}>
-          {heading(Award, 'Chọn từ hồ sơ LHU', 'Thông tin chính thức được lấy từ hồ sơ của bạn. Chọn những mục muốn hiển thị trên CV.')}
-          <div className="space-y-6"><div><div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-bold">Công tác tại LHU</h3><span className="text-xs text-slate-400">Đã chọn {draft.workHistoryIds.length}</span></div><p className="mb-3 text-xs text-slate-500">Admin quản lý dữ liệu phân công công tác.</p>{data.profile.workHistory.length ? <div className="space-y-2">{data.profile.workHistory.map(item => <label key={item.assignmentId} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3 text-sm dark:border-slate-700"><input className="accent-teal-600" type="checkbox" checked={draft.workHistoryIds.includes(Number(item.assignmentId))} onChange={() => toggle('workHistoryIds', item.assignmentId)} /><span className="flex-1 font-medium">{item.unitName}</span><span className="text-xs text-slate-500">{item.period}</span></label>)}</div> : <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500 dark:bg-slate-800">Chưa có phân công công tác.</p>}</div>
-          <div><div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-bold">Thành tích đã xác nhận</h3><span className="text-xs text-slate-400">Đã chọn {draft.achievementIds.length}</span></div>{data.achievements.length ? <div className="max-h-64 space-y-2 overflow-y-auto">{data.achievements.map(item => <label key={item.achievementId} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3 text-sm dark:border-slate-700"><input className="accent-teal-600" type="checkbox" checked={draft.achievementIds.includes(Number(item.achievementId))} onChange={() => toggle('achievementIds', item.achievementId)} /><span className="flex-1 font-medium">{item.title}</span><span className="text-xs text-slate-500">{item.recognitionYear}</span></label>)}</div> : <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500 dark:bg-slate-800">Chưa có thành tích đã xác nhận.</p>}</div></div>
-        </section>
-        <section id="education" className={card}>
-          {heading(GraduationCap, 'Học vấn', 'Thêm bằng cấp, chuyên ngành và cơ sở đào tạo bạn muốn giới thiệu.')}
-          <div className="space-y-4">{draft.education.map((item, index) => <div key={index} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-800/50"><div className="mb-4 flex items-center justify-between"><span className="text-sm font-bold">Học vấn {index + 1}</span><div className="flex items-center">{reorder('education', index)}<button type="button" aria-label="Xóa học vấn" onClick={() => update('education', draft.education.filter((_,i) => i !== index))} className="rounded-lg p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950"><Trash2 className="h-4 w-4" /></button></div></div><div className="grid gap-4 sm:grid-cols-2">{[['qualification','Bằng cấp / chuyên ngành'],['institution','Cơ sở đào tạo'],['period','Thời gian']].map(([key,name]) => <label key={key} className={label}>{name}<input className={input} maxLength={key === 'period' ? 80 : 150} value={item[key]} onChange={e => update('education', draft.education.map((v,i) => i === index ? { ...v, [key]: e.target.value } : v))} /></label>)}</div></div>)}</div>
-          <button type="button" className="mt-4 inline-flex items-center gap-2 rounded-xl border border-dashed border-teal-400 px-4 py-2.5 text-sm font-semibold text-teal-700 hover:bg-teal-50 disabled:opacity-50 dark:text-teal-300 dark:hover:bg-teal-950" disabled={draft.education.length >= 30} onClick={() => update('education', [...draft.education, { institution:'', qualification:'', period:'' }])}><Plus className="h-4 w-4" /> Thêm học vấn</button>
-        </section>
-        <section id="experience" className={card}>
-          {heading(BriefcaseBusiness, 'Kinh nghiệm khác', 'Bổ sung kinh nghiệm ngoài dữ liệu công tác chính thức của trường.')}
-          <div className="space-y-4">{draft.experiences.map((item, index) => <div key={index} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-800/50"><div className="mb-4 flex items-center justify-between"><span className="text-sm font-bold">Kinh nghiệm {index + 1}</span><div className="flex items-center">{reorder('experiences', index)}<button type="button" aria-label="Xóa kinh nghiệm" onClick={() => update('experiences', draft.experiences.filter((_,i) => i !== index))} className="rounded-lg p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950"><Trash2 className="h-4 w-4" /></button></div></div><div className="grid gap-4 sm:grid-cols-2">{fields.map(([key,name]) => <label key={key} className={label}>{name}<input className={input} maxLength={key === 'description' ? 1000 : key === 'period' ? 80 : 150} value={item[key]} onChange={e => update('experiences', draft.experiences.map((v,i) => i === index ? { ...v, [key]: e.target.value } : v))} /></label>)}</div></div>)}</div>
-          <button type="button" className="mt-4 inline-flex items-center gap-2 rounded-xl border border-dashed border-teal-400 px-4 py-2.5 text-sm font-semibold text-teal-700 hover:bg-teal-50 disabled:opacity-50 dark:text-teal-300 dark:hover:bg-teal-950" disabled={draft.experiences.length >= 30} onClick={() => update('experiences', [...draft.experiences, { organization:'', position:'', period:'', description:'' }])}><Plus className="h-4 w-4" /> Thêm kinh nghiệm</button>
-        </section>
-        <section id="details" className={card}>
-          {heading(Sparkles, 'Thông tin bổ sung', 'Điền những phần phù hợp với bạn; mục để trống sẽ không xuất hiện trên CV.')}
-          <div className="grid gap-5 sm:grid-cols-2">{[['skills','Kỹ năng',500],['certificates','Chứng chỉ',2000],['projects','Dự án',3000],['researchLinks','Liên kết nghiên cứu',2000]].map(([key,name,max]) => <label className={label} key={key}>{name}<textarea className={textArea} rows={3} maxLength={max} value={draft[key]} onChange={e => update(key, e.target.value)} placeholder={key === 'researchLinks' ? 'Mỗi dòng một liên kết hoặc mô tả' : 'Mỗi dòng một nội dung'} /></label>)}</div>
-        </section>
-        <section id="sharing" className={card}>
-          {heading(Link2, 'Chia sẻ CV', 'Xem trước và lưu bản nháp trước khi chia sẻ theo nhu cầu.')}
-          <div className="rounded-2xl bg-teal-50/70 p-4 text-sm leading-6 text-teal-900 dark:bg-teal-950/40 dark:text-teal-200">Khi công khai, bất kỳ ai có link đều có thể xem. Thay đổi trong bản nháp cần công khai lại để cập nhật link.</div>
-          <div className="mt-5 flex flex-wrap gap-3"><button type="button" disabled={busy} className="soft-btn-secondary" onClick={() => run('save')}><Save className="h-4 w-4" /> Lưu bản nháp</button><button type="button" disabled={busy} className="soft-btn-primary" onClick={() => run('publish')}><FileText className="h-4 w-4" /> {busy ? 'Đang xử lý...' : data.isPublished ? 'Cập nhật CV công khai' : 'Công khai CV'}</button>{data.isPublished && <button type="button" disabled={busy} className="soft-btn-secondary" onClick={() => run('unpublish')}>Ngừng chia sẻ</button>}</div>
-          {data.isPublished && <div className="mt-6 space-y-3 border-t border-slate-200 pt-5 text-sm dark:border-slate-700"><p className="text-slate-500">Công khai lần cuối: {data.publishedAt ? new Date(data.publishedAt).toLocaleString('vi-VN') : 'Chưa có thông tin'}</p><div className="break-all"><span className="font-semibold">Link CV: </span><a className="text-teal-700 underline dark:text-teal-300" href={publicLink} target="_blank" rel="noreferrer">{publicLink}</a></div><div className="flex flex-wrap gap-3"><button type="button" className="soft-btn-secondary text-sm" onClick={copyLink}><Clipboard className="h-4 w-4" /> Sao chép link</button><button type="button" className="soft-btn-secondary text-sm" disabled={busy} onClick={() => { if (window.confirm('Đổi link sẽ khiến link cũ không còn truy cập được. Tiếp tục?')) run('rotate'); }}>Đổi link chia sẻ</button></div></div>}
-        </section>
+
+  // 4. Export DOCX
+  const handleExportDocx = async () => {
+    setExportingDocx(true);
+    try {
+      const response = await apiClient.get('/me/cv/export-docx', {
+        responseType: 'blob',
+      });
+      const blob = new Blob([response], {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const cleanName = (contact?.fullName || 'LHU').replace(/\s+/g, '_');
+      link.download = `CV_${cleanName}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Lỗi khi xuất file Word: ' + (err.message || 'Không thể tạo file') });
+    } finally {
+      setExportingDocx(false);
+    }
+  };
+
+  // Toggle achievement selection
+  const toggleAchievement = (achId) => {
+    const idNum = Number(achId);
+    setSelectedAchievementIds(prev =>
+      prev.includes(idNum) ? prev.filter(x => x !== idNum) : [...prev, idNum]
+    );
+  };
+
+  const selectAllAchievements = () => {
+    setSelectedAchievementIds(achievements.map(a => Number(a.achievement_id || a.achievementId || a.id)));
+  };
+
+  const deselectAllAchievements = () => {
+    setSelectedAchievementIds([]);
+  };
+
+  // Public identifier & Link
+  const publicIdentifier = slug.trim() || profile?.profileId;
+  const publicUrl = publicIdentifier ? `${window.location.origin}/cv/${publicIdentifier}` : '';
+
+  const handleCopyLink = async () => {
+    if (!publicUrl) return;
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch {
+      alert('Không thể tự động sao chép. Vui lòng chọn và sao chép đường link bên dưới.');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="py-20 text-center space-y-3">
+        <RefreshCw className="w-8 h-8 animate-spin text-teal-600 mx-auto" />
+        <p className="text-sm font-medium text-slate-600 dark:text-slate-300">Đang tải hồ sơ CV...</p>
       </div>
-    </div>
-  </main>;
+    );
+  }
+
+  return (
+    <main className="space-y-6 pb-20 text-slate-800 dark:text-slate-100">
+      {/* Page Header */}
+      <header className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-soft-sm dark:border-slate-700 dark:bg-slate-800 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <Link
+              to="/me/profile"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-teal-600 dark:text-slate-400 mb-2 transition"
+            >
+              <ArrowLeft className="w-4 h-4" /> Quay lại Hồ sơ năng lực
+            </Link>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+              Thiết lập CV & Trang giới thiệu Cá nhân
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Tùy chỉnh đường dẫn định danh (Slug), chọn giao diện hiển thị, quản lý quyền riêng tư và tải bản Word (.docx).
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Word DOCX Download */}
+            <button
+              type="button"
+              disabled={exportingDocx}
+              onClick={handleExportDocx}
+              className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-2 transition disabled:opacity-50 shadow-soft-sm"
+            >
+              {exportingDocx ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin text-teal-600" />
+                  <span>Đang tạo Word...</span>
+                </>
+              ) : (
+                <>
+                  <FileDown className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span>Tải bản Word (.docx)</span>
+                </>
+              )}
+            </button>
+
+            {/* View Public CV Link */}
+            {publicUrl && (
+              <a
+                href={publicUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2.5 rounded-xl border border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-950/60 dark:text-teal-300 text-xs font-semibold flex items-center gap-2 transition shadow-soft-sm"
+              >
+                <ExternalLink className="w-4 h-4" />
+                <span>Xem trang công khai</span>
+              </a>
+            )}
+
+            {/* Save Button */}
+            <button
+              type="button"
+              disabled={saving || Boolean(slugError)}
+              onClick={handleSave}
+              className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold flex items-center gap-2 transition shadow-soft-sm disabled:opacity-50"
+            >
+              <Save className="w-4 h-4" />
+              <span>{saving ? 'Đang lưu...' : 'Lưu thay đổi'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Status Message */}
+        {message.text && (
+          <div
+            className={`p-3.5 rounded-2xl text-xs flex items-center gap-2 border ${
+              message.type === 'success'
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+                : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
+            }`}
+          >
+            {message.type === 'success' ? (
+              <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+            )}
+            <span>{message.text}</span>
+          </div>
+        )}
+      </header>
+
+      {/* Main Configuration Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column (8 Cols): Slug, Privacy, Content */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Section 1: Slug & Public Link Setting */}
+          <section className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm space-y-4">
+            <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Globe className="w-4 h-4 text-teal-600" />
+              <span>Đường dẫn truy cập định danh (Custom Slug)</span>
+            </h2>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Địa chỉ URL của trang CV
+              </label>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 text-xs font-mono border border-slate-200 dark:border-slate-600 shrink-0">
+                  {window.location.origin}/cv/
+                </span>
+                <input
+                  type="text"
+                  placeholder={profile?.profileId ? profile.profileId.slice(0, 18) + '...' : 'ho-ten-giang-vien'}
+                  value={slug}
+                  onChange={(e) => handleSlugChange(e.target.value)}
+                  className={`flex-1 min-w-[200px] px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl border text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 ${
+                    slugError
+                      ? 'border-rose-500 focus:ring-rose-500/20'
+                      : 'border-slate-200 dark:border-slate-700 focus:ring-teal-500/20 focus:border-teal-500'
+                  }`}
+                />
+                {publicUrl && (
+                  <button
+                    type="button"
+                    onClick={handleCopyLink}
+                    className="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 transition"
+                  >
+                    {copySuccess ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                    <span>{copySuccess ? 'Đã chép!' : 'Sao chép link'}</span>
+                  </button>
+                )}
+              </div>
+
+              {slugError ? (
+                <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">{slugError}</p>
+              ) : (
+                <p className="text-[11px] text-slate-400">
+                  {slug ? (
+                    <>Slug hợp lệ: 3-100 ký tự chữ thường, số và dấu gạch ngang.</>
+                  ) : (
+                    <>
+                      Nếu để trống slug, hệ thống sẽ sử dụng mã định danh UUID duy nhất:{' '}
+                      <strong className="font-mono text-slate-600 dark:text-slate-300">
+                        /cv/{profile?.profileId || 'uuid'}
+                      </strong>
+                    </>
+                  )}
+                </p>
+              )}
+            </div>
+
+            {/* Public/Private Toggle Switch */}
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between gap-4">
+              <div className="space-y-0.5">
+                <span className="text-xs font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                  {isPublic ? (
+                    <>
+                      <Globe className="w-4 h-4 text-emerald-600" />
+                      <span>Chế độ Công khai (Public)</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-4 h-4 text-slate-400" />
+                      <span>Chế độ Riêng tư (Private)</span>
+                    </>
+                  )}
+                </span>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {isPublic
+                    ? 'Bất kỳ ai có đường link đều có thể xem trang CV này mà không cần đăng nhập.'
+                    : 'Người truy cập link sẽ thấy màn hình thông báo hồ sơ đang ở chế độ riêng tư.'}
+                </p>
+              </div>
+
+              {/* Toggle control */}
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isPublic}
+                onClick={() => setIsPublic(!isPublic)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${
+                  isPublic ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    isPublic ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+          </section>
+
+          {/* Section 2: Headline & Bio */}
+          <section className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm space-y-4">
+            <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <User className="w-4 h-4 text-teal-600" />
+              <span>Tiêu đề nghề nghiệp & Giới thiệu</span>
+            </h2>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Tiêu đề chức danh / Lĩnh vực chuyên môn (Headline)
+                </label>
+                <input
+                  type="text"
+                  maxLength={255}
+                  placeholder="Ví dụ: PGS.TS Giảng viên Khoa Công nghệ thông tin | Chuyên gia Trí tuệ nhân tạo"
+                  value={headline}
+                  onChange={(e) => setHeadline(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="font-semibold text-slate-700 dark:text-slate-300">
+                    Tiểu sử tóm tắt (Bio)
+                  </label>
+                  <span className="text-[11px] text-slate-400">{bio.length} / 5000 ký tự</span>
+                </div>
+                <textarea
+                  rows={5}
+                  maxLength={5000}
+                  placeholder="Giới thiệu hướng nghiên cứu chính, các giải thưởng khoa học, các dự án thực tế tiêu biểu..."
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white resize-y"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* Section 3: Select Achievements to Display */}
+          <section className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Award className="w-4 h-4 text-teal-600" />
+                  <span>Chọn Thành tích từ Kho cá nhân hiển thị trên CV</span>
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Đã chọn {selectedAchievementIds.length} / {achievements.length} thành tích
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={selectAllAchievements}
+                  className="text-xs text-teal-600 dark:text-teal-400 hover:underline font-semibold"
+                >
+                  Chọn tất cả
+                </button>
+                <span className="text-slate-300">|</span>
+                <button
+                  type="button"
+                  onClick={deselectAllAchievements}
+                  className="text-xs text-slate-500 hover:underline"
+                >
+                  Bỏ chọn tất cả
+                </button>
+              </div>
+            </div>
+
+            {achievements.length === 0 ? (
+              <p className="text-xs text-slate-400 italic py-6 text-center">
+                Bạn chưa có thành tích nào trong Kho cá nhân. Hãy thêm thành tích tại mục{' '}
+                <Link to="/achievements" className="text-teal-600 underline">Kho thành tích</Link>.
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                {achievements.map((ach) => {
+                  const id = Number(ach.achievement_id || ach.achievementId || ach.id);
+                  const isChecked = selectedAchievementIds.includes(id);
+
+                  return (
+                    <label
+                      key={id}
+                      className={`flex items-start gap-3 p-3.5 rounded-2xl border transition cursor-pointer text-xs ${
+                        isChecked
+                          ? 'border-teal-500 bg-teal-50/40 dark:bg-teal-950/20'
+                          : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => toggleAchievement(id)}
+                        className="mt-0.5 w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
+                      />
+                      <div className="space-y-1 flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-bold text-slate-800 dark:text-white truncate">
+                            {ach.title}
+                          </span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-semibold shrink-0">
+                            {ach.status || 'ACTIVE'}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+                          {ach.recognition_year && <span>Năm {ach.recognition_year}</span>}
+                          {ach.issuing_authority && <span>• Cấp bởi: {ach.issuing_authority}</span>}
+                          {ach.decision_number && <span>• Số QĐ: {ach.decision_number}</span>}
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* Right Column (4 Cols): Template Selector */}
+        <aside className="lg:col-span-4 space-y-6">
+          <section className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm space-y-4">
+            <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Layers className="w-4 h-4 text-teal-600" />
+              <span>Giao diện mẫu CV (3 Templates)</span>
+            </h2>
+
+            <div className="space-y-3">
+              {[
+                {
+                  id: 'Modern',
+                  name: 'Modern (Hiện đại)',
+                  desc: 'Bố cục 2 cột năng động, màu nhấn teal/slate hiện đại, phù hợp chuyển đổi số.',
+                  badge: 'Khuyên dùng',
+                },
+                {
+                  id: 'Academic',
+                  name: 'Academic (Hàn lâm)',
+                  desc: 'Font serif trang trọng, nhấn mạnh học vị, chức danh và phân loại công trình khoa học.',
+                  badge: 'Giảng viên / Nghiên cứu',
+                },
+                {
+                  id: 'Minimalist',
+                  name: 'Minimalist (Tối giản)',
+                  desc: 'Khoảng trắng thanh lịch, tinh gọn, tập trung trực tiếp vào thành tựu cốt lõi.',
+                  badge: 'Gọn gàng',
+                },
+              ].map((tmpl) => (
+                <label
+                  key={tmpl.id}
+                  className={`block p-4 rounded-2xl border transition cursor-pointer text-xs ${
+                    templateId === tmpl.id
+                      ? 'border-teal-500 bg-teal-50/60 dark:bg-teal-950/40 ring-1 ring-teal-500'
+                      : 'border-slate-200 dark:border-slate-700 hover:border-teal-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="templateId"
+                        value={tmpl.id}
+                        checked={templateId === tmpl.id}
+                        onChange={() => setTemplateId(tmpl.id)}
+                        className="text-teal-600 focus:ring-teal-500"
+                      />
+                      <span>{tmpl.name}</span>
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold">
+                      {tmpl.badge}
+                    </span>
+                  </div>
+                  <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed pl-6">
+                    {tmpl.desc}
+                  </p>
+                </label>
+              ))}
+            </div>
+          </section>
+
+          {/* Contact Preview Card */}
+          <section className="bg-slate-50 dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 space-y-3 text-xs">
+            <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-teal-600" />
+              <span>Thông tin danh tính LHU</span>
+            </h3>
+            <div className="space-y-1.5 text-slate-600 dark:text-slate-300">
+              <p><strong>Họ tên:</strong> {contact.fullName || '—'}</p>
+              <p><strong>Học vị:</strong> {contact.degree || '—'}</p>
+              <p><strong>Chức danh:</strong> {contact.title || '—'}</p>
+              <p><strong>Đơn vị:</strong> {contact.unitName || '—'}</p>
+              <p><strong>Email:</strong> {contact.email || '—'}</p>
+            </div>
+            <p className="text-[11px] text-slate-400 pt-2 border-t border-slate-200 dark:border-slate-800">
+              Thông tin danh tính chính thức được đồng bộ từ tài khoản LHU.
+            </p>
+          </section>
+        </aside>
+      </div>
+    </main>
+  );
 }

@@ -1,10 +1,5 @@
-import Select from '../components/common/Select';
-import { useSelectionOptions } from '../hooks/useSelections';
-import { EntitySelect, lecturerLabel } from '../components/common/EntityPicker';
-import UnderlineTabs from '../components/common/UnderlineTabs';
-import PageHeader from '../components/common/PageHeader';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import EvaluationResults from '../components/ai/EvaluationResults';
+import { Link } from 'react-router-dom';
 import {
   Cpu,
   History,
@@ -15,9 +10,29 @@ import {
   ChevronRight,
   User,
   Building2,
+  Sparkles,
+  Download,
+  AlertCircle,
+  Calendar,
+  ArrowRight,
+  FileText,
+  Clock,
+  Layers,
+  Check,
+  X,
+  ExternalLink,
 } from 'lucide-react';
+import Select from '../components/common/Select';
+import UnderlineTabs from '../components/common/UnderlineTabs';
+import PageHeader from '../components/common/PageHeader';
+import { EntitySelect, lecturerLabel } from '../components/common/EntityPicker';
+import { useSelectionOptions } from '../hooks/useSelections';
 import { aiEvaluationApi } from '../services/aiEvaluationApi';
+import { regulationsApi } from '../services/regulationsApi';
+import { kpiApi } from '../services/kpiApi';
+import { calendarApi } from '../services/calendarApi';
 import { LoadingState, ErrorState, EmptyState } from '../components/common/AsyncState';
+import EvaluationResults from '../components/ai/EvaluationResults';
 import fixtures from '../../../docs/ai/eval-dev/EvaluationRun.fixtures.json';
 
 const conclusions = {
@@ -29,96 +44,256 @@ const conclusions = {
 const runStatuses = { COMPLETED: 'Đã hoàn tất', FLAGGED_UNCONFIRMED: 'Cần rà soát thêm', FAILED: 'Đánh giá không thành công' };
 
 export default function AIForecast() {
-  const [activeTab, setActiveTab] = useState('live'); // 'live' | 'history' | 'fixtures'
+  const [activeTab, setActiveTab] = useState('regulation'); // 'regulation' | 'discovery' | 'history' | 'fixtures'
 
-  // Form State
+  // Common Selection Options
+  const choices = useSelectionOptions('AI');
   const [subjectType, setSubjectType] = useState('LECTURER');
   const [subjectId, setSubjectId] = useState('');
-  const choices = useSelectionOptions('AI');
-  const subjectName = (type, id) => {
-    const list = type === 'LECTURER' ? choices.lecturers : choices.subjectUnits;
-    const item = list.find(option => String(option.id) === String(id));
-    return item?.name || `${type === 'LECTURER' ? 'Giảng viên' : 'Đơn vị'} (mã ${id ?? 'chưa rõ'})`;
-  };
   const [asOfDate, setAsOfDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [provider, setProvider] = useState('auto');
-  const [configurationCollapsed, setConfigurationCollapsed] = useState(false);
-  const configurationSummary = useRef(null);
-  useEffect(() => { if (configurationCollapsed) configurationSummary.current?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); }, [configurationCollapsed]);
-  const [availableCriteria, setAvailableCriteria] = useState([]);
-  const [criteriaError, setCriteriaError] = useState(null);
-  const [loadingCriteria, setLoadingCriteria] = useState(true);
-  const [criteriaRevision, setCriteriaRevision] = useState(0);
-  const [selectedCriteriaIds, setSelectedCriteriaIds] = useState([]);
 
-  // Live Evaluation State
+  // Choose from authorized subjects
+  useEffect(() => {
+    if (choices.loading) return;
+    const subjects = subjectType === 'LECTURER' ? choices.lecturers : choices.subjectUnits;
+    setSubjectId(current => subjects.some(s => String(s.id) === String(current)) ? current : String(subjects[0]?.id || ''));
+  }, [choices.loading, choices.lecturers, choices.subjectUnits, subjectType]);
+
+  // ================= TAB 1: KHÁM THEO QUY CHẾ =================
+  const [regulations, setRegulations] = useState([]);
+  const [selectedRegulationId, setSelectedRegulationId] = useState('');
+  const [loadingRegulations, setLoadingRegulations] = useState(true);
+  const [regulationCriteria, setRegulationCriteria] = useState([]);
+  const [loadingRegCriteria, setLoadingRegCriteria] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
   const [evalError, setEvalError] = useState(null);
   const [currentRun, setCurrentRun] = useState(null);
-
-  // Stale Check State
-  const [checkingStale, setCheckingStale] = useState(false);
-  const [staleInfo, setStaleInfo] = useState(null);
-
-  // RAG Explanation State
-  const [explanations, setExplanations] = useState({}); // { [criterionId]: explanationData }
+  const [explanations, setExplanations] = useState({});
   const [aiStates, setAiStates] = useState({});
   const [progress, setProgress] = useState(null);
-  const operation = useRef(false);
-  const runContext = useRef(null);
+  const [exportingZip, setExportingZip] = useState(false);
   const mounted = useRef(true);
+  const operation = useRef(false);
   const currentRunId = useRef(null);
-  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
 
-  // History State
+  // Load regulations list
+  useEffect(() => {
+    let active = true;
+    setLoadingRegulations(true);
+    regulationsApi.listDocuments()
+      .then(res => {
+        if (!active) return;
+        const docs = Array.isArray(res) ? res : res?.items || res?.data || [];
+        setRegulations(docs);
+        if (docs.length) {
+          setSelectedRegulationId(curr => curr || String(docs[0].document_id || docs[0].id));
+        }
+      })
+      .catch(() => {})
+      .finally(() => { if (active) setLoadingRegulations(false); });
+    return () => { active = false; };
+  }, []);
+
+  // When selected regulation changes, load its criteria
+  useEffect(() => {
+    if (!selectedRegulationId) return;
+    let active = true;
+    setLoadingRegCriteria(true);
+    regulationsApi.listCriteria({ documentId: selectedRegulationId })
+      .then(res => {
+        if (!active) return;
+        const crits = Array.isArray(res) ? res : res?.items || res?.data || [];
+        setRegulationCriteria(crits);
+      })
+      .catch(() => {
+        if (active) setRegulationCriteria([]);
+      })
+      .finally(() => { if (active) setLoadingRegCriteria(false); });
+    return () => { active = false; };
+  }, [selectedRegulationId]);
+
+  // Execute structured evaluation for selected regulation
+  const handleRunRegulationEvaluation = async (e) => {
+    if (e) e.preventDefault();
+    if (evaluating || !selectedRegulationId) return;
+    setEvaluating(true);
+    setEvalError(null);
+    setCurrentRun(null);
+    setExplanations({});
+    setAiStates({});
+    setProgress({ stage: 'data' });
+
+    try {
+      const criteriaIds = regulationCriteria.map(c => c.criteria_version_id || c.criterionId || c.criteriaId).filter(Boolean);
+      const payload = {
+        subjectType,
+        subjectId: Number(subjectId) || undefined,
+        criteriaVersionIds: criteriaIds.length ? criteriaIds.map(Number) : undefined,
+        regulationId: Number(selectedRegulationId),
+        asOfDate,
+        forcedProvider: provider,
+      };
+
+      const result = await aiEvaluationApi.evaluateStructured(payload);
+      if (!mounted.current) return;
+      setCurrentRun(result);
+      currentRunId.current = result.runId;
+      const results = result.criterionResults || [];
+      setAiStates(Object.fromEntries(results.map(item => [item.criterionId, { status: 'idle' }])));
+      setProgress({ stage: 'complete' });
+    } catch (err) {
+      if (mounted.current) setEvalError(err);
+    } finally {
+      if (mounted.current) setEvaluating(false);
+    }
+  };
+
+  // Export Dossier ZIP Handler
+  const handleExportZip = async (regId, regTitle) => {
+    const idToUse = regId || selectedRegulationId;
+    if (!idToUse) return;
+    setExportingZip(true);
+    try {
+      const blob = await aiEvaluationApi.exportDossierZip({ regulationId: Number(idToUse) });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const sanitizedTitle = (regTitle || 'Quy_Che').replace(/[^a-zA-Z0-9_\u00C0-\u024F\u1EA0-\u1EF9]/g, '_');
+      a.download = `Goi_Minh_Chung_${sanitizedTitle}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Không thể tải gói hồ sơ ZIP: ' + (err.message || 'Lỗi hệ thống'));
+    } finally {
+      setExportingZip(false);
+    }
+  };
+
+  // ================= TAB 2: KHÁM NGƯỢC TIỀM NĂNG / AUTO-DISCOVERY =================
+  const [discoveryList, setDiscoveryList] = useState([]);
+  const [discovering, setDiscovering] = useState(false);
+  const [discoveryError, setDiscoveryError] = useState(null);
+
+  const runAutoDiscovery = useCallback(async () => {
+    setDiscovering(true);
+    setDiscoveryError(null);
+    try {
+      const res = await aiEvaluationApi.autoDiscovery({
+        subjectType,
+        subjectId: Number(subjectId) || undefined,
+        asOfDate,
+      });
+      const items = res?.data || (Array.isArray(res) ? res : []);
+      setDiscoveryList(items);
+    } catch (err) {
+      setDiscoveryError(err.message || 'Lỗi khi quét tiềm năng danh hiệu');
+    } finally {
+      setDiscovering(false);
+    }
+  }, [subjectType, subjectId, asOfDate]);
+
+  useEffect(() => {
+    if (activeTab === 'discovery' && discoveryList.length === 0 && !discovering) {
+      runAutoDiscovery();
+    }
+  }, [activeTab, discoveryList.length, discovering, runAutoDiscovery]);
+
+  // ================= GAP TO KPI MODAL STATE =================
+  const [gapModalOpen, setGapModalOpen] = useState(false);
+  const [gapRegulation, setGapRegulation] = useState(null);
+  const [gapMissingCriteria, setGapMissingCriteria] = useState([]);
+  const [gapAddReminder, setGapAddReminder] = useState(true);
+  const [gapDeadlineDate, setGapDeadlineDate] = useState('');
+  const [gapTransferring, setGapTransferring] = useState(false);
+  const [gapSuccessNotice, setGapSuccessNotice] = useState(null);
+
+  const openGapToKpiModal = (regulation, missingCriteria) => {
+    setGapRegulation(regulation);
+    setGapMissingCriteria(missingCriteria || []);
+    setGapAddReminder(true);
+    // Pre-fill deadline date from regulation deadline or 30 days ahead
+    if (regulation?.deadline) {
+      setGapDeadlineDate(regulation.deadline.slice(0, 10));
+    } else {
+      const future = new Date();
+      future.setDate(future.getDate() + 30);
+      setGapDeadlineDate(future.toISOString().slice(0, 10));
+    }
+    setGapSuccessNotice(null);
+    setGapModalOpen(true);
+  };
+
+  const handleConfirmGapTransfer = async () => {
+    if (!gapRegulation || !gapMissingCriteria || gapMissingCriteria.length === 0) {
+      alert('Không có tiêu chí thiếu để chuyển thành KPI.');
+      return;
+    }
+    setGapTransferring(true);
+    try {
+      const regId = Number(gapRegulation.regulationId || gapRegulation.documentId || gapRegulation.id || selectedRegulationId);
+      if (!regId || Number.isNaN(regId) || regId <= 0) {
+        alert('Không tìm thấy mã quy chế hợp lệ.');
+        return;
+      }
+
+      const cleanMissingCriteria = gapMissingCriteria.map((g, i) => {
+        const rawCode = String(g.code || g.criterionCode || `GAP_${i + 1}`).trim();
+        const rawName = String(g.name || g.criterionName || `Tiêu chí ${rawCode}`).trim();
+        const countVal = Math.max(1, parseInt(g.missingCount, 10) || 1);
+        const unitVal = String(g.unit || g.measureUnit || g.thresholdMetric?.unit || 'tiêu chí').trim();
+        return {
+          code: rawCode.slice(0, 80).toUpperCase(),
+          name: rawName.slice(0, 255),
+          missingCount: countVal,
+          unit: unitVal.slice(0, 32),
+        };
+      });
+
+      if (cleanMissingCriteria.length === 0) {
+        alert('Không có tiêu chí thiếu để chuyển thành KPI.');
+        return;
+      }
+
+      const payload = {
+        regulationId: regId,
+        missingCriteria: cleanMissingCriteria,
+      };
+
+      await kpiApi.createFromAiGap(payload);
+
+      // Optionally create calendar reminder
+      if (gapAddReminder && gapDeadlineDate) {
+        await calendarApi.createReminder({
+          title: `Hạn nộp hồ sơ: ${gapRegulation.name || gapRegulation.title || 'Quy chế khen thưởng'}`,
+          deadlineDate: gapDeadlineDate,
+          regulationId: regId,
+          description: `Lộ trình hoàn thiện ${cleanMissingCriteria.length} tiêu chí còn thiếu để đạt danh hiệu.`,
+        });
+      }
+
+      setGapSuccessNotice({
+        message: `Đã chuyển thành công ${cleanMissingCriteria.length} tiêu chí còn thiếu thành Mục tiêu KPI${gapAddReminder ? ' và thêm sự kiện vào Lịch cá nhân' : ''}!`,
+      });
+    } catch (err) {
+      alert('Không thể chuyển thành KPI: ' + (err.message || 'Lỗi hệ thống'));
+    } finally {
+      setGapTransferring(false);
+    }
+  };
+
+  // ================= TAB 3: LỊCH SỬ PHIÊN AI =================
   const [historyRuns, setHistoryRuns] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historyError, setHistoryError] = useState(null);
-  const [historyFilterType, setHistoryFilterType] = useState('');
 
-  // Fixtures State (W3-Q4)
-  const [selectedFixtureCase, setSelectedFixtureCase] = useState(fixtures.fixtures[0].caseId);
-
-  // Choose from authorized subjects; user IDs and lecturer IDs are different identities.
-  useEffect(() => {
-    if(choices.loading)return;
-    const subjects=subjectType==='LECTURER' ? choices.lecturers : choices.subjectUnits;
-    setSubjectId(current=>subjects.some(s=>String(s.id)===String(current)) ? current : String(subjects[0]?.id || ''));
-  }, [choices.loading,choices.lecturers,choices.subjectUnits,subjectType]);
-
-  // Load criteria list from backend
-  useEffect(() => {
-    let isMounted = true;
-    setLoadingCriteria(true);
-    setCriteriaError(null);
-    async function loadCriteria() {
-      try {
-        const res = await aiEvaluationApi.listCriteria({ confirmedOnly: true }, criteriaRevision > 0);
-        const items = res?.items || res?.data || (Array.isArray(res) ? res : []);
-        if (isMounted) {
-          setAvailableCriteria(items);
-          setSelectedCriteriaIds(items.slice(0, 3).map(c => c.criteria_version_id));
-        }
-      } catch (err) {
-        if (isMounted) setCriteriaError(err);
-      } finally {
-        if (isMounted) setLoadingCriteria(false);
-      }
-    }
-    loadCriteria();
-    return () => {
-      isMounted = false;
-    };
-  }, [criteriaRevision]);
-
-  // Fetch History Runs
   const loadHistory = useCallback(async (fresh = true) => {
     setLoadingHistory(true);
     setHistoryError(null);
     try {
-      const params = {};
-      if (historyFilterType) params.subjectType = historyFilterType;
-      const res = await aiEvaluationApi.listEvaluationRuns(params, fresh);
+      const res = await aiEvaluationApi.listEvaluationRuns({}, fresh);
       const runs = res?.items || res?.data || (Array.isArray(res) ? res : []);
       setHistoryRuns(runs);
     } catch (err) {
@@ -126,497 +301,685 @@ export default function AIForecast() {
     } finally {
       setLoadingHistory(false);
     }
-  }, [historyFilterType]);
+  }, []);
 
   useEffect(() => {
-    if (activeTab === 'history') {
-      loadHistory(false);
-    }
+    if (activeTab === 'history') loadHistory(false);
   }, [activeTab, loadHistory]);
 
-  // Toggle criteria selection
-  const handleToggleCriterion = (id) => {
-    setSelectedCriteriaIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
+  // Tab 4: Fixtures
+  const [selectedFixtureCase, setSelectedFixtureCase] = useState(fixtures.fixtures[0]?.caseId);
+  const fixtureItem = fixtures.fixtures.find(f => f.caseId === selectedFixtureCase);
 
-  // Run Evaluation
-  const explainBatch = async (run, results, context) => {
-    for (let index = 0; index < results.length; index++) {
-      if (!mounted.current) return;
-      const result = results[index];
-      setProgress({ stage: 'ai', done: index, total: results.length });
-      setAiStates(previous => ({ ...previous, [result.criterionId]: { status: 'running' } }));
-      try {
-        const response = await aiEvaluationApi.explainEvaluation({ criterionResult: result, runId: run.runId, asOfDate: context.asOfDate, provider: context.provider });
-        if (!mounted.current) return;
-        setExplanations(previous => ({ ...previous, [result.criterionId]: response }));
-        const status = response.providerError ? 'error' : response.provider === 'none' || response.model === 'none' ? 'noSource' : response.isMock ? 'mock' : !response.isSufficientData ? 'rejected' : 'success';
-        setAiStates(previous => ({ ...previous, [result.criterionId]: { status, provider: response.provider } }));
-      } catch (error) {
-        if (!mounted.current) return;
-        setAiStates(previous => ({ ...previous, [result.criterionId]: { status: 'error', message: error.message || 'Dịch vụ AI chưa phản hồi.' } }));
-      }
-    }
-  };
-
-  const handleRunEvaluation = async (e, withAI = true) => {
-    e?.preventDefault();
-    if (operation.current || loadingCriteria || criteriaError || !selectedCriteriaIds.length) return;
-    if (!subjectId) {
-      setEvalError(new Error('Vui lòng chọn chủ thể thẩm định'));
-      return;
-    }
-    operation.current = true;
-    const context = { asOfDate, provider, subjectType, subjectId, criteriaCount: selectedCriteriaIds.length };
-    setConfigurationCollapsed(true);
-    runContext.current = context;
-    setEvaluating(true);
-    setEvalError(null);
-    setStaleInfo(null);
-    setExplanations({});
-    setCurrentRun(null);
-    currentRunId.current = null;
-    setAiStates({});
-    setProgress({ stage: 'data' });
-    try {
-      const payload = {
-        subjectType,
-        subjectId: Number(subjectId),
-        criteriaVersionIds: selectedCriteriaIds.map(Number),
-        asOfDate: context.asOfDate,
-        forcedProvider: context.provider,
-      };
-      const result = await aiEvaluationApi.evaluateStructured(payload);
-      if (!mounted.current) return;
-      setCurrentRun(result);
-      currentRunId.current = result.runId;
-      const results = result.criterionResults || [];
-      setAiStates(Object.fromEntries(results.map(item => [item.criterionId, { status: withAI ? 'queued' : 'idle' }])));
-      if (withAI) await explainBatch(result, results, context);
-      if (mounted.current) setProgress({ stage: withAI ? 'complete' : 'dataOnly' });
-    } catch (err) {
-      if (mounted.current) { setEvalError(err); setProgress(null); setConfigurationCollapsed(false); }
-    } finally {
-      operation.current = false;
-      if (mounted.current) setEvaluating(false);
-    }
-  };
-
-  // Run Stale Check
-  const handleCheckStale = async (runId) => {
-    if (!runId || checkingStale) return;
-    setCheckingStale(true);
-    try {
-      const res = await aiEvaluationApi.checkEvaluationStale(runId);
-      if (!mounted.current || currentRunId.current !== runId) return;
-      setStaleInfo(res);
-      setCurrentRun(prev => prev?.runId === runId ? { ...prev, isStale: res.isStale } : prev);
-    } catch (err) {
-      alert(`Kiểm tra dữ liệu thất bại: ${err.message || 'Lỗi hệ thống'}`);
-    } finally {
-      setCheckingStale(false);
-    }
-  };
-
-  const handleExplainCriterion = async (onlyResult) => {
-    if (operation.current || !currentRun) return;
-    const pending = (onlyResult ? [onlyResult] : currentRun.criterionResults || []).filter(result => !['success', 'mock'].includes(aiStates[result.criterionId]?.status));
-    if (!pending.length) return;
-    operation.current = true; setEvaluating(true);
-    const context = runContext.current || { asOfDate: currentRun.inputSnapshot?.asOfDate || currentRun.asOfDate, provider };
-    try { await explainBatch(currentRun, pending, context); }
-    finally { operation.current = false; if (mounted.current) { setEvaluating(false); setProgress({ stage: 'complete' }); } }
-  };
-
-  // Select historical run to view
-  const handleSelectHistoryRun = async (runId) => {
-    if (operation.current) return;
-    operation.current = true;
-    try {
-      setEvaluating(true);
-      const fullRun = await aiEvaluationApi.getEvaluationRun(runId);
-      if (!mounted.current) return;
-      setExplanations({});
-      setStaleInfo(null);
-      setCurrentRun(fullRun);
-      currentRunId.current = fullRun.runId;
-      setAiStates({}); setProgress(null); setConfigurationCollapsed(true);
-      runContext.current = { asOfDate: fullRun.inputSnapshot?.asOfDate || fullRun.asOfDate, provider, subjectType: fullRun.targetSubject?.subjectType, subjectId: fullRun.targetSubject?.subjectId, criteriaCount: fullRun.criterionResults?.length || 0 };
-      setActiveTab('live');
-      // Automatically check stale status
-      await handleCheckStale(runId);
-    } catch (err) {
-      alert(`Không thể tải phiên đánh giá: ${err.message}`);
-    } finally {
-      operation.current = false;
-      if (mounted.current) setEvaluating(false);
-    }
-  };
-
-  const fixtureItem = fixtures.fixtures.find((f) => f.caseId === selectedFixtureCase);
+  // Compute criteria breakdown from currentRun
+  const currentResults = currentRun?.criterionResults || [];
+  const satisfiedResults = currentResults.filter(r => r.isSatisfied || r.thresholdMetric?.isSatisfied);
+  const missingResults = currentResults.filter(r => !r.isSatisfied && !r.thresholdMetric?.isSatisfied);
+  const currentTotal = currentResults.length;
+  const currentPercentage = currentTotal > 0 ? Math.round((satisfiedResults.length / currentTotal) * 100) : 0;
+  const currentSelectedReg = regulations.find(r => String(r.document_id || r.id) === String(selectedRegulationId));
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Phân tích & Thẩm định AI" description="Thẩm định tiêu chí, kiểm tra hồ sơ và truy xuất trích dẫn từ quy định." icon={Cpu} onRefresh={evaluating || activeTab === 'fixtures' ? undefined : () => activeTab === 'history' ? loadHistory() : setCriteriaRevision(v => v + 1)} refreshing={activeTab === 'history' ? loadingHistory : loadingCriteria} tabs={<UnderlineTabs label="Nội dung phân tích AI" value={activeTab} disabled={evaluating} onChange={setActiveTab} items={[
-        {id: 'live', label: 'Thẩm định Trực tiếp', icon: Cpu},
-        {id: 'history', label: 'Lịch sử Phiên AI', icon: History},
-        {id: 'fixtures', label: 'Hồ sơ mẫu', icon: FileCheck2},
-      ]} />} />
+      <PageHeader
+        title="Trợ lý AI & Khám quy chế"
+        description="Khám đối chiếu quy chế khen thưởng, tự động xếp hạng tiềm năng danh hiệu và chuyển tiêu chí thiếu thành lộ trình KPI."
+        icon={Cpu}
+        onRefresh={() => {
+          if (activeTab === 'regulation') handleRunRegulationEvaluation();
+          else if (activeTab === 'discovery') runAutoDiscovery();
+          else if (activeTab === 'history') loadHistory(true);
+        }}
+        refreshing={evaluating || discovering || loadingHistory}
+        tabs={
+          <UnderlineTabs
+            label="Phương thức phân tích AI"
+            value={activeTab}
+            disabled={evaluating || discovering}
+            onChange={setActiveTab}
+            items={[
+              { id: 'regulation', label: 'Khám theo quy chế', icon: Cpu },
+              { id: 'discovery', label: 'Khám ngược tiềm năng / Auto-Discovery', icon: Sparkles },
+              { id: 'history', label: 'Lịch sử Phiên AI', icon: History },
+              { id: 'fixtures', label: 'Hồ sơ mẫu', icon: FileCheck2 },
+            ]}
+          />
+        }
+      />
 
-      <p className="text-sm text-slate-600 dark:text-slate-300">Chọn hồ sơ → kiểm tra dữ liệu → AI giải thích kết quả và căn cứ. Kết quả hỗ trợ rà soát, không tự công nhận hoặc trao thưởng.</p>
-
-      {/* ================= TAB 1: LIVE EVALUATION ================= */}
-      {activeTab === 'live' && (
+      {/* ================= TAB 1: KHÁM THEO QUY CHẾ ================= */}
+      {activeTab === 'regulation' && (
         <div className="space-y-6">
-          {/* Form Filter & Run Action */}
-          {configurationCollapsed && <div ref={configurationSummary} data-configuration-summary className="soft-card scroll-mt-5 flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-sm"><p className="min-w-0 break-words text-slate-700 dark:text-slate-200"><strong>{evaluating ? 'Đang phân tích' : 'Đang xem kết quả'}: {subjectName(runContext.current?.subjectType, runContext.current?.subjectId)}</strong><span className="mx-2 text-slate-400">·</span>{runContext.current?.criteriaCount ?? currentRun?.criterionResults?.length ?? 0} tiêu chí đã chọn</p><button type="button" disabled={evaluating} onClick={() => setConfigurationCollapsed(false)} className="soft-btn-secondary shrink-0 text-sm disabled:opacity-50">Thay đổi</button></div>}
-          {!configurationCollapsed && <form onSubmit={handleRunEvaluation} className="soft-card p-6 space-y-5">
-            <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <Search className="w-4 h-4 text-brand-500" />
-              Chọn hồ sơ và tiêu chí đánh giá
+          {/* Regulation & Subject Selector Card */}
+          <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm space-y-4">
+            <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Search className="w-4 h-4 text-teal-600" />
+              <span>Chọn Quy chế / Danh hiệu cần khám</span>
             </h2>
 
-            <fieldset disabled={evaluating} className="grid min-w-0 grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Subject Type */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
-                  Đối tượng Thẩm định
-                </label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {setSubjectType('LECTURER');setSubjectId('');}}
-                    className={`flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition-all ${
-                      subjectType === 'LECTURER'
-                        ? 'bg-[#008080] text-white border-[#008080]'
-                        : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
-                    }`}
-                  >
-                    <User className="w-3.5 h-3.5" />
-                    Cá nhân
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {setSubjectType('UNIT');setSubjectId('');}}
-                    className={`flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition-all ${
-                      subjectType === 'UNIT'
-                        ? 'bg-[#008080] text-white border-[#008080]'
-                        : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
-                    }`}
-                  >
-                    <Building2 className="w-3.5 h-3.5" />
-                    Tập thể
-                  </button>
-                </div>
-              </div>
-
-              {/* Subject ID */}
-              <div>
-                <EntitySelect label={subjectType==='LECTURER' ? 'Giảng viên được thẩm định' : 'Đơn vị được thẩm định'} options={subjectType==='LECTURER' ? choices.lecturers : choices.subjectUnits} value={subjectId} onChange={setSubjectId} required disabled={choices.loading || evaluating} placeholder="Chọn chủ thể" getLabel={subjectType==='LECTURER' ? lecturerLabel : o=>o.name}/>
-                {choices.error && <p role="alert" className="text-xs text-rose-600">{choices.error}</p>}
-              </div>
-
-              {/* As Of Date */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
-                  Ngày Hiệu lực Thẩm định
-                </label>
-                <div className="relative">
-                  <input
-                    type="date"
-                    required
-                    value={asOfDate}
-                    onChange={(e) => setAsOfDate(e.target.value)}
-                    className="soft-input w-full text-xs"
-                  />
-                </div>
-              </div>
-
-              {/* AI Provider */}
-              <details className="md:col-span-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
-                <summary className="cursor-pointer text-sm font-semibold text-slate-600 dark:text-slate-300">Tùy chọn kỹ thuật · nguồn giải thích AI</summary>
-                <label htmlFor="ai-explanation-provider" className="mt-3 block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
-                  Dịch vụ tạo giải thích
+            <form onSubmit={handleRunRegulationEvaluation} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+              {/* Regulation Selector */}
+              <div className="md:col-span-5 space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Quy chế / Danh hiệu mục tiêu <span className="text-rose-500">*</span>
                 </label>
                 <Select
-                  id="ai-explanation-provider"
-                  disabled={evaluating}
-                  value={provider}
-                  onChange={(e) => setProvider(e.target.value)}
-                  className="soft-input w-full text-xs"
+                  value={selectedRegulationId}
+                  onChange={(e) => setSelectedRegulationId(e.target.value)}
+                  disabled={loadingRegulations || evaluating}
+                  className="w-full text-xs"
                 >
-                  <option value="auto">Tự động chọn dịch vụ</option>
-                  <option value="mock">Mô phỏng bằng câu trả lời mẫu</option>
-                  <option value="groq">Groq</option>
-                  <option value="openrouter">OpenRouter (Free Tier)</option>
+                  {regulations.map((reg) => (
+                    <option key={reg.document_id || reg.id} value={reg.document_id || reg.id}>
+                      {reg.document_code ? `[${reg.document_code}] ` : ''}{reg.title || reg.name}
+                    </option>
+                  ))}
                 </Select>
-                <p className="mt-2 text-xs text-slate-500">Mặc định ưu tiên Groq, sau đó OpenRouter. Các dịch vụ cần được cấu hình trên máy chủ; mô phỏng không gọi dịch vụ AI.</p>
-              </details>
-            </fieldset>
-
-            {loadingCriteria && <LoadingState label="Đang tải tiêu chí..." layout="cards" rows={3} />}
-            {criteriaError && <ErrorState error={criteriaError} onRetry={() => setCriteriaRevision((value) => value + 1)} />}
-            {!loadingCriteria && !criteriaError && !availableCriteria.length && <p role="status">Chưa có tiêu chí đủ điều kiện. Cần duyệt cả tiêu chí và phiên bản văn bản nguồn trong Kho quy định.</p>}
-            {/* Criteria Selection */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">
-                Chọn tiêu chí đánh giá ({selectedCriteriaIds.length}/{availableCriteria.length} đã chọn):
-              </label>
-              {availableCriteria.some(c => !c.source_rules) && <p role="note" data-source-warning className="mb-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">{availableCriteria.filter(c => !c.source_rules).length === availableCriteria.length ? 'Các tiêu chí hiện có đều' : availableCriteria.filter(c => !c.source_rules).length + ' tiêu chí'} chưa cấu hình nguồn dữ liệu. Người quản lý cần chọn loại hồ sơ được tính trước khi hệ thống có thể kết luận.</p>}
-              {availableCriteria.some(c => c.lhu_application_status === 'SIMULATION_ONLY' || /^SIM-|^SCN-/i.test(c.criterion_code || '')) && <p className="mb-3 text-xs text-slate-600 dark:text-slate-300">Danh sách có tiêu chí mô phỏng; kết quả của các mục này chỉ dùng tham khảo.</p>}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-80 overflow-y-auto p-1">
-                {availableCriteria.map((c) => {
-                  const id = c.criteria_version_id;
-                  const isChecked = selectedCriteriaIds.includes(id);
-                  return (
-                    <label
-                      key={id}
-                      className={`flex items-start gap-2.5 p-2.5 rounded-xl border text-xs cursor-pointer transition-all ${
-                        isChecked
-                          ? 'border-indigo-500/60 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-950 dark:text-indigo-200'
-                          : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-700 dark:text-slate-300'
-                      }`}
-                    >
-                      <input
-                        disabled={evaluating}
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => handleToggleCriterion(id)}
-                        className="rounded mt-0.5 text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <span className="font-bold text-slate-900 dark:text-slate-100 block truncate">
-                          {c.criterion_code}
-                        </span>
-                        <span className="text-xs text-slate-600 dark:text-slate-300">
-                          {c.name || c.criterionName}
-                        </span>
-                        <span title={`Văn bản: ${c.document_title || c.document_code || 'Chưa rõ'} · Phiên bản: ${c.version_number || 'Chưa rõ'}`} className="mt-1 block text-xs text-slate-500 dark:text-slate-400">{c.document_code || 'Chưa rõ văn bản nguồn'}</span>
-                      </div>
-                    </label>
-                  );
-                })}
               </div>
-            </div>
 
-            {/* Submit Action */}
-            <div className="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-              <button type="button" onClick={() => handleRunEvaluation(null, false)} disabled={evaluating || loadingCriteria || !!criteriaError || !selectedCriteriaIds.length || !subjectId} className="soft-btn-secondary text-sm">Chỉ kiểm tra dữ liệu</button>
-              <button
-                type="submit"
-                disabled={evaluating || loadingCriteria || !!criteriaError || !selectedCriteriaIds.length || !subjectId}
-                className="soft-btn-primary text-xs px-6 py-2.5 font-semibold"
-              >
-                {evaluating ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    {progress?.stage === 'ai' ? 'Đang phân tích bằng AI…' : 'Đang kiểm tra dữ liệu…'}
-                  </>
-                ) : (
-                  <>
-                    <Cpu className="w-4 h-4" />
-                    Kiểm tra & phân tích bằng AI
-                  </>
-                )}
-              </button>
-            </div>
-          </form>}
+              {/* Subject Select */}
+              <div className="md:col-span-4 space-y-1.5">
+                <EntitySelect
+                  label="Chủ thể thẩm định"
+                  options={subjectType === 'LECTURER' ? choices.lecturers : choices.subjectUnits}
+                  value={subjectId}
+                  onChange={setSubjectId}
+                  required
+                  disabled={choices.loading || evaluating}
+                  placeholder="Chọn chủ thể"
+                  getLabel={subjectType === 'LECTURER' ? lecturerLabel : o => o.name}
+                />
+              </div>
 
-          {/* Error Banner */}
-          {evalError && <ErrorState error={evalError} onRetry={handleRunEvaluation} />}
-          {progress && <div role="status" aria-live="polite" data-ai-progress className="soft-card px-6 py-4 text-sm text-slate-700 dark:text-slate-200 flex items-center gap-3">
-            {evaluating ? <RefreshCw className="h-4 w-4 motion-safe:animate-spin shrink-0" /> : <CheckCircle2 className="h-4 w-4 shrink-0 text-teal-600" />}
-            {progress.stage === 'data' ? 'Đang kiểm tra hồ sơ theo tiêu chí…' : progress.stage === 'ai' ? `Đã kiểm tra dữ liệu · AI đang giải thích ${progress.done + 1}/${progress.total} tiêu chí…` : progress.stage === 'dataOnly' ? 'Đã kiểm tra dữ liệu · Chưa gọi AI. Chọn “Tạo giải thích AI” trong kết quả để tiếp tục.' : 'Đã xử lý yêu cầu. Xem trạng thái AI của từng tiêu chí bên dưới.'}
-          </div>}
-          {currentRun && <EvaluationResults run={currentRun} subjectName={subjectName(currentRun.targetSubject?.subjectType, currentRun.targetSubject?.subjectId)} explanations={explanations} aiStates={aiStates} busy={evaluating} onExplain={handleExplainCriterion} onRetry={() => handleExplainCriterion()} staleInfo={staleInfo} checkingStale={checkingStale} onCheckStale={() => handleCheckStale(currentRun.runId)} />}
+              {/* As Of Date & Action */}
+              <div className="md:col-span-3 flex items-center gap-2">
+                <button
+                  type="submit"
+                  disabled={evaluating || !selectedRegulationId || loadingRegCriteria}
+                  className="w-full h-11 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-soft-sm"
+                >
+                  {evaluating ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Đang khám...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Cpu className="w-4 h-4" />
+                      <span>Kiểm tra theo quy chế</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+
+            {loadingRegCriteria && (
+              <p className="text-xs text-slate-500 animate-pulse">Đang tải danh sách tiêu chí của quy chế...</p>
+            )}
+          </div>
+
+          {evalError && (
+            <div role="alert" className="p-4 rounded-2xl bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{evalError.message || 'Lỗi khi kiểm tra quy chế.'}</span>
+            </div>
+          )}
+
+          {/* Results Display */}
+          {currentRun && (
+            <div className="space-y-6 animate-fade-in">
+              {/* Score & Prediction Summary Card */}
+              <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm space-y-5">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <span className="text-xs font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-wider">
+                      Dự báo kết quả thẩm định
+                    </span>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                      {currentSelectedReg?.title || 'Quy chế khen thưởng'}
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Đạt {satisfiedResults.length} / {currentTotal} tiêu chí theo chuẩn quy chế
+                    </p>
+                  </div>
+
+                  {/* Feasibility Badge */}
+                  <div>
+                    {currentPercentage === 100 ? (
+                      <span className="px-4 py-2 rounded-2xl bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold text-xs inline-flex items-center gap-1.5 border border-emerald-300 dark:border-emerald-800 shadow-soft-sm">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        Đủ điều kiện xét thưởng (100%)
+                      </span>
+                    ) : (
+                      <span className="px-4 py-2 rounded-2xl bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 font-bold text-xs inline-flex items-center gap-1.5 border border-amber-300 dark:border-amber-800 shadow-soft-sm">
+                        <AlertCircle className="w-4 h-4 text-amber-600" />
+                        Chưa đủ điều kiện (Còn thiếu {missingResults.length} tiêu chí)
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <span>Tỷ lệ hoàn thành</span>
+                    <span className="text-teal-600 dark:text-teal-400 text-base">{currentPercentage}%</span>
+                  </div>
+                  <div className="w-full h-3 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-500 ${
+                        currentPercentage === 100 ? 'bg-emerald-500' : currentPercentage >= 50 ? 'bg-teal-500' : 'bg-amber-500'
+                      }`}
+                      style={{ width: `${currentPercentage}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Action Bar: Export Dossier ZIP & Transfer to KPI */}
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    {/* Xuất gói minh chứng (.ZIP) */}
+                    <button
+                      type="button"
+                      disabled={exportingZip}
+                      onClick={() => handleExportZip(selectedRegulationId, currentSelectedReg?.title)}
+                      className="px-4 py-2.5 rounded-xl font-semibold text-xs text-white bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 transition flex items-center gap-2 shadow-soft-sm disabled:opacity-50"
+                    >
+                      {exportingZip ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          <span>Đang đóng gói ZIP...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4 text-teal-400" />
+                          <span>Xuất gói minh chứng (.ZIP)</span>
+                        </>
+                      )}
+                    </button>
+
+                    {/* Chuyển thành mục tiêu KPI */}
+                    {missingResults.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => openGapToKpiModal(currentSelectedReg, missingResults)}
+                        className="px-4 py-2.5 rounded-xl font-semibold text-xs text-purple-700 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/50 dark:text-purple-300 dark:hover:bg-purple-900 border border-purple-200 dark:border-purple-800 transition flex items-center gap-2 shadow-soft-sm"
+                      >
+                        <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                        <span>Chuyển thành mục tiêu KPI ({missingResults.length} tiêu chí)</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <span className="text-xs text-slate-400">
+                    Mã phiên: #{currentRun.runId}
+                  </span>
+                </div>
+              </div>
+
+              {/* Criteria Breakdown Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Passed Criteria */}
+                <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-emerald-200/80 dark:border-emerald-900/60 shadow-soft-sm space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-emerald-100 dark:border-emerald-900/40">
+                    <h4 className="text-sm font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Tiêu chí đã đạt ({satisfiedResults.length})</span>
+                    </h4>
+                  </div>
+
+                  {satisfiedResults.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic py-4 text-center">Chưa có tiêu chí nào đạt chuẩn.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {satisfiedResults.map((crit, idx) => (
+                        <div key={idx} className="p-3.5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 text-xs space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-bold text-slate-900 dark:text-white">
+                              {crit.criterionCode ? `[${crit.criterionCode}] ` : ''}{crit.criterionName || crit.name}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 font-semibold text-[10px] shrink-0">
+                              Đạt chuẩn
+                            </span>
+                          </div>
+
+                          {crit.matchedRecords?.length > 0 && (
+                            <div className="pt-1 space-y-1">
+                              <span className="text-[10px] text-slate-500 font-semibold uppercase">Minh chứng đối khớp:</span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {crit.matchedRecords.map((m, mIdx) => (
+                                  <span key={mIdx} className="px-2 py-0.5 rounded bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[10px] truncate max-w-xs">
+                                    ✓ {m.title || `Thành tích #${m.id}`}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Missing Criteria (Gaps) */}
+                <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-amber-200/80 dark:border-amber-900/60 shadow-soft-sm space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-amber-100 dark:border-amber-900/40">
+                    <h4 className="text-sm font-bold text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-amber-600" />
+                      <span>Tiêu chí còn thiếu / Khoảng trống ({missingResults.length})</span>
+                    </h4>
+                  </div>
+
+                  {missingResults.length === 0 ? (
+                    <p className="text-xs text-emerald-600 italic py-4 text-center">Xin chúc mừng! Không có tiêu chí nào còn thiếu.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {missingResults.map((crit, idx) => (
+                        <div key={idx} className="p-3.5 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 text-xs space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-bold text-slate-900 dark:text-white">
+                              {crit.criterionCode ? `[${crit.criterionCode}] ` : ''}{crit.criterionName || crit.name}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 font-semibold text-[10px] shrink-0">
+                              Còn thiếu {crit.missingCount || 1} {crit.thresholdMetric?.unit || 'tiêu chí'}
+                            </span>
+                          </div>
+
+                          <p className="text-slate-500 dark:text-slate-400 text-[11px]">
+                            Yêu cầu: tối thiểu {crit.thresholdMetric?.target || 1} {crit.thresholdMetric?.unit || 'tiêu chí'}. Thực tế đã ghi nhận: {crit.thresholdMetric?.actual || 0}.
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* RAG Explanations View */}
+              {currentResults.length > 0 && (
+                <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm">
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-teal-600" />
+                    <span>Giải thích chi tiết từ Trợ lý AI (Citations Điều/Khoản)</span>
+                  </h4>
+                  <EvaluationResults
+                    run={currentRun}
+                    explanations={explanations}
+                    aiStates={aiStates}
+                    onExplain={async (result) => {
+                      try {
+                        const res = await aiEvaluationApi.explainEvaluation({
+                          criterionResult: result,
+                          runId: currentRun.runId,
+                          asOfDate,
+                          provider,
+                        });
+                        setExplanations(prev => ({ ...prev, [result.criterionId]: res }));
+                        setAiStates(prev => ({ ...prev, [result.criterionId]: { status: 'success' } }));
+                      } catch (err) {
+                        setAiStates(prev => ({ ...prev, [result.criterionId]: { status: 'error', message: err.message } }));
+                      }
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
-      {/* ================= TAB 2: HISTORY ================= */}
-      {activeTab === 'history' && (
+      {/* ================= TAB 2: KHÁM NGƯỢC TIỀM NĂNG / AUTO-DISCOVERY ================= */}
+      {activeTab === 'discovery' && (
         <div className="space-y-6">
-          <div className="soft-card p-6 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <History className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                  Lịch sử Các Phiên Thẩm định AI
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Chọn một phiên để xem lại kết quả và dữ liệu tại thời điểm đánh giá.
-                </p>
-              </div>
-
-              {/* Filters */}
-              <div className="flex items-center gap-2">
-                <Select
-                  value={historyFilterType}
-                  onChange={(e) => setHistoryFilterType(e.target.value)}
-                  className="soft-input text-xs py-1.5"
-                >
-                  <option value="">Tất cả chủ thể</option>
-                  <option value="LECTURER">Giảng viên (Cá nhân)</option>
-                  <option value="UNIT">Đơn vị (Tập thể)</option>
-                </Select>
-
-              </div>
+          <div className="bg-gradient-to-r from-teal-500/10 via-purple-500/10 to-transparent rounded-3xl p-6 border border-teal-200/80 dark:border-teal-800/80 shadow-soft-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <span className="text-xs font-bold text-teal-700 dark:text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4" /> Khám ngược tiềm năng (Auto-Discovery)
+              </span>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                Xếp hạng danh hiệu thi đua khả thi nhất
+              </h2>
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                AI tự động đối soát toàn bộ kho quy chế đang mở với thành tích của bạn và xếp hạng theo tỷ lệ hoàn thành từ cao xuống thấp.
+              </p>
             </div>
 
-            {/* History Table */}
-            {loadingHistory ? (
-              <LoadingState label="Đang tải lịch sử phiên đánh giá..." />
-            ) : historyError ? (
-              <ErrorState error={historyError} onRetry={loadHistory} />
-            ) : historyRuns.length === 0 ? (
-              <EmptyState message="Chưa có phiên đánh giá nào được lưu." />
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 uppercase tracking-wider">
-                    <tr>
-                      <th className="p-3">Mã phiên</th>
-                      <th className="p-3">Thời gian</th>
-                      <th className="p-3">Chủ thể</th>
-                      <th className="p-3">Kết luận</th>
-                      <th className="p-3">Thay đổi dữ liệu</th>
-                      <th className="p-3 text-right">Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {historyRuns.map((r) => (
-                      <tr key={r.runId || r.run_id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
-                        <td className="p-3 font-mono text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">
-                          {(r.runId || r.run_id).slice(0, 13)}...
-                        </td>
-                        <td className="p-3 text-slate-600 dark:text-slate-300">
-                          {r.evaluatedAt ? new Date(r.evaluatedAt).toLocaleString('vi-VN') : 'N/A'}
-                        </td>
-                        <td className="p-3">
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">
-                            {subjectName(r.targetSubject?.subjectType || r.subject_type, r.targetSubject?.subjectId || r.subject_id)}
-                          </span>
-                        </td>
-                        <td className="p-3">
-                          <span className="font-medium text-slate-700 dark:text-slate-300">
-                            {conclusions[r.overallConclusion || r.overall_conclusion] || r.overallConclusion || r.overall_conclusion}
-                          </span>
-                        </td>
-                        <td className="p-3">
-                          {r.isStale || r.is_stale ? (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
-                              ĐÃ THAY ĐỔI
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                              ĐỒNG NHẤT
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-3 text-right">
+            <button
+              type="button"
+              disabled={discovering}
+              onClick={runAutoDiscovery}
+              className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs transition disabled:opacity-50 flex items-center gap-2 shadow-soft-sm shrink-0"
+            >
+              <RefreshCw className={`w-4 h-4 ${discovering ? 'animate-spin' : ''}`} />
+              <span>{discovering ? 'Đang quét toàn trường...' : 'Quét lại toàn bộ'}</span>
+            </button>
+          </div>
+
+          {discoveryError && (
+            <div role="alert" className="p-4 rounded-2xl bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900 text-xs">
+              {discoveryError}
+            </div>
+          )}
+
+          {discovering && (
+            <div className="py-12 text-center space-y-3">
+              <RefreshCw className="w-8 h-8 animate-spin text-teal-600 mx-auto" />
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                AI đang quét toàn bộ kho quy chế và đối chiếu thành tích của bạn...
+              </p>
+              <p className="text-xs text-slate-400">Quá trình này mất khoảng vài giây.</p>
+            </div>
+          )}
+
+          {!discovering && discoveryList.length === 0 && !discoveryError && (
+            <div className="py-12 text-center space-y-2 bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700">
+              <Cpu className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" />
+              <p className="text-sm text-slate-500">Chưa tìm thấy quy chế nào khả thi.</p>
+            </div>
+          )}
+
+          {!discovering && discoveryList.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {discoveryList.map((item, idx) => {
+                const missingCriteria = (item.criteria || []).filter(c => !c.isSatisfied);
+                const isTop100 = item.percentage === 100;
+                const isHighPotential = item.percentage >= 50 && item.percentage < 100;
+
+                return (
+                  <article
+                    key={item.regulationId || idx}
+                    className={`bg-white dark:bg-slate-800 rounded-3xl p-6 border transition shadow-soft-sm space-y-4 ${
+                      isTop100
+                        ? 'border-emerald-300 dark:border-emerald-700 ring-2 ring-emerald-500/20'
+                        : isHighPotential
+                        ? 'border-teal-200 dark:border-teal-800'
+                        : 'border-slate-200/80 dark:border-slate-700/80'
+                    }`}
+                  >
+                    {/* Header: Title and Badge */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <span className="text-[10px] font-mono text-slate-400 block truncate">
+                          {item.documentCode || `Quy chế #${item.regulationId}`}
+                        </span>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white line-clamp-2">
+                          {item.name || 'Danh hiệu khen thưởng'}
+                        </h3>
+                      </div>
+
+                      {/* Percentage Badge */}
+                      <div className="text-right shrink-0">
+                        <span className={`text-xl font-extrabold ${
+                          isTop100 ? 'text-emerald-600' : isHighPotential ? 'text-teal-600' : 'text-amber-600'
+                        }`}>
+                          {item.percentage}%
+                        </span>
+                        <span className="block text-[10px] text-slate-400 font-medium">phù hợp</span>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                      <div
+                        className={`h-full ${isTop100 ? 'bg-emerald-500' : isHighPotential ? 'bg-teal-500' : 'bg-amber-500'}`}
+                        style={{ width: `${item.percentage}%` }}
+                      />
+                    </div>
+
+                    {/* Stats & Feasibility Status */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <span className="text-slate-500">
+                        Đạt <strong>{item.satisfiedCount}</strong> / {item.totalCount} tiêu chí
+                      </span>
+
+                      {isTop100 ? (
+                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold text-[10px]">
+                          ✓ Đủ điều kiện nộp ngay
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-medium text-[10px]">
+                          Còn thiếu {missingCriteria.length} tiêu chí
+                        </span>
+                      )}
+                    </div>
+
+                    {item.deadline && (
+                      <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>Hạn nộp: {item.deadline.slice(0, 10)}</span>
+                      </p>
+                    )}
+
+                    {/* Card Actions */}
+                    <div className="pt-3 border-t border-slate-100 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {/* Xuất ZIP */}
+                        <button
+                          type="button"
+                          onClick={() => handleExportZip(item.regulationId, item.name)}
+                          className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>Xuất ZIP</span>
+                        </button>
+
+                        {/* Chuyển thành KPI nếu còn thiếu */}
+                        {missingCriteria.length > 0 && (
                           <button
                             type="button"
-                            onClick={() => handleSelectHistoryRun(r.runId || r.run_id)}
-                            className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline inline-flex items-center gap-1"
+                            onClick={() => openGapToKpiModal(item, missingCriteria)}
+                            className="px-3 py-1.5 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 dark:bg-purple-950 dark:text-purple-300 text-xs font-semibold flex items-center gap-1.5 border border-purple-200 dark:border-purple-800 transition"
                           >
-                            Xem lại hồ sơ
-                            <ChevronRight className="w-3.5 h-3.5" />
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>Chuyển thành KPI</span>
                           </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedRegulationId(String(item.regulationId));
+                          setActiveTab('regulation');
+                        }}
+                        className="text-xs text-teal-600 dark:text-teal-400 font-semibold hover:underline flex items-center gap-1"
+                      >
+                        <span>Khám chi tiết</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ================= TAB 3: LỊCH SỬ PHIÊN AI ================= */}
+      {activeTab === 'history' && (
+        <div className="space-y-4">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm space-y-4">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+              Các phiên thẩm định AI đã thực hiện
+            </h3>
+
+            {loadingHistory ? (
+              <p className="text-xs text-slate-500 animate-pulse">Đang tải lịch sử phiên...</p>
+            ) : historyRuns.length === 0 ? (
+              <p className="text-xs text-slate-400 italic py-6 text-center">Chưa có phiên đánh giá nào được lưu.</p>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-700/60">
+                {historyRuns.map(run => (
+                  <div key={run.runId} className="py-3 flex items-center justify-between gap-3 text-xs">
+                    <div>
+                      <span className="font-semibold text-slate-800 dark:text-white block">
+                        Phiên #{run.runId} · {run.targetSubject?.subjectType || 'LECTURER'}
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        {run.completedAt || run.createdAt} · {run.criterionResults?.length || 0} tiêu chí
+                      </span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium text-[10px]">
+                      {runStatuses[run.status] || run.status}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* ================= TAB 3: FIXTURES (W3-Q4) ================= */}
-      {activeTab === 'fixtures' && (
-        <div className="space-y-6">
-          <div className="soft-card p-6 space-y-4">
-            <h2 className="text-base font-bold text-slate-900 dark:text-white">
-              Hồ sơ mẫu để tham khảo
-            </h2>
-            <p className="text-xs text-slate-500">
-              12 tình huống minh họa kết quả và cảnh báo. Đây là dữ liệu mô phỏng, không phải hồ sơ thực tế.
-            </p>
+      {/* ================= TAB 4: HỒ SƠ MẪU (FIXTURES) ================= */}
+      {activeTab === 'fixtures' && fixtureItem && (
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm space-y-4">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Hồ sơ mô phỏng kiểm thử</h3>
+          <p className="text-xs text-slate-500">{fixtureItem.description}</p>
+          <pre className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 text-xs overflow-auto font-mono text-slate-700 dark:text-slate-300 max-h-96">
+            {JSON.stringify(fixtureItem, null, 2)}
+          </pre>
+        </div>
+      )}
 
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Chọn tình huống mẫu:
-              <Select
-                className="soft-input w-full mt-1.5 text-xs"
-                value={selectedFixtureCase}
-                onChange={(e) => setSelectedFixtureCase(e.target.value)}
+      {/* ================= GAP-TO-KPI ROADMAP TRANSFER MODAL ================= */}
+      {gapModalOpen && gapRegulation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-3xl p-6 sm:p-7 shadow-soft-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-600" />
+                <span>Chuyển thành mục tiêu KPI</span>
+              </h3>
+              <button
+                onClick={() => setGapModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg"
               >
-                {fixtures.fixtures.map((f) => (
-                  <option key={f.caseId} value={f.caseId}>
-                    {f.caseId} — {f.title}
-                  </option>
-                ))}
-              </Select>
-            </label>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-            {fixtureItem && (
-              <div className="space-y-4 pt-2">
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2">
-                  <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">{fixtureItem.title}</h3>
-                  <div className="grid sm:grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <span className="text-slate-400">Trạng thái:</span>{' '}
-                      <strong>{runStatuses[fixtureItem.run.overallStatus] || fixtureItem.run.overallStatus}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400">Kết luận:</span>{' '}
-                      <strong>{conclusions[fixtureItem.run.overallConclusion] || fixtureItem.run.overallConclusion}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400">Chủ thể:</span>{' '}
-                      <strong>
-                        {fixtureItem.run.targetSubject.subjectType === 'LECTURER' ? 'Giảng viên mẫu' : 'Đơn vị mẫu'} #{fixtureItem.run.targetSubject.subjectId}
-                      </strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400">Vấn đề dữ liệu:</span>{' '}
-                      <span>{fixtureItem.observed.issues.join(', ') || 'Đủ dữ liệu mô phỏng'}</span>
-                    </div>
+            {gapSuccessNotice ? (
+              <div className="space-y-4 py-3">
+                <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 text-xs space-y-1">
+                  <div className="flex items-center gap-2 font-bold text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Thiết lập lộ trình thành công!</span>
                   </div>
+                  <p>{gapSuccessNotice.message}</p>
                 </div>
 
-                <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                    Kết quả đối chiếu tiêu chí:
-                  </h4>
-                  {fixtureItem.run.criterionResults.map((result) => (
-                    <div
-                      key={result.criterionCode}
-                      className="rounded-xl border border-slate-200 dark:border-slate-800 p-3.5 space-y-2 bg-white dark:bg-slate-900/40 text-xs"
-                    >
-                      <div className="flex items-center justify-between">
-                        <strong className="text-slate-900 dark:text-slate-100">
-                          {result.criterionCode} — {result.criterionName}
-                        </strong>
-                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200">
-                          {result.thresholdMetric.isSatisfied}
-                        </span>
-                      </div>
-                      <p className="text-slate-600 dark:text-slate-400">{result.aiAnalysis}</p>
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <Link
+                    to="/kpi"
+                    className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium text-xs transition"
+                  >
+                    Xem Mục tiêu KPI →
+                  </Link>
+                  <Link
+                    to="/calendar"
+                    className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium text-xs transition"
+                  >
+                    Xem Lịch cá nhân →
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4 text-xs">
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Quy chế mục tiêu:</span>
+                  <span className="text-sm font-bold text-slate-800 dark:text-white">
+                    {gapRegulation.name || gapRegulation.title}
+                  </span>
+                </div>
+
+                {/* Missing Criteria List */}
+                <div className="space-y-2">
+                  {gapMissingCriteria.length === 0 ? (
+                    <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs text-center">
+                      <p className="font-semibold">Tất cả tiêu chí đã hoàn thành!</p>
+                      <p className="text-[11px] mt-0.5 text-emerald-600 dark:text-emerald-400">Không có tiêu chí thiếu để chuyển thành KPI.</p>
                     </div>
-                  ))}
+                  ) : (
+                    <>
+                      <span className="font-semibold text-slate-700 dark:text-slate-300">
+                        Danh sách {gapMissingCriteria.length} tiêu chí còn thiếu sẽ chuyển thành KPI:
+                      </span>
+                      <div className="max-h-44 overflow-y-auto space-y-1.5 pr-1">
+                        {gapMissingCriteria.map((c, i) => (
+                          <div
+                            key={i}
+                            className="p-2.5 rounded-xl bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200/60 dark:border-purple-800/40 flex items-center justify-between gap-2"
+                          >
+                            <span className="font-medium text-slate-800 dark:text-white truncate">
+                              {c.criterionCode || c.code ? `[${c.criterionCode || c.code}] ` : ''}{c.criterionName || c.name}
+                            </span>
+                            <span className="text-purple-700 dark:text-purple-300 font-bold text-[11px] shrink-0">
+                              + {c.missingCount || 1} {c.thresholdMetric?.unit || c.unit || 'tiêu chí'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
 
-                <div className="pt-2">
-                  <details className="text-xs">
-                    <summary className="font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
-                      Xem Căn cứ Kỹ thuật & JSON Fixture
-                    </summary>
-                    <pre className="mt-2 p-3 bg-slate-900 text-slate-100 rounded-xl overflow-auto text-[11px] max-h-64 font-mono">
-                      {JSON.stringify(fixtureItem, null, 2)}
-                    </pre>
-                  </details>
+                {/* Reminder Checkbox Prompt */}
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-2.5">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={gapAddReminder}
+                      onChange={(e) => setGapAddReminder(e.target.checked)}
+                      className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                    />
+                    <span className="font-bold text-slate-800 dark:text-white">
+                      Bạn có muốn thêm vào lịch nhắc nhở không?
+                    </span>
+                  </label>
+
+                  {gapAddReminder && (
+                    <div className="pl-6 space-y-1">
+                      <label className="block text-[11px] text-slate-500">
+                        Hạn chót hoàn thành hồ sơ (Deadline):
+                      </label>
+                      <input
+                        type="date"
+                        value={gapDeadlineDate}
+                        onChange={(e) => setGapDeadlineDate(e.target.value)}
+                        className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs w-full"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-200 dark:border-slate-700">
+                  <button
+                    type="button"
+                    disabled={gapTransferring}
+                    onClick={() => setGapModalOpen(false)}
+                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 transition"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="button"
+                    disabled={gapTransferring || !gapMissingCriteria || gapMissingCriteria.length === 0}
+                    onClick={handleConfirmGapTransfer}
+                    className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 shadow-soft-sm"
+                  >
+                    {gapTransferring ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Đang thiết lập...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Xác nhận chuyển thành KPI</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             )}

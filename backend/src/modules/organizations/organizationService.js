@@ -1,3 +1,8 @@
+
+import { evaluateStructuredCriterion } from '../ai/criteriaEvaluator.js';
+import { getActiveRoles, getLecturerProfile } from '../auth/authRepository.js';
+import { ForbiddenError } from '../../utils/errors.js';
+
 import organizationRepository from './organizationRepository.js';
 import { ConflictError, ConcurrencyConflictError, NotFoundError } from '../../utils/errors.js';
 import { recordAuditLog } from '../audit/auditService.js';
@@ -99,7 +104,134 @@ export function createOrganizationService(repository = organizationRepository) {
     return assignment;
   }
 
+  
+  async function scanUnitWithAi(unitId, regulationId, user, client = null) {
+    unitId = Number(unitId);
+    regulationId = Number(regulationId);
+
+    const activeRoles = (user?.activeRoles && user.activeRoles.length)
+      ? user.activeRoles
+      : (await getActiveRoles(user.userId)).map(r => r.Code);
+
+    const isAdmin = activeRoles.includes('ADMIN');
+    const isFacultyLead = activeRoles.includes('FACULTY_LEAD');
+    const isDeptHead = activeRoles.includes('DEPARTMENT_HEAD');
+
+    if (!isAdmin && !isFacultyLead && !isDeptHead) {
+      throw new ForbiddenError('Yêu cầu một trong các vai trò: DEPARTMENT_HEAD, FACULTY_LEAD, ADMIN');
+    }
+
+    const unit = await repository.findUnit(unitId);
+    if (!unit) {
+      throw new NotFoundError('Không tìm thấy đơn vị');
+    }
+
+    if (!isAdmin) {
+      const profile = await getLecturerProfile(user.userId);
+      const userUnitId = profile?.primaryUnit?.unitId;
+      if (!userUnitId) {
+        throw new ForbiddenError('Người dùng chưa được phân công đơn vị');
+      }
+
+      if (isDeptHead && !isFacultyLead) {
+        if (Number(userUnitId) !== Number(unitId)) {
+          throw new ForbiddenError('Trưởng Bộ môn chỉ có quyền quét đơn vị bộ môn của mình');
+        }
+      } else if (isFacultyLead) {
+        if (Number(userUnitId) !== Number(unitId)) {
+          const isChild = await repository.hasDescendant(userUnitId, unitId);
+          if (!isChild) {
+            throw new ForbiddenError('Ban Chủ nhiệm Khoa chỉ có quyền quét các đơn vị thuộc khoa của mình');
+          }
+        }
+      }
+    }
+
+    const criteria = await repository.getRegulationCriteria(regulationId, client);
+    if (!criteria || criteria.length === 0) {
+      throw new NotFoundError('Không tìm thấy tiêu chí quy chế để đánh giá');
+    }
+
+    const unitIds = await repository.getDescendantUnitIds(unitId, client);
+    const members = await repository.getUnitMembers(unitIds, client);
+
+    const asOfDate = new Date().toISOString().slice(0, 10);
+    const results = [];
+
+    for (const member of members) {
+      const records = await repository.getMemberAchievements(member.lecturer_id, client);
+      const matched = [];
+      const missing = [];
+
+      for (const crit of criteria) {
+        let rules = crit.source_rules || crit.rules || null;
+        if (typeof rules === 'string') {
+          try { rules = JSON.parse(rules); } catch (_) { rules = null; }
+        }
+
+        const evalResult = evaluateStructuredCriterion({
+          subject: { subjectType: 'LECTURER', subjectId: member.lecturer_id },
+          criterion: {
+            ...crit,
+            criterionCode: crit.code,
+            isConfirmed: true,
+          },
+          documentVersion: {
+            versionId: crit.version_id || 1,
+            isConfirmed: true,
+            lhuApplicationStatus: 'CONFIRMED_LHU_POLICY',
+          },
+          rules,
+          records,
+          asOfDate,
+        });
+
+        if (evalResult.isSatisfied) {
+          matched.push({
+            criterionId: crit.criteria_version_id,
+            code: crit.code,
+            name: crit.name,
+          });
+        } else {
+          missing.push({
+            criterionId: crit.criteria_version_id,
+            code: crit.code,
+            name: crit.name,
+            missingCount: evalResult.missingCount || 1,
+            unit: crit.unit_metric || 'tiêu chí',
+          });
+        }
+      }
+
+      const totalCriteria = criteria.length;
+      const percentage = totalCriteria > 0 ? Math.round((matched.length / totalCriteria) * 100) : 0;
+      const isEligible = totalCriteria > 0 && matched.length === totalCriteria;
+
+      results.push({
+        userId: member.user_id,
+        lecturerId: member.lecturer_id,
+        fullName: member.full_name,
+        email: member.email,
+        unitId: member.unit_id,
+        unitName: member.unit_name,
+        percentage,
+        isEligible,
+        matched,
+        missing,
+      });
+    }
+
+    return {
+      unitId,
+      regulationId,
+      totalMembers: members.length,
+      eligibleCount: results.filter(r => r.isEligible).length,
+      results,
+    };
+  }
+
   return {
+    scanUnitWithAi,
     listUnits: () => repository.listUnits(),
     getUnitProfile,
     createUnit,

@@ -5,7 +5,7 @@ export async function cleanupAchievementTrash(adapter = storage) {
   await withTransaction(async ({ client }) => {
     await client.query(`DECLARE @expired TABLE (achievement_id BIGINT PRIMARY KEY);
       INSERT INTO @expired SELECT achievement_id FROM app.achievements a WITH (UPDLOCK, HOLDLOCK)
-      WHERE a.status = 'DRAFT' AND a.deleted_at <= DATEADD(day, -30, SYSUTCDATETIME())
+      WHERE a.status IN ('ACTIVE', 'DRAFT') AND a.deleted_at <= DATEADD(day, -30, SYSUTCDATETIME())
       AND NOT EXISTS (SELECT 1 FROM app.achievement_submissions s WHERE s.achievement_id = a.achievement_id)
       AND NOT EXISTS (SELECT 1 FROM app.award_record_achievements r WHERE r.achievement_id = a.achievement_id)
       AND NOT EXISTS (SELECT 1 FROM app.kpi_results k WHERE k.achievement_id = a.achievement_id)

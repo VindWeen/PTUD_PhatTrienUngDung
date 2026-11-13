@@ -1,109 +1,88 @@
 import express from 'express';
+import multer from 'multer';
 import { authenticate } from '../../middlewares/authenticate.js';
 import { requireRoles } from '../../middlewares/requireRoles.js';
 import controller from './achievementController.js';
 
 const router = express.Router();
 
+// Cấu hình Multer upload vào memory buffer để chuyển cho AI Vision
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+});
+
 router.use(authenticate);
 
-// Read active catalog metadata without granting access to Admin catalog mutations.
+const standardRoles = ['MEMBER', 'DEPARTMENT_HEAD', 'FACULTY_LEAD', 'ADMIN', 'LECTURER', 'UNIT_REPRESENTATIVE'];
+
+// Read active catalog metadata
 router.get('/achievements/catalogs', controller.catalogs);
 
 // 1. Tra cứu danh sách phân trang và lọc thành tích
 router.get('/achievements', controller.list);
 
-// 2. Chi tiết hồ sơ thành tích
+// 2. AI Vision Auto-fill: Trích xuất thông tin bằng khen/chứng chỉ từ file tải lên
+router.post(
+  '/achievements/ai-extract',
+  requireRoles(...standardRoles),
+  upload.single('file'),
+  controller.aiExtract
+);
+
+// 3. Chi tiết hồ sơ thành tích
 router.get('/achievements/:id', controller.getById);
 
-// 3. Tạo bản nháp thành tích mới (DRAFT)
+// 4. Tạo thành tích mới trong Kho (nhận trạng thái ACTIVE ngay lập tức)
 router.post(
   '/achievements',
-  requireRoles('LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'),
+  requireRoles(...standardRoles),
   controller.create
 );
 
-// 4. Cập nhật bản nháp thành tích (DRAFT hoặc NEED_CORRECTION)
+// 5. Cập nhật thành tích trong kho cá nhân
 router.patch(
   '/achievements/:id',
-  requireRoles('LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'),
+  requireRoles(...standardRoles),
   controller.update
 );
 router.put(
   '/achievements/:id',
-  requireRoles('LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'),
+  requireRoles(...standardRoles),
   controller.update
 );
 
-// 5. Xóa bản nháp thành tích (chỉ xóa DRAFT chưa từng nộp)
+// 6. Xóa thành tích khỏi kho cá nhân
 router.delete(
   '/achievements/:id',
-  requireRoles('LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'),
+  requireRoles(...standardRoles),
   controller.remove
 );
 
-router.post('/achievements/:id/restore', requireRoles('LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'), controller.restore);
+router.post('/achievements/:id/restore', requireRoles(...standardRoles), controller.restore);
 
-// 6. Xem lịch sử chuyển trạng thái
+// 7. Xem lịch sử chuyển trạng thái
 router.get('/achievements/:id/history', controller.getHistory);
 
-// 7. Xem danh sách các lần nộp hồ sơ (Submissions & Snapshots)
+// 8. Xem danh sách các lần nộp hồ sơ (nếu có dữ liệu lịch sử cũ)
 router.get('/achievements/:id/submissions', controller.getSubmissions);
 
-// 8. Gửi duyệt hồ sơ thành tích (DRAFT hoặc NEED_CORRECTION -> SUBMITTED)
-router.post(
-  '/achievements/:id/submit',
-  requireRoles('LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'),
-  controller.submit
-);
+// --- BÃI BỎ / DECOMMISSION CÁC TUYẾN PHÊ DUYỆT HÀNH CHÍNH CŨ ---
+const decommissioned = (actionName) => (req, res) => {
+  res.status(410).json({
+    success: false,
+    decommissioned: true,
+    message: `Quy trình [${actionName}] đã được bãi bỏ. Hệ thống sử dụng Kho lưu trữ thành tích cá nhân có hiệu lực trực tiếp (ACTIVE).`,
+  });
+};
 
-// 9. Xác nhận hồ sơ thành tích (SUBMITTED -> VERIFIED)
-router.post(
-  '/achievements/:id/verify',
-  requireRoles('MANAGER', 'ADMIN'),
-  controller.verify
-);
-
-// 10. Yêu cầu bổ sung hồ sơ (SUBMITTED -> NEED_CORRECTION)
-router.post(
-  '/achievements/:id/request-correction',
-  requireRoles('MANAGER', 'ADMIN'),
-  controller.requestCorrection
-);
-
-// 11. Từ chối hồ sơ (SUBMITTED -> REJECTED)
-router.post(
-  '/achievements/:id/reject',
-  requireRoles('MANAGER', 'ADMIN'),
-  controller.reject
-);
-
-// 12. Hủy hồ sơ (DRAFT, SUBMITTED hoặc NEED_CORRECTION -> CANCELLED)
-router.post(
-  '/achievements/:id/cancel',
-  requireRoles('LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'),
-  controller.cancel
-);
-
-// 13. Thu hồi hồ sơ đã xác nhận (VERIFIED -> REVOKED)
-router.post(
-  '/achievements/:id/revoke',
-  requireRoles('MANAGER', 'ADMIN'),
-  controller.revoke
-);
-
-// 14. Gửi lại hồ sơ thành tích (alias cho submit khi ở NEED_CORRECTION)
-router.post(
-  '/achievements/:id/resubmit',
-  requireRoles('LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'),
-  controller.submit
-);
-
-// 15. Tạo bản thay thế cho hồ sơ đã kết thúc (REJECTED, CANCELLED, REVOKED)
-router.post(
-  '/achievements/:id/replace',
-  requireRoles('LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'),
-  controller.replace
-);
+router.post('/achievements/:id/submit', decommissioned('submit'));
+router.post('/achievements/:id/verify', decommissioned('verify'));
+router.post('/achievements/:id/request-correction', decommissioned('request-correction'));
+router.post('/achievements/:id/reject', decommissioned('reject'));
+router.post('/achievements/:id/cancel', decommissioned('cancel'));
+router.post('/achievements/:id/revoke', decommissioned('revoke'));
+router.post('/achievements/:id/resubmit', decommissioned('resubmit'));
+router.post('/achievements/:id/replace', decommissioned('replace'));
 
 export default router;

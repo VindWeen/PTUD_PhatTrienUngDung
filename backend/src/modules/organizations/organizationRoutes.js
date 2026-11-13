@@ -8,6 +8,7 @@ const router = express.Router();
 router.use(authenticate);
 router.get('/organizations', controller.list);
 router.get('/units/:id/profile', requireUnitRead, controller.profile);
+router.post(['/organizations/units/:id/ai-scan', '/units/:id/ai-scan'], requireRoles('DEPARTMENT_HEAD', 'FACULTY_LEAD', 'ADMIN'), controller.aiScan);
 router.post('/organizations', requireRoles('ADMIN'), controller.create);
 router.patch('/organizations/:id', requireRoles('ADMIN'), controller.update);
 router.delete('/organizations/:id', requireRoles('ADMIN'), controller.remove);

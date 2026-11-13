@@ -1,6 +1,7 @@
 import { USE_FIXTURES } from './apiConfig.js';
 import { fixtureClient } from './fixtureClient.js';
 import { request } from './request.js';
+import apiClient from './apiClient.js';
 
 const fixtureWriteError = () =>
   Promise.reject(
@@ -13,6 +14,29 @@ export const achievementsApi = {
 
   getById: (id, fresh = false) =>
     USE_FIXTURES ? fixtureClient.getAchievementById(id) : request({ method: 'GET', url: `/achievements/${id}`, fresh }),
+
+  aiExtract: async (file) => {
+    if (USE_FIXTURES) {
+      return {
+        success: true,
+        data: {
+          title: 'Bằng khen Chiến sĩ thi đua cấp cơ sở',
+          recognitionYear: 2025,
+          issueDate: '2025-05-10',
+          issuer: 'Hiệu trưởng Trường Đại học Lạc Hồng',
+          decisionNumber: '1245/QĐ-ĐHLH',
+          category: 'TEACHING',
+        },
+        fallback: false,
+        message: 'Trích xuất thông tin thành tựu thành công qua Vision AI',
+      };
+    }
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiClient.post('/achievements/ai-extract', formData, {
+      headers: { 'Content-Type': undefined },
+    });
+  },
 
   create: (data) =>
     USE_FIXTURES ? fixtureWriteError() : request({ method: 'POST', url: '/achievements', data }),

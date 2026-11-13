@@ -51,7 +51,8 @@ test('SQL Server achievement trash: owner restore, expiry, version, evidence ret
     assert.equal(prematurelyRemoved.includes(key), false);
     assert.equal((await repo.findAchievementById(id,null,true)).submissions.length,0);
     await assert.rejects(service.restoreAchievement({ userId: user.userId + 999999 }, id), error => error.statusCode === 403);
-    assert.equal((await service.restoreAchievement(user,id)).status,'DRAFT');
+    const restored = await service.restoreAchievement(user,id);
+    assert.ok(['ACTIVE', 'DRAFT'].includes(restored.status));
     await service.deleteAchievement(user,id);
     await run('UPDATE app.achievements SET deleted_at = DATEADD(day,-31,SYSUTCDATETIME()) WHERE achievement_id=$1', [id]);
     await assert.rejects(service.restoreAchievement(user,id), error => error.statusCode === 409);

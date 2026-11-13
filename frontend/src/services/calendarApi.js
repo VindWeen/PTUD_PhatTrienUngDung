@@ -11,4 +11,6 @@ export const calendarApi = {
   create: data => call({ url: '/me/calendar', method: 'POST', data }),
   update: (id, data) => call({ url: `/me/calendar/${id}`, method: 'PUT', data }),
   remove: (id, version) => call({ url: `/me/calendar/${id}`, method: 'DELETE', data: { version } }),
+  createReminder: data => call({ url: '/me/calendar/reminder', method: 'POST', data }),
+  listReminders: () => call({ url: '/me/calendar/reminders' }),
 };

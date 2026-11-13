@@ -21,4 +21,8 @@ router.post('/ai/rag/index-chunks', aiController.indexRegulationChunks);
 router.post('/ai/rag/retrieve', aiController.retrieveChunks);
 router.post('/ai/rag/explain', aiController.explainEvaluation);
 
+// Milestone 2 Core: Auto-Discovery (Khám Ngược) & Dossier ZIP Packager
+router.post('/ai/auto-discovery', aiController.autoDiscovery);
+router.post('/ai/export-dossier-zip', aiController.exportDossierZip);
+
 export default router;

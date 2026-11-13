@@ -1,5 +1,6 @@
 import Select from '../components/common/Select';
 import PageHeader from '../components/common/PageHeader';
+import UnderlineTabs from '../components/common/UnderlineTabs';
 import React, { useEffect, useState } from 'react';
 import {
   BarChart3,
@@ -16,9 +17,16 @@ import {
   CheckCircle2,
   XCircle,
   Info,
+  Sparkles,
+  RefreshCw,
+  Users,
+  AlertCircle,
+  Check,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { reportsApi } from '../services/reportsApi.js';
+import { organizationsApi } from '../services/organizationsApi.js';
+import { regulationsApi } from '../services/regulationsApi.js';
 import { USE_FIXTURES } from '../services/apiConfig.js';
 import { ErrorState, LoadingState, Skeleton } from '../components/common/AsyncState';
 import { useSelectionOptions } from '../hooks/useSelections';
@@ -81,8 +89,71 @@ export default function Reports({ dashboard = false }) {
 
   const roles = (user?.roles || []).map((r) => (typeof r === 'string' ? r : r.code));
   const canExport = roles.some((r) =>
-    ['ADMIN', 'MANAGER', 'RECORDS_OFFICER', 'UNIT_REPRESENTATIVE'].includes(r)
+    ['ADMIN', 'MANAGER', 'RECORDS_OFFICER', 'UNIT_REPRESENTATIVE', 'DEPARTMENT_HEAD', 'FACULTY_LEAD'].includes(r)
   );
+  const canScanUnit = roles.some((r) =>
+    ['ADMIN', 'MANAGER', 'UNIT_REPRESENTATIVE', 'DEPARTMENT_HEAD', 'FACULTY_LEAD'].includes(r)
+  );
+
+  // Unit AI Scan Tab States
+  const [activeReportTab, setActiveReportTab] = useState('statistics'); // 'statistics' | 'ai_scan'
+  const [scanUnitId, setScanUnitId] = useState('');
+  const [scanRegulationId, setScanRegulationId] = useState('');
+  const [scanning, setScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [scanResult, setScanResult] = useState(null);
+  const [scanError, setScanError] = useState(null);
+  const [scanFilter, setScanFilter] = useState('all'); // 'all' | 'eligible' | 'not_eligible'
+  const [regulationsList, setRegulationsList] = useState([]);
+  const [allUnits, setAllUnits] = useState([]);
+
+  useEffect(() => {
+    if (!canScanUnit) return;
+    regulationsApi.listDocuments()
+      .then(res => {
+        const docs = Array.isArray(res) ? res : res?.items || res?.data || [];
+        setRegulationsList(docs);
+        if (docs.length) {
+          setScanRegulationId(curr => curr || String(docs[0].document_id || docs[0].id));
+        }
+      })
+      .catch(() => {});
+
+    organizationsApi.list()
+      .then(res => {
+        const orgs = Array.isArray(res) ? res : res?.items || res?.data || [];
+        setAllUnits(orgs);
+        if (orgs.length) {
+          setScanUnitId(curr => curr || String(orgs[0].unit_id || orgs[0].organization_unit_id || orgs[0].id));
+        }
+      })
+      .catch(() => {});
+  }, [canScanUnit]);
+
+  const runUnitAiScan = async () => {
+    if (!scanUnitId || !scanRegulationId) return;
+    setScanning(true);
+    setScanError(null);
+    setScanProgress(20);
+
+    const progressTimer = setInterval(() => {
+      setScanProgress(p => (p < 85 ? p + 15 : p));
+    }, 250);
+
+    try {
+      const res = await organizationsApi.aiScanUnit(scanUnitId, {
+        regulationId: Number(scanRegulationId),
+      });
+      clearInterval(progressTimer);
+      setScanProgress(100);
+      setScanResult(res?.data || res);
+    } catch (err) {
+      clearInterval(progressTimer);
+      setScanError(err.message || 'Lỗi khi quét AI đơn vị.');
+    } finally {
+      setScanning(false);
+    }
+  };
 
   useEffect(() => {
     let current = true;
@@ -133,21 +204,46 @@ export default function Reports({ dashboard = false }) {
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12">
-      <PageHeader title={dashboard ? `Tổng quan báo cáo · ${user?.displayName || 'Hồ sơ'}` : 'Báo cáo / CSV'} description="Thống kê thành tích đã xác nhận và khen thưởng đã ghi nhận theo phạm vi của bạn." icon={BarChart3} onRefresh={() => setReload(value => value + 1)} refreshing={loading} exportAction={canExport ? {label: exporting ? 'Đang xuất CSV...' : 'Xuất Báo Cáo CSV', onClick: download, disabled: exporting || loading} : null} />
+      <PageHeader
+        title={dashboard ? `Tổng quan báo cáo · ${user?.displayName || 'Hồ sơ'}` : 'Báo cáo & Quét AI'}
+        description="Thống kê thành tích, khen thưởng và hỗ trợ lãnh đạo đơn vị quét đối chiếu tiêu chí nhân sự."
+        icon={BarChart3}
+        onRefresh={() => setReload(value => value + 1)}
+        refreshing={loading}
+        exportAction={
+          activeReportTab === 'statistics' && canExport
+            ? { label: exporting ? 'Đang xuất CSV...' : 'Xuất Báo Cáo CSV', onClick: download, disabled: exporting || loading }
+            : null
+        }
+        tabs={
+          canScanUnit ? (
+            <UnderlineTabs
+              label="Chế độ báo cáo"
+              value={activeReportTab}
+              onChange={setActiveReportTab}
+              items={[
+                { id: 'statistics', label: 'Thống kê & Xuất CSV', icon: BarChart3 },
+                { id: 'ai_scan', label: 'Quét AI Đơn vị (Unit AI Scan)', icon: Sparkles },
+              ]}
+            />
+          ) : null
+        }
+      />
 
-      {USE_FIXTURES ? (
-        <div className="bg-amber-50 dark:bg-amber-950/40 p-4 rounded-2xl border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200">
-          <div className="flex items-center gap-2 font-bold text-sm">
-            <Info className="w-4 h-4 text-amber-600" />
-            Đang chạy chế độ dữ liệu mẫu
+      {activeReportTab === 'statistics' && (
+        USE_FIXTURES ? (
+          <div className="bg-amber-50 dark:bg-amber-950/40 p-4 rounded-2xl border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200">
+            <div className="flex items-center gap-2 font-bold text-sm">
+              <Info className="w-4 h-4 text-amber-600" />
+              Đang chạy chế độ dữ liệu mẫu
+            </div>
+            <p className="mt-1">
+              Để xem báo cáo thực tế, quản trị viên cần kết nối nguồn dữ liệu. Cấu hình{' '}
+              <code className="font-mono bg-amber-100 dark:bg-amber-900/60 px-1.5 py-0.5 rounded">VITE_DATA_SOURCE=api</code>{' '}
+              trong frontend để trải nghiệm đầy đủ.
+            </p>
           </div>
-          <p className="mt-1">
-            Để xem báo cáo thực tế, quản trị viên cần kết nối nguồn dữ liệu. Cấu hình{' '}
-            <code className="font-mono bg-amber-100 dark:bg-amber-900/60 px-1.5 py-0.5 rounded">VITE_DATA_SOURCE=api</code>{' '}
-            trong frontend để trải nghiệm đầy đủ.
-          </p>
-        </div>
-      ) : (
+        ) : (
         <>
           {/* 2. Metric Cards (Matching Dashboard soft pastel cards) */}
           {(
@@ -538,6 +634,304 @@ export default function Reports({ dashboard = false }) {
             )
           )}
         </>
+        )
+      )}
+
+      {/* ================= TAB 2: QUÉT AI ĐƠN VỊ (UNIT AI SCAN) ================= */}
+      {activeReportTab === 'ai_scan' && (
+        <div className="space-y-6">
+          {/* Scan Controls */}
+          <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm space-y-4">
+            <div className="space-y-1">
+              <span className="text-xs font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4" /> Quét AI Đơn vị (Unit Personnel Evaluation)
+              </span>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                Kiểm tra & Rà soát tiêu chí thành viên theo quy chế
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Dành cho Trưởng bộ môn, Ban chủ nhiệm Khoa và Ban giám hiệu. Tự động đối chiếu kho thành tích của tất cả nhân sự thuộc đơn vị với quy định thi đua khen thưởng đã chọn.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end pt-2">
+              {/* Unit Selector */}
+              <div className="md:col-span-5 space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Chọn Đơn vị / Khoa / Bộ môn <span className="text-rose-500">*</span>
+                </label>
+                <Select
+                  value={scanUnitId}
+                  onChange={(e) => setScanUnitId(e.target.value)}
+                  disabled={scanning}
+                  className="w-full text-xs"
+                >
+                  {allUnits.map((u) => (
+                    <option key={u.unit_id || u.organization_unit_id || u.id} value={u.unit_id || u.organization_unit_id || u.id}>
+                      {u.unit_name || u.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              {/* Regulation Selector */}
+              <div className="md:col-span-4 space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Quy chế khen thưởng mục tiêu <span className="text-rose-500">*</span>
+                </label>
+                <Select
+                  value={scanRegulationId}
+                  onChange={(e) => setScanRegulationId(e.target.value)}
+                  disabled={scanning}
+                  className="w-full text-xs"
+                >
+                  {regulationsList.map((r) => (
+                    <option key={r.document_id || r.id} value={r.document_id || r.id}>
+                      {r.document_code ? `[${r.document_code}] ` : ''}{r.title || r.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              {/* Scan Button */}
+              <div className="md:col-span-3">
+                <button
+                  type="button"
+                  disabled={scanning || !scanUnitId || !scanRegulationId}
+                  onClick={runUnitAiScan}
+                  className="w-full h-11 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-soft-sm"
+                >
+                  {scanning ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Đang quét AI...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      <span>Bắt đầu Quét AI Đơn vị</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Animated Progress Bar */}
+            {scanning && (
+              <div className="pt-3 space-y-2">
+                <div className="flex justify-between text-xs font-semibold text-teal-700 dark:text-teal-300">
+                  <span>Đang quét và đối soát tiêu chí hồ sơ thành tích của các thành viên trong đơn vị...</span>
+                  <span>{scanProgress}%</span>
+                </div>
+                <div className="w-full h-2.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-300"
+                    style={{ width: `${scanProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {scanError && (
+              <div role="alert" className="p-3.5 rounded-2xl bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{scanError}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Scan Results View */}
+          {scanResult && (
+            <div className="space-y-6 animate-fade-in">
+              {/* KPI Summary Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-5 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm space-y-1">
+                  <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+                    <span className="text-xs font-semibold">Tổng nhân sự quét</span>
+                    <Users className="w-4 h-4 text-slate-400" />
+                  </div>
+                  <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
+                    {scanResult.totalMembers ?? (scanResult.results?.length || 0)}
+                  </div>
+                  <p className="text-[11px] text-slate-400">thành viên trong đơn vị</p>
+                </div>
+
+                <div className="p-5 rounded-3xl bg-white dark:bg-slate-800 border border-emerald-200/80 dark:border-emerald-900/60 shadow-soft-sm space-y-1">
+                  <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400">
+                    <span className="text-xs font-semibold">Số lượng đủ điều kiện</span>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
+                    {scanResult.eligibleCount ?? (scanResult.results?.filter(r => r.isEligible)?.length || 0)}
+                  </div>
+                  <p className="text-[11px] text-emerald-600/70">đạt 100% tiêu chí quy chế</p>
+                </div>
+
+                <div className="p-5 rounded-3xl bg-white dark:bg-slate-800 border border-teal-200/80 dark:border-teal-900/60 shadow-soft-sm space-y-1">
+                  <div className="flex items-center justify-between text-teal-700 dark:text-teal-400">
+                    <span className="text-xs font-semibold">Tỷ lệ đủ điều kiện</span>
+                    <Sparkles className="w-4 h-4 text-teal-600" />
+                  </div>
+                  <div className="text-2xl font-extrabold text-teal-600 dark:text-teal-400">
+                    {Math.round(((scanResult.eligibleCount || 0) / (scanResult.totalMembers || scanResult.results?.length || 1)) * 100)}%
+                  </div>
+                  <p className="text-[11px] text-teal-600/70">trên tổng số nhân sự</p>
+                </div>
+              </div>
+
+              {/* Member Breakdown Table Card */}
+              <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-soft-sm overflow-hidden">
+                {/* Table Header Controls */}
+                <div className="p-5 border-b border-slate-100 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                      Bảng đối soát chi tiết từng thành viên
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Hiển thị kết quả đối khớp tiêu chí và các khoảng trống cần hoàn thiện
+                    </p>
+                  </div>
+
+                  {/* Filter Pills */}
+                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-700 text-xs font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => setScanFilter('all')}
+                      className={`px-3 py-1 rounded-lg transition ${
+                        scanFilter === 'all'
+                          ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-soft-sm'
+                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-800'
+                      }`}
+                    >
+                      Tất cả ({scanResult.results?.length || 0})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setScanFilter('eligible')}
+                      className={`px-3 py-1 rounded-lg transition ${
+                        scanFilter === 'eligible'
+                          ? 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 shadow-soft-sm'
+                          : 'text-slate-500 dark:text-slate-400 hover:text-emerald-600'
+                      }`}
+                    >
+                      Đủ chuẩn ({scanResult.results?.filter(r => r.isEligible)?.length || 0})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setScanFilter('not_eligible')}
+                      className={`px-3 py-1 rounded-lg transition ${
+                        scanFilter === 'not_eligible'
+                          ? 'bg-white dark:bg-slate-800 text-amber-700 dark:text-amber-300 shadow-soft-sm'
+                          : 'text-slate-500 dark:text-slate-400 hover:text-amber-600'
+                      }`}
+                    >
+                      Chưa đạt ({scanResult.results?.filter(r => !r.isEligible)?.length || 0})
+                    </button>
+                  </div>
+                </div>
+
+                {/* Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 font-semibold border-b border-slate-100 dark:border-slate-700/60">
+                      <tr>
+                        <th className="py-3.5 px-5">Thành viên</th>
+                        <th className="py-3.5 px-4">Tỷ lệ đạt</th>
+                        <th className="py-3.5 px-4">Trạng thái</th>
+                        <th className="py-3.5 px-5">Tiêu chí đã thỏa</th>
+                        <th className="py-3.5 px-5">Tiêu chí còn thiếu</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60">
+                      {(scanResult.results || [])
+                        .filter(m => {
+                          if (scanFilter === 'eligible') return m.isEligible;
+                          if (scanFilter === 'not_eligible') return !m.isEligible;
+                          return true;
+                        })
+                        .map((m, idx) => (
+                          <tr key={m.userId || m.lecturerId || idx} className="hover:bg-slate-50/60 dark:hover:bg-slate-700/30 transition">
+                            <td className="py-3.5 px-5 min-w-[180px]">
+                              <span className="font-bold text-slate-900 dark:text-white block">
+                                {m.fullName || m.name || `Giảng viên #${m.userId}`}
+                              </span>
+                              <span className="text-[11px] text-slate-400 block truncate">
+                                {m.email || m.unitName || '—'}
+                              </span>
+                            </td>
+
+                            <td className="py-3.5 px-4 w-32">
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-[11px] font-bold">
+                                  <span>{m.percentage || 0}%</span>
+                                </div>
+                                <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                                  <div
+                                    className={`h-full ${
+                                      m.isEligible ? 'bg-emerald-500' : (m.percentage || 0) >= 50 ? 'bg-teal-500' : 'bg-amber-500'
+                                    }`}
+                                    style={{ width: `${m.percentage || 0}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className="py-3.5 px-4">
+                              {m.isEligible ? (
+                                <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold text-[10px] inline-flex items-center gap-1">
+                                  <Check className="w-3 h-3" /> Đủ chuẩn
+                                </span>
+                              ) : (
+                                <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-medium text-[10px] inline-flex items-center gap-1">
+                                  Chưa đạt
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="py-3.5 px-5 max-w-xs">
+                              {(!m.matched || m.matched.length === 0) ? (
+                                <span className="text-slate-400 italic text-[11px]">Chưa đạt tiêu chí nào</span>
+                              ) : (
+                                <div className="flex flex-wrap gap-1">
+                                  {m.matched.map((mat, mIdx) => (
+                                    <span
+                                      key={mIdx}
+                                      className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 text-[10px] truncate max-w-[200px]"
+                                      title={mat.name}
+                                    >
+                                      ✓ {mat.code || mat.name}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </td>
+
+                            <td className="py-3.5 px-5 max-w-xs">
+                              {(!m.missing || m.missing.length === 0) ? (
+                                <span className="text-emerald-600 font-semibold text-[11px]">Đã thỏa mãn tất cả</span>
+                              ) : (
+                                <div className="flex flex-wrap gap-1">
+                                  {m.missing.map((mis, misIdx) => (
+                                    <span
+                                      key={misIdx}
+                                      className="px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 text-[10px] truncate max-w-[200px]"
+                                      title={mis.name}
+                                    >
+                                      ! {mis.code || mis.name} {mis.missingCount ? `(thiếu ${mis.missingCount} ${mis.unit || ''})` : ''}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

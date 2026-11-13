@@ -1,4 +1,6 @@
 import aiService from './aiService.js';
+import * as autoDiscoveryService from './autoDiscoveryService.js';
+import * as dossierPackagerService from './dossierPackagerService.js';
 import * as ragRetrievalService from './rag/ragRetrievalService.js';
 import * as ragExplanationService from './rag/ragExplanationService.js';
 import { z } from 'zod';
@@ -173,6 +175,23 @@ export async function checkEvaluationStale(req, res, next) {
     const runId = req.params.runId;
     const result = await aiService.checkEvaluationStale(runId, req.user);
     ok(res, result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function autoDiscovery(req, res, next) {
+  try {
+    const result = await autoDiscoveryService.discoverEligibleRegulations(req.user, req.body || {});
+    ok(res, result.data);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function exportDossierZip(req, res, next) {
+  try {
+    await dossierPackagerService.packageAndStreamDossierZip(req.user, req.body || {}, res);
   } catch (err) {
     next(err);
   }

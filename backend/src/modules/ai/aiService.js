@@ -327,6 +327,7 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
         SELECT a.achievement_id AS id,
                'ACHIEVEMENT' AS type,
                a.achievement_type_id AS "sourceTypeId",
+               a.title,
                a.lecturer_id, a.unit_id,
                COALESCE(a.recognition_year, YEAR(a.achievement_date)) AS year,
                a.status,
@@ -338,7 +339,7 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
                  WHERE e.achievement_id = a.achievement_id AND e.is_removed = 0 FOR JSON PATH, INCLUDE_NULL_VALUES) AS files
         FROM app.achievements a
         WHERE ${subjectType === 'LECTURER' ? 'a.lecturer_id = $1' : 'a.unit_id = $1'}
-          AND a.status IN ('VERIFIED', 'RECORDED', 'REVOKED', 'CANCELLED')
+          AND a.status IN ('ACTIVE', 'VERIFIED', 'RECORDED', 'REVOKED', 'CANCELLED')
       `;
       const achRes = await db(achSql, [subjectId]);
 
@@ -362,6 +363,8 @@ Hãy phân tích tính phù hợp và đưa ra kết luận.`;
 
       const mapRow = (r) => ({
         id: Number(r.id),
+        achievementId: Number(r.id),
+        title: r.title || (r.type === 'AWARD_RECORD' ? 'Khen thưởng đã ghi nhận' : 'Thành tích cá nhân'),
         type: r.type,
         sourceTypeId: r.sourceTypeId ? Number(r.sourceTypeId) : null,
         subjectId: Number(subjectType === 'LECTURER' ? r.lecturer_id : r.unit_id),

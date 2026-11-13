@@ -27,3 +27,34 @@ export function filterPublishedAchievements(snapshot, validAchievements) {
   const allowed = new Set(validAchievements.map(item => String(item.achievementId)));
   return { ...snapshot, achievements: (snapshot.achievements || []).filter(item => item.achievementId && allowed.has(String(item.achievementId))).map(({ title, recognitionYear }) => ({ title, recognitionYear })) };
 }
+
+
+export const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+export const RESERVED_SLUGS = ['admin', 'api', 'auth', 'system', 'login', 'settings', 'help', 'root', 'me', 'public', 'export-docx', 'download', 'cv', 'profile', 'default'];
+export const VALID_TEMPLATES = ['Modern', 'Academic', 'Minimalist', 'Creative', 'standard', 'classic', 'modern'];
+
+export const slugSchema = z.string().trim()
+  .min(3, 'Độ dài slug phải từ 3 đến 100 ký tự')
+  .max(100, 'Độ dài slug phải từ 3 đến 100 ký tự')
+  .regex(SLUG_REGEX, 'Slug chỉ được chứa chữ cái thường, số và dấu gạch ngang')
+  .refine(s => !RESERVED_SLUGS.includes(s.toLowerCase()), 'Slug không được sử dụng các từ khóa hệ thống đã được bảo lưu');
+
+export const updateCvProfileSchema = z.object({
+  slug: slugSchema.optional().nullable(),
+  templateId: z.string().trim().refine(t => VALID_TEMPLATES.some(v => v.toLowerCase() === t.toLowerCase()), {
+    message: 'Mẫu giao diện CV không hợp lệ',
+  }).optional(),
+  isPublic: z.boolean().optional(),
+  headline: z.string().trim().max(255).optional().nullable(),
+  bio: z.string().trim().max(5000).optional().nullable(),
+  contact: z.object({
+    fullName: z.string().trim().max(255).optional().nullable(),
+    phone: z.string().trim().max(50).optional().nullable(),
+    email: z.string().trim().email().optional().nullable(),
+    address: z.string().trim().max(255).optional().nullable(),
+    title: z.string().trim().max(100).optional().nullable(),
+    degree: z.string().trim().max(100).optional().nullable(),
+  }).optional().nullable(),
+  selectedAchievementIds: z.array(z.coerce.number().int().positive()).optional().nullable(),
+  version: z.coerce.number().int().nonnegative().optional(),
+}).strict();

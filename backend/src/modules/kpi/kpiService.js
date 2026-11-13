@@ -18,6 +18,7 @@ import {
   versionSchema,
   draftSchema,
   importSchema,
+  fromAiGapSchema,
   readCsv,
 } from "./kpiSchemas.js";
 
@@ -383,6 +384,88 @@ export async function importCsv(user, raw, commit = false) {
       rows,
       imported: rows.filter((r) => r.status === "IMPORTED").length,
       duplicates: rows.filter((r) => r.status === "DUPLICATE").length,
+    };
+  });
+}
+
+
+export async function createFromAiGap(user, raw) {
+  const data = parse(fromAiGapSchema, raw);
+  return run(async (client) => {
+    const regRes = await client.query(
+      'SELECT document_id, title FROM app.regulation_documents WHERE document_id = $1',
+      [data.regulationId]
+    );
+    if (!regRes.rows[0]) {
+      throw new NotFoundError('Không tìm thấy quy chế');
+    }
+    const regDoc = regRes.rows[0];
+
+    const s = await repo.subject(client, user.userId, 'LECTURER');
+    if (!s) {
+      throw new ForbiddenError('Chưa có hồ sơ hoặc vai trò hợp lệ để tạo KPI');
+    }
+
+    const currentYear = new Date().getFullYear();
+    const defaultPeriodStart = `${currentYear}-01-01`;
+    const defaultPeriodEnd = `${currentYear}-12-31`;
+    const createdGoals = [];
+
+    for (const item of data.missingCriteria) {
+      const periodStart = item.periodStart || data.periodStart || defaultPeriodStart;
+      const periodEnd = item.periodEnd || data.periodEnd || defaultPeriodEnd;
+      const target = Number(item.missingCount) > 0 ? Number(item.missingCount) : 1;
+      const measureUnit = item.unit || 'tiêu chí';
+      let code = item.code.trim().toUpperCase();
+      const title = (item.name && item.name.trim().length >= 5)
+        ? item.name.trim()
+        : `Mục tiêu bổ sung: ${item.name || item.code}`.trim();
+      const plan = item.plan || data.plan || `Bổ sung tiêu chí ${item.name || item.code} cho quy chế #${data.regulationId}`;
+      const sourceNote = `Khoảng trống AI từ quy chế #${data.regulationId}: ${regDoc.title || ''}`.slice(0, 2000);
+
+      let goal;
+      const dup = await repo.findDuplicate(client, s, { code, periodStart, periodEnd });
+      if (dup) {
+        if (dup.status === 'DRAFT') {
+          const updated = (
+            await client.query(
+              `UPDATE app.kpi_goals
+               SET target = target + $1, [plan] = [plan] + N' ; ' + $2, updated_at = SYSUTCDATETIME(), version = version + 1
+               OUTPUT INSERTED.*
+               WHERE goal_id = $3`,
+              [target, plan, dup.goal_id]
+            )
+          ).rows[0];
+          await audit(client, user, 'UPDATE_GOAL', 'kpi_goals', updated);
+          goal = updated;
+        } else {
+          code = `${code}-GAP`;
+          goal = await repo.createGoal(
+            client,
+            user.userId,
+            s,
+            { code, title, measureUnit, periodStart, periodEnd, target, plan, sourceNote },
+            'AI_GAP'
+          );
+          await audit(client, user, 'CREATE_FROM_GAP', 'kpi_goals', goal);
+        }
+      } else {
+        goal = await repo.createGoal(
+          client,
+          user.userId,
+          s,
+          { code, title, measureUnit, periodStart, periodEnd, target, plan, sourceNote },
+          'AI_GAP'
+        );
+        await audit(client, user, 'CREATE_FROM_GAP', 'kpi_goals', goal);
+      }
+      createdGoals.push(goal);
+    }
+
+    return {
+      goals: createdGoals,
+      count: createdGoals.length,
+      regulationId: data.regulationId,
     };
   });
 }

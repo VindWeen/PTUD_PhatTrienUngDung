@@ -12,4 +12,5 @@ export const organizationsApi = {
   remove: (id) => USE_FIXTURES ? fixtureWriteError() : request({ method: 'DELETE', url: `/organizations/${id}` }),
   appointRepresentative: (id, data) => USE_FIXTURES ? fixtureWriteError() : request({ method: 'POST', url: `/organizations/${id}/representative`, data }),
   transferLecturer: (id, data) => USE_FIXTURES ? fixtureWriteError() : request({ method: 'POST', url: `/lecturers/${id}/assignments`, data }),
+  aiScanUnit: (id, data) => USE_FIXTURES ? fixtureWriteError() : request({ method: 'POST', url: `/organizations/units/${id}/ai-scan`, data }),
 };

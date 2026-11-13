@@ -1,25 +1,26 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
-import { GraduationCap, Home, User, Cpu, LogOut, Building2, Award, BookOpen, BarChart3, Target, ClipboardList, Menu, X } from 'lucide-react';
+import { 
+  GraduationCap, Home, User, Cpu, LogOut, Building2, 
+  Award, BookOpen, BarChart3, Target, CalendarDays, Shield, Menu, X 
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-function NotificationCountBadge({ count }) {
-  if (count <= 0) return null;
-  return <span aria-hidden="true" data-notification-badge className="pointer-events-none absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold leading-none text-white ring-2 ring-[#274b64]">{count > 99 ? '99+' : count}</span>;
-}
+const ALL_ROLES = ['MEMBER', 'DEPARTMENT_HEAD', 'FACULTY_LEAD', 'ADMIN', 'LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER'];
+const UNIT_LEADERS = ['DEPARTMENT_HEAD', 'FACULTY_LEAD', 'ADMIN', 'UNIT_REPRESENTATIVE', 'MANAGER'];
+const ADMIN_ONLY = ['ADMIN'];
 
 const navItems = [
-  { to: '/me/dashboard', icon: Home, label: 'Trang chủ', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
-  { to: '/me/profile', icon: User, label: 'Hồ sơ năng lực', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER'] },
-  { to: '/achievements', icon: Award, label: 'Thành tích', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
-  { to: '/award-applications', icon: ClipboardList, label: 'Đề nghị khen thưởng', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'COUNCIL'] },
-  { to: '/awards', icon: Award, label: 'Khen thưởng', roles: ['RECORDS_OFFICER'] },
-  { to: '/kpi', icon: Target, label: 'Mục tiêu / KPI', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'] },
-  { to: '/me/ai-forecast', icon: Cpu, label: 'Phân tích & Thẩm định AI', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
-  { to: '/reports', icon: BarChart3, label: 'Báo cáo / CSV', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
-  { to: '/regulations', icon: BookOpen, label: 'Kho quy định', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'COUNCIL', 'ADMIN'] },
-  { to: '/organizations', icon: Building2, label: 'Tổ chức', roles: ['LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER', 'ADMIN'] },
-  { to: '/admin', icon: User, label: 'Quản trị', roles: ['ADMIN'] },
+  { to: '/me/dashboard', icon: Home, label: 'Trang chủ', roles: ALL_ROLES },
+  { to: '/me/profile', icon: User, label: 'Hồ sơ năng lực', roles: ALL_ROLES },
+  { to: '/achievements', icon: Award, label: 'Kho thành tích', roles: ALL_ROLES },
+  { to: '/kpi', icon: Target, label: 'Mục tiêu / KPI', roles: ALL_ROLES },
+  { to: '/me/ai-forecast', icon: Cpu, label: 'Trợ lý AI & Quy chế', roles: ALL_ROLES },
+  { to: '/calendar', icon: CalendarDays, label: 'Lịch & Nhắc nhở', roles: ALL_ROLES },
+  { to: '/reports', icon: BarChart3, label: 'Báo cáo & Quét AI', roles: ALL_ROLES },
+  { to: '/regulations', icon: BookOpen, label: 'Kho quy định', roles: ALL_ROLES },
+  { to: '/organizations', icon: Building2, label: 'Cây tổ chức', roles: UNIT_LEADERS },
+  { to: '/admin', icon: Shield, label: 'Quản trị hệ thống', roles: ADMIN_ONLY },
 ];
 
 export default function Sidebar() {
@@ -28,6 +29,7 @@ export default function Sidebar() {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreDialog = useRef(null);
   const moreButton = useRef(null);
+
   useEffect(() => { setMoreOpen(false); }, [pathname]);
   useEffect(() => {
     const dialog = moreDialog.current;
@@ -38,20 +40,34 @@ export default function Sidebar() {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = previousOverflow; };
   }, [moreOpen]);
+
   const closeMore = () => { setMoreOpen(false); moreButton.current?.focus(); };
   const accessibleLabel = (_to, label) => label;
-  const roles = (user?.roles || []).map((role) => typeof role === 'string' ? role : role.code);
-  const visibleItems = navItems.filter((item) => item.roles.some((role) => roles.includes(role)));
-  const primaryItems = visibleItems.filter(item => ['/me/dashboard', '/achievements', '/award-applications', '/kpi', '/awards'].includes(item.to)).slice(0, 4);
+  
+  const rawRoles = (user?.roles || []).map((role) => typeof role === 'string' ? role : role.code);
+  const normalizedRoles = rawRoles.map(r => {
+    if (r === 'LECTURER') return 'MEMBER';
+    if (r === 'UNIT_REPRESENTATIVE') return 'DEPARTMENT_HEAD';
+    if (r === 'MANAGER') return 'FACULTY_LEAD';
+    if (r === 'RECORDS_OFFICER' || r === 'COUNCIL') return 'MEMBER';
+    return r;
+  });
+  const allUserRoles = [...new Set([...rawRoles, ...normalizedRoles])];
+
+  const visibleItems = navItems.filter((item) => item.roles.some((role) => allUserRoles.includes(role)));
+  const primaryItems = visibleItems.filter(item => ['/me/dashboard', '/achievements', '/kpi', '/me/ai-forecast', '/calendar'].includes(item.to)).slice(0, 4);
+  
   const desktopRowInsetClass = 'px-0 group-hover/sidebar:px-3 group-has-[:focus-visible]/sidebar:px-3 transition-[padding,background-color,color] duration-300 motion-reduce:transition-none';
   const desktopLabelClass = 'min-w-0 flex-1 whitespace-nowrap text-left text-[15px] font-semibold leading-5 opacity-0 translate-x-2 transition-[opacity,transform] duration-200 group-hover/sidebar:opacity-100 group-hover/sidebar:translate-x-0 group-has-[:focus-visible]/sidebar:opacity-100 group-has-[:focus-visible]/sidebar:translate-x-0 motion-reduce:transition-none';
+  
   const navLink = ({ to, icon: Icon, label }) => (
     <NavLink key={to} to={to} title={label} aria-label={accessibleLabel(to, label)}
       className={({isActive}) => `min-w-0 min-h-14 flex-1 rounded-2xl flex flex-col items-center justify-center transition-colors ${isActive ? 'bg-white/20 text-white' : 'text-slate-200 hover:text-white hover:bg-white/10'}`}>
       <span className="relative"><Icon className="w-5 h-5" /></span>
-      <span className="max-w-full truncate px-1 text-[11px] mt-1 font-medium">{to === '/award-applications' ? 'Đề nghị' : to === '/kpi' ? 'KPI' : label}</span>
+      <span className="max-w-full truncate px-1 text-[11px] mt-1 font-medium">{to === '/calendar' ? 'Lịch' : to === '/kpi' ? 'KPI' : label}</span>
     </NavLink>
   );
+
   return <>
     <aside aria-label="Điều hướng desktop" className="group/sidebar hidden lg:flex fixed left-5 top-1/2 -translate-y-1/2 max-h-[calc(100dvh-40px)] w-[76px] hover:w-[272px] has-[:focus-visible]:w-[272px] overflow-hidden bg-gradient-to-b from-[#182b3d] via-[#274b64] to-[#365f79] dark:from-[#111c2a] dark:to-[#223e52] rounded-[32px] flex-col items-start px-3.5 py-4 z-30 shadow-soft-lg text-white transition-[width] duration-300 ease-out motion-reduce:transition-none">
       <Link to="/" aria-label="Trang chủ LHU" className={`flex h-12 w-full shrink-0 items-center gap-3 rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-teal-300 ${desktopRowInsetClass}`}>
@@ -63,7 +79,7 @@ export default function Sidebar() {
           {visibleItems.map(({to, icon: Icon, label}) => <NavLink key={to} to={to} aria-label={accessibleLabel(to, label)}
             className={({isActive}) => `flex h-12 w-full shrink-0 items-center gap-3 rounded-2xl ${desktopRowInsetClass} focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-teal-300 ${isActive ? 'bg-white/20 text-white' : 'text-slate-200 hover:text-white hover:bg-white/10'}`}>
             <span className="flex h-12 w-12 shrink-0 items-center justify-center"><span className="relative"><Icon className="h-5 w-5" /></span></span>
-            <span className={desktopLabelClass}>{to === '/me/ai-forecast' ? <><span className="block">Phân tích &</span><span className="block">Thẩm định AI</span></> : label}</span>
+            <span className={desktopLabelClass}>{label}</span>
           </NavLink>)}
         </nav>
       </div>

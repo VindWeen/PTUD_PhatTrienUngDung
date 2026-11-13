@@ -159,7 +159,7 @@ export function evaluateStructuredCriterion({
     }
 
     // Chỉ chấp nhận hồ sơ ở trạng thái VERIFIED (đã thẩm định đạt) hoặc RECORDED (đã ghi nhận khen thưởng)
-    if (!['VERIFIED', 'RECORDED'].includes(record.status)) {
+    if (!['ACTIVE', 'VERIFIED', 'RECORDED'].includes(record.status)) {
       issues.add('MISSING_DATA');
       continue;
     }
@@ -312,18 +312,32 @@ export function evaluateStructuredCriterion({
     });
   }
 
+  const missingCount = isSatisfied === true ? 0 : (targetMin != null ? Math.max(0, targetMin - (actualRecorded || 0)) : 1);
+
   return {
     criterionId: Number(criterion.criteriaVersionId || criterion.criterionId),
     criterionCode: criterion.criterionCode,
     criterionName: criterion.name || criterion.criterionName,
     isConfirmedByLhu,
     isSimulation,
+    isSatisfied: isSatisfied === true,
     thresholdMetric: {
       targetMin,
       actualRecorded,
       unitMetric: criterion.unitMetric || criterion.unit_metric || null,
       isSatisfied,
+      missingCount,
     },
+    matchedRecords: activeRecords.map((r) => ({
+      id: r.id || r.achievementId,
+      achievementId: r.achievementId || r.id,
+      title: r.title || 'Minh chứng',
+      year: r.normalizedYear || r.year || r.recognitionYear,
+      status: r.status,
+      file: r.file || null,
+      evidenceFiles: r.evidenceFiles || (r.file ? [r.file] : []),
+    })),
+    missingCount,
     distinctYears: distinctYears.length,
     consecutiveYears: isConsecutive,
     legalReferences,

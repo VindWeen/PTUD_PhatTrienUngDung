@@ -130,5 +130,140 @@ export async function transferLecturer({ lecturerId, unitId, effectiveAt, assign
   });
 }
 
-export default { listUnits, findUnit, getCurrentRepresentative, getUnitStats, createUnit, updateUnit,
-  hasDescendant, getDependencyCounts, deleteUnit, appointRepresentative, transferLecturer };
+
+export async function getDescendantUnitIds(unitId, client = null) {
+  const db = client ? client.query.bind(client) : query;
+  const res = await db(
+    `WITH DescendantUnits AS (
+       SELECT unit_id FROM app.organization_units WHERE unit_id = $1
+       UNION ALL
+       SELECT u.unit_id FROM app.organization_units u
+       JOIN DescendantUnits d ON u.parent_id = d.unit_id
+       WHERE u.is_active = 1
+     ) SELECT DISTINCT unit_id FROM DescendantUnits`,
+    [unitId]
+  );
+  return res.rows.map(r => Number(r.unit_id));
+}
+
+export async function getUnitMembers(unitIds, client = null) {
+  if (!unitIds || unitIds.length === 0) return [];
+  const db = client ? client.query.bind(client) : query;
+  const placeholders = unitIds.map((_, i) => '$' + (i + 1)).join(',');
+  const res = await db(
+    `SELECT DISTINCT l.lecturer_id, l.user_id, l.full_name, l.email, la.unit_id, ou.name AS unit_name
+     FROM app.lecturers l
+     JOIN app.lecturer_assignments la ON la.lecturer_id = l.lecturer_id
+     JOIN app.organization_units ou ON ou.unit_id = la.unit_id
+     WHERE la.unit_id IN (${placeholders})
+       AND l.is_active = 1
+       AND la.valid_from <= SYSUTCDATETIME()
+       AND (la.valid_to IS NULL OR la.valid_to > SYSUTCDATETIME())
+     ORDER BY l.lecturer_id ASC`,
+    unitIds
+  );
+  return res.rows;
+}
+
+export async function getRegulationCriteria(regulationId, client = null) {
+  const db = client ? client.query.bind(client) : query;
+  const res = await db(
+    `SELECT c.criteria_version_id, c.criterion_code AS code, c.name, c.target_type,
+            c.min_threshold, c.unit_metric, c.is_confirmed,
+            c.source_rules, c.source_rules_revision,
+            v.version_id, v.version_number
+     FROM app.award_criteria_versions c
+     JOIN app.regulation_document_versions v ON v.version_id = c.version_id
+     WHERE v.document_id = $1 AND v.is_confirmed = 1
+     ORDER BY c.criteria_version_id ASC`,
+    [regulationId]
+  );
+  if (res.rows.length > 0) return res.rows;
+
+  const fallbackRes = await db(
+    `SELECT c.criteria_version_id, c.criterion_code AS code, c.name, c.target_type,
+            c.min_threshold, c.unit_metric, c.is_confirmed,
+            c.source_rules, c.source_rules_revision,
+            v.version_id, v.version_number
+     FROM app.award_criteria_versions c
+     JOIN app.regulation_document_versions v ON v.version_id = c.version_id
+     WHERE v.document_id = $1
+     ORDER BY v.version_id DESC, c.criteria_version_id ASC`,
+    [regulationId]
+  );
+  return fallbackRes.rows;
+}
+
+export async function getMemberAchievements(lecturerId, client = null) {
+  const db = client ? client.query.bind(client) : query;
+  const achRes = await db(
+    `SELECT a.achievement_id AS id,
+            'ACHIEVEMENT' AS type,
+            a.achievement_type_id AS "sourceTypeId",
+            a.title,
+            a.lecturer_id, a.unit_id,
+            COALESCE(a.recognition_year, YEAR(a.achievement_date)) AS year,
+            a.status,
+            a.replaces_achievement_id AS "replacesRecordId",
+            (SELECT ef.evidence_file_id AS id, ef.sha256_hash AS sha256, ef.original_file_name AS name
+             FROM app.evidences e
+             JOIN app.evidence_files ef ON ef.evidence_id = e.evidence_id
+             WHERE e.achievement_id = a.achievement_id AND e.is_removed = 0 FOR JSON PATH) AS files
+     FROM app.achievements a
+     WHERE a.lecturer_id = $1
+       AND a.status IN ('ACTIVE', 'VERIFIED', 'RECORDED', 'REVOKED', 'CANCELLED')
+       AND a.deleted_at IS NULL`,
+    [lecturerId]
+  );
+
+  const awardRes = await db(
+    `SELECT r.record_id AS id,
+            'AWARD_RECORD' AS type,
+            r.award_type_id AS "sourceTypeId",
+            r.lecturer_id, r.unit_id,
+            r.recognition_year AS year,
+            r.status,
+            r.replaces_award_record_id AS "replacesRecordId"
+     FROM app.award_records r
+     WHERE r.lecturer_id = $1 AND r.status IN ('RECORDED', 'REVOKED')`,
+    [lecturerId]
+  );
+
+  const mapRow = (r, defaultType = 'ACHIEVEMENT') => ({
+    id: Number(r.id),
+    achievementId: Number(r.id),
+    title: r.title || 'Thành tích',
+    type: r.type || defaultType,
+    sourceTypeId: r.sourceTypeId ? Number(r.sourceTypeId) : null,
+    subjectId: Number(r.lecturer_id || lecturerId),
+    year: Number(r.year),
+    status: r.status,
+    replacesRecordId: r.replacesRecordId ? Number(r.replacesRecordId) : null,
+    file: Array.isArray(r.files) && r.files[0] ? r.files[0] : null,
+    evidenceFiles: Array.isArray(r.files) ? r.files : [],
+    hasEvidence: Boolean(Array.isArray(r.files) && r.files.length > 0),
+  });
+
+  return [
+    ...achRes.rows.map(r => mapRow(r, 'ACHIEVEMENT')),
+    ...awardRes.rows.map(r => mapRow(r, 'AWARD_RECORD')),
+  ];
+}
+
+export default {
+  listUnits,
+  findUnit,
+  getCurrentRepresentative,
+  getUnitStats,
+  createUnit,
+  updateUnit,
+  hasDescendant,
+  getDependencyCounts,
+  deleteUnit,
+  appointRepresentative,
+  transferLecturer,
+  getDescendantUnitIds,
+  getUnitMembers,
+  getRegulationCriteria,
+  getMemberAchievements,
+};

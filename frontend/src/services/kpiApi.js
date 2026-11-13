@@ -18,6 +18,7 @@ export const kpiApi = {
   catalogs: () => api('GET', '/catalogs'),
   list: (params, fresh = false) => api('GET', '/goals', undefined, params, fresh),
   create: (data) => api('POST', '/goals', data),
+  createFromAiGap: (data) => api('POST', '/from-ai-gap', data),
   update: (id, data) => api('PATCH', `/goals/${id}`, data),
   remove: (id, version) => api('DELETE', `/goals/${id}`, { version }),
   accept: (id, version) => api('POST', `/goals/${id}/accept`, { version }),

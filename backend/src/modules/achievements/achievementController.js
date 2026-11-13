@@ -1,4 +1,5 @@
 import achievementService from './achievementService.js';
+import achievementAiIngestService from './achievementAiIngestService.js';
 import {
   createAchievementSchema,
   updateAchievementSchema,
@@ -175,7 +176,35 @@ export async function getSubmissions(req, res, next) {
   }
 }
 
+export async function aiExtract(req, res, next) {
+  try {
+    if (!req.file || !req.file.buffer) {
+      return res.status(200).json({
+        success: true,
+        data: null,
+        fallback: true,
+        message: 'Không tìm thấy tệp tin tải lên. Vui lòng tự nhập thông tin.',
+      });
+    }
+
+    const result = await achievementAiIngestService.extractCertificateInfo({
+      buffer: req.file.buffer,
+      mimetype: req.file.mimetype,
+      originalname: req.file.originalname,
+    });
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(200).json({
+      success: true,
+      data: null,
+      fallback: true,
+      message: 'Không thể xử lý tệp tin. Vui lòng tự nhập thông tin vào biểu mẫu.',
+    });
+  }
+}
+
 export default {
+  aiExtract,
   catalogs,
   list,
   getById,

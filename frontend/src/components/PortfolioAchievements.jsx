@@ -6,8 +6,9 @@ import { achievementsApi } from '../services/achievementsApi';
 import PortfolioAchievementDialog from './PortfolioAchievementDialog';
 import { LoadingState } from './common/AsyncState';
 
-const statuses = { DRAFT: 'Bản nháp', UNDER_REVIEW: 'Đang xét duyệt', SUBMITTED: 'Chờ duyệt', NEED_CORRECTION: 'Cần bổ sung', VERIFIED: 'Đã xác nhận', REJECTED: 'Bị từ chối', CANCELLED: 'Đã hủy', REVOKED: 'Đã thu hồi' };
+const statuses = { ACTIVE: 'Sẵn sàng sử dụng', DRAFT: 'Bản nháp', UNDER_REVIEW: 'Đang xét duyệt', SUBMITTED: 'Chờ duyệt', NEED_CORRECTION: 'Cần bổ sung', VERIFIED: 'Đã xác nhận', REJECTED: 'Bị từ chối', CANCELLED: 'Đã hủy', REVOKED: 'Đã thu hồi' };
 const statusStyles = {
+  ACTIVE: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
   DRAFT: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
   SUBMITTED: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300',
   UNDER_REVIEW: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300',

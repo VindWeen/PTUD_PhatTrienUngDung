@@ -364,9 +364,23 @@ function PersonalKpi() {
                       >
                         {g.status === 'DRAFT' ? 'Bản nháp' : 'Đã chấp nhận'}
                       </span>
-                      <span className="text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-700/60 px-2 py-0.5 rounded">
-                        Nguồn: {({MANUAL:'Tự thiết lập',AI:'Gợi ý AI',EXTERNAL:'Đồng bộ',CSV:'Nhập từ tệp'})[g.source] || 'Nguồn bổ sung'}
-                      </span>
+                      {g.source === 'AI_GAP' || g.source === 'AI_GAP_ANALYSIS' ? (
+                        <span className="text-[10px] font-semibold text-purple-700 bg-purple-100 dark:bg-purple-950/50 dark:text-purple-300 px-2.5 py-0.5 rounded-full flex items-center gap-1 border border-purple-200 dark:border-purple-800">
+                          <Sparkles className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                          Lộ trình AI Gap
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-700/60 px-2 py-0.5 rounded">
+                          Nguồn: {({
+                            MANUAL: 'Tự thiết lập',
+                            AI: 'Gợi ý AI',
+                            EXTERNAL: 'Đồng bộ',
+                            CSV: 'Nhập từ tệp',
+                            AI_GAP: 'Lộ trình AI Gap',
+                            SYSTEM: 'Hệ thống',
+                          })[g.source] || 'Nguồn bổ sung'}
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400">

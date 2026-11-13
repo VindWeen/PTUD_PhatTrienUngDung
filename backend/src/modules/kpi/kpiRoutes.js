@@ -49,6 +49,10 @@ router.get(
   handle((req) => service.list(req.user, req.query)),
 );
 router.post(
+  "/kpi/from-ai-gap",
+  handle((req) => service.createFromAiGap(req.user, req.body), 201),
+);
+router.post(
   "/kpi/goals",
   handle((req) => service.create(req.user, req.body), 201),
 );

@@ -94,9 +94,11 @@
   "author": "Tạ Trần Vinh Quang",
   "license": "ISC",
   "dependencies": {
+    "archiver": "^8.0.0",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "docxtemplater": "^3.71.1",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "helmet": "^8.0.0",
@@ -104,10 +106,11 @@
     "morgan": "^1.10.0",
     "mssql": "^12.7.14",
     "multer": "^2.4.0",
+    "pizzip": "^3.3.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "pg": "^8.23.1",
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "pg": "^8.23.1"
   }
 }

@@ -32,6 +32,8 @@ import {
   Lock,
   ShieldCheck,
   AlertTriangle,
+  Sparkles,
+  RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { achievementsApi } from '../services/achievementsApi';
@@ -40,6 +42,10 @@ import { evidencesApi, validateEvidenceFile } from '../services/evidencesApi';
 import { LoadingState, ErrorState, EmptyState } from '../components/common/AsyncState';
 
 const STATUS_BADGES = {
+  ACTIVE: {
+    label: 'Sẵn sàng sử dụng',
+    color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800',
+  },
   DRAFT: { label: 'Bản nháp', color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
   SUBMITTED: { label: 'Chờ duyệt', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
   NEED_CORRECTION: { label: 'Cần bổ sung', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
@@ -55,7 +61,7 @@ export default function Achievements() {
   const userRoles = (user?.roles || []).map((r) => (typeof r === 'string' ? r : r.code));
   const isManager = userRoles.includes('MANAGER');
   const canReview = isManager;
-  const canCreate = userRoles.some(role => ['LECTURER', 'UNIT_REPRESENTATIVE', 'ADMIN'].includes(role));
+  const canCreate = Boolean(user);
 
   const [items, setItems] = useState([]);
   const [trashActionId, setTrashActionId] = useState(null);
@@ -102,14 +108,12 @@ export default function Achievements() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState(null);
 
-  // Workflow Action Modal (W2-Q3)
-  const [actionModalOpen, setActionModalOpen] = useState(false);
-  const [actionType, setActionType] = useState('SUBMIT'); // 'SUBMIT' | 'VERIFY' | 'REQUEST_CORRECTION' | 'REJECT' | 'CANCEL' | 'REVOKE'
-  const [actionNote, setActionNote] = useState('');
-  const [actionSubmitting, setActionSubmitting] = useState(false);
-  const [actionError, setActionError] = useState(null);
-  const [actionConflict, setActionConflict] = useState(false);
-  const [targetAchievement, setTargetAchievement] = useState(null);
+  // AI Vision Certificate OCR Modal States
+  const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [aiFile, setAiFile] = useState(null);
+  const [aiPreview, setAiPreview] = useState(null);
+  const [aiScanning, setAiScanning] = useState(false);
+  const [aiNotice, setAiNotice] = useState(null);
 
   // Form Fields
   const [formData, setFormData] = useState({
@@ -169,19 +173,10 @@ export default function Achievements() {
           }
         } catch (err) { if (active) setError(err); }
       }
-      if (actionModalOpen && targetAchievement?.achievementId) {
-        try {
-          const target = await achievementsApi.getById(targetAchievement.achievementId, true);
-          if (active && String(target.version) !== String(targetAchievement.version)) {
-            setActionConflict(true);
-            setActionError('Hồ sơ vừa được cập nhật. Đóng hộp thao tác và chọn lại thao tác từ trạng thái mới.');
-          }
-        } catch (err) { if (active) setActionError(err.message); }
-      }
     };
     window.addEventListener('workflow-updated', refresh);
     return () => { active = false; window.removeEventListener('workflow-updated', refresh); };
-  }, [loadData, detailModalOpen, selectedAchievement?.achievementId, actionModalOpen, targetAchievement?.achievementId, targetAchievement?.version]);
+  }, [loadData, detailModalOpen, selectedAchievement?.achievementId]);
 
   // Load danh mục loại thành tích và tổ chức
   useEffect(() => {
@@ -316,65 +311,109 @@ export default function Achievements() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeParams]);
 
-  const openActionModal = (ach, type) => {
-    setTargetAchievement(ach);
-    setActionType(type);
-    setActionNote('');
-    setActionError(null);
-    setActionConflict(false);
-    setActionModalOpen(true);
+  const handleAiFileSelect = (file) => {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Tệp vượt quá dung lượng 10MB cho phép.');
+      return;
+    }
+    const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    if (!['.jpg', '.jpeg', '.png', '.pdf'].includes(ext)) {
+      alert('Chỉ hỗ trợ tệp định dạng JPG, PNG hoặc PDF.');
+      return;
+    }
+    setAiFile(file);
+    if (file.type.startsWith('image/')) {
+      setAiPreview(URL.createObjectURL(file));
+    } else {
+      setAiPreview(null);
+    }
   };
 
-  const handleExecuteAction = async (e) => {
-    e.preventDefault();
-    if (!targetAchievement) return;
-    setActionSubmitting(true);
-    setActionError(null);
-
+  const handleAiExtract = async () => {
+    if (!aiFile) return;
+    setAiScanning(true);
+    const fileToKeep = aiFile;
     try {
-      const payload = { version: targetAchievement.version };
-      if (['REQUEST_CORRECTION', 'REJECT', 'CANCEL', 'REVOKE'].includes(actionType)) {
-        if (actionNote.trim().length < 5) {
-          throw new Error('Vui lòng nhập lý do thực hiện thao tác, ít nhất 5 ký tự.');
+      const res = await achievementsApi.aiExtract(aiFile);
+      if (res?.fallback || !res?.data) {
+        setAiModalOpen(false);
+        openCreateModal();
+        setPendingEvidences([
+          {
+            id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()),
+            file: fileToKeep,
+            title: fileToKeep.name.replace(/\.[^/.]+$/, '').slice(0, 255),
+            description: 'Minh chứng tệp đính kèm (AI Fallback)',
+          },
+        ]);
+        setAiNotice({
+          type: 'info',
+          message: res?.message || 'Trợ lý AI chưa trích xuất được đủ thông tin từ tài liệu. Tệp đã được đính kèm vào minh chứng, vui lòng tự điền thông tin vào biểu mẫu.',
+        });
+      } else {
+        const extracted = res.data;
+        setAiModalOpen(false);
+        openCreateModal();
+
+        let matchedTypeId = types[0]?.achievement_type_id || '';
+        if (extracted.category === 'SCIENTIFIC_RESEARCH' || extracted.category === 'RESEARCH') {
+          const found = types.find(t => /RESEARCH|NCKH|JOURNAL|PATENT/i.test(t.code || t.name));
+          if (found) matchedTypeId = found.achievement_type_id;
+        } else if (extracted.category === 'TEACHING') {
+          const found = types.find(t => /TEACH|CURRICULUM|GIANG_DAY/i.test(t.code || t.name));
+          if (found) matchedTypeId = found.achievement_type_id;
         }
-        payload.reason = actionNote.trim();
-      } else if (actionType === 'SUBMIT') {
-        payload.submitNote = actionNote.trim() || undefined;
-      } else if (actionType === 'VERIFY') {
-        payload.note = actionNote.trim() || undefined;
-      }
 
-      if (actionType === 'SUBMIT') {
-        await achievementsApi.submit(targetAchievement.achievementId, payload);
-      } else if (actionType === 'VERIFY') {
-        await achievementsApi.verify(targetAchievement.achievementId, payload);
-      } else if (actionType === 'REQUEST_CORRECTION') {
-        await achievementsApi.requestCorrection(targetAchievement.achievementId, payload);
-      } else if (actionType === 'REJECT') {
-        await achievementsApi.reject(targetAchievement.achievementId, payload);
-      } else if (actionType === 'CANCEL') {
-        await achievementsApi.cancel(targetAchievement.achievementId, payload);
-      } else if (actionType === 'REVOKE') {
-        await achievementsApi.revoke(targetAchievement.achievementId, payload);
-      }
+        setFormData(prev => ({
+          ...prev,
+          title: extracted.title || prev.title,
+          recognitionYear: extracted.recognitionYear || prev.recognitionYear,
+          startDate: extracted.issueDate || prev.startDate,
+          endDate: extracted.issueDate || prev.endDate,
+          contributionRole: (extracted.category === 'SCIENTIFIC_RESEARCH' || extracted.category === 'RESEARCH') ? 'Tác giả' : prev.contributionRole,
+          description: [
+            extracted.issuer ? `Đơn vị cấp: ${extracted.issuer}` : null,
+            extracted.decisionNumber ? `Số quyết định: ${extracted.decisionNumber}` : null,
+          ].filter(Boolean).join('\n') || prev.description,
+          achievementTypeId: matchedTypeId,
+        }));
 
-      setActionModalOpen(false);
-      await loadData();
-      if (detailModalOpen && selectedAchievement?.achievementId === targetAchievement.achievementId) {
-        const refreshed = await achievementsApi.getById(targetAchievement.achievementId);
-        setSelectedAchievement(refreshed);
-        loadHistoryAndSubmissions(targetAchievement.achievementId);
+        setPendingEvidences([
+          {
+            id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()),
+            file: fileToKeep,
+            title: extracted.title || fileToKeep.name.slice(0, 255),
+            description: `Minh chứng trích xuất từ AI Vision (Số QĐ: ${extracted.decisionNumber || '—'})`,
+          },
+        ]);
+
+        setAiNotice({
+          type: 'success',
+          message: '✨ AI Vision đã trích xuất thành công thông tin bằng khen! Tệp chứng nhận đã được tự động thêm vào danh sách minh chứng.',
+        });
       }
     } catch (err) {
-      const msg = err.response?.data?.error?.message || err.message || 'Thao tác không thành công';
-      setActionError(msg);
-      if (err.status === 409) {
-        setActionConflict(true);
-        setActionError(`${msg} Đóng hộp thao tác và chọn lại hồ sơ sau khi danh sách được cập nhật.`);
-        await loadData();
+      setAiModalOpen(false);
+      openCreateModal();
+      if (fileToKeep) {
+        setPendingEvidences([
+          {
+            id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()),
+            file: fileToKeep,
+            title: fileToKeep.name.replace(/\.[^/.]+$/, '').slice(0, 255),
+            description: 'Minh chứng tệp đính kèm (AI Fallback)',
+          },
+        ]);
       }
+      setAiNotice({
+        type: 'info',
+        message: 'Dịch vụ AI Vision tạm thời gián đoạn. Tệp đã được lưu vào minh chứng, vui lòng tự nhập các thông tin để tiếp tục.',
+      });
     } finally {
-      setActionSubmitting(false);
+      setAiScanning(false);
+      setAiFile(null);
+      setAiPreview(null);
     }
   };
 
@@ -555,23 +594,11 @@ export default function Achievements() {
 
     const actions = [
       { key: 'edit', label: 'Chỉnh sửa', icon: Edit2, run: () => openEditModal(ach) },
-      { key: 'submit', label: 'Nộp thẩm định', icon: Send, run: () => openActionModal(ach, 'SUBMIT') },
-      { key: 'cancel', label: 'Rút hồ sơ', icon: RotateCcw, run: () => openActionModal(ach, 'CANCEL') },
-      { key: 'review', label: 'Xác nhận', icon: Check, run: () => openActionModal(ach, 'VERIFY') },
-      { key: 'review', label: 'Yêu cầu bổ sung', icon: AlertCircle, run: () => openActionModal(ach, 'REQUEST_CORRECTION') },
-      { key: 'review', label: 'Từ chối', icon: X, run: () => openActionModal(ach, 'REJECT') },
-      { key: 'revoke', label: 'Thu hồi xác nhận', icon: ShieldAlert, run: () => openActionModal(ach, 'REVOKE') },
-      { key: 'replace', label: 'Tạo bản thay thế', icon: RotateCcw, run: () => handleCreateReplacement(ach) },
-      { key: 'remove', label: 'Xóa bản nháp', icon: Trash2, run: () => handleDelete(ach) },
-    ].filter(action => canAct(ach, action.key));
+      { key: 'remove', label: 'Xóa', icon: Trash2, run: () => handleDelete(ach) },
+    ].filter(action => canAct(ach, action.key) || isSelf(ach));
     const tones = {
       'Xem chi tiết': 'border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-950 dark:text-teal-300',
       'Chỉnh sửa': 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300',
-      'Nộp thẩm định': 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950 dark:text-indigo-300',
-      'Xác nhận': 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
-      'Rút hồ sơ': 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300',
-      'Yêu cầu bổ sung': 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300',
-      'Tạo bản thay thế': 'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-300',
     };
     const dangerTone = 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-300';
     return <div className="flex flex-wrap items-center gap-1.5">
@@ -581,14 +608,42 @@ export default function Achievements() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Thành tích" description="Kê khai, theo dõi và quản lý thành tích cá nhân và tập thể." icon={Award} onRefresh={loadData} refreshing={loading} secondaryActions={<button type="button" aria-pressed={activeTab === 'TRASH'} onClick={() => { setActiveTab(activeTab === 'TRASH' ? (canReview ? 'PENDING' : 'ACTIONABLE') : 'TRASH'); setPagination(prev => ({ ...prev, page: 1 })); }} className="soft-btn-secondary h-11 text-sm"><Trash2 className="h-4 w-4" />Thùng rác</button>} primaryAction={canCreate ? {label: 'Kê khai Thành tích', onClick: openCreateModal, disabled: catalogLoading || !types.length} : null} tabs={<UnderlineTabs label="Danh sách thành tích" value={activeTab} onChange={tab => { setActiveTab(tab); setPagination(prev => ({ ...prev, page: 1 })); }} items={[
-        {id: 'ACTIONABLE', label: 'Cần hoàn thiện', icon: Edit2},
-        {id: 'PENDING', label: canReview ? 'Chờ thẩm định' : 'Đang xét', icon: Clock},
-        {id: 'VERIFIED', label: 'Đã xác nhận', icon: CheckCircle2},
-        {id: 'ENDED', label: 'Từ chối / Thu hồi / Hủy', icon: ShieldAlert},
-        {id: 'ALL', label: 'Tất cả', icon: Award},
-        ...(activeTab === 'TRASH' ? [{id: 'TRASH', label: 'Thùng rác', icon: Trash2}] : []),
-      ]} />} />
+      <PageHeader
+        title="Kho Thành tích Cá nhân"
+        description="Kê khai, theo dõi và quản lý thành tích trong Kho số cá nhân (ACTIVE) sẵn sàng tham gia thẩm định và xuất CV."
+        icon={Award}
+        onRefresh={loadData}
+        refreshing={loading}
+        secondaryActions={
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setAiModalOpen(true)}
+              disabled={catalogLoading || !types.length}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/60 dark:text-teal-300 dark:hover:bg-teal-900 border border-teal-200 dark:border-teal-800 transition shadow-soft-sm"
+            >
+              <Sparkles className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+              <span>✨ Quét AI Bằng khen</span>
+            </button>
+            <button
+              type="button"
+              aria-pressed={activeTab === 'TRASH'}
+              onClick={() => { setActiveTab(activeTab === 'TRASH' ? 'ALL' : 'TRASH'); setPagination(prev => ({ ...prev, page: 1 })); }}
+              className="soft-btn-secondary h-11 text-sm"
+            >
+              <Trash2 className="h-4 w-4" />Thùng rác
+            </button>
+          </div>
+        }
+        primaryAction={canCreate ? {label: 'Kê khai Thành tích', onClick: openCreateModal, disabled: catalogLoading || !types.length} : null}
+        tabs={<UnderlineTabs label="Danh sách thành tích" value={activeTab} onChange={tab => { setActiveTab(tab); setPagination(prev => ({ ...prev, page: 1 })); }} items={[
+          {id: 'ALL', label: 'Kho thành tích (Tất cả)', icon: Award},
+          {id: 'ACTIONABLE', label: 'Cần hoàn thiện', icon: Edit2},
+          {id: 'VERIFIED', label: 'Đã xác nhận', icon: CheckCircle2},
+          {id: 'ENDED', label: 'Từ chối / Thu hồi / Hủy', icon: ShieldAlert},
+          ...(activeTab === 'TRASH' ? [{id: 'TRASH', label: 'Thùng rác', icon: Trash2}] : []),
+        ]} />}
+      />
 
       {activeTab === 'TRASH' && <p className="text-sm text-slate-600 dark:text-slate-300">Bản nháp được giữ trong 30 ngày kể từ lúc xóa. Khôi phục trước hạn để tiếp tục chỉnh sửa; sau hạn, hệ thống tự động xóa vĩnh viễn.</p>}
       {catalogError && <ErrorState error={catalogError} onRetry={() => setCatalogRetry(value => value + 1)} />}
@@ -755,7 +810,7 @@ export default function Achievements() {
             <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-700">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Award className="w-5 h-5 text-teal-600" />
-                <span>{isEditing ? 'Chỉnh sửa Bản nháp Thành tích' : 'Kê khai Thành tích Mới (Bản nháp)'}</span>
+                <span>{isEditing ? 'Chỉnh sửa Thành tích' : 'Kê khai Thành tích vào Kho'}</span>
               </h2>
               <button
                 disabled={formSubmitting || evidenceSubmitting}
@@ -765,6 +820,22 @@ export default function Achievements() {
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {aiNotice && (
+              <div className={`mt-4 p-3 rounded-xl text-xs flex items-center justify-between gap-2 border ${
+                aiNotice.type === 'success'
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+                  : 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
+              }`}>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 flex-shrink-0 text-teal-600 dark:text-teal-400" />
+                  <span>{aiNotice.message}</span>
+                </div>
+                <button type="button" onClick={() => setAiNotice(null)} className="p-1 hover:opacity-75">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
 
             {formError && (
               <div className="mt-4 p-3 rounded-xl bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 text-xs flex items-center gap-2 border border-rose-200 dark:border-rose-900">
@@ -981,7 +1052,7 @@ export default function Achievements() {
                   disabled={formSubmitting}
                   className="px-5 py-2.5 rounded-xl bg-[#008080] hover:bg-[#006666] text-white font-medium transition disabled:opacity-50 flex items-center gap-2"
                 >
-                  {formSubmitting ? 'Đang lưu...' : isEditing ? 'Cập nhật bản nháp' : 'Lưu bản nháp'}
+                  {formSubmitting ? 'Đang lưu...' : isEditing ? 'Cập nhật thành tích' : 'Lưu vào Kho Thành tích'}
                 </button>
               </div>
               </fieldset>
@@ -1046,59 +1117,10 @@ export default function Achievements() {
                 </div>
               )}
 
-              {selectedAchievement.status === 'SUBMITTED' && isSelf(selectedAchievement) && (
-                <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800 text-xs flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <ShieldAlert className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                    <span><strong>Quy chế Liêm chính:</strong> Bạn là người kê khai/chủ hồ sơ này, bạn không được tự thẩm định (Anti-self-approval).</span>
-                  </div>
-                  {canAct(selectedAchievement, 'cancel') && <button
-                    onClick={() => openActionModal(selectedAchievement, 'CANCEL')}
-                    className="px-3 py-1 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium flex items-center gap-1 flex-shrink-0 shadow-soft-sm"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" /> Hủy nộp
-                  </button>}
-                </div>
-              )}
-
-              {canAct(selectedAchievement, 'review') && (
-                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Thao tác thẩm định:</span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => openActionModal(selectedAchievement, 'VERIFY')}
-                      className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium flex items-center gap-1.5 shadow-soft-sm"
-                    >
-                      <Check className="w-3.5 h-3.5" /> Xác nhận (VERIFY)
-                    </button>
-                    <button
-                      onClick={() => openActionModal(selectedAchievement, 'REQUEST_CORRECTION')}
-                      className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium flex items-center gap-1.5 shadow-soft-sm"
-                    >
-                      <AlertCircle className="w-3.5 h-3.5" /> Yêu cầu bổ sung
-                    </button>
-                    <button
-                      onClick={() => openActionModal(selectedAchievement, 'REJECT')}
-                      className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium flex items-center gap-1.5 shadow-soft-sm"
-                    >
-                      <X className="w-3.5 h-3.5" /> Từ chối
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {canAct(selectedAchievement, 'replace') && (
-                <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800 text-xs flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <RotateCcw className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-                    <span>Hồ sơ đã kết thúc ({selectedAchievement.status}). Bạn có thể tạo bản kê khai mới thay thế có liên kết.</span>
-                  </div>
-                  <button
-                    onClick={() => handleCreateReplacement(selectedAchievement)}
-                    className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium flex items-center gap-1.5 flex-shrink-0 shadow-soft-sm"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Tạo bản thay thế
-                  </button>
+              {selectedAchievement.status === 'ACTIVE' && (
+                <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 text-xs flex items-center gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <span>Thành tích trong Kho cá nhân đã có hiệu lực (ACTIVE), sẵn sàng để đối soát quy chế và hiển thị trên CV.</span>
                 </div>
               )}
 
@@ -1110,14 +1132,10 @@ export default function Achievements() {
               )}
             </div>
 
-            {/* Modal Detail Tabs */}
+            {/* Modal Detail Actions */}
             <div className="mt-4 flex flex-wrap items-center gap-2">
               {canAct(selectedAchievement, 'edit') && <button type="button" onClick={() => openEditModal(selectedAchievement)} className="px-3 py-2 rounded-xl bg-blue-50 text-blue-700 text-xs font-medium">Sửa hồ sơ</button>}
-              {canAct(selectedAchievement, 'submit') && <button type="button" disabled={evidencesLoading || evidenceSubmitting || Boolean(evidenceError) || !evidences.some(ev => ev.latestFileId)} onClick={() => openActionModal(selectedAchievement, 'SUBMIT')} className="px-3 py-2 rounded-xl bg-teal-600 text-white text-xs font-medium disabled:opacity-50">{selectedAchievement.status === 'NEED_CORRECTION' ? 'Gửi lại hồ sơ' : 'Nộp duyệt hồ sơ'}</button>}
-              {canAct(selectedAchievement, 'cancel') && !(selectedAchievement.status === 'SUBMITTED' && isSelf(selectedAchievement)) && <button type="button" onClick={() => openActionModal(selectedAchievement, 'CANCEL')} className="px-3 py-2 rounded-xl bg-amber-50 text-amber-700 text-xs font-medium">Hủy hồ sơ</button>}
-              {canAct(selectedAchievement, 'revoke') && <button type="button" onClick={() => openActionModal(selectedAchievement, 'REVOKE')} className="px-3 py-2 rounded-xl bg-purple-50 text-purple-700 text-xs font-medium">Thu hồi xác nhận</button>}
             </div>
-            {canAct(selectedAchievement, 'submit') && !evidencesLoading && !evidences.some(ev => ev.latestFileId) && <p className="mt-2 text-xs text-amber-700">Thêm ít nhất một tệp minh chứng trước khi nộp duyệt.</p>}
             {historyError && <div role="alert" className="mt-3 text-sm text-rose-700">{historyError} <button type="button" onClick={() => loadHistoryAndSubmissions(selectedAchievement.achievementId)} className="underline">Thử lại</button></div>}
             <div className="mt-4"><UnderlineTabs label="Chi tiết thành tích" value={detailTab} onChange={setDetailTab} items={[
               {id: 'INFO', label: 'Thông tin & Minh chứng', icon: FileText},
@@ -1506,119 +1524,110 @@ export default function Achievements() {
         </div>
       )}
 
-      {/* 6. Modal Thao tác luồng thẩm định (W2-Q3) */}
-      {actionModalOpen && targetAchievement && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+      {/* 6. Modal AI Vision Certificate OCR */}
+      {aiModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-3xl p-6 sm:p-7 shadow-soft-2xl border border-slate-200/80 dark:border-slate-700/80">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
               <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                {actionType === 'SUBMIT' && <Send className="w-5 h-5 text-teal-600" />}
-                {actionType === 'VERIFY' && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
-                {actionType === 'REQUEST_CORRECTION' && <AlertCircle className="w-5 h-5 text-amber-600" />}
-                {actionType === 'REJECT' && <X className="w-5 h-5 text-rose-600" />}
-                {actionType === 'CANCEL' && <RotateCcw className="w-5 h-5 text-amber-600" />}
-                {actionType === 'REVOKE' && <ShieldAlert className="w-5 h-5 text-purple-600" />}
-                <span>
-                  {actionType === 'SUBMIT' && 'Nộp hồ sơ thành tích thẩm định'}
-                  {actionType === 'VERIFY' && 'Xác nhận & Phê duyệt thành tích'}
-                  {actionType === 'REQUEST_CORRECTION' && 'Yêu cầu sửa đổi bổ sung'}
-                  {actionType === 'REJECT' && 'Từ chối thành tích'}
-                  {actionType === 'CANCEL' && 'Hủy yêu cầu nộp hồ sơ'}
-                  {actionType === 'REVOKE' && 'Thu hồi quyết định xác nhận (Admin)'}
-                </span>
+                <Sparkles className="w-5 h-5 text-teal-600" />
+                <span>✨ Quét AI Bằng khen & Chứng chỉ</span>
               </h2>
               <button
-                onClick={() => setActionModalOpen(false)}
+                onClick={() => { setAiModalOpen(false); setAiFile(null); setAiPreview(null); }}
                 className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {actionError && (
-              <div className="mt-3 p-3 rounded-xl bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 text-xs flex items-center gap-2 border border-rose-200 dark:border-rose-900">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                <span>{actionError}</span>
-              </div>
-            )}
+            <div className="mt-4 space-y-4">
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                Tải lên ảnh chụp hoặc tệp PDF bằng khen, chứng chỉ. AI Vision sẽ tự động phân tích và điền tiêu đề, năm công nhận, ngày cấp, đơn vị cấp và số quyết định. Tệp sẽ được tự động đính kèm vào minh chứng.
+              </p>
 
-            <form onSubmit={handleExecuteAction} className="mt-4 space-y-4 text-xs">
-              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-700/80 space-y-1">
-                <div className="font-semibold text-slate-900 dark:text-white text-sm line-clamp-1">
-                  {targetAchievement.title}
-                </div>
-                <div className="text-slate-500 dark:text-slate-400 flex items-center gap-3">
-                  <span>Mã: #{targetAchievement.achievementId}</span>
-                  <span>Phiên bản: <strong>v{targetAchievement.version}</strong></span>
-                  <span>Trạng thái: <strong>{targetAchievement.status}</strong></span>
-                </div>
-              </div>
-
-              {actionType === 'SUBMIT' && (
-                <div className="p-3 rounded-xl bg-teal-50 dark:bg-teal-950/30 text-teal-800 dark:text-teal-300 border border-teal-200/80 dark:border-teal-900/40">
-                  <p>Hồ sơ sẽ được tạo một snapshot bất biến đóng băng phiên bản tệp minh chứng và chuyển sang trạng thái <strong>SUBMITTED</strong> chờ cấp quản lý thẩm định.</p>
-                </div>
-              )}
-
-              {actionType === 'VERIFY' && (
-                <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-900/40">
-                  <p>Hồ sơ sẽ chuyển sang trạng thái <strong>VERIFIED</strong>. Mọi chỉnh sửa nội dung và thay thế tệp minh chứng sẽ được khóa vĩnh viễn (Immutability).</p>
-                </div>
-              )}
-
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                  {['REQUEST_CORRECTION', 'REJECT', 'CANCEL', 'REVOKE'].includes(actionType) ? (
-                    <>Lý do thực hiện <span className="text-rose-500">*</span></>
-                  ) : (
-                    <>Ghi chú đính kèm (tùy chọn)</>
-                  )}
+              {!aiFile ? (
+                <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-teal-300 dark:border-teal-700 rounded-2xl bg-teal-50/50 dark:bg-teal-950/20 cursor-pointer hover:bg-teal-50 dark:hover:bg-teal-950/40 transition">
+                  <UploadCloud className="w-10 h-10 text-teal-600 dark:text-teal-400 mb-2" />
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Kéo thả hoặc chọn tệp bằng khen</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">Hỗ trợ JPG, PNG hoặc PDF (Tối đa 10 MB)</span>
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    className="sr-only"
+                    onChange={(e) => handleAiFileSelect(e.target.files?.[0])}
+                  />
                 </label>
-                <textarea
-                  rows={3}
-                  required={['REQUEST_CORRECTION', 'REJECT', 'CANCEL', 'REVOKE'].includes(actionType)}
-                  placeholder={
-                    actionType === 'REQUEST_CORRECTION'
-                      ? 'Nêu rõ tài liệu, thông tin cần bổ sung hoặc sửa chữa...'
-                      : actionType === 'REJECT'
-                      ? 'Nêu rõ căn cứ từ chối hồ sơ...'
-                      : actionType === 'CANCEL'
-                      ? 'Lý do rút lại hồ sơ...'
-                      : actionType === 'REVOKE'
-                      ? 'Căn cứ quyết định thu hồi...'
-                      : 'Nhập ghi chú (nếu có)...'
-                  }
-                  value={actionNote}
-                  onChange={(e) => setActionNote(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white resize-none text-xs"
-                />
-              </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3">
+                    {aiPreview ? (
+                      <div className="relative max-h-48 overflow-hidden rounded-xl flex items-center justify-center bg-black/5">
+                        <img src={aiPreview} alt="Xem trước bằng khen" className="object-contain max-h-48 rounded-lg" />
+                        {aiScanning && (
+                          <div className="absolute inset-0 bg-teal-950/50 backdrop-blur-[2px] flex flex-col items-center justify-center text-white">
+                            <div className="relative w-full h-1 bg-teal-400/80 animate-pulse mb-3" />
+                            <RefreshCw className="w-8 h-8 animate-spin text-teal-300 mb-2" />
+                            <span className="text-xs font-semibold tracking-wide">AI Vision đang quét tài liệu...</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3 p-2">
+                        <FileText className="w-8 h-8 text-teal-600" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-slate-800 dark:text-white truncate">{aiFile.name}</p>
+                          <p className="text-[11px] text-slate-500">{(aiFile.size / 1024).toFixed(1)} KB</p>
+                        </div>
+                        {aiScanning && <RefreshCw className="w-5 h-5 animate-spin text-teal-600" />}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span>Tệp đã chọn: <strong>{aiFile.name}</strong></span>
+                    {!aiScanning && (
+                      <button
+                        type="button"
+                        onClick={() => { setAiFile(null); setAiPreview(null); }}
+                        className="text-rose-500 hover:underline"
+                      >
+                        Chọn tệp khác
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-200 dark:border-slate-700">
                 <button
                   type="button"
-                  onClick={() => setActionModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+                  disabled={aiScanning}
+                  onClick={() => { setAiModalOpen(false); setAiFile(null); setAiPreview(null); }}
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition text-xs"
                 >
                   Hủy
                 </button>
                 <button
-                  type="submit"
-                  disabled={actionSubmitting || actionConflict}
-                  className={`px-4 py-2 rounded-xl font-medium text-white transition disabled:opacity-50 flex items-center gap-1.5 shadow-soft-sm ${
-                    actionType === 'VERIFY'
-                      ? 'bg-emerald-600 hover:bg-emerald-700'
-                      : actionType === 'REJECT' || actionType === 'REVOKE'
-                      ? 'bg-rose-600 hover:bg-rose-700'
-                      : actionType === 'REQUEST_CORRECTION' || actionType === 'CANCEL'
-                      ? 'bg-amber-600 hover:bg-amber-700'
-                      : 'bg-[#008080] hover:bg-[#006666]'
-                  }`}
+                  type="button"
+                  disabled={!aiFile || aiScanning}
+                  onClick={handleAiExtract}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-medium text-xs transition disabled:opacity-50 flex items-center gap-1.5 shadow-soft-sm"
                 >
-                  {actionSubmitting ? 'Đang xử lý...' : 'Xác nhận thực hiện'}
+                  {aiScanning ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Đang quét AI...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Bắt đầu quét bằng AI Vision</span>
+                    </>
+                  )}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
