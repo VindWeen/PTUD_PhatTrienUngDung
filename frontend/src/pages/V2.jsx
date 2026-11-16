@@ -1105,10 +1105,10 @@ export function Achievements() {
     <div className="flex items-center gap-2">
       <Link 
         to="/reports" 
-        className="soft-btn-secondary inline-flex items-center gap-1.5 text-xs font-bold"
+        className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border border-teal-600/40 text-teal-800 dark:text-teal-200 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/60 hover:border-teal-600 shadow-sm transition-all"
         title="Xem thống kê phân bố thành tích theo năm và loại"
       >
-        <BarChart3 size={15} />
+        <BarChart3 size={16} className="text-teal-600 dark:text-teal-400" />
         <span>Thống kê & Báo cáo</span>
       </Link>
       <button type="button" className={button} onClick={() => begin()}>
@@ -1428,9 +1428,9 @@ export function Discovery() {
   const pageActions = (
     <Link 
       to="/regulations" 
-      className="soft-btn-secondary inline-flex items-center gap-1.5 text-xs font-bold"
+      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border border-teal-600/40 text-teal-800 dark:text-teal-200 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/60 hover:border-teal-600 shadow-sm transition-all"
     >
-      <BookOpen size={15} />
+      <BookOpen size={16} className="text-teal-600 dark:text-teal-400" />
       <span>Tra cứu kho quy chế</span>
     </Link>
   );
@@ -1550,28 +1550,42 @@ export function Discovery() {
         })}
 
         {/* Card 1: Thiết lập nhanh */}
-        <section className={`${panel} vault-discovery-settings`}>
-          <div>
-            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Thiết lập thời điểm khám</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Chọn mốc thời gian để hệ thống kiểm tra các quy chế có hiệu lực tại thời điểm đó.</p>
+        <section className={panel}>
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+            <div className="max-w-md">
+              <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <Sparkles size={18} className="text-teal-600 dark:text-teal-400" />
+                Thiết lập thời điểm khám
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                Chọn mốc thời gian để hệ thống kiểm tra các quy chế có hiệu lực tại thời điểm đó.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap sm:flex-nowrap items-end gap-3">
+              <div className="min-w-[170px]">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Thời điểm đối chiếu
+                </label>
+                <input 
+                  type="date" 
+                  required 
+                  className={input} 
+                  value={evaluationDate} 
+                  onChange={e => setEvaluationDate(e.target.value || localDay())} 
+                />
+              </div>
+              <button 
+                type="button"
+                className="soft-btn-primary inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold whitespace-nowrap shadow-sm" 
+                disabled={!versions.length || busy} 
+                onClick={() => evaluate(null)}
+              >
+                <Sparkles size={15} />
+                <span>{busy ? 'Đang khám hồ sơ…' : 'Quét tự động tất cả'}</span>
+              </button>
+            </div>
           </div>
-          <Field label="Thời điểm đối chiếu">
-            <input 
-              type="date" 
-              required 
-              className={input} 
-              value={evaluationDate} 
-              onChange={e => setEvaluationDate(e.target.value || localDay())} 
-            />
-          </Field>
-          <button 
-            className="soft-btn-primary inline-flex items-center gap-1.5" 
-            disabled={!versions.length || busy} 
-            onClick={() => evaluate(null)}
-          >
-            <Sparkles size={16} />
-            <span>{busy ? 'Đang khám hồ sơ…' : 'Quét tự động tất cả quy chế phù hợp'}</span>
-          </button>
         </section>
 
         {/* Card 2: Quy chế đang áp dụng */}
@@ -2127,8 +2141,13 @@ function RegulationCard({ doc, version, onEvaluate, busy }) {
         {details.loading ? 'Đang tải tiêu chí…' : details.error ? 'Không tải được số tiêu chí' : `${details.data?.groups?.length || 0} nhóm · ${details.data?.criteria?.length || 0} tiêu chí`}
       </p>
       <div className="vault-card-actions">
-        <button type="button" className={secondary} onClick={() => setOpen(true)}>
-          Xem chi tiết tiêu chí
+        <button 
+          type="button" 
+          className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-teal-600 hover:text-teal-700 dark:hover:text-teal-300 shadow-sm transition-all" 
+          onClick={() => setOpen(true)}
+        >
+          <Eye size={14} className="text-teal-600 dark:text-teal-400" />
+          <span>Xem chi tiết tiêu chí</span>
         </button>
         {onEvaluate ? (
           <button type="button" className={button} disabled={busy} onClick={() => onEvaluate(version.id)}>

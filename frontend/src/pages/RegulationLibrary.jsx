@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { request } from '../services/request';
 import { useAuth } from '../context/AuthContext';
@@ -446,6 +446,51 @@ function Editor({ doc, versionId, organizations, catalog, refresh, action, onClo
   );
 }
 
+function VaultModal({ open, onClose, title, subtitle, maxWidth = "max-w-4xl", children }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const dialog = ref.current;
+    if (!dialog) return;
+    if (open && !dialog.open) {
+      dialog.showModal();
+    } else if (!open && dialog.open) {
+      dialog.close();
+    }
+  }, [open]);
+
+  if (!open) return null;
+
+  return (
+    <dialog
+      ref={ref}
+      className={`vault-modal ${maxWidth} w-[94vw] max-h-[90vh] overflow-y-auto`}
+      aria-label={typeof title === 'string' ? title : 'Hộp thoại'}
+      onCancel={onClose}
+      onClose={onClose}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="vault-modal-heading sticky top-0 bg-white dark:bg-slate-800 z-10 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between p-4 sm:p-5">
+        <div>
+          <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100">{title}</h2>
+          {subtitle && <p className="text-xs text-slate-400 font-mono mt-0.5">{subtitle}</p>}
+        </div>
+        <button
+          type="button"
+          className="soft-btn-secondary text-xs px-3 py-1.5 inline-flex items-center gap-1 font-bold rounded-xl"
+          onClick={onClose}
+          aria-label="Đóng"
+        >
+          <X size={16} /> Đóng
+        </button>
+      </div>
+      <div className="vault-modal-body p-4 sm:p-6 space-y-6">
+        {children}
+      </div>
+    </dialog>
+  );
+}
+
 /**
  * Trang Kho quy chế chính
  */
@@ -798,27 +843,15 @@ export default function RegulationLibrary() {
         </section>
 
         {/* MODAL / INSPECTOR CHI TIẾT QUY CHẾ */}
-        {selectedDoc && (
-          <dialog 
-            open 
-            className="vault-modal max-w-4xl w-[94vw] max-h-[90vh] overflow-y-auto"
-            onCancel={() => setSelected(null)}
-          >
-            <div className="vault-modal-heading sticky top-0 bg-white dark:bg-slate-800 z-10">
-              <div>
-                <h2>{selectedDoc.name}</h2>
-                <p className="text-xs text-slate-400 font-mono mt-0.5">{selectedDoc.code} · {selectedDoc.owner_type === 'PERSONAL' ? 'Quy chế cá nhân' : name(selectedDoc.owner_organization_id)}</p>
-              </div>
-              <button 
-                type="button" 
-                className="soft-btn-secondary text-xs px-3 py-1.5 inline-flex items-center gap-1 font-bold" 
-                onClick={() => setSelected(null)}
-              >
-                <X size={16} /> Đóng
-              </button>
-            </div>
-
-            <div className="vault-modal-body space-y-6">
+        <VaultModal
+          open={Boolean(selectedDoc)}
+          onClose={() => setSelected(null)}
+          title={selectedDoc?.name || ''}
+          subtitle={selectedDoc ? `${selectedDoc.code} · ${selectedDoc.owner_type === 'PERSONAL' ? 'Quy chế cá nhân' : name(selectedDoc.owner_organization_id)}` : ''}
+          maxWidth="max-w-4xl"
+        >
+          {selectedDoc && (
+            <div className="space-y-6">
               {/* Chọn phiên bản & Nút tạo bản nháp */}
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-wrap items-end justify-between gap-3">
                 <div className="flex-1 min-w-[220px]">
@@ -863,84 +896,78 @@ export default function RegulationLibrary() {
                 </div>
               )}
             </div>
-          </dialog>
-        )}
+          )}
+        </VaultModal>
 
         {/* MODAL: TẠO PHIÊN BẢN NHÁP MỚI */}
-        {creatingVersion && selectedDoc && (
-          <dialog open className="vault-modal max-w-2xl w-[90vw] max-h-[85vh] overflow-y-auto">
-            <div className="vault-modal-heading sticky top-0 bg-white dark:bg-slate-800 z-10">
-              <h2>Tạo phiên bản nháp cho: {selectedDoc.name}</h2>
-              <button type="button" className="soft-btn-secondary" onClick={() => setCreatingVersion(false)}>
-                <X size={18} />
-              </button>
-            </div>
-            <div className="vault-modal-body">
-              <VersionForm 
-                initial={{}}
-                submitLabel="Tạo bản nháp ngay"
-                onCancel={() => setCreatingVersion(false)}
-                onSubmit={data => {
-                  action(async () => {
-                    const v = await api(`/regulations/documents/${selectedDoc.id}/versions`, 'POST', data);
-                    setVersion(String(v.id));
-                    setCreatingVersion(false);
-                    await reload();
-                  }, 'Đã tạo phiên bản nháp mới thành công.');
-                }}
-              />
-            </div>
-          </dialog>
-        )}
+        <VaultModal
+          open={Boolean(creatingVersion && selectedDoc)}
+          onClose={() => setCreatingVersion(false)}
+          title={`Tạo phiên bản nháp cho: ${selectedDoc?.name || ''}`}
+          maxWidth="max-w-2xl"
+        >
+          {creatingVersion && selectedDoc && (
+            <VersionForm 
+              initial={{}}
+              submitLabel="Tạo bản nháp ngay"
+              onCancel={() => setCreatingVersion(false)}
+              onSubmit={data => {
+                action(async () => {
+                  const v = await api(`/regulations/documents/${selectedDoc.id}/versions`, 'POST', data);
+                  setVersion(String(v.id));
+                  setCreatingVersion(false);
+                  await reload();
+                }, 'Đã tạo phiên bản nháp mới thành công.');
+              }}
+            />
+          )}
+        </VaultModal>
 
         {/* MODAL: TẠO QUY CHẾ MỚI */}
-        {creatingDoc && (
-          <dialog open className="vault-modal max-w-lg w-[90vw]" onCancel={() => setCreatingDoc(false)}>
-            <div className="vault-modal-heading">
-              <h2>Tạo văn bản quy chế mới</h2>
-              <button type="button" className="soft-btn-secondary" onClick={() => setCreatingDoc(false)}><X size={18} /></button>
+        <VaultModal
+          open={creatingDoc}
+          onClose={() => setCreatingDoc(false)}
+          title="Tạo văn bản quy chế mới"
+          maxWidth="max-w-lg"
+        >
+          <form 
+            className="space-y-4" 
+            onSubmit={e => {
+              e.preventDefault();
+              action(async () => {
+                const d = await api('/regulations/documents', 'POST', {
+                  code: newDoc.code,
+                  name: newDoc.name,
+                  ...(newDoc.owner_organization_id ? { owner_organization_id: Number(newDoc.owner_organization_id) } : {})
+                });
+                setNewDoc({ code: '', name: '', owner_organization_id: '' });
+                setCreatingDoc(false);
+                setTab('managed');
+                openInspector(d.id);
+                await reload();
+              }, 'Đã khởi tạo quy chế mới.');
+            }}
+          >
+            <Field label="Mã quy chế * (ví dụ: QC-NCKH-2026)">
+              <input required className={input} value={newDoc.code} onChange={e => setNewDoc({ ...newDoc, code: e.target.value })} placeholder="QC-NCKH-2026" />
+            </Field>
+            <Field label="Tên quy chế *">
+              <input required className={input} value={newDoc.name} onChange={e => setNewDoc({ ...newDoc, name: e.target.value })} placeholder="Quy chế Đánh giá Nghiên cứu khoa học..." />
+            </Field>
+            <Field label="Chủ sở hữu ban hành">
+              <select className={input} value={newDoc.owner_organization_id} onChange={e => setNewDoc({ ...newDoc, owner_organization_id: e.target.value })}>
+                <option value="">Cá nhân tôi</option>
+                {orgs.filter(o => permits(o.id, 'REGULATIONS_CREATE')).map(o => (
+                  <option key={o.id} value={o.id}>{o.name}</option>
+                ))}
+              </select>
+            </Field>
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" className={secondary} onClick={() => setCreatingDoc(false)}>Hủy</button>
+              <button className={button}>Khởi tạo quy chế</button>
             </div>
-            <div className="vault-modal-body">
-              <form 
-                className="space-y-4" 
-                onSubmit={e => {
-                  e.preventDefault();
-                  action(async () => {
-                    const d = await api('/regulations/documents', 'POST', {
-                      code: newDoc.code,
-                      name: newDoc.name,
-                      ...(newDoc.owner_organization_id ? { owner_organization_id: Number(newDoc.owner_organization_id) } : {})
-                    });
-                    setNewDoc({ code: '', name: '', owner_organization_id: '' });
-                    setCreatingDoc(false);
-                    setTab('managed');
-                    openInspector(d.id);
-                    await reload();
-                  }, 'Đã khởi tạo quy chế mới.');
-                }}
-              >
-                <Field label="Mã quy chế * (ví dụ: QC-NCKH-2026)">
-                  <input required className={input} value={newDoc.code} onChange={e => setNewDoc({ ...newDoc, code: e.target.value })} placeholder="QC-NCKH-2026" />
-                </Field>
-                <Field label="Tên quy chế *">
-                  <input required className={input} value={newDoc.name} onChange={e => setNewDoc({ ...newDoc, name: e.target.value })} placeholder="Quy chế Đánh giá Nghiên cứu khoa học..." />
-                </Field>
-                <Field label="Chủ sở hữu ban hành">
-                  <select className={input} value={newDoc.owner_organization_id} onChange={e => setNewDoc({ ...newDoc, owner_organization_id: e.target.value })}>
-                    <option value="">Cá nhân tôi</option>
-                    {orgs.filter(o => permits(o.id, 'REGULATIONS_CREATE')).map(o => (
-                      <option key={o.id} value={o.id}>{o.name}</option>
-                    ))}
-                  </select>
-                </Field>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button type="button" className={secondary} onClick={() => setCreatingDoc(false)}>Hủy</button>
-                  <button className={button}>Khởi tạo quy chế</button>
-                </div>
-              </form>
-            </div>
-          </dialog>
-        )}
+          </form>
+        </VaultModal>
       </fieldset>
     </main>
   );
