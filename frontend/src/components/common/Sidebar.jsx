@@ -2,25 +2,21 @@ import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { 
   GraduationCap, Home, User, Cpu, LogOut, Building2, 
-  Award, BookOpen, BarChart3, Target, CalendarDays, Shield, Menu, X 
+  Award, BookOpen, Target, Shield, Menu, X 
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-const ALL_ROLES = ['MEMBER', 'DEPARTMENT_HEAD', 'FACULTY_LEAD', 'ADMIN', 'LECTURER', 'UNIT_REPRESENTATIVE', 'MANAGER', 'RECORDS_OFFICER'];
-const UNIT_LEADERS = ['DEPARTMENT_HEAD', 'FACULTY_LEAD', 'ADMIN', 'UNIT_REPRESENTATIVE', 'MANAGER'];
-const ADMIN_ONLY = ['ADMIN'];
+const ALL_ROLES = ['MEMBER', 'SYSTEM_ADMIN', 'REGULATION_MANAGER'];
 
 const navItems = [
   { to: '/me/dashboard', icon: Home, label: 'Trang chủ', roles: ALL_ROLES },
-  { to: '/me/profile', icon: User, label: 'Hồ sơ năng lực', roles: ALL_ROLES },
+  { to: '/me/profile', icon: User, label: 'Hồ sơ & CV', roles: ALL_ROLES },
   { to: '/achievements', icon: Award, label: 'Kho thành tích', roles: ALL_ROLES },
+  { to: '/me/ai-forecast', icon: Cpu, label: 'Khám hồ sơ', roles: ALL_ROLES },
   { to: '/kpi', icon: Target, label: 'Mục tiêu / KPI', roles: ALL_ROLES },
-  { to: '/me/ai-forecast', icon: Cpu, label: 'Trợ lý AI & Quy chế', roles: ALL_ROLES },
-  { to: '/calendar', icon: CalendarDays, label: 'Lịch & Nhắc nhở', roles: ALL_ROLES },
-  { to: '/reports', icon: BarChart3, label: 'Báo cáo & Quét AI', roles: ALL_ROLES },
-  { to: '/regulations', icon: BookOpen, label: 'Kho quy định', roles: ALL_ROLES },
-  { to: '/organizations', icon: Building2, label: 'Cây tổ chức', roles: UNIT_LEADERS },
-  { to: '/admin', icon: Shield, label: 'Quản trị hệ thống', roles: ADMIN_ONLY },
+  { to: '/regulations', icon: BookOpen, label: 'Kho quy chế', roles: ALL_ROLES },
+  { to: '/organizations', icon: Building2, label: 'Tổ chức', roles: ALL_ROLES },
+  { to: '/admin', icon: Shield, label: 'Quản trị hệ thống', roles: ['SYSTEM_ADMIN'] },
 ];
 
 export default function Sidebar() {
@@ -45,31 +41,24 @@ export default function Sidebar() {
   const accessibleLabel = (_to, label) => label;
   
   const rawRoles = (user?.roles || []).map((role) => typeof role === 'string' ? role : role.code);
-  const normalizedRoles = rawRoles.map(r => {
-    if (r === 'LECTURER') return 'MEMBER';
-    if (r === 'UNIT_REPRESENTATIVE') return 'DEPARTMENT_HEAD';
-    if (r === 'MANAGER') return 'FACULTY_LEAD';
-    if (r === 'RECORDS_OFFICER' || r === 'COUNCIL') return 'MEMBER';
-    return r;
-  });
-  const allUserRoles = [...new Set([...rawRoles, ...normalizedRoles])];
+  const allUserRoles = [...new Set(['MEMBER', ...rawRoles])];
 
   const visibleItems = navItems.filter((item) => item.roles.some((role) => allUserRoles.includes(role)));
-  const primaryItems = visibleItems.filter(item => ['/me/dashboard', '/achievements', '/kpi', '/me/ai-forecast', '/calendar'].includes(item.to)).slice(0, 4);
+  const primaryItems = visibleItems.filter(item => ['/me/dashboard', '/achievements', '/kpi', '/me/ai-forecast'].includes(item.to)).slice(0, 4);
   
-  const desktopRowInsetClass = 'px-0 group-hover/sidebar:px-3 group-has-[:focus-visible]/sidebar:px-3 transition-[padding,background-color,color] duration-300 motion-reduce:transition-none';
-  const desktopLabelClass = 'min-w-0 flex-1 whitespace-nowrap text-left text-[15px] font-semibold leading-5 opacity-0 translate-x-2 transition-[opacity,transform] duration-200 group-hover/sidebar:opacity-100 group-hover/sidebar:translate-x-0 group-has-[:focus-visible]/sidebar:opacity-100 group-has-[:focus-visible]/sidebar:translate-x-0 motion-reduce:transition-none';
+  const desktopRowInsetClass = 'px-2 transition-colors';
+  const desktopLabelClass = 'min-w-0 flex-1 whitespace-nowrap text-left text-sm font-semibold leading-5';
   
   const navLink = ({ to, icon: Icon, label }) => (
     <NavLink key={to} to={to} title={label} aria-label={accessibleLabel(to, label)}
       className={({isActive}) => `min-w-0 min-h-14 flex-1 rounded-2xl flex flex-col items-center justify-center transition-colors ${isActive ? 'bg-white/20 text-white' : 'text-slate-200 hover:text-white hover:bg-white/10'}`}>
       <span className="relative"><Icon className="w-5 h-5" /></span>
-      <span className="max-w-full truncate px-1 text-[11px] mt-1 font-medium">{to === '/calendar' ? 'Lịch' : to === '/kpi' ? 'KPI' : label}</span>
+      <span className="max-w-full truncate px-1 text-[11px] mt-1 font-medium">{to === '/kpi' ? 'KPI' : label}</span>
     </NavLink>
   );
 
   return <>
-    <aside aria-label="Điều hướng desktop" className="group/sidebar hidden lg:flex fixed left-5 top-1/2 -translate-y-1/2 max-h-[calc(100dvh-40px)] w-[76px] hover:w-[272px] has-[:focus-visible]:w-[272px] overflow-hidden bg-gradient-to-b from-[#182b3d] via-[#274b64] to-[#365f79] dark:from-[#111c2a] dark:to-[#223e52] rounded-[32px] flex-col items-start px-3.5 py-4 z-30 shadow-soft-lg text-white transition-[width] duration-300 ease-out motion-reduce:transition-none">
+    <aside aria-label="Điều hướng desktop" className="hidden lg:flex fixed inset-y-0 left-0 w-[248px] overflow-hidden bg-[#1d3548] dark:bg-[#111c2a] flex-col items-start px-4 py-6 z-30 text-white">
       <Link to="/" aria-label="Trang chủ LHU" className={`flex h-12 w-full shrink-0 items-center gap-3 rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-teal-300 ${desktopRowInsetClass}`}>
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10"><GraduationCap /></span>
         <span className={desktopLabelClass}><span className="block font-bold text-white">LHU</span><span className="block text-xs text-slate-300">Quản lý thành tích</span></span>
@@ -83,7 +72,7 @@ export default function Sidebar() {
           </NavLink>)}
         </nav>
       </div>
-      <button type="button" onClick={signOut} aria-label="Đăng xuất" className={`flex h-12 w-full shrink-0 items-center gap-3 rounded-2xl bg-red-500 text-white hover:bg-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-rose-300 ${desktopRowInsetClass}`}>
+      <button type="button" onClick={signOut} aria-label="Đăng xuất" className={`flex h-12 w-full shrink-0 items-center gap-3 rounded-xl text-slate-200 hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-teal-300 ${desktopRowInsetClass}`}>
         <span className="flex h-11 w-12 shrink-0 items-center justify-center"><LogOut className="h-5 w-5" /></span>
         <span className={desktopLabelClass}>Đăng xuất</span>
       </button>

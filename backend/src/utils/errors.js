@@ -41,15 +41,6 @@ export class ForbiddenError extends AppError {
 }
 
 /**
- * 403 - Vi phạm quy tắc CẤM TỰ DUYỆT
- */
-export class SelfApprovalError extends ForbiddenError {
-  constructor(message = 'Quy tắc liêm chính: Cán bộ thẩm định không được phép tự duyệt hồ sơ do chính mình tạo, nộp hoặc là chủ thể', details = []) {
-    super(message, 'SELF_APPROVAL_PROHIBITED', details);
-  }
-}
-
-/**
  * 403 - Vi phạm phân công phạm vi (Ngoài Scope đơn vị)
  */
 export class OutOfScopeError extends ForbiddenError {

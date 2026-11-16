@@ -52,8 +52,9 @@ function normalizeRow(row, columns = {}) {
 }
 function normalizeError(error) {
   error.sqlServerNumber = error.number;
-  const codes = {2601:'23505',2627:'23505',547:'23514',515:'23502',1205:'40001',51001:'23P01'};
+  const codes = {2601:'23505',2627:'23505',547:'23514',515:'23502',1205:'40001',51001:'40001',51003:'40001',51005:'23P01'};
   if (codes[error.number]) error.code = codes[error.number];
+  else if (error.number >= 51000 && error.number <= 51999) error.code = '23514';
   return error;
 }
 async function execute(owner,text,values=[]) {

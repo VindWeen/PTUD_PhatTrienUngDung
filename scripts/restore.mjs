@@ -4,8 +4,8 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { Pool,getDbPoolConfig } from '../backend/src/config/database.js';
-import storage from '../backend/src/modules/evidences/storage/localStorageAdapter.js';
-import {parseArgs,quoteIdentifier,sqlString,serverJoin,within,safeFile,sha256,walkFiles,privateReferences,tableCounts,checkReferences} from './backup.mjs';
+import { storageRoot } from '../backend/src/v2/files.js';
+import {parseArgs,quoteIdentifier,sqlString,serverJoin,within,safeFile,sha256,walkFiles,privateReferences,tableCounts,checkReferences,privateStorageRoots} from './backup.mjs';
 
 export function validateTargetName(target,protectedNames=[]){
   if(typeof target!=='string'||!/^[A-Za-z][A-Za-z0-9_]{2,100}$/.test(target)||!/restore|test/i.test(target)) throw new Error('Explicit isolated target DB name must contain restore/test and use letters, numbers or underscore.');
@@ -17,18 +17,21 @@ export async function verifyArchive(backupDir){
   const recorded=fs.readFileSync(path.join(root,'backup_manifest.sha256'),'utf8').trim();
   if(!/^[a-f0-9]{64}$/i.test(recorded)||crypto.createHash('sha256').update(text).digest('hex')!==recorded) throw new Error('Backup manifest SHA256 mismatch.');
   const manifest=JSON.parse(text);
-  if(manifest.formatVersion!==2||manifest.databaseEngine!=='SQL Server'||manifest.database.archiveFile!=='database.bak'||manifest.storage.archiveDirectory!=='storage_backup'||!Array.isArray(manifest.storage.files)) throw new Error('Unsupported or malformed SQL Server backup manifest.');
+  if(![2,3].includes(manifest.formatVersion)||manifest.databaseEngine!=='SQL Server'||manifest.database?.archiveFile!=='database.bak'||manifest.storage?.archiveDirectory!=='storage_backup'||!Array.isArray(manifest.storage.files)) throw new Error('Unsupported or malformed SQL Server backup manifest.');
   const bak=safeFile(root,manifest.database.archiveFile),bakStat=fs.lstatSync(bak);
   if(!bakStat.isFile()||bakStat.isSymbolicLink()||bakStat.size!==manifest.database.sizeBytes||await sha256(bak)!==manifest.database.sha256) throw new Error('Database BAK SHA256/size mismatch.');
   const archiveStorage=path.join(root,'storage_backup'),actual=walkFiles(archiveStorage),seen=new Set();
   for(const file of manifest.storage.files){
+    if(manifest.formatVersion===3&&!/^(evidences|regulations)\/.+$/.test(file.storageKey))throw new Error('V3 files must use evidence/regulation namespaces.');
+    if(!Number.isSafeInteger(file.fileSizeBytes)||file.fileSizeBytes<0||!/^[a-f0-9]{64}$/i.test(file.checksumSha256))throw new Error('Invalid private file size/hash in manifest.');
     const full=safeFile(archiveStorage,file.storageKey);
     if(seen.has(file.storageKey))throw new Error('Duplicate private-file key in manifest.');seen.add(file.storageKey);
     const stat=fs.lstatSync(full);
     if(!stat.isFile()||stat.isSymbolicLink()||stat.size!==file.fileSizeBytes||await sha256(full)!==file.checksumSha256) throw new Error(`Private-file SHA256/size mismatch: ${file.storageKey}`);
   }
   if(actual.length!==seen.size||actual.some(key=>!seen.has(key))) throw new Error('Private archive has unlisted/missing files.');
-  checkReferences(manifest.privateReferences,manifest.storage.files);
+  if(manifest.storage.totalFiles!==seen.size||manifest.storage.totalBytes!==manifest.storage.files.reduce((sum,file)=>sum+file.fileSizeBytes,0))throw new Error('Private manifest totals mismatch.');
+  checkReferences(manifest.privateReferences,manifest.storage.files,manifest.formatVersion);
   return {root,manifest,bak,archiveStorage};
 }
 function restoreConfig(options){
@@ -59,8 +62,9 @@ export async function runRestore(options={}){
     if(options.verifyOnly){console.log('RESTORE VERIFYONLY WITH CHECKSUM passed; archive/private SHA256 verified.');return {success:true,verifyOnly:true,serverBakPath:stage};}
     const target=options.targetDatabase,exists=await pool.query('SELECT DB_ID(@p1) AS database_id;',[target]);
     if(exists.rows[0].database_id!==null)throw new Error('Restore target already exists; no database will be overwritten.');
-    const targetStorage=path.resolve(options.targetStorageDir),active=path.resolve(storage.baseDir);
-    if(fs.existsSync(targetStorage)||within(active,targetStorage)||within(targetStorage,active)||within(archive.root,targetStorage)||within(targetStorage,archive.root))throw new Error('Target storage must be new and separate from active storage and backup archive.');
+    const targetStorage=path.resolve(options.targetStorageDir);
+    if(fs.existsSync(targetStorage)||within(archive.root,targetStorage)||within(targetStorage,archive.root))throw new Error('Target storage must be new and separate from active storage and backup archive.');
+    for(const active of Object.values(privateStorageRoots()))if(within(active,targetStorage)||within(targetStorage,active))throw new Error('Target storage must be separate from both active evidence and regulation storage.');
     const files=(await pool.query('RESTORE FILELISTONLY FROM DISK=@p1;',[stage])).rows;
     if(!files.length||files.some(file=>!['D','L'].includes(file.Type)))throw new Error('Unsupported backup file layout; only ordinary SQL data/log files are accepted.');
     const suffix=crypto.randomBytes(6).toString('hex');
@@ -78,12 +82,14 @@ export async function runRestore(options={}){
     targetPool=new Pool({...restoreConfig(options),database:target});
     const counts=await tableCounts(targetPool);
     if(JSON.stringify(counts)!==JSON.stringify(archive.manifest.database.tableCounts))throw new Error('Restored table counts differ from the backup manifest. Isolated target is retained for inspection.');
-    const references=await privateReferences(targetPool);checkReferences(references,archive.manifest.storage.files);
+    const references=await privateReferences(targetPool);checkReferences(references,archive.manifest.storage.files,archive.manifest.formatVersion);
+    if(JSON.stringify(references)!==JSON.stringify(archive.manifest.privateReferences))throw new Error('Restored private-file metadata/version links differ from the backup manifest.');
     for(const file of archive.manifest.storage.files)if(await sha256(safeFile(targetStorage,file.storageKey))!==file.checksumSha256)throw new Error('Restored private-file SHA256 mismatch.');
     const constraints=await targetPool.query('DBCC CHECKCONSTRAINTS WITH ALL_CONSTRAINTS;');
     if(constraints.rows.length)throw new Error('Restored database has constraint violations.');
     const report={success:true,createdAt:new Date().toISOString(),databaseEngine:'SQL Server',backupId:archive.manifest.backupId,
-      targetDatabase:target,targetStorageDir:targetStorage,serverBakPath:stage,tableCounts:counts,privateFilesVerified:archive.manifest.storage.files.length,
+      targetDatabase:target,targetStorageDir:targetStorage,targetEvidenceDirectory:archive.manifest.formatVersion===3?path.join(targetStorage,'evidences'):targetStorage,
+      targetRegulationDirectory:archive.manifest.formatVersion===3?path.join(targetStorage,'regulations'):null,archiveFormatVersion:archive.manifest.formatVersion,serverBakPath:stage,tableCounts:counts,privateFilesVerified:archive.manifest.storage.files.length,
       constraintsChecked:true,primaryDatabaseOverwritten:false,note:'Isolated database retained. Server login mapping and runtime secrets must be configured separately before app use.'};
     const reportPath=path.join(targetStorage,'restore_report.json');fs.writeFileSync(reportPath,JSON.stringify(report,null,2)+'\n',{flag:'wx'});
     console.log(`Isolated SQL Server restore verified: ${target}; ${report.privateFilesVerified} private files.`);
@@ -95,6 +101,6 @@ export async function runRestore(options={}){
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   let options;try{options=parseArgs();}catch(error){console.error(error.message);process.exitCode=1;}
-  if(options?.help)console.log('node scripts/restore.mjs --backup-dir=FOLDER --verify-only\nnode scripts/restore.mjs --backup-dir=FOLDER --target-db=PTUD_restore_UNIQUE --target-storage-dir=NEW_FOLDER --apply\nOptional server-backup-dir/server-bak-path/server-data-dir/server-log-dir; SQL_RESTORE_USER/PASSWORD are separate admin credentials. Existing DB/storage is always refused.');
+  if(options?.help)console.log('node scripts/restore.mjs --backup-dir=FOLDER --verify-only\nnode scripts/restore.mjs --backup-dir=FOLDER --target-db=PTUD_restore_UNIQUE --target-storage-dir=NEW_FOLDER --apply\nV3 restores NEW_FOLDER/evidences and NEW_FOLDER/regulations; point STORAGE_DIR to NEW_FOLDER/evidences. Legacy v2 restores evidence files directly in NEW_FOLDER.\nOptional server-backup-dir/server-bak-path/server-data-dir/server-log-dir; SQL_RESTORE_USER/PASSWORD are separate admin credentials. Existing DB/storage is always refused.');
   else if(options)runRestore(options).catch(error=>{console.error(`Restore refused/failed: ${error.message}`);process.exitCode=1;});
 }

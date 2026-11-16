@@ -1,13 +1,10 @@
+import regulationSourceRoutes from './v2/regulationSourceRoutes.js';
+import regulationDistributionRoutes from './v2/regulationDistributionRoutes.js';
 import express from 'express';
-import calendarRoutes from './modules/calendar/calendarRoutes.js';
-import kpiRoutes from './modules/kpi/kpiRoutes.js';
-import regulationRoutes from './modules/regulations/regulationRoutes.js';
-import aiRoutes from './modules/ai/aiRoutes.js';
-import reportRoutes from './modules/reports/reportRoutes.js';
-import awardRoutes from './modules/awards/awardRoutes.js';
-import applicationRoutes from './modules/awards/applicationRoutes.js';
-import selectionRoutes from './modules/selections/selectionRoutes.js';
-import notificationRoutes from './modules/notifications/notificationRoutes.js';
+import identityRoutes from './v2/identityRoutes.js';
+import intelligenceRoutes from './v2/intelligenceRoutes.js';
+import vaultRoutes from './v2/vaultRoutes.js';
+import supportRoutes from './v2/supportRoutes.js';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -17,13 +14,6 @@ import correlationId from './middlewares/correlationId.js';
 import errorHandler from './middlewares/errorHandler.js';
 import notFoundHandler from './middlewares/notFoundHandler.js';
 import healthRoutes from './modules/health/healthRoutes.js';
-import authRoutes from './modules/auth/authRoutes.js';
-import profileRoutes from './modules/profiles/profileRoutes.js';
-import organizationRoutes from './modules/organizations/organizationRoutes.js';
-import adminRoutes from './modules/admin/adminRoutes.js';
-import achievementRoutes from './modules/achievements/achievementRoutes.js';
-import evidenceRoutes from './modules/evidences/evidenceRoutes.js';
-import cvRoutes from './modules/cv/cvRoutes.js';
 
 const app = express();
 
@@ -59,33 +49,32 @@ if (config.NODE_ENV !== 'test') {
 // 3. Khai báo các Routes
 const apiPrefix = config.API_PREFIX || '/api/v1';
 
+const authAttempts = new Map();
+app.use([`${apiPrefix}/auth/login`, `${apiPrefix}/auth/register`, `${apiPrefix}/auth/forgot-password`, `${apiPrefix}/auth/reset-password`], (req, res, next) => {
+  const now = Date.now();
+  for (const [key, value] of authAttempts) if (value.until <= now) authAttempts.delete(key);
+  const key = req.ip;
+  const entry = authAttempts.get(key) || { count: 0, until: now + 15 * 60000 };
+  if (++entry.count > 30 || (authAttempts.size >= 10000 && !authAttempts.has(key))) return res.status(429).json({success:false,error:{code:'RATE_LIMITED',message:'Quá nhiều yêu cầu. Vui lòng thử lại sau.'}});
+  authAttempts.set(key, entry);next();
+});
+
 // Health Check Routes
 app.use(`${apiPrefix}/health`, healthRoutes);
 
 // Auth Routes
-app.use(`${apiPrefix}/auth`, authRoutes);
-app.use(apiPrefix, cvRoutes);
-app.use(apiPrefix, profileRoutes);
-app.use(apiPrefix, organizationRoutes);
-app.use(apiPrefix, achievementRoutes);
-app.use(apiPrefix, evidenceRoutes);
-app.use(apiPrefix, awardRoutes);
-app.use(apiPrefix, applicationRoutes);
-app.use(apiPrefix, selectionRoutes);
-app.use(apiPrefix, notificationRoutes);
-app.use(apiPrefix, calendarRoutes);
-app.use(apiPrefix, reportRoutes);
-app.use(apiPrefix, kpiRoutes);
-app.use(apiPrefix, regulationRoutes);
-app.use(apiPrefix, aiRoutes);
-app.use(`${apiPrefix}/admin`, adminRoutes);
+app.use(apiPrefix, identityRoutes);
+app.use(apiPrefix, vaultRoutes);
+app.use(apiPrefix, regulationSourceRoutes);
+app.use(apiPrefix, regulationDistributionRoutes);
+app.use(apiPrefix, intelligenceRoutes);
+app.use(apiPrefix, supportRoutes);
 
 // Root Welcome Route
 app.get('/', (req, res) => {
   res.json({
-    name: 'PTUD - LHU Digital Achievement & Awards System REST API',
-    version: '1.0.0',
-    documentation: '/docs/api/openapi.yaml',
+    name: 'PTUD - Personal Achievement Vault REST API',
+    version: '2.0.0',
     healthCheck: `${apiPrefix}/health`,
   });
 });

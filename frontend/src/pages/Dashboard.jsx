@@ -1,230 +1,29 @@
-import { PersonalCalendarCard } from '../components/calendar/PersonalCalendar';
-import { ThemeToggle } from '../components/common/PageHeader';
-import NotificationBell from '../components/common/NotificationBell';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  Award,
-  BookOpen,
-  FileText,
-  ChevronDown,
-  GraduationCap,
-  Target,
-  Plus,
-  Search,
-  Users,
-} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, Award, ClipboardCheck, FileUser, Target } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { EmptyState, ErrorState, LoadingState } from '../components/common/AsyncState';
-import { portfolioApi } from '../services/portfolioApi';
-import { kpiApi } from '../services/kpiApi';
+import { request } from '../services/request';
+import DashboardCalendar from '../components/calendar/DashboardCalendar';
 
-const actionCards = [
-  { title: 'Thành tích', subtitle: 'Kê khai và quản lý thành tích', icon: Award, tone: 'teal', route: '/achievements' },
-  { title: 'Đề nghị khen thưởng', subtitle: 'Lập và theo dõi đề nghị khen thưởng', icon: FileText, tone: 'blue', route: '/award-applications' },
-  { title: 'Mục tiêu / KPI', subtitle: 'Theo dõi mục tiêu và tiến độ thực hiện', icon: Target, tone: 'amber', route: '/kpi' },
+function useDashboardData(url) {
+  const [data, setData] = useState(null), [error, setError] = useState(null);
+  useEffect(() => { let active = true; request({ url, fresh: true }).then(value => { if (active) setData(value); }).catch(err => { if (active) setError(err); }); return () => { active = false; }; }, [url]);
+  return { data, error };
+}
+const shortcuts = [
+  { title: 'Kho thành tích', subtitle: 'Lưu thành tích và minh chứng', icon: Award, to: '/achievements', tone: 'mint' },
+  { title: 'Khám hồ sơ', subtitle: 'Đối chiếu với quy chế', icon: ClipboardCheck, to: '/me/ai-forecast', tone: 'blue' },
+  { title: 'Tạo & Chia sẻ CV', subtitle: 'Thiết kế CV từ hồ sơ của bạn', icon: FileUser, to: '/me/profile?tab=cv', tone: 'mint' },
+  { title: 'Mục tiêu / KPI', subtitle: 'Theo dõi việc cần làm', icon: Target, to: '/kpi', tone: 'sand' },
 ];
-
-const toneStyles = {
-  teal: 'bg-[#dff5f3] text-[#69c9c4]',
-  blue: 'bg-[#e7f0fc] text-[#7da8e7]',
-  amber: 'bg-[#fff6da] text-[#ffc83d]',
-};
-
 export default function Dashboard() {
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const [summary, setSummary] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [kpiGoals, setKpiGoals] = useState([]);
-  const [kpiLoading, setKpiLoading] = useState(true);
-
-  function searchAchievements(event) {
-    event.preventDefault();
-    const query = searchQuery.trim();
-    if (query) navigate(`/achievements?${new URLSearchParams({ search: query })}`);
-  }
-
-  const loadSummary = useCallback(async (fresh = true) => {
-    setLoading(true); setError(null);
-    try { setSummary(await portfolioApi.getDashboardSummary(fresh)); }
-    catch (loadError) { setSummary(null); setError(loadError); }
-    finally { setLoading(false); }
-  }, []);
-
-  const loadKpiGoals = useCallback(async () => {
-    setKpiLoading(true);
-    try {
-      const res = await kpiApi.list({ subjectType: 'LECTURER' }, true);
-      setKpiGoals(res?.items || []);
-    } catch {
-      setKpiGoals([]);
-    } finally {
-      setKpiLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadSummary(false);
-    loadKpiGoals();
-  }, [loadSummary, loadKpiGoals]);
-
-  const todayLabel = useMemo(() => new Intl.DateTimeFormat('vi-VN', {
-    day: '2-digit', month: 'long', year: 'numeric', weekday: 'long',
-  }).format(new Date()), []);
-
-  const roadmapItems = useMemo(() => {
-    if (!kpiGoals || kpiGoals.length === 0) return [];
-    const colors = ['bg-[#78a5d1]', 'bg-[#97aa70]', 'bg-[#e28b8c]', 'bg-[#d8975a]'];
-    const icons = [BookOpen, GraduationCap, Users, Target];
-    return kpiGoals.slice(0, 4).map((g, idx) => {
-      let actualNum = 0;
-      if (g.result) {
-        try {
-          const resObj = typeof g.result === 'string' ? JSON.parse(g.result) : g.result;
-          actualNum = Number(resObj?.actual) || 0;
-        } catch {
-          actualNum = Number(g.result?.actual) || 0;
-        }
-      }
-      const targetNum = Number(g.target) || 0;
-      const percent = targetNum > 0 ? Math.min(100, Math.round((actualNum / targetNum) * 100)) : 0;
-      
-      let dueLabel = 'Chưa có hạn';
-      if (g.period_end) {
-        const d = new Date(g.period_end);
-        if (!isNaN(d.getTime())) {
-          dueLabel = `Hạn: ${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-        }
-      }
-
-      return {
-        id: g.goal_id,
-        title: g.title,
-        due: dueLabel,
-        percent,
-        target: targetNum,
-        actual: actualNum,
-        unit: g.measure_unit,
-        width: `${percent}%`,
-        color: colors[idx % colors.length],
-        icon: icons[idx % icons.length],
-      };
-    });
-  }, [kpiGoals]);
-
-  const awardCount = summary?.awards?.RecordedCount || 0;
-
-  return <div className="animate-fadeIn space-y-6 pb-3">
-    <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div>
-        <h1 className="text-[25px] font-extrabold leading-tight tracking-tight text-slate-800 dark:text-white sm:text-[30px]">
-          Chào mừng trở lại, {user?.displayName || user?.lecturerProfile?.fullName || 'Giảng viên LHU'}!
-        </h1>
-        <p className="mt-1 text-xs font-medium capitalize text-slate-400">{todayLabel}</p>
-      </div>
-      <div className="flex w-full items-center gap-2 sm:w-auto">
-      <form onSubmit={searchAchievements} role="search" className="flex h-11 w-full items-center gap-2 rounded-2xl bg-white px-4 shadow-[0_8px_24px_rgba(55,78,107,0.05)] dark:bg-slate-900 sm:w-[290px]">
-        <input aria-label="Tìm kiếm thành tích" placeholder="Tìm kiếm thành tích..." maxLength={100} value={searchQuery} onChange={event => setSearchQuery(event.target.value)} className="w-full bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-300 dark:text-white" />
-        <button type="submit" aria-label="Tìm thành tích" className="shrink-0 text-slate-400 hover:text-teal-600"><Search className="h-4 w-4" /></button>
-      </form>
-      <NotificationBell /><ThemeToggle />
-      </div>
-    </header>
-
-    <section className="grid gap-6 lg:grid-cols-12">
-      <div className="relative min-h-[250px] overflow-hidden rounded-[30px] bg-[#e7ccae] px-7 py-6 dark:bg-[#382f27] sm:px-9 lg:col-span-8">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#f1e6d3] via-[#e7ccae] to-[#e7ccae] dark:from-[#382f27] dark:via-[#382f27] dark:to-[#382f27]" />
-        <div className="absolute hidden sm:block -right-3 -top-20 h-64 w-[62%] rounded-[50%] bg-[#bd8d3d] dark:bg-[#946a2e]" />
-        <div className="absolute hidden sm:block bottom-[-120px] right-[24%] h-64 w-72 rounded-full bg-[#bd8d3d] dark:bg-[#946a2e]" />
-        <div className="relative z-10 max-w-[290px]">
-          <h2 className="text-[27px] font-black leading-[1.08] text-slate-800 dark:text-amber-50 sm:text-[31px]">
-            Hệ thống Quản lý<br />Thành tích & Dự<br />báo AI
-          </h2>
-          <p className="mt-3 max-w-[270px] text-[13px] font-medium leading-5 text-slate-600 dark:text-amber-100/75">
-            Chúng tôi giúp bạn theo dõi tiến độ nghiên cứu và giảng dạy một cách trực quan nhất.
-          </p>
-        </div>
-        <img src="/dashboard-student.png" alt="Sinh viên áo xanh đang học cùng các chồng sách" className="absolute bottom-0 right-0 z-10 hidden sm:block h-full w-[48%] object-cover object-[70%_54%] drop-shadow-xl" />
-      </div>
-
-      <div className="flex min-h-[240px] flex-col rounded-[30px] bg-[#d7eff4] p-7 dark:bg-[#19313b] lg:col-span-4">
-        <h2 className="text-base font-extrabold text-slate-700 dark:text-cyan-50">Tổng quan hồ sơ</h2>
-        <p className="mt-1 text-xs text-slate-500 dark:text-cyan-100/60">Số bản ghi trong phạm vi bạn được xem.</p>
-        <div className="mt-6 space-y-4">
-          {loading ? <LoadingState label="Đang tải tổng quan..." rows={1} /> : error ? <ErrorState error={error} onRetry={loadSummary} /> : !summary ? <EmptyState message="Chưa có dữ liệu tổng quan." /> : <>
-          <p className="flex justify-between text-sm"><span>Thành tích đã xác nhận</span><strong>{summary.achievements?.VerifiedCount || 0}</strong></p>
-          <p className="flex justify-between text-sm"><span>Khen thưởng đã ghi nhận</span><strong>{awardCount}</strong></p>
-          <p className="text-xs text-slate-500 dark:text-cyan-100/60">Thẩm định tiêu chí cần căn cứ và người có thẩm quyền rà soát.</p>
-          </>}
-        </div>
-      </div>
-    </section>
-
-    <section className="grid gap-5 xl:grid-cols-12">
-      <div className="space-y-6 xl:col-span-9">
-        <div className="grid gap-4 sm:grid-cols-3">
-          {actionCards.map(({ title, subtitle, icon: Icon, tone, route }) => <button key={title} onClick={() => navigate(route)} className="group flex min-h-[92px] items-center gap-4 rounded-[27px] bg-white p-4 text-left shadow-[0_8px_28px_rgba(55,78,107,0.05)] transition hover:-translate-y-1 hover:shadow-lg dark:bg-slate-900">
-            <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${toneStyles[tone]}`}><Icon className="h-6 w-6" /></span>
-            <span className="min-w-0 flex-1"><strong className="block text-base font-extrabold text-slate-700 dark:text-slate-100">{title}</strong><small className="mt-1 block text-xs font-medium text-slate-400">{subtitle}</small></span>
-            <span className={`flex h-5 w-5 items-center justify-center rounded-full text-white ${tone === 'teal' ? 'bg-[#74d0ca]' : tone === 'blue' ? 'bg-[#91b9ed]' : 'bg-[#ffd04e]'}`}><Plus className="h-3 w-3" /></span>
-          </button>)}
-        </div>
-
-        <PersonalCalendarCard />
-      </div>
-
-      <aside className="flex min-h-[500px] flex-col rounded-[30px] bg-white p-5 shadow-[0_8px_28px_rgba(55,78,107,0.05)] dark:bg-slate-900 xl:col-span-3">
-        <h2 className="mt-2 text-center text-lg font-extrabold text-slate-700 dark:text-white">Lộ trình Mục tiêu & KPI</h2>
-        <p className="mt-1.5 text-center text-[11px] font-medium leading-4 text-teal-600 dark:text-teal-400">Tiến độ thực hiện mục tiêu cá nhân</p>
-        
-        {kpiLoading ? (
-          <div className="mt-6">
-            <LoadingState label="Đang tải lộ trình KPI..." rows={3} />
-          </div>
-        ) : roadmapItems.length === 0 ? (
-          <div className="my-auto py-8 text-center text-xs text-slate-400">
-            Chưa có mục tiêu KPI nào được thiết lập.
-          </div>
-        ) : (
-          <div className="mt-5 space-y-3">
-            {roadmapItems.map(({ id, icon: Icon, title, due, percent, target, actual, unit, width, color }) => (
-              <div
-                key={id || title}
-                onClick={() => navigate('/kpi')}
-                className="cursor-pointer rounded-2xl bg-white p-3.5 shadow-[0_3px_8px_rgba(15,23,42,0.08)] transition hover:shadow-md dark:bg-slate-800"
-              >
-                <div className="flex gap-3">
-                  <Icon className="mt-0.5 h-6 w-6 shrink-0 text-slate-500" />
-                  <div className="min-w-0 flex-1">
-                    <div className="line-clamp-2 text-[13px] font-extrabold leading-4 text-slate-700 dark:text-slate-200" title={title}>
-                      {title}
-                    </div>
-                    <div className="mt-1 flex items-center justify-between text-[10px] font-medium text-slate-400">
-                      <span>{due}</span>
-                      <span className="font-semibold text-slate-600 dark:text-slate-300">
-                        {actual}/{target} {unit || ''} ({percent}%)
-                      </span>
-                    </div>
-                    <div className="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
-                      <div className={`h-full rounded-full transition-all duration-300 ${color}`} style={{ width }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <button
-          onClick={() => navigate('/kpi')}
-          className="mt-auto flex items-center justify-center gap-2 pb-1 text-xs font-bold text-slate-600 hover:text-teal-600 transition dark:text-slate-300 dark:hover:text-teal-400"
-        >
-          Xem toàn bộ mục tiêu <ChevronDown className="h-5 w-5" />
-        </button>
-      </aside>
-    </section>
-  </div>;
+  const summary = useDashboardData('/reports'), goals = useDashboardData('/kpi/goals?pageSize=4');
+  const items = goals.data?.items || [];
+  const date = new Intl.DateTimeFormat('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+  return <main className="dashboard"><header className="dash-header"><div><h1>Chào mừng trở lại, {user?.fullName || 'bạn'}!</h1><p>{date}</p></div></header>
+    <section className="dash-intro-grid"><div className="dash-hero"><div className="dash-hero-copy"><h2>Hành trình thành tích của bạn</h2><p>Lưu giữ những dấu mốc, khám phá cơ hội và tiếp tục phát triển hồ sơ cá nhân.</p><Link to="/achievements">Mở kho thành tích <ArrowRight size={16} aria-hidden="true" /></Link></div><img src="/dashboard-student.png" alt="Sinh viên đang học cùng sách" /></div><div className="dash-summary"><h2>Tổng quan hồ sơ</h2><p>Số liệu từ hồ sơ cá nhân của bạn.</p>{summary.error ? <p role="alert">Không tải được tổng quan: {summary.error.message}</p> : !summary.data ? <p>Đang tải tổng quan…</p> : <dl><div><dt>Thành tích đã lưu</dt><dd>{summary.data.summary.achievementCount}</dd></div><div><dt>Mục tiêu đang theo dõi</dt><dd>{summary.data.summary.kpiCount}</dd></div><div><dt>Lần khám hồ sơ</dt><dd>{summary.data.summary.assessmentCount}</dd></div></dl>}<Link to="/reports">Thống kê & Báo cáo <ArrowRight size={15} aria-hidden="true" /></Link></div></section>
+    <section className="dash-shortcuts" aria-label="Thao tác nhanh">{shortcuts.map(({ title, subtitle, icon: Icon, to, tone }) => <Link to={to} key={to}><span className={`dash-shortcut-icon ${tone}`}><Icon size={22} aria-hidden="true" /></span><span><strong>{title}</strong><small>{subtitle}</small></span><ArrowRight size={17} aria-hidden="true" /></Link>)}</section><section className="dash-workspace"><DashboardCalendar /><aside className="dash-goals"><div className="dash-section-head"><div><h2>Lộ trình mục tiêu</h2><p>Tiến độ thực hiện cá nhân</p></div><Target size={20} aria-hidden="true" /></div>{goals.error ? <p role="alert">Không tải được mục tiêu: {goals.error.message}</p> : !goals.data ? <p>Đang tải mục tiêu…</p> : !items.length ? <div className="dash-goals-empty"><Target size={26} aria-hidden="true" /><p>Chưa có mục tiêu nào.</p><span>Bắt đầu từ một mục tiêu cá nhân hoặc tiêu chí còn thiếu.</span><Link className="soft-btn-secondary mt-4" to="/kpi">Tạo mục tiêu đầu tiên</Link></div> : <div className="dash-goals-list">{items.map(goal => <Link to="/kpi" key={goal.id}><strong>{goal.title}</strong><span>{goal.current_value ?? 0} / {goal.target_value} {goal.measure_unit} · {goal.completion_percent ?? 0}%</span><span className="dash-progress"><i style={{ width: `${Math.min(100, Math.max(0, goal.completion_percent || 0))}%` }} /></span></Link>)}</div>}<Link className="dash-goals-link" to="/kpi">Xem toàn bộ mục tiêu <ArrowRight size={16} aria-hidden="true" /></Link></aside></section>
+  </main>;
 }
+

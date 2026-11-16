@@ -47,12 +47,12 @@ export function errorHandler(err, req, res, next) {
     } else if (err.code === '23P01') {
       statusCode = 409;
       code = 'OVERLAPPING_HISTORY';
-      message = 'Khoảng thời gian công tác hoặc đại diện bị chồng lấn với lịch sử hiện có.';
+      message = 'Khoảng thời gian thành viên bị chồng lấn với lịch sử hiện có.';
       details = [{ sqlState: err.code, constraint: err.constraint, message: err.detail || err.message }];
     } else if (['23503', '23514', '23502'].includes(err.code)) {
       statusCode = 400;
       code = 'CONSTRAINT_VIOLATION';
-      message = 'Thao tác vi phạm ràng buộc toàn vẹn dữ liệu (Chủ thể XOR, ngày tháng hoặc liên kết không hợp lệ).';
+      message = 'Ngày tháng, chủ sở hữu hoặc liên kết dữ liệu không hợp lệ.';
       details = [{ sqlState: err.code, constraint: err.constraint, message: err.detail || err.message }];
     }
   }

@@ -4,28 +4,13 @@ import { Eye, EyeOff, User, Mail, LockKeyhole } from 'lucide-react';
 import { BookLoader } from '../components/auth/BookLoader';
 import { ThemeSwitch } from '../components/auth/ThemeSwitch';
 import { useTheme } from '../hooks/useTheme';
-import { useDemoAuth } from '../hooks/useDemoAuth';
-import { USE_FIXTURES } from '../services/apiConfig';
+import { useAuth } from '../context/AuthContext';
 import { authApi } from '../services/authApi';
 import './auth.css';
 
-// Tài khoản thử nghiệm từ supabase/seed.sql và database/scripts/seedScenario.js.
-const QUICK_ACCOUNTS = [
-  { username: 'an.nv', label: 'Giảng viên' },
-  { username: 'bich.tt', label: 'Quản lý FIT' },
-  { username: 'duc.pm', label: 'Admin' },
-  { username: 'cuong.lh', label: 'Đại diện đơn vị' },
-  { username: 'records.demo', label: 'Văn thư' },
-  { username: 'council.demo', label: 'Hội đồng · Được phân công' },
-  { username: 'council.other', label: 'Hội đồng · Chưa phân công' },
-  { username: 'linh.pharm', label: 'Giảng viên Khoa Dược' },
-  { username: 'rep.expired', label: 'Đại diện · Hết phân công' },
-  { username: 'locked.demo', label: 'Tài khoản bị khóa' },
-];
-
 export default function AuthPage() {
   const { theme, toggleTheme: onToggleTheme } = useTheme();
-  const { signIn } = useDemoAuth();
+  const { signIn } = useAuth();
   const navigate = useNavigate();
   const [mode, setMode] = useState('login');
   const [showPassword, setShowPassword] = useState(false);
@@ -36,6 +21,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [personType, setPersonType] = useState('OTHER');
   const timers = useRef([]);
   const [registerLoading, setRegisterLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
@@ -65,16 +51,11 @@ export default function AuthPage() {
     }
   };
 
-  const fillQuickAccount = (quickUser, quickPass = 'demo1234') => {
-    setEmail(quickUser);
-    setPassword(quickPass);
-    setError(null);
-  };
   const handleRegister = async event => {
     event.preventDefault(); setError(null); setSuccess(null); setRegisterLoading(true);
     try {
-      const result = await authApi.register({ fullName, email, password });
-      setPassword(''); setSuccess(result.message);
+      const result = await authApi.register({ fullName, email: email.trim(), password, personType });
+      setPassword(''); setSuccess(result.data?.message || result.message || 'Đăng ký thành công. Bạn có thể đăng nhập.');
     } catch (err) { setError(err.message || 'Không thể đăng ký tài khoản.'); }
     finally { setRegisterLoading(false); }
   };
@@ -84,7 +65,7 @@ export default function AuthPage() {
       setError('Nhập email hợp lệ trước khi dùng quên mật khẩu.'); return;
     }
     setResetLoading(true);
-    try { const result = await authApi.requestPasswordReset(email.trim()); setPassword(''); setSuccess(result.message); }
+    try { const result = await authApi.requestPasswordReset(email.trim()); setPassword(''); setSuccess(result.data?.message || result.message || 'Nếu email tồn tại, hướng dẫn khôi phục sẽ được gửi.'); }
     catch (err) { setError(err.message || 'Không thể gửi yêu cầu khôi phục mật khẩu.'); }
     finally { setResetLoading(false); }
   };
@@ -217,13 +198,25 @@ export default function AuthPage() {
                 </div>
               )}
 
+              {!isLogin && (
+                <div className="input-box">
+                  <User size={18} aria-hidden="true" />
+                  <select aria-label="Nhóm hồ sơ" value={personType} onChange={event => setPersonType(event.target.value)} disabled={registerLoading}>
+                    <option value="OTHER">Khác</option>
+                    <option value="STUDENT">Sinh viên</option>
+                    <option value="LECTURER">Giảng viên</option>
+                    <option value="STAFF">Nhân viên</option>
+                  </select>
+                </div>
+              )}
+
               {/* Email field */}
               <div className="input-box">
                 <Mail size={18} aria-hidden="true" />
                 <input
-                  type={isLogin ? 'text' : 'email'}
-                  placeholder={isLogin ? 'Tên đăng nhập hoặc email' : 'Email'}
-                  aria-label={isLogin ? 'Tên đăng nhập hoặc email' : 'Email'}
+                  type="email"
+                  placeholder="Email"
+                  aria-label="Email"
                   autoComplete={isLogin ? 'username' : 'email'}
                   inputMode={isLogin ? 'text' : 'email'}
                   value={email}
@@ -238,7 +231,7 @@ export default function AuthPage() {
                 <LockKeyhole size={18} aria-hidden="true" />
                 <input 
                   type={showPassword ? "text" : "password"} 
-                  placeholder="Mật khẩu" aria-label="Mật khẩu" minLength={isLogin ? 1 : 8} autoComplete={isLogin ? "current-password" : "new-password"}
+                  placeholder="Mật khẩu" aria-label="Mật khẩu" minLength={isLogin ? 1 : 8} maxLength={72} autoComplete={isLogin ? "current-password" : "new-password"}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
@@ -286,25 +279,7 @@ export default function AuthPage() {
                 </button>
               )}
 
-              {isLogin && (
-                <details className="quick-accounts-section my-3 text-left rounded-xl border border-slate-200 p-3 dark:border-slate-700">
-                  <summary className="cursor-pointer text-sm font-semibold text-slate-600 dark:text-slate-300">Chọn tài khoản thử nghiệm</summary>
-                  <p className="my-2 text-xs text-slate-500">Mật khẩu chung: <code>demo1234</code>. Chọn tài khoản để điền sẵn form.</p>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {QUICK_ACCOUNTS.map(({ username, label }) => (
-                      <button
-                        key={username}
-                        type="button"
-                        onClick={() => fillQuickAccount(username)}
-                        disabled={isPendingTransition}
-                        className="px-3 py-2 text-xs text-left rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-700 border border-slate-200 transition-colors disabled:opacity-50"
-                      >
-                        {label} ({username})
-                      </button>
-                    ))}
-                  </div>
-                </details>
-              )}
+
             </form>
           )}
 

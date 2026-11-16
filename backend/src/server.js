@@ -1,5 +1,4 @@
 import app from './app.js';
-import { startAchievementTrashCleanup } from './modules/achievements/achievementTrashCleanup.js';
 import config from './config/env.js';
 import { connectDB, closeDB } from './config/database.js';
 
@@ -16,7 +15,6 @@ async function bootstrap() {
     console.warn('   Server vẫn sẽ khởi động để phục vụ các yêu cầu liveness health check và báo lỗi khi truy cập database.');
   }
 
-  const stopTrashCleanup = startAchievementTrashCleanup();
 
   // 2. Khởi chạy Express Server
   server = app.listen(config.PORT, () => {
@@ -36,7 +34,6 @@ async function bootstrap() {
         console.log('🔌 Đã dừng máy chủ HTTP Express.');
       });
     }
-    stopTrashCleanup();
     await closeDB();
     process.exit(0);
   };

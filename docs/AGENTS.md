@@ -1,5 +1,11 @@
 # Yêu cầu báo cáo học phần và slide
 
+## Hướng nghiệp vụ hiện hành từ 15/11/2026
+
+- Người dùng đã đổi hướng sang kho thành tích cá nhân không xét duyệt, khám hồ sơ theo quy chế, KPI và CV; tổ chức cha–con hỗ trợ thành viên theo phạm vi. Nguồn thiết kế đang thống nhất: `requirements/PERSONAL_VAULT_V2.md`.
+- Các tên đề tài và mô tả xét duyệt ở mốc báo cáo bên dưới là thông tin lịch sử, không buộc triển khai lại quy trình cũ. Chưa sửa các file Word/PDF và chưa có tên đề tài thay thế được xác nhận.
+- Tài liệu Markdown bàn giao/xét duyệt cũ đã được dọn theo yêu cầu người dùng; không tự tái tạo chúng. Giữ các ràng buộc báo cáo học phần và thông tin bìa đã xác nhận khi người dùng yêu cầu cập nhật báo cáo.
+
 Áp dụng cho việc viết báo cáo và làm slide của dự án này. Ghi nhận hướng dẫn do người dùng cung cấp ngày 10/11/2026.
 
 - Đây là báo cáo môn Phát triển ứng dụng, không phải báo cáo tốt nghiệp.

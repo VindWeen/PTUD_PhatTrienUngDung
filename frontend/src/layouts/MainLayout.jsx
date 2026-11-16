@@ -1,42 +1,36 @@
 import React, { Suspense, useEffect } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import Sidebar from '../components/common/Sidebar';
-import { DATA_SOURCE } from '../services/apiConfig';
-import { LoadingState } from '../components/common/AsyncState';
 import { useAuth } from '../context/AuthContext';
-import useWorkflowUpdates from '../hooks/useWorkflowUpdates';
-import { UserRound } from 'lucide-react';
-import { CalendarProvider, CalendarButton } from '../components/calendar/PersonalCalendar';
+import { Moon, Sun, UserRound } from 'lucide-react';
+import NotificationDropdown from '../components/common/NotificationDropdown';
+import { useTheme } from '../hooks/useTheme';
+import GlobalSearch from '../components/common/GlobalSearch';
 
-const roleLabels = { LECTURER: 'Giảng viên', UNIT_REPRESENTATIVE: 'Đại diện đơn vị', MANAGER: 'Quản lý / Thẩm định', RECORDS_OFFICER: 'Cán bộ thi đua khen thưởng', COUNCIL: 'Hội đồng', ADMIN: 'Quản trị viên' };
+const roleLabels = { MEMBER: 'Thành viên', SYSTEM_ADMIN: 'Quản trị hệ thống', REGULATION_MANAGER: 'Quản lý quy chế' };
 
 export default function MainLayout() {
-  const { user } = useAuth();
-  return <CalendarProvider key={user?.userId || user?.username || 'anonymous'}><MainLayoutContent /></CalendarProvider>;
+  return <MainLayoutContent />;
 }
 
 function MainLayoutContent() {
   const { pathname } = useLocation();
   const { user } = useAuth();
-  useWorkflowUpdates();
+  const { theme, toggleTheme } = useTheme();
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   return (
-    <div className="min-h-screen bg-soft-bg dark:bg-soft-darkBg text-slate-800 dark:text-slate-100 transition-colors duration-200">
+    <div className="vault-shell min-h-screen bg-soft-bg dark:bg-soft-darkBg text-slate-800 dark:text-slate-100 transition-colors duration-200">
       {/* Sidebar (Desktop Floating Capsule + Mobile Bottom Nav) */}
       <Sidebar />
 
       {/* Main Content Area */}
-      <div className="lg:pl-[108px] pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-8 transition-all duration-200">
+      <div className="lg:pl-[248px] pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-8 transition-all duration-200">
         <div className="p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto">
-          {user && <div aria-label="Tài khoản đang đăng nhập" className="mb-5 flex flex-wrap items-center justify-end gap-3 text-sm">
-            <CalendarButton />
-            <UserRound className="h-5 w-5 shrink-0 text-teal-600" />
-            <div className="min-w-0"><p className="break-words font-semibold">{user.displayName || user.username}<span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">@{user.username}</span></p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{(user.roles || []).map(r => { const code = typeof r === 'string' ? r : r.code; return roleLabels[code] || r.name || code; }).join(' · ')}</p>
-            </div>
+          {user && <div aria-label="Tài khoản đang đăng nhập" className="workspace-topbar">
+            <GlobalSearch />
+            <div className="workspace-topbar-actions"><NotificationDropdown /><button type="button" className="workspace-icon-button" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Chuyển giao diện sáng' : 'Chuyển giao diện tối'}>{theme === 'dark' ? <Sun size={19} /> : <Moon size={19} />}</button><Link to="/me/profile" className="workspace-user"><span className="workspace-avatar"><UserRound size={18} /></span><span><strong>{user.fullName || user.email}</strong><small>{(user.roles || []).map(r => { const code = typeof r === 'string' ? r : r.code; return roleLabels[code] || r.name || code; }).join(' · ')}</small></span></Link></div>
           </div>}
-          {DATA_SOURCE === 'fixture' && <p className="mb-5 text-xs font-semibold text-amber-700 dark:text-amber-300">Nguồn dữ liệu: FIXTURE theo OpenAPI — không phải dữ liệu thật.</p>}
-          <Suspense fallback={<LoadingState label="Đang mở trang…" />}>
+          <Suspense fallback={<p>Đang mở trang…</p>}>
             <Outlet />
           </Suspense>
         </div>

@@ -10,7 +10,7 @@ function fakePool(applied=[],failBatch=false){
     log.push({sql,params});
     if(sql.includes('sp_getapplock')) return {rows:[{lock_result:0}]};
     if(sql.includes('SELECT name, checksum')) return {rows:applied};
-    if(failBatch&&sql.includes('-- SQL Server 2017+')) throw new Error('fixture batch failure');
+    if(failBatch&&sql.includes('CREATE TABLE app.users')) throw new Error('fixture batch failure');
     return {rows:[]};
   },async release(){log.push({sql:'RELEASE'});}};
   return {log,async connect(){return client;},async end(){throw new Error('Custom pool must not be closed');}};
@@ -19,6 +19,7 @@ test('migration parser handles GO and checksum normalizes CRLF',()=>{
   assert.equal(splitBatches('SELECT 1;\nGO\nSELECT 2;\ngo -- test\nSELECT 3;').length,3);
   assert.equal(calculateChecksum('SELECT 1;\r\n'),calculateChecksum('SELECT 1;\n'));
   assert.ok(migrationsDir.includes('sqlserver'));
+  assert.ok(migrationsDir.replaceAll('\\','/').includes('/v2/migrations/'));
 });
 test('already applied files are validated and not executed again',async()=>{
   const applied=getMigrationFiles().map(name=>({name,checksum:calculateChecksum(fs.readFileSync(path.join(migrationsDir,name),'utf8'))}));
@@ -44,4 +45,23 @@ test('failed schema batch rolls back the whole run without recording a migration
 test('demo seed requires explicit authorization before opening a connection',async()=>{
   const pool={async connect(){throw new Error('must not connect');}};
   await assert.rejects(seedDatabase(pool),/requires --apply/);
+});
+
+test('V2 baseline refuses an existing unversioned schema',async()=>{
+  const pool=fakePool();
+  const connect=pool.connect;
+  pool.connect=async()=>{
+    const client=await connect();
+    const query=client.query.bind(client);
+    client.query=async(sql,params)=>sql.includes('COUNT(*) AS table_count')
+      ? {rows:[{table_count:53}]} : query(sql,params);
+    return client;
+  };
+  await assert.rejects(migrateUp(pool),/requires an empty database/);
+  assert.ok(pool.log.some(e=>e.sql==='ROLLBACK'));
+});
+
+test('legacy seed is blocked even with explicit apply on V2',async()=>{
+  const pool={async connect(){throw new Error('must not connect');}};
+  await assert.rejects(seedDatabase(pool,{apply:true}),/V2 seed is not available/);
 });

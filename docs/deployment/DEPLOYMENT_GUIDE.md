@@ -6,4 +6,4 @@ Backend cần Node, cấu hình DB_HOST/PORT/NAME/USER/PASSWORD và SQL Server t
 
 Frontend build tĩnh cần reverse proxy /api/v1 hoặc VITE_API_URL được cấu hình trước build; CORS_ORIGIN phải khớp tên miền frontend. Cấu hình HTTPS/cookie theo môi trường. AI pool và email reset giữ cơ chế riêng như phiên bản trước.
 
-Máy hiện tại dùng SQL Server2022 local; đây chưa phải bằng chứng đã triển khai SQL Server lên dịch vụ hosting bên ngoài. Các tài liệu triển khai PostgreSQL cũ giữ trong docs/archive/sqlserver để tra lịch sử.
+Máy hiện tại dùng SQL Server2022 local; đây chưa phải bằng chứng đã triển khai SQL Server lên dịch vụ hosting bên ngoài. Các hướng dẫn PostgreSQL cũ đã được dọn. Hướng thiết kế mới nằm ở [V2](../requirements/PERSONAL_VAULT_V2.md), chưa được triển khai đầy đủ trong schema hiện tại.

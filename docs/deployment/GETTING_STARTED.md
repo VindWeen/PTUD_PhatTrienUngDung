@@ -1,5 +1,7 @@
 # Cài đặt và chạy SQL Server
 
+> Trạng thái mới 15/11/2026: PTUD_LHU đã có 33 bảng nghiệp vụ V2 rỗng. Migrate mặc định đã chuyển sang V2; seed cũ bị chặn. Xem [hướng dẫn V2](../../database/sqlserver/v2/README.md). Hướng dẫn và số liệu chuyển đổi bên dưới thuộc phiên bản trước; API/giao diện vẫn cần chuyển sang schema mới.
+
 Cập nhật 11/11/2026. React/Vite giao tiếp Express REST; Express dùng driver mssql và T-SQL trên SQL Server. Không cần tài khoản Supabase để chạy phiên bản hiện tại.
 
 ## Máy đã được chuyển trong workspace

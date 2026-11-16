@@ -5,7 +5,7 @@ Mở bằng icon lịch cạnh tài khoản trên mọi trang hoặc chọn ngà
 - Popup có lịch tháng, chọn tháng/năm, Hôm nay, bộ lọc, danh sách trong ngày và các lịch sắp tới.
 - Thêm, sửa, xóa lịch thi/cuộc thi/công việc/cá nhân; có thời gian, cả ngày hoặc nhiều ngày, địa điểm/link, ghi chú, trạng thái hoàn thành. Công việc quá hạn được đánh dấu.
 - Nút ×, Esc, bấm nền ngoài đóng popup. Nội dung chưa lưu cần xác nhận bỏ. Trong lúc ghi API, popup không thể đóng.
-- Lưu PostgreSQL theo tài khoản đang xác thực; API không chấp nhận userId từ client. Mọi thao tác đọc/ghi ràng buộc user_id; cập nhật/xóa kiểm tra version chống ghi đè giữa các phiên.
+- Lưu SQL Server theo tài khoản đang xác thực; API không chấp nhận userId từ client. Mọi thao tác đọc/ghi ràng buộc user_id; cập nhật/xóa kiểm tra version chống ghi đè giữa các phiên.
 - Ngày giờ dùng giờ Việt Nam (UTC+7). Lịch cả ngày tính cả ngày bắt đầu và kết thúc.
 - Hai sự kiện chung là minh họa lặp theo tháng đang xem, chỉ đọc, không phải lịch hội đồng thực tế. Chưa có nhắc lịch hoặc đồng bộ lịch ngoài. Chế độ fixture chỉ xem sự kiện minh họa, không lưu lịch cá nhân.
 

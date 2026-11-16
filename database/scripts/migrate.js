@@ -4,7 +4,8 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { Pool, getDbPoolConfig } from '../../backend/src/config/database.js';
 
-export const migrationsDir = fileURLToPath(new URL('../sqlserver/migrations/', import.meta.url));
+// V2 is a fresh baseline. Never mix the historical workflow migrations into this chain.
+export const migrationsDir = fileURLToPath(new URL('../sqlserver/v2/migrations/', import.meta.url));
 export function getMigrationFiles() {
   if (!fs.existsSync(migrationsDir)) throw new Error(`SQL Server migrations not found: ${migrationsDir}`);
   const files = fs.readdirSync(migrationsDir).filter(file => /^\d+_[\w-]+\.sql$/.test(file)).sort();
@@ -59,6 +60,12 @@ export async function migrateUp(customPool = null) {
     await ensureMigrationsTable(client);
     const applied = await getApplied(client);
     checkHistory(files, applied);
+    if (!applied.length) {
+      const existing = await client.query("SELECT COUNT(*) AS table_count FROM sys.tables WHERE is_ms_shipped=0 AND NOT (schema_id=SCHEMA_ID(N'app') AND name=N'_schema_migrations');");
+      if (Number(existing.rows?.[0]?.table_count || 0) > 0) {
+        throw new Error('V2 baseline requires an empty database; existing tables were found. No automatic legacy conversion is performed.');
+      }
+    }
     const known = new Set(applied.map(item => item.name));
     let appliedCount = 0;
     for (const file of files) {

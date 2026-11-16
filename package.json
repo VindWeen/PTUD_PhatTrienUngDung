@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Smart Achievement Vault & Career Assistant E2E Test Suite",
   "scripts": {
-    "test:e2e": "node tests/e2e/runner.js",
-    "test:e2e:smoke": "node --test tests/e2e/smoke.test.js"
+    "test": "npm --prefix backend test",
+    "test:e2e": "npm --prefix backend run test:api",
+    "test:e2e:smoke": "npm --prefix backend run test:api"
   }
 }

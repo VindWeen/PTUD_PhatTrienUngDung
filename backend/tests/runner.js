@@ -9,7 +9,6 @@ import {
   ValidationError,
   UnauthorizedError,
   ForbiddenError,
-  SelfApprovalError,
   ConcurrencyConflictError,
   NotFoundError,
   OutOfScopeError,
@@ -86,12 +85,6 @@ it('UnauthorizedError khởi tạo đúng mã 401 và UNAUTHORIZED', () => {
   assert.strictEqual(err.code, 'UNAUTHORIZED');
 });
 
-it('SelfApprovalError khởi tạo đúng mã 403 và SELF_APPROVAL_PROHIBITED', () => {
-  const err = new SelfApprovalError();
-  assert.strictEqual(err.statusCode, 403);
-  assert.strictEqual(err.code, 'SELF_APPROVAL_PROHIBITED');
-});
-
 it('ConcurrencyConflictError khởi tạo đúng mã 409 và CONCURRENCY_CONFLICT', () => {
   const err = new ConcurrencyConflictError();
   assert.strictEqual(err.statusCode, 409);
@@ -119,9 +112,9 @@ it('formatQuery tự động suy diễn và tham số hóa an toàn chống SQL 
 
 // 4. Kiểm thử Migration Runner Files
 console.log('\n4. KIỂM THỬ DANH SÁCH MIGRATIONS (SQL SERVER):');
-it('SQL Server migrations gồm baseline và trigger theo đúng thứ tự', () => {
+it('SQL Server migrations chỉ dùng baseline V2 và ràng buộc V2 theo đúng thứ tự', () => {
   const files = getMigrationFiles();
-  assert.deepStrictEqual(files, ['001_final_schema.sql', '002_integrity_triggers.sql', '003_achievement_trash.sql', '004_achievement_trash_file_collation.sql', '005_refactor_personal_vault_and_cv.sql']);
+  assert.deepStrictEqual(files, ['001_v2_schema.sql', '002_v2_integrity.sql']);
 });
 
 // 5. Kiểm thử Mật mã & Token (Crypto & Token Hashing)
@@ -692,39 +685,6 @@ async function runHttpTests() {
     });
     // Phải bị 403 FORBIDDEN vì ADMIN không tự động là MANAGER và không có scope
     assert.strictEqual(res.status, 403);
-  });
-
-  // Anti-Self Approval Middleware
-  console.log('\n8. KIỂM THỬ QUY TẮC LIÊM CHÍNH - CHỐNG TỰ PHÊ DUYỆT (ANTI-SELF APPROVAL):');
-
-  await itAsync('Thẩm định viên tự duyệt hồ sơ của chính mình bị chặn 403 SELF_APPROVAL_PROHIBITED', async () => {
-    const loginBich = await makeRequest(port, '/api/v1/auth/login', {
-      method: 'POST',
-      body: { username: 'bich.tt', password: 'demo1234' },
-    });
-    // Bích (UserId: 2) thẩm định hồ sơ của chính mình (lecturerUserId: 2)
-    const res = await makeRequest(port, '/api/v1/auth/test-anti-self-approval', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${loginBich.data.data.accessToken}` },
-      body: { lecturerUserId: 2 },
-    });
-    assert.strictEqual(res.status, 403);
-    assert.strictEqual(res.data.error.code, 'SELF_APPROVAL_PROHIBITED');
-  });
-
-  await itAsync('Thẩm định viên duyệt hồ sơ của người khác được chấp thuận 200 OK', async () => {
-    const loginBich = await makeRequest(port, '/api/v1/auth/login', {
-      method: 'POST',
-      body: { username: 'bich.tt', password: 'demo1234' },
-    });
-    // Bích (UserId: 2) thẩm định hồ sơ của An (lecturerUserId: 1)
-    const res = await makeRequest(port, '/api/v1/auth/test-anti-self-approval', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${loginBich.data.data.accessToken}` },
-      body: { lecturerUserId: 1 },
-    });
-    assert.strictEqual(res.status, 200);
-    assert.strictEqual(res.data.success, true);
   });
 
   await new Promise((resolve) => server.close(resolve));

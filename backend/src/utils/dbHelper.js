@@ -32,7 +32,7 @@ export function formatQuery(sqlText, params = []) {
  * Thực thi câu lệnh SQL tham số hóa (Parameterized Query) an toàn
  * @param {string} sqlText - Câu lệnh SQL (hỗ trợ $1, $2... hoặc @param)
  * @param {Array|Object} params - Danh sách hoặc đối tượng tham số
- * @param {object|null} customClient - pg.Client dùng khi ở trong Transaction
+ * @param {object|null} customClient - SQL Server client dùng khi ở trong Transaction
  */
 export async function query(sqlText, params = [], customClient = null) {
   const { text, values } = formatQuery(sqlText, params);
@@ -57,7 +57,7 @@ export async function query(sqlText, params = [], customClient = null) {
 }
 
 /**
- * Helper quản lý PostgreSQL Database Transaction dùng cùng pg client BEGIN/COMMIT/ROLLBACK
+ * Helper quản lý SQL Server transaction trên cùng kết nối BEGIN/COMMIT/ROLLBACK
  * Tự động Rollback toàn diện khi gặp bất kỳ ngoại lệ nào
  * @param {Function} callback - Hàm thực thi nhận vào { client, query }
  */
@@ -81,7 +81,7 @@ export async function withTransaction(callback) {
     try {
       await client.query('ROLLBACK');
     } catch (rollbackError) {
-      console.error('Lỗi khi thực hiện ROLLBACK transaction PostgreSQL:', rollbackError.message);
+      console.error('Lỗi khi rollback SQL Server transaction:', rollbackError.message);
     }
     throw error;
   } finally {

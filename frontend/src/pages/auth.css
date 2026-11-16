@@ -137,7 +137,8 @@
   text-align: center;
 }
 
-.ptud-auth .input-box input {
+.ptud-auth .input-box input,
+.ptud-auth .input-box select {
   border: none;
   outline: none;
   width: 100%;
@@ -147,6 +148,13 @@
   font: inherit;
   font-size: 14px;
   color: #172033;
+}
+
+:root.dark .ptud-auth .input-box select {
+  color: #f5f5f5;
+  color-scheme: dark;
+  background-color: transparent;
+  border-radius: 0;
 }
 
 .ptud-auth .input-box input::placeholder {
