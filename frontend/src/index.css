@@ -795,3 +795,235 @@
   .workspace-topbar { flex-direction: column; align-items: stretch; }
   .vault-form-grid { grid-template-columns: 1fr; }
 }
+
+
+/* =====================================================================
+   CV Live Preview & Document Layout
+   ===================================================================== */
+.cv-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.cv-preview-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cv-preview-heading h2 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+.cv-preview-heading p {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+.cv-preview-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #e6f6f4;
+  color: #0f766e;
+}
+
+.cv-preview-paper {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  padding: 28px 24px;
+  min-height: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Template styles */
+.cv-preview-paper.cv-template-modern {
+  border-top: 6px solid #0f766e;
+}
+.cv-preview-paper.cv-template-academic {
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  border-top: 6px solid #1e293b;
+}
+.cv-preview-paper.cv-template-minimalist {
+  border: 1px solid #cbd5e1;
+  background: #fafbfc;
+}
+
+.cv-preview-name {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+.cv-preview-headline {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0f766e;
+  margin-top: -8px;
+}
+.cv-preview-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.75rem;
+  color: #64748b;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 10px;
+}
+.cv-preview-bio {
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: #475569;
+  background: #f8fafc;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border-left: 3px solid #0f766e;
+}
+.cv-preview-paper h3 {
+  font-size: 0.85rem;
+  font-weight: 750;
+  color: #1e293b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 4px;
+  margin-top: 6px;
+}
+.cv-preview-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+}
+.cv-preview-item strong {
+  font-size: 0.82rem;
+  color: #0f172a;
+  font-weight: 700;
+}
+.cv-preview-item span {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+.cv-preview-muted {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-style: italic;
+  padding: 16px;
+  text-align: center;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px dashed #cbd5e1;
+}
+.cv-preview-note {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  text-align: center;
+  font-style: italic;
+}
+
+/* =====================================================================
+   Attribute Builder (Replaces confusing JSON textarea)
+   ===================================================================== */
+.attr-builder {
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px;
+  background: #f8fafc;
+}
+.attr-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.attr-preset-chip {
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  transition: all 0.15s;
+}
+.attr-preset-chip:hover {
+  background: #0f766e;
+  color: #ffffff;
+  border-color: #0f766e;
+}
+.attr-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.attr-row input {
+  padding: 7px 10px;
+  font-size: 0.8rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+}
+
+/* =====================================================================
+   Evaluation Results Spotlight Card
+   ===================================================================== */
+.evaluation-spotlight {
+  border: 2px solid #0f766e;
+  border-radius: 24px;
+  background: #ffffff;
+  padding: 24px 28px;
+  box-shadow: 0 12px 32px rgba(15, 118, 110, 0.08);
+  position: relative;
+}
+.eval-badge-met {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+.eval-badge-not-met {
+  background: #fff1f2;
+  color: #be123c;
+  border: 1px solid #fecdd3;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+.eval-criterion-card {
+  padding: 16px;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 10px;
+  transition: all 0.15s;
+}
+.eval-criterion-card:hover {
+  border-color: #cbd5e1;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+/* =====================================================================
+   Structured Table Enhancements for Goals and Records
+   ===================================================================== */
+.vault-goal-table-row {
+  transition: background 0.15s;
+}
+.vault-goal-table-row:hover {
+  background: #f8fafc;
+}

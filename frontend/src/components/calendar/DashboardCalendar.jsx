@@ -58,17 +58,20 @@ export default function DashboardCalendar() {
   }, [selected]);
 
   const dayEvents = useCallback(date => (events || []).filter(event => intersectsDay(event, date)).sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt)), [events]);
-  const activeEvents = useMemo(() => (events || []).filter(event => event.status !== 'CANCELLED' && new Date(event.endsAt) > new Date()).sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt)).slice(0, 4), [events]);
-  
-  const currentDayEvents = dayEvents(activeDate);
 
-  const openDayModal = (date, element) => { 
+  const openDayModal = (date, element, startWithNew = false) => { 
     trigger.current = element; 
-    setForm(null); 
     setEditingId(null); 
     setFormError(''); 
     setNotice(''); 
-    setSelected(startOfDay(date)); 
+    const targetDate = startOfDay(date);
+    setActiveDate(targetDate);
+    setSelected(targetDate); 
+    if (startWithNew) {
+      setForm(blankForm(targetDate));
+    } else {
+      setForm(null);
+    }
   };
 
   const closeDialog = () => { if (!busy) dialog.current?.close(); };
@@ -125,7 +128,7 @@ export default function DashboardCalendar() {
   const selectedEvents = selected ? dayEvents(selected) : [];
 
   return (
-    <section className="dash-calendar interactive-calendar" aria-labelledby="calendar-title">
+    <section className="dash-calendar interactive-calendar cal-fullwidth-card" aria-labelledby="calendar-title">
       {/* Header Lịch */}
       <div className="dash-section-head">
         <div>
@@ -138,8 +141,7 @@ export default function DashboardCalendar() {
             className="cal-btn-add" 
             onClick={e => { 
               const date = startOfDay(new Date()); 
-              openDayModal(date, e.currentTarget); 
-              setForm(blankForm(date)); 
+              openDayModal(date, e.currentTarget, true);
             }}
           >
             <Plus size={15} aria-hidden="true" /> Thêm sự kiện
@@ -164,55 +166,51 @@ export default function DashboardCalendar() {
         </div>
       )}
 
-      {/* Bố cục Calendar: Lưới tháng + Thẻ sự kiện nổi (Spotlight Card) */}
-      <div className="dash-calendar-layout">
-        <div className="cal-main-col">
-          {/* Month Navigator */}
-          <div className="dash-month">
-            <button 
-              aria-label="Tháng trước" 
-              type="button" 
-              onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <strong>Tháng {month.getMonth() + 1}, {month.getFullYear()}</strong>
-            <button 
-              aria-label="Tháng sau" 
-              type="button" 
-              onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
+      {/* Bố cục Calendar: Dàn trọn card theo yêu cầu người dùng */}
+      <div className="cal-full-container">
+        {/* Month Navigator */}
+        <div className="dash-month">
+          <button 
+            aria-label="Tháng trước" 
+            type="button" 
+            onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <strong>Tháng {month.getMonth() + 1}, {month.getFullYear()}</strong>
+          <button 
+            aria-label="Tháng sau" 
+            type="button" 
+            onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
 
-          {/* Grid Lịch */}
-          <div className="dash-calendar-grid">
-            {weekdays.map(day => (
-              <span className="dash-weekday" key={day}>{day}</span>
-            ))}
-            {Array.from({ length: start }, (_, i) => (
-              <span key={`blank-${i}`} className="cal-day-blank" />
-            ))}
-            {Array.from({ length: days }, (_, i) => {
-              const date = new Date(month.getFullYear(), month.getMonth(), i + 1);
-              const list = dayEvents(date);
-              const isToday = sameDay(date, today);
-              const isActive = sameDay(date, activeDate);
+        {/* Grid Lịch dàn rộng */}
+        <div className="dash-calendar-grid cal-grid-expanded">
+          {weekdays.map(day => (
+            <span className="dash-weekday" key={day}>{day}</span>
+          ))}
+          {Array.from({ length: start }, (_, i) => (
+            <span key={`blank-${i}`} className="cal-day-blank" />
+          ))}
+          {Array.from({ length: days }, (_, i) => {
+            const date = new Date(month.getFullYear(), month.getMonth(), i + 1);
+            const list = dayEvents(date);
+            const isToday = sameDay(date, today);
+            const isActive = sameDay(date, activeDate);
 
-              return (
+            return (
+              <div 
+                key={i} 
+                className={`cal-day-wrapper ${list.length > 0 ? 'has-events' : ''}`}
+              >
                 <button 
                   type="button" 
-                  key={i} 
                   className={`cal-day ${isToday ? 'is-today' : ''} ${isActive ? 'is-active' : ''}`}
-                  aria-label={`${dayLabel(date)}, ${list.length} sự kiện`} 
-                  onClick={e => {
-                    setActiveDate(date);
-                    if (list.length > 0) {
-                      // Nếu bấm ngày có sự kiện thì mở modal quản lý hoặc focus
-                    }
-                  }}
-                  onDoubleClick={e => openDayModal(date, e.currentTarget)}
+                  aria-label={`${dayLabel(date)}, ${list.length} sự kiện. Nhấn để quản lý sự kiện.`} 
+                  onClick={e => openDayModal(date, e.currentTarget, list.length === 0)}
                 >
                   <span className="cal-day-number">{i + 1}</span>
                   {list.length > 0 && (
@@ -220,115 +218,54 @@ export default function DashboardCalendar() {
                       {list.slice(0, 3).map(item => (
                         <i key={item.id} className={`cal-dot ${item.status.toLowerCase()}`} />
                       ))}
+                      {list.length > 3 && <span className="cal-more-dot">+{list.length - 3}</span>}
                     </span>
                   )}
                 </button>
-              );
-            })}
-          </div>
 
-          {/* Legend nhỏ gọn */}
-          <div className="cal-legend" aria-label="Chú thích trạng thái">
-            <span><i className="cal-dot scheduled" /> Đã lên lịch</span>
-            <span><i className="cal-dot completed" /> Hoàn thành</span>
-            <span><i className="cal-dot cancelled" /> Đã hủy</span>
-          </div>
+                {/* Popover / Tooltip nổi khi hover ngày có sự kiện */}
+                {list.length > 0 && (
+                  <div className="cal-hover-popover" role="tooltip">
+                    <div className="cal-popover-header">
+                      <strong>Ngày {i + 1} tháng {month.getMonth() + 1}</strong>
+                      <span className="cal-popover-count">{list.length} sự kiện</span>
+                    </div>
+                    <div className="cal-popover-list">
+                      {list.slice(0, 3).map(ev => (
+                        <div key={ev.id} className="cal-popover-item">
+                          <div className="cal-popover-item-title">
+                            <i className={`cal-dot ${ev.status.toLowerCase()}`} />
+                            <span className="truncate">{ev.title}</span>
+                          </div>
+                          <div className="cal-popover-item-time">
+                            <Clock size={11} className="shrink-0" />
+                            <span>{eventRange(ev)}</span>
+                          </div>
+                          {ev.description && (
+                            <p className="cal-popover-item-desc truncate">{ev.description}</p>
+                          )}
+                        </div>
+                      ))}
+                      {list.length > 3 && (
+                        <p className="cal-popover-more">Và {list.length - 3} sự kiện khác...</p>
+                      )}
+                    </div>
+                    <div className="cal-popover-hint">
+                      Nhấp để xem chi tiết / sửa sự kiện →
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        {/* Cột hiển thị Sự kiện Nổi bật (Event Spotlight Card như trong bản Figma) */}
-        <div className="cal-spotlight-col">
-          <div className="cal-spotlight-head">
-            <h3>Sự kiện ngày {activeDate.getDate()}/{activeDate.getMonth() + 1}</h3>
-            <button 
-              type="button" 
-              className="cal-spotlight-add" 
-              onClick={e => {
-                openDayModal(activeDate, e.currentTarget);
-                setForm(blankForm(activeDate));
-              }}
-              title="Thêm sự kiện vào ngày này"
-            >
-              <Plus size={15} />
-            </button>
-          </div>
-
-          {!currentDayEvents.length ? (
-            <div className="cal-spotlight-empty">
-              <CalendarDays size={28} aria-hidden="true" />
-              <p>Chưa có sự kiện nào cho ngày {activeDate.getDate()}/{activeDate.getMonth() + 1}.</p>
-              <button 
-                type="button" 
-                className="cal-spotlight-create-btn"
-                onClick={e => {
-                  openDayModal(activeDate, e.currentTarget);
-                  setForm(blankForm(activeDate));
-                }}
-              >
-                + Thêm sự kiện mới
-              </button>
-            </div>
-          ) : (
-            <div className="cal-spotlight-cards">
-              {currentDayEvents.map(event => (
-                <article 
-                  key={event.id} 
-                  className="cal-event-card-spotlight"
-                  onClick={e => openDayModal(activeDate, e.currentTarget)}
-                >
-                  <div className="event-card-top">
-                    <h4>{event.title}</h4>
-                    <span className="event-bell-badge" aria-hidden="true">
-                      <Bell size={14} />
-                    </span>
-                  </div>
-
-                  {event.description && (
-                    <p className="event-card-desc">
-                      <MapPin size={13} className="shrink-0" />
-                      <span>{event.description}</span>
-                    </p>
-                  )}
-
-                  <div className="event-card-time">
-                    <Clock size={13} className="shrink-0" />
-                    <span>{eventRange(event)}</span>
-                  </div>
-
-                  <div className="event-card-action">
-                    <span>{labels[event.status] || event.status}</span>
-                    <button type="button" className="event-card-detail-btn">
-                      Chi tiết & Quản lý →
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-
-          {/* Danh sách sự kiện sắp tới tóm lược */}
-          {activeEvents.length > 0 && (
-            <div className="cal-upcoming-wrap">
-              <h4>Sắp tới gần nhất</h4>
-              <div className="cal-upcoming-list">
-                {activeEvents.slice(0, 2).map(item => (
-                  <button 
-                    type="button" 
-                    key={item.id} 
-                    className="cal-upcoming-item"
-                    onClick={e => {
-                      const d = new Date(item.startsAt);
-                      setActiveDate(startOfDay(d));
-                      setMonth(new Date(d.getFullYear(), d.getMonth(), 1));
-                    }}
-                  >
-                    <CheckCircle2 size={14} className="text-teal-600 shrink-0" />
-                    <span className="truncate">{item.title}</span>
-                    <small>{new Date(item.startsAt).toLocaleDateString('vi-VN')}</small>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+        {/* Legend nhỏ gọn */}
+        <div className="cal-legend" aria-label="Chú thích trạng thái">
+          <span><i className="cal-dot scheduled" /> Đã lên lịch</span>
+          <span><i className="cal-dot completed" /> Hoàn thành</span>
+          <span><i className="cal-dot cancelled" /> Đã hủy</span>
+          <span className="cal-legend-hint">Nhấp chuột trực tiếp vào ngày bất kỳ để quản lý hoặc tạo sự kiện</span>
         </div>
       </div>
 
@@ -344,7 +281,7 @@ export default function DashboardCalendar() {
           <>
             <div className="cal-dialog-header">
               <div>
-                <h2 id="cal-dialog-title">Sự kiện trong ngày</h2>
+                <h2 id="cal-dialog-title">Sự kiện & Xét duyệt</h2>
                 <p>{dayLabel(selected)}</p>
               </div>
               <button 
@@ -372,19 +309,38 @@ export default function DashboardCalendar() {
                 {formError && !form && <p role="alert" className="cal-error">{formError}</p>}
 
                 {!selectedEvents.length ? (
-                  <p className="cal-empty">Ngày này chưa có sự kiện. Bạn có thể thêm sự kiện mới.</p>
+                  <div className="cal-empty-card">
+                    <CalendarDays size={28} className="text-slate-400 mb-2" />
+                    <p className="font-semibold text-slate-700">Ngày này chưa có sự kiện</p>
+                    <p className="text-xs text-slate-500 mt-1">Bạn có thể tạo lịch xét duyệt, hạn nộp hoặc ghi chú mới.</p>
+                    <button type="button" className="cal-btn-add mt-3" onClick={beginCreate} disabled={busy}>
+                      + Thêm sự kiện ngay
+                    </button>
+                  </div>
                 ) : (
                   selectedEvents.map(item => (
                     <article className="cal-event-row" key={item.id}>
                       <span className={`cal-dot ${item.status.toLowerCase()}`} aria-hidden="true" />
-                      <div>
-                        <h4>{item.title}</h4>
-                        <p>{eventRange(item)} · {labels[item.status] || item.status}</p>
-                        {item.description && <p className="cal-event-description">{item.description}</p>}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-slate-800 text-sm truncate">{item.title}</h4>
+                          <span className={`cal-status-chip ${item.status.toLowerCase()}`}>
+                            {labels[item.status] || item.status}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+                          <Clock size={12} className="shrink-0 text-slate-400" />
+                          <span>{eventRange(item)}</span>
+                        </p>
+                        {item.description && (
+                          <p className="cal-event-description mt-1 text-xs text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                            {item.description}
+                          </p>
+                        )}
                       </div>
                       <div className="cal-event-actions">
-                        <button type="button" onClick={() => beginEdit(item)} disabled={busy}>Sửa</button>
-                        <button type="button" onClick={() => remove(item)} disabled={busy}>Xóa</button>
+                        <button type="button" onClick={() => beginEdit(item)} disabled={busy} className="cal-act-edit">Sửa</button>
+                        <button type="button" onClick={() => remove(item)} disabled={busy} className="cal-act-del">Xóa</button>
                       </div>
                     </article>
                   ))
@@ -394,28 +350,28 @@ export default function DashboardCalendar() {
               <div className="cal-dialog-editor">
                 {form ? (
                   <form onSubmit={submit} className="cal-form">
-                    <h3>{editingId ? 'Sửa sự kiện' : 'Thêm sự kiện'}</h3>
+                    <h3>{editingId ? 'Chỉnh sửa sự kiện' : 'Thêm sự kiện mới'}</h3>
                     {formError && <p role="alert" className="cal-error">{formError}</p>}
                     
                     <label>
-                      Tên sự kiện
+                      Tên sự kiện / Lịch xét duyệt
                       <input 
                         autoFocus 
                         required 
                         maxLength={300} 
                         value={form.title} 
                         onChange={e => setForm({ ...form, title: e.target.value })} 
-                        placeholder="Nhập tên sự kiện..."
+                        placeholder="Ví dụ: Hội đồng xét duyệt CSTĐ, Hạn nộp minh chứng..."
                       />
                     </label>
 
                     <label>
-                      Địa điểm / Mô tả
+                      Địa điểm / Mô tả chi tiết
                       <textarea 
                         rows={3} 
                         value={form.description} 
                         onChange={e => setForm({ ...form, description: e.target.value })} 
-                        placeholder="Phòng họp, link meeting hoặc ghi chú..."
+                        placeholder="Phòng họp, link họp trực tuyến hoặc lưu ý..."
                       />
                     </label>
 
@@ -461,7 +417,7 @@ export default function DashboardCalendar() {
 
                     <div className="cal-form-actions">
                       <button type="submit" className="cal-save" disabled={busy}>
-                        {busy ? 'Đang lưu…' : 'Lưu sự kiện'}
+                        {busy ? 'Đang lưu…' : editingId ? 'Lưu thay đổi' : 'Thêm vào lịch'}
                       </button>
                       <button 
                         type="button" 
@@ -475,8 +431,9 @@ export default function DashboardCalendar() {
                   </form>
                 ) : (
                   <div className="cal-editor-empty">
-                    <CalendarDays size={28} aria-hidden="true" />
-                    <p>Chọn một sự kiện từ danh sách bên trái để chỉnh sửa hoặc bấm "Thêm sự kiện".</p>
+                    <CalendarDays size={32} className="text-slate-300 mb-2" />
+                    <p className="font-semibold text-slate-700">Chọn một sự kiện từ danh sách để chỉnh sửa</p>
+                    <p className="text-xs text-slate-500 mt-1">Hoặc bấm nút "Thêm sự kiện" để tạo lịch mới cho ngày này.</p>
                   </div>
                 )}
               </div>
