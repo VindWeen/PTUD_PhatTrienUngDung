@@ -179,3 +179,76 @@
     max-height: calc(100dvh - 120px); 
   } 
 }
+
+
+/* Dark Mode for Notification Dropdown */
+.dark .notification-panel {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.5);
+}
+.dark .notification-panel > header {
+  background: #1e293b;
+}
+.dark .notification-panel h2 {
+  color: #f8fafc;
+}
+.dark .notification-panel header p {
+  color: #94a3b8;
+}
+.dark .notification-close {
+  background: #0f172a;
+  border-color: #334155;
+  color: #94a3b8;
+}
+.dark .notification-close:hover {
+  background: #334155;
+  color: #ffffff;
+}
+.dark .notification-toolbar {
+  background: #1e293b;
+  border-color: #334155;
+}
+.dark .notification-toolbar button {
+  color: #2dd4bf;
+}
+.dark .notification-toolbar button:hover:not(:disabled) {
+  background: #042f2e;
+}
+.dark .notification-list article {
+  border-color: #334155;
+}
+.dark .notification-list article:hover {
+  background: #0f172a;
+}
+.dark .notification-list article.is-unread {
+  background: #042f2e;
+  border-left-color: #0f766e;
+}
+.dark .notification-list h3 {
+  color: #f8fafc;
+}
+.dark .notification-list article > p {
+  color: #cbd5e1;
+}
+.dark .notification-list footer {
+  color: #64748b;
+}
+.dark .notification-list footer button {
+  color: #2dd4bf;
+  background: #042f2e;
+}
+.dark .notification-list footer button:hover:not(:disabled) {
+  background: #115e59;
+}
+.dark .notification-empty strong {
+  color: #f8fafc;
+}
+.dark .notification-empty {
+  color: #94a3b8;
+}
+.dark .notification-footnote {
+  border-color: #334155;
+  color: #94a3b8;
+}

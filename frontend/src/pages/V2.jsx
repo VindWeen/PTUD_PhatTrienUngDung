@@ -8,7 +8,7 @@ import {
   BarChart3, Sparkles, UploadCloud, CheckCircle2, AlertCircle, 
   Calendar, Award, FileText, FileArchive, Target, ExternalLink, 
   FileDown, BookOpen, RotateCcw, Check, CheckSquare, Square, 
-  Sliders, ChevronDown, ChevronUp, Clock
+  Sliders, ChevronDown, ChevronUp, Clock, Network, CornerDownRight, Building2
 } from 'lucide-react';
 
 const api = (url, method = 'GET', data, options = {}) => request({ 
@@ -2194,16 +2194,92 @@ function RegulationCard({ doc, version, onEvaluate, busy }) {
 export { default as Regulations } from './RegulationLibrary';
 
 /* =====================================================================
+   Cơ cấu tổ chức trực quan (Tree Hierarchy)
+   ===================================================================== */
+function OrgHierarchyTree({ org, parentOrg, children }) {
+  const [open, setOpen] = useState(false);
+  if (!parentOrg && !children.length) return null;
+
+  return (
+    <div className="mt-2 border-t border-slate-100 dark:border-slate-800 pt-2">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="text-xs font-bold text-teal-700 dark:text-teal-400 hover:underline flex items-center gap-1.5"
+      >
+        <Network size={14} />
+        <span>Cơ cấu phân tầng tổ chức</span>
+        {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+      </button>
+
+      {open && (
+        <div className="mt-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+          {/* Cấp trên (Parent) */}
+          {parentOrg && (
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+              <span className="w-5 h-5 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center text-[10px] font-bold">
+                ↑
+              </span>
+              <span>Cấp trên: <strong>{parentOrg.name}</strong></span>
+              <span className="px-1.5 py-0.2 rounded bg-slate-200/80 dark:bg-slate-700 text-[10px] font-semibold">
+                {displayLabel(parentOrg.organization_type)}
+              </span>
+            </div>
+          )}
+
+          {/* Đơn vị hiện tại (Active) */}
+          <div className="flex items-center gap-2 pl-4 py-1 border-l-2 border-teal-500 font-bold text-teal-800 dark:text-teal-300">
+            <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+            <span>{org.name}</span>
+            <span className="px-1.5 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950 text-[10px] font-bold text-teal-800 dark:text-teal-200">
+              Đang chọn ({displayLabel(org.organization_type)})
+            </span>
+          </div>
+
+          {/* Đơn vị trực thuộc con (Children) */}
+          {children.length > 0 && (
+            <div className="pl-6 space-y-1 pt-1 border-l-2 border-slate-200 dark:border-slate-700 ml-2">
+              <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">
+                Đơn vị trực thuộc ({children.length}):
+              </span>
+              {children.map(child => (
+                <div key={child.id} className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                  <CornerDownRight size={13} className="text-slate-400 shrink-0" />
+                  <span>{child.name}</span>
+                  <span className="px-1.5 py-0.2 rounded bg-slate-200/80 dark:bg-slate-700 text-[10px] font-semibold">
+                    {displayLabel(child.organization_type)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =====================================================================
    Trang Tổ chức (Giữ nguyên các chức năng, đồng bộ style)
    ===================================================================== */
 export function Organizations() {
   const state = useLoad('/organizations'), invites = useLoad('/me/invitations'), profile = useLoad('/me/profile');
   const { hasRole } = useAuth();
   const admin = hasRole('SYSTEM_ADMIN');
-  const [showForm,setShowForm] = useState(false), [showInvites,setShowInvites] = useState(false), [selected,setSelected] = useState(null), [members,setMembers] = useState([]), [error,setError] = useState(null), [email,setEmail] = useState(''), [name,setName] = useState(''), [code,setCode] = useState(''), [type,setType] = useState('TEAM'), [parent,setParent] = useState('');
-  const membership = profile.data?.memberships || [], grants = profile.data?.orgGrants || [];
+  const [showForm, setShowForm] = useState(false);
+  const [showInvites, setShowInvites] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const [members, setMembers] = useState([]);
+  const [error, setError] = useState(null);
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [code, setCode] = useState('');
+  const [type, setType] = useState('TEAM');
+  const [parent, setParent] = useState('');
+  const membership = profile.data?.memberships || [];
+  const grants = profile.data?.orgGrants || [];
   
-  function permitted(id,permission) { 
+  function permitted(id, permission) { 
     if (admin) return true; 
     return grants.some(grant => { 
       if (grant.permission_code !== permission) return false; 
@@ -2226,17 +2302,22 @@ export function Organizations() {
     setSelected(id); 
     setError(null); 
     try { 
-      if (permitted(id,'MEMBERS_VIEW')) setMembers(array(await api(`/organizations/${id}/members`))); 
+      if (permitted(id, 'MEMBERS_VIEW')) setMembers(array(await api(`/organizations/${id}/members`))); 
       else setMembers([]); 
+      // Cuộn mượt đến không gian tổ chức vừa mở
+      setTimeout(() => {
+        const el = document.getElementById('active-org-workspace');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     } catch(err) { 
       setMembers([]); 
       setError(err); 
     } 
   }
   
-  async function respond(id,accept) { 
+  async function respond(id, accept) { 
     try { 
-      await api(`/invitations/${id}/respond`,'POST',{accept}); 
+      await api(`/invitations/${id}/respond`, 'POST', { accept }); 
       await invites.reload(); 
       await state.reload(); 
       await profile.reload(); 
@@ -2244,6 +2325,8 @@ export function Organizations() {
       setError(err); 
     } 
   }
+
+  const selectedOrg = array(state.data).find(o => o.id === selected);
 
   return (
     <Page 
@@ -2262,8 +2345,111 @@ export function Organizations() {
       }
     >
       <ErrorMessage error={error} />
+
+      {/* KHÔNG GIAN TỔ CHỨC ĐƯỢC CHỌN (HIỂN THỊ RÕ RÀNG VỚI NÚT ĐÓNG NỔI BẬT) */}
+      {selected && selectedOrg && (
+        <section id="active-org-workspace" className="p-6 mb-6 rounded-3xl bg-white dark:bg-slate-800 border-2 border-teal-600 shadow-xl space-y-5 transition-all">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-700">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-200 flex items-center justify-center font-bold text-lg">
+                <Building2 size={24} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-extrabold text-slate-800 dark:text-slate-100">{selectedOrg.name}</h2>
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-950 dark:text-teal-300">
+                    {displayLabel(selectedOrg.organization_type)}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 font-mono mt-0.5">Mã đơn vị: {selectedOrg.code}</p>
+              </div>
+            </div>
+
+            <button 
+              type="button" 
+              className="soft-btn-secondary text-xs px-3.5 py-2 inline-flex items-center gap-1.5 font-bold hover:bg-slate-200 transition-colors"
+              onClick={() => setSelected(null)}
+            >
+              <X size={16} /> Đóng không gian
+            </button>
+          </div>
+
+          {permitted(selected, 'MEMBERS_VIEW') ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200">
+                  Danh sách thành viên ({members.length})
+                </h3>
+              </div>
+              
+              {!members.length ? (
+                <p className="text-xs text-slate-500 italic p-4 text-center border border-dashed rounded-xl">Chưa có thành viên nào trong đơn vị này.</p>
+              ) : (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {members.map(member => (
+                    <div key={member.id} className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900 flex justify-between items-center text-xs">
+                      <div className="truncate mr-2">
+                        <strong className="block font-bold text-slate-800 dark:text-slate-100 truncate">{member.full_name}</strong>
+                        <span className="text-[11px] text-slate-400 truncate block">{member.email} {member.title && `· ${member.title}`}</span>
+                      </div>
+                      {permitted(selected, 'MEMBERS_MANAGE') && (
+                        <button 
+                          type="button" 
+                          className="text-rose-600 hover:text-rose-700 font-semibold p-1 hover:bg-rose-50 rounded shrink-0" 
+                          onClick={async () => { 
+                            if (!window.confirm(`Loại thành viên “${member.full_name}” khỏi tổ chức?`)) return; 
+                            try { 
+                              await api(`/organizations/${selected}/members/${member.id}`, 'DELETE'); 
+                              await select(selected); 
+                            } catch(err) { 
+                              setError(err); 
+                            } 
+                          }}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {permitted(selected, 'MEMBERS_MANAGE') && (
+                <form className="mt-4 p-4 rounded-2xl bg-teal-50/40 dark:bg-teal-950/20 border border-teal-100 dark:border-teal-900/40 flex flex-wrap items-end gap-3" onSubmit={async e => { e.preventDefault(); try { await api(`/organizations/${selected}/invitations`, 'POST', { email }); setEmail(''); await select(selected); setMessage('Đã gửi lời mời thành công!'); } catch(err) { setError(err); } }}>
+                  <div className="flex-1 min-w-[220px]">
+                    <Field label="Mời thành viên mới tham gia (Nhập Email)">
+                      <input type="email" required placeholder="nhanvien@lhu.edu.vn" className={input} value={email} onChange={e => setEmail(e.target.value)} />
+                    </Field>
+                  </div>
+                  <button className={button}>Gửi lời mời</button>
+                </form>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-slate-500 italic p-4 bg-slate-50 dark:bg-slate-900 rounded-xl">
+              Bạn đang tham gia tổ chức này với quyền xem cơ bản. Liên hệ ban quản lý để được cấp thêm quyền quản trị.
+            </p>
+          )}
+
+          {selected && ['ACCESS_MANAGE', 'STRUCTURE_MANAGE', 'ASSESSMENTS_RUN'].some(permission => permitted(selected, permission)) && (
+            <OrganizationTools 
+              permissions={{ 
+                scan: permitted(selected, 'ASSESSMENTS_RUN') && permitted(selected, 'ASSESSMENTS_VIEW'), 
+                structure: permitted(selected, 'STRUCTURE_MANAGE'), 
+                access: permitted(selected, 'ACCESS_MANAGE') 
+              }} 
+              key={selected} 
+              organizationId={selected} 
+              organizations={array(state.data)} 
+              members={members} 
+            />
+          )}
+        </section>
+      )}
+
+      {/* DANH SÁCH CÁC TỔ CHỨC CỦA BẠN */}
       <section className={panel}>
-        <h2 className="text-lg font-bold mb-4">Tổ chức của bạn</h2>
+        <h2 className="text-lg font-bold mb-4 text-slate-800 dark:text-slate-100">Tổ chức của bạn</h2>
         <Load state={profile}>
           <Load state={state}>
             {!mine.length ? (
@@ -2276,26 +2462,40 @@ export function Organizations() {
                   const role = membership.find(m => String(m.organization_id) === String(org.id)); 
                   const parentOrg = array(state.data).find(o => String(o.id) === String(org.parent_id)); 
                   const children = array(state.data).filter(o => String(o.parent_id) === String(org.id)); 
+                  const isSelected = selected === org.id;
+
                   return (
-                    <article className="vault-organization-card" key={org.id}>
-                      <div className="flex justify-between gap-2">
-                        <span className="text-sm font-semibold text-slate-500">{displayLabel(org.organization_type)}</span>
-                        <span className="vault-status">{admin ? 'Quản trị hệ thống' : role?.title || (grants.some(g => String(g.organization_id) === String(org.id)) ? 'Được cấp quyền quản lý' : 'Thành viên')}</span>
+                    <article 
+                      className={`vault-organization-card ${isSelected ? 'ring-2 ring-teal-600 bg-teal-50/20 dark:bg-teal-950/20' : ''}`} 
+                      key={org.id}
+                    >
+                      <div className="flex justify-between items-center gap-2">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                          {displayLabel(org.organization_type)}
+                        </span>
+                        <span className="vault-status">
+                          {admin ? 'Quản trị hệ thống' : role?.title || (grants.some(g => String(g.organization_id) === String(org.id)) ? 'Được cấp quyền quản lý' : 'Thành viên')}
+                        </span>
                       </div>
-                      <h3>{org.name}</h3>
-                      <p className="text-xs font-mono text-slate-400">{org.code}</p>
-                      {(parentOrg || children.length > 0) && (
-                        <details className="vault-org-tree">
-                          <summary className="text-xs font-semibold text-teal-700 cursor-pointer">Cơ cấu tổ chức</summary>
-                          {parentOrg && <p className="text-xs text-slate-600 mt-1">Trực thuộc: <strong>{parentOrg.name}</strong></p>}
-                          <ul className="text-xs text-slate-600 list-disc pl-4 mt-1">
-                            {children.map(child => <li key={child.id}>{child.name} · {displayLabel(child.organization_type)}</li>)}
-                          </ul>
-                        </details>
-                      )}
-                      <button className={secondary} onClick={() => select(org.id)}>
-                        Mở không gian tổ chức <ArrowRight size={14} />
-                      </button>
+
+                      <h3 className="font-extrabold text-base text-slate-800 dark:text-slate-100 mt-1">{org.name}</h3>
+                      <p className="text-xs font-mono text-slate-400">Mã: {org.code}</p>
+
+                      {/* Phân tầng cơ cấu trực quan (Tree) */}
+                      <OrgHierarchyTree org={org} parentOrg={parentOrg} children={children} />
+
+                      {/* Nút Mở không gian tổ chức - Nổi bật, dễ nhận biết */}
+                      <div className="vault-card-actions pt-2 mt-auto">
+                        <button 
+                          type="button"
+                          className="soft-btn-primary w-full text-xs font-bold inline-flex items-center justify-center gap-2 py-2.5" 
+                          onClick={() => select(org.id)}
+                        >
+                          <Building2 size={15} />
+                          <span>Mở không gian tổ chức</span>
+                          <ArrowRight size={14} />
+                        </button>
+                      </div>
                     </article>
                   ); 
                 })}
@@ -2304,60 +2504,6 @@ export function Organizations() {
           </Load>
         </Load>
       </section>
-
-      {selected && (
-        <section className={`${panel} mt-6`}>
-          <div className="vault-list-heading flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">{array(state.data).find(o => o.id === selected)?.name}</h2>
-            <button className={secondary} onClick={() => setSelected(null)}>Đóng không gian</button>
-          </div>
-          {permitted(selected,'MEMBERS_VIEW') ? (
-            <>
-              <h3 className="font-semibold text-sm mb-2">Danh sách thành viên</h3>
-              {!members.length && <p className="text-xs text-slate-500">Chưa có thành viên để hiển thị.</p>}
-              <div className="space-y-2">
-                {members.map(member => (
-                  <div key={member.id} className="p-3 rounded-xl border border-slate-200 bg-white dark:bg-slate-800 flex justify-between items-center text-xs">
-                    <span><strong>{member.full_name}</strong> · {member.email} {member.title && `· ${member.title}`}</span>
-                    {permitted(selected,'MEMBERS_MANAGE') && (
-                      <button className="text-rose-600 hover:underline font-semibold" onClick={async () => { if(!window.confirm('Kết thúc quan hệ thành viên này?')) return; try { await api(`/organizations/${selected}/members/${member.id}`,'DELETE'); await select(selected); } catch(err) { setError(err); } }}>
-                        Bỏ thành viên
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <p className="text-xs text-slate-500">Bạn đang tham gia tổ chức này. Hãy liên hệ người quản lý để được cấp thêm quyền truy cập.</p>
-          )}
-
-          {permitted(selected,'MEMBERS_MANAGE') && (
-            <form className="mt-4 flex flex-wrap items-end gap-2" onSubmit={async e => { e.preventDefault(); try { await api(`/organizations/${selected}/invitations`,'POST',{email}); setEmail(''); } catch(err) { setError(err); } }}>
-              <div className="flex-1 min-w-[200px]">
-                <Field label="Email người được mời">
-                  <input type="email" required className={input} value={email} onChange={e => setEmail(e.target.value)} />
-                </Field>
-              </div>
-              <button className={button}>Gửi lời mời</button>
-            </form>
-          )}
-        </section>
-      )}
-
-      {selected && ['ACCESS_MANAGE','STRUCTURE_MANAGE','ASSESSMENTS_RUN'].some(permission => permitted(selected,permission)) && (
-        <OrganizationTools 
-          permissions={{ 
-            scan: permitted(selected,'ASSESSMENTS_RUN') && permitted(selected,'ASSESSMENTS_VIEW'), 
-            structure: permitted(selected,'STRUCTURE_MANAGE'), 
-            access: permitted(selected,'ACCESS_MANAGE') 
-          }} 
-          key={selected} 
-          organizationId={selected} 
-          organizations={array(state.data)} 
-          members={members} 
-        />
-      )}
 
       <Modal open={showForm} onClose={() => setShowForm(false)} title={admin ? 'Tạo tổ chức' : 'Tạo nhóm độc lập'}>
         <ErrorMessage error={error} />

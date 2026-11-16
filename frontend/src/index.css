@@ -1027,3 +1027,377 @@
 .vault-goal-table-row:hover {
   background: #f8fafc;
 }
+
+
+/* =====================================================================
+   Comprehensive Dark Mode Styles (Theme Tối Toàn Diện)
+   ===================================================================== */
+.dark body {
+  background-color: #0b1120;
+  color: #f1f5f9;
+}
+
+.dark .vault-shell {
+  background-color: #0b1120;
+  color: #f1f5f9;
+}
+
+.dark .dashboard {
+  color: #f1f5f9;
+}
+
+.dark .dash-header h1 {
+  color: #f8fafc;
+}
+
+.dark .dash-hero-card {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.dark .dash-hero-banner {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.dark .dash-hero-title {
+  color: #f8fafc;
+}
+
+.dark .dash-hero-desc {
+  color: #94a3b8;
+}
+
+.dark .dash-summary {
+  background: #042f2e;
+  border-color: #115e59;
+}
+.dark .dash-summary-header h2 {
+  color: #5eead4;
+}
+.dark .dash-summary-header p {
+  color: #99f6e4;
+}
+.dark .metric-header {
+  color: #ccfbf1;
+}
+.dark .metric-val {
+  color: #ffffff;
+}
+.dark .metric-track {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.dark .dash-shortcut-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+.dark .dash-shortcut-card:hover {
+  background: #24344d;
+  border-color: #475569;
+}
+.dark .dash-shortcut-content strong {
+  color: #f8fafc;
+}
+.dark .dash-shortcut-content small {
+  color: #94a3b8;
+}
+
+.dark .dash-goals {
+  background: #1e293b;
+  border-color: #334155;
+}
+.dark .dash-section-head h2 {
+  color: #f8fafc;
+}
+.dark .dash-section-head p {
+  color: #94a3b8;
+}
+.dark .dash-goal-card {
+  background: #0f172a;
+  border-color: #334155;
+}
+.dark .dash-goal-card:hover {
+  background: #182234;
+  border-color: #475569;
+}
+.dark .dash-goal-title strong {
+  color: #f8fafc;
+}
+.dark .dash-goal-title small {
+  color: #94a3b8;
+}
+.dark .dash-goals-link {
+  border-color: #334155;
+  color: #2dd4bf;
+}
+.dark .dash-goals-add {
+  background: #0f172a;
+  color: #94a3b8;
+}
+
+/* Calendar in Dark Mode */
+.dark .interactive-calendar {
+  background: #1e293b;
+  border-color: #334155;
+}
+.dark .dash-month {
+  color: #f8fafc;
+}
+.dark .dash-month button {
+  background: #0f172a;
+  border-color: #334155;
+  color: #94a3b8;
+}
+.dark .dash-month button:hover {
+  background: #334155;
+  color: #ffffff;
+}
+.dark .cal-day {
+  background: #0f172a;
+  color: #cbd5e1;
+  border-color: #1e293b;
+}
+.dark .cal-day:hover {
+  background: #334155;
+  color: #ffffff;
+  border-color: #475569;
+}
+.dark .cal-day-wrapper.has-events .cal-day {
+  background: #1e293b;
+  border-color: #334155;
+}
+.dark .cal-day.is-active {
+  background: #042f2e;
+  color: #2dd4bf;
+  border-color: #0f766e;
+}
+.dark .cal-day.is-today {
+  background: #0f766e;
+  color: #ffffff;
+}
+.dark .cal-hover-popover {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+}
+.dark .cal-hover-popover::after {
+  border-color: #1e293b transparent transparent transparent;
+}
+.dark .cal-popover-header {
+  border-color: #334155;
+}
+.dark .cal-popover-header strong {
+  color: #f8fafc;
+}
+.dark .cal-popover-item-title {
+  color: #f1f5f9;
+}
+.dark .cal-popover-item-time {
+  color: #94a3b8;
+}
+.dark .cal-popover-hint {
+  border-color: #334155;
+  color: #2dd4bf;
+}
+.dark .cal-legend {
+  border-color: #334155;
+  color: #94a3b8;
+}
+.dark .cal-dialog {
+  background: #1e293b;
+  color: #f8fafc;
+}
+.dark .cal-dialog-header {
+  border-color: #334155;
+}
+.dark .cal-dialog-header h2 {
+  color: #f8fafc;
+}
+.dark .cal-close {
+  background: #0f172a;
+  border-color: #334155;
+  color: #94a3b8;
+}
+.dark .cal-close:hover {
+  background: #334155;
+  color: #ffffff;
+}
+.dark .cal-dialog-editor {
+  background: #0f172a;
+  border-color: #334155;
+}
+.dark .cal-form h3 {
+  color: #f8fafc;
+}
+.dark .cal-form label {
+  color: #cbd5e1;
+}
+.dark .cal-form input,
+.dark .cal-form textarea,
+.dark .cal-form select {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+}
+.dark .cal-event-row {
+  background: #0f172a;
+  border-color: #334155;
+}
+.dark .cal-event-row h4 {
+  color: #f8fafc;
+}
+.dark .cal-act-edit {
+  background: #334155;
+  color: #f1f5f9;
+}
+.dark .cal-empty-card {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+/* Vault Pages in Dark Mode */
+.dark .vault-page-header h1 {
+  color: #f8fafc;
+}
+.dark .vault-page-description {
+  color: #94a3b8;
+}
+.dark .vault-tabs {
+  border-color: #334155;
+}
+.dark .vault-tabs > button {
+  color: #94a3b8;
+}
+.dark .vault-tabs > button:hover {
+  color: #f8fafc;
+}
+.dark .vault-tabs > button[aria-selected="true"] {
+  color: #2dd4bf;
+  border-bottom-color: #2dd4bf;
+}
+.dark .vault-table-wrap {
+  background: #1e293b;
+  border-color: #334155;
+}
+.dark .vault-table th {
+  background: #0f172a;
+  color: #94a3b8;
+  border-color: #334155;
+}
+.dark .vault-table td {
+  border-color: #334155;
+  color: #cbd5e1;
+}
+.dark .vault-table tbody tr:hover {
+  background: #0f172a;
+}
+.dark .vault-kpi-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+.dark .vault-kpi-card:hover {
+  background: #24344d;
+  border-color: #475569;
+}
+.dark .vault-kpi-title {
+  color: #2dd4bf;
+}
+.dark .vault-regulation-card,
+.dark .vault-organization-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+.dark .vault-regulation-card:hover,
+.dark .vault-organization-card:hover {
+  background: #24344d;
+  border-color: #475569;
+}
+.dark .vault-regulation-card h3,
+.dark .vault-organization-card h3 {
+  color: #f8fafc;
+}
+.dark .vault-card-actions {
+  border-color: #334155;
+}
+.dark .vault-modal {
+  background: #1e293b;
+  color: #f8fafc;
+}
+.dark .vault-modal-heading {
+  border-color: #334155;
+}
+.dark .vault-modal-heading h2 {
+  color: #f8fafc;
+}
+
+/* Evaluation & CV in Dark Mode */
+.dark .evaluation-spotlight {
+  background: #1e293b;
+  border-color: #0f766e;
+}
+.dark .eval-criterion-card {
+  background: #0f172a;
+  border-color: #334155;
+}
+.dark .cv-preview-paper {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+}
+.dark .cv-preview-name {
+  color: #f8fafc;
+}
+.dark .cv-preview-item {
+  background: #0f172a;
+  border-color: #334155;
+}
+.dark .cv-preview-item strong {
+  color: #f8fafc;
+}
+.dark .cv-preview-bio {
+  background: #0f172a;
+  color: #cbd5e1;
+}
+.dark .attr-builder {
+  background: #0f172a;
+  border-color: #334155;
+}
+.dark .attr-row input {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+}
+.dark .attr-preset-chip {
+  background: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+.dark .attr-preset-chip:hover {
+  background: #0f766e;
+  color: #ffffff;
+}
+
+/* Topbar in Dark Mode */
+.dark .workspace-topbar {
+  border-color: #334155;
+}
+.dark .workspace-icon-button {
+  background: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+.dark .workspace-icon-button:hover {
+  background: #334155;
+  color: #ffffff;
+}
+.dark .workspace-user {
+  color: #f8fafc;
+}
+.dark .workspace-avatar {
+  background: #042f2e;
+  border-color: #115e59;
+  color: #2dd4bf;
+}
