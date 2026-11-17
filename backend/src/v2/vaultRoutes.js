@@ -29,7 +29,8 @@ const templates = [
 ];
 const reservedSlugs = new Set(['admin','api','auth','system','login','settings','help','root','me','public','export-docx','download','cv','profile','default']);
 const cvSchema = z.object({
-  slug: z.string().trim().toLowerCase().max(100).nullable().optional(), templateId: z.enum(['Modern','Academic','Minimalist']).default('Modern'),
+  slug: z.string().trim().toLowerCase().max(100).nullable().optional(), 
+  templateId: z.string().trim().transform(val => ['Modern','Academic','Minimalist'].includes(val) ? val : 'Modern').default('Modern'),
   isPublic: z.boolean().default(false), headline: z.string().trim().max(300).default(''), bio: z.string().max(20000).default(''),
   selectedAchievementIds: z.array(z.number().int().positive()).max(300).default([]), showEmail: z.boolean().default(false), showPhone: z.boolean().default(false),
 }).strict();

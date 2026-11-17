@@ -12,7 +12,7 @@ const navItems = [
   { to: '/me/dashboard', icon: Home, label: 'Trang chủ', roles: ALL_ROLES },
   { to: '/me/profile', icon: User, label: 'Hồ sơ & CV', roles: ALL_ROLES },
   { to: '/achievements', icon: Award, label: 'Kho thành tích', roles: ALL_ROLES },
-  { to: '/me/ai-forecast', icon: Cpu, label: 'Khám hồ sơ', roles: ALL_ROLES },
+  { to: '/me/ai-forecast', icon: Cpu, label: 'Đối chiếu quy chế', roles: ALL_ROLES },
   { to: '/kpi', icon: Target, label: 'Mục tiêu / KPI', roles: ALL_ROLES },
   { to: '/regulations', icon: BookOpen, label: 'Kho quy chế', roles: ALL_ROLES },
   { to: '/organizations', icon: Building2, label: 'Tổ chức', roles: ALL_ROLES },

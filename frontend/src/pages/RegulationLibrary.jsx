@@ -324,19 +324,62 @@ function Editor({ doc, versionId, organizations, catalog, refresh, action, onClo
           </p>
         </div>
 
-        {draft && doc.can_publish && (
-          <button 
-            type="button"
-            className="soft-btn-primary text-xs font-bold" 
-            onClick={() => {
-              if (window.confirm('Bạn có chắc muốn công bố phiên bản này? Khi đã công bố, nội dung sẽ được khóa để đảm bảo tính pháp lý.')) {
-                run(() => api(`/regulations/versions/${versionId}/publish`, 'POST', {}), 'Đã công bố phiên bản thành công!');
-              }
-            }}
-          >
-            <ShieldCheck size={15} /> Công bố phiên bản này
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {!draft && (
+            <button 
+              type="button"
+              className="soft-btn-primary text-xs font-bold inline-flex items-center gap-1.5" 
+              onClick={() => {
+                run(async () => {
+                  await api(`/regulations/versions/${versionId}/adopt`, 'POST', {});
+                }, 'Đã thêm quy chế này vào danh sách theo dõi định mức cá nhân!');
+              }}
+              title="Ghim quy chế vào hồ sơ cá nhân để hệ thống tự động đối chiếu định mức NCKH/Giảng dạy"
+            >
+              <CheckCircle2 size={15} /> Theo dõi định mức này (Ghim vào hồ sơ)
+            </button>
+          )}
+
+          {draft && doc.can_publish && (
+            <button 
+              type="button"
+              className="soft-btn-primary text-xs font-bold" 
+              onClick={() => {
+                if (window.confirm('Bạn có chắc muốn công bố phiên bản này? Khi đã công bố, nội dung sẽ được khóa để đảm bảo tính pháp lý.')) {
+                  run(() => api(`/regulations/versions/${versionId}/publish`, 'POST', {}), 'Đã công bố phiên bản thành công!');
+                }
+              }}
+            >
+              <ShieldCheck size={15} /> Công bố phiên bản này
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Thẻ tóm tắt nhanh điều kiện định mức */}
+      <div className="p-4 rounded-2xl bg-teal-50/50 dark:bg-teal-950/20 border border-teal-200/60 dark:border-teal-800/60 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-teal-800 dark:text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
+            <Sparkles size={14} /> Tóm tắt điều kiện định mức
+          </span>
+          <span className="text-[11px] text-slate-500 font-semibold">{version.criteria?.length || 0} tiêu chuẩn cần đạt</span>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs">
+          {(version.criteria || []).length === 0 ? (
+            <span className="text-xs text-slate-400 italic">Chưa thiết lập tiêu chuẩn cho phiên bản này.</span>
+          ) : (
+            (version.criteria || []).slice(0, 4).map(crit => (
+              <span key={crit.id} className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-teal-200/80 dark:border-teal-700 font-medium text-slate-700 dark:text-slate-200 shadow-2xs">
+                • {crit.title}
+              </span>
+            ))
+          )}
+          {(version.criteria?.length || 0) > 4 && (
+            <span className="px-2 py-1 text-slate-400 text-xs italic">
+              + {(version.criteria.length - 4)} tiêu chí khác
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Thông tin nguồn & Tệp đính kèm */}
@@ -508,6 +551,7 @@ export default function RegulationLibrary() {
   const [message, setMessage] = useState('');
   const [tab, setTab] = useState('applicable');
   const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   
   // Selected inspection document
   const [selected, setSelected] = useState(null);
@@ -587,6 +631,25 @@ export default function RegulationLibrary() {
 
   const matches = x => `${x.name || ''} ${x.code || ''} ${x.version_label || ''}`.toLocaleLowerCase('vi').includes(search.toLocaleLowerCase('vi'));
 
+  const categorize = d => {
+    const text = `${d.name || ''} ${d.code || ''} ${d.description || ''}`.toLowerCase();
+    if (text.includes('nghiên cứu') || text.includes('nckh') || text.includes('bài báo') || text.includes('khoa học') || text.includes('sáng chế') || text.includes('đề tài')) {
+      return 'nckh';
+    }
+    if (text.includes('giảng dạy') || text.includes('đào tạo') || text.includes('giờ chuẩn') || text.includes('giáo trình') || text.includes('bài giảng') || text.includes('khóa luận')) {
+      return 'teaching';
+    }
+    if (text.includes('thi đua') || text.includes('khen thưởng') || text.includes('chiến sĩ') || text.includes('lao động tiên tiến') || text.includes('dạy giỏi') || text.includes('danh hiệu')) {
+      return 'award';
+    }
+    return 'other';
+  };
+
+  const matchesCategory = d => {
+    if (categoryFilter === 'all') return true;
+    return categorize(d) === categoryFilter;
+  };
+
   const pageActions = (
     <div className="flex items-center gap-2">
       <Link 
@@ -646,18 +709,44 @@ export default function RegulationLibrary() {
             </div>
           </div>
 
-          {/* Ô tìm kiếm */}
+          {/* Ô tìm kiếm & Bộ lọc Danh mục */}
           {tab !== 'shares' && (
-            <div className="mt-4 mb-5 max-w-md">
-              <Field label="Tìm kiếm theo tên quy chế hoặc mã">
-                <input 
-                  type="search" 
-                  className={input} 
-                  placeholder="Nhập tên hoặc mã quy chế..." 
-                  value={search} 
-                  onChange={e => setSearch(e.target.value)} 
-                />
-              </Field>
+            <div className="mt-4 mb-5 space-y-3">
+              <div className="max-w-md">
+                <Field label="Tìm kiếm theo tên quy chế hoặc mã">
+                  <input 
+                    type="search" 
+                    className={input} 
+                    placeholder="Nhập tên hoặc mã quy chế..." 
+                    value={search} 
+                    onChange={e => setSearch(e.target.value)} 
+                  />
+                </Field>
+              </div>
+
+              {/* Chips phân loại danh mục dành cho Giảng viên & Nhà trường */}
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {[
+                  ['all', 'Tất cả quy chế'],
+                  ['nckh', '🔬 Nghiên cứu khoa học & Bài báo'],
+                  ['teaching', '📖 Giảng dạy & Đào tạo'],
+                  ['award', '🏆 Thi đua - Khen thưởng'],
+                  ['other', 'Khác / Sinh viên']
+                ].map(([catId, catLabel]) => (
+                  <button
+                    key={catId}
+                    type="button"
+                    onClick={() => setCategoryFilter(catId)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                      categoryFilter === catId
+                        ? 'bg-teal-600 text-white shadow-sm'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                    }`}
+                  >
+                    {catLabel}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -670,13 +759,13 @@ export default function RegulationLibrary() {
             <>
               {/* TAB 1: ĐANG ÁP DỤNG */}
               {tab === 'applicable' && (
-                !contexts.filter(matches).length ? (
+                !contexts.filter(matches).filter(matchesCategory).length ? (
                   <p className="p-8 text-center text-xs text-slate-500">
-                    Chưa có quy chế nào đang áp dụng. Bạn có thể duyệt tab "Cộng đồng" để tiếp nhận hoặc tạo quy chế riêng.
+                    Chưa có quy chế nào phù hợp với bộ lọc. Bạn có thể duyệt tab "Cộng đồng" để theo dõi quy chế mới hoặc tạo quy chế riêng.
                   </p>
                 ) : (
                   <div className="vault-card-grid">
-                    {contexts.filter(matches).map((c, i) => {
+                    {contexts.filter(matches).filter(matchesCategory).map((c, i) => {
                       const expired = c.effective_to && date(c.effective_to) < new Date().toISOString().slice(0, 10);
                       return (
                         <article 
@@ -742,11 +831,11 @@ export default function RegulationLibrary() {
 
               {/* TAB 2: TÔI QUẢN LÝ */}
               {tab === 'managed' && (
-                !manageable.filter(matches).length ? (
-                  <p className="p-8 text-center text-xs text-slate-500">Bạn chưa quản lý quy chế nào. Hãy nhấn "Tạo quy chế" để khởi tạo.</p>
+                !manageable.filter(matches).filter(matchesCategory).length ? (
+                  <p className="p-8 text-center text-xs text-slate-500">Không tìm thấy quy chế phù hợp trong danh mục quản lý của bạn. Hãy chọn danh mục khác hoặc nhấn "Tạo quy chế".</p>
                 ) : (
                   <div className="vault-card-grid">
-                    {manageable.filter(matches).map(d => (
+                    {manageable.filter(matches).filter(matchesCategory).map(d => (
                       <article key={d.id} className="vault-regulation-card">
                         <div className="flex justify-between items-center gap-2">
                           <span className="vault-regulation-code">{d.code}</span>
@@ -774,11 +863,11 @@ export default function RegulationLibrary() {
 
               {/* TAB 3: CỘNG ĐỒNG */}
               {tab === 'public' && (
-                !publicDocs.filter(matches).length ? (
-                  <p className="p-8 text-center text-xs text-slate-500">Không tìm thấy quy chế cộng đồng nào phù hợp.</p>
+                !publicDocs.filter(matches).filter(matchesCategory).length ? (
+                  <p className="p-8 text-center text-xs text-slate-500">Không tìm thấy quy chế cộng đồng nào phù hợp với bộ lọc danh mục đã chọn.</p>
                 ) : (
                   <div className="vault-card-grid">
-                    {publicDocs.filter(matches).map(d => (
+                    {publicDocs.filter(matches).filter(matchesCategory).map(d => (
                       <article key={d.id} className="vault-regulation-card">
                         <span className="vault-regulation-code">{d.code}</span>
                         <h3 className="font-bold text-base text-slate-800 dark:text-slate-100">{d.name}</h3>

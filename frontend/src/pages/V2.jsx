@@ -8,7 +8,8 @@ import {
   BarChart3, Sparkles, UploadCloud, CheckCircle2, AlertCircle, 
   Calendar, Award, FileText, FileArchive, Target, ExternalLink, 
   FileDown, BookOpen, RotateCcw, Check, CheckSquare, Square, 
-  Sliders, ChevronDown, ChevronUp, Clock, Network, CornerDownRight, Building2
+  Sliders, ChevronDown, ChevronUp, Clock, Network, CornerDownRight, Building2,
+  Copy, QrCode
 } from 'lucide-react';
 
 const api = (url, method = 'GET', data, options = {}) => request({ 
@@ -646,12 +647,32 @@ export function Cv({ embedded = false }) {
   });
   const [error, setError] = useState(null);
   const [message, setMessage] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [showQr, setShowQr] = useState(false);
+
+  const publicCvUrl = form.slug ? `${window.location.origin}/cv/${encodeURIComponent(form.slug)}` : '';
+
+  const copyCvLink = async () => {
+    if (!publicCvUrl) return;
+    try {
+      await navigator.clipboard.writeText(publicCvUrl);
+      setCopied(true);
+      setMessage('Đã sao chép liên kết CV vào bộ nhớ tạm!');
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      prompt('Sao chép đường dẫn CV:', publicCvUrl);
+    }
+  };
 
   useEffect(() => { 
     if (state.data) {
+      const validTemplate = ['Modern', 'Academic', 'Minimalist'].includes(state.data.templateId) 
+        ? state.data.templateId 
+        : 'Modern';
       setForm(old => ({ 
         ...old, 
         ...state.data, 
+        templateId: validTemplate,
         selectedAchievementIds: state.data.selectedAchievementIds || [], 
         contact: state.data.contact || {},
         showEmail: !!state.data.showEmail,
@@ -666,18 +687,21 @@ export function Cv({ embedded = false }) {
     setError(null);
     setMessage('');
     try { 
+      const validTemplate = ['Modern', 'Academic', 'Minimalist'].includes(form.templateId) 
+        ? form.templateId 
+        : 'Modern';
       const result = await api('/me/cv', 'PUT', { 
-        slug: form.slug || null, 
-        templateId: form.templateId, 
+        slug: form.slug ? form.slug.trim().toLowerCase() : null, 
+        templateId: validTemplate, 
         isPublic: !!form.isPublic, 
         headline: form.headline || '', 
         bio: form.bio || '', 
-        selectedAchievementIds: form.selectedAchievementIds.map(Number), 
+        selectedAchievementIds: (form.selectedAchievementIds || []).map(Number).filter(n => !isNaN(n) && n > 0), 
         showEmail: !!form.showEmail, 
         showPhone: !!form.showPhone 
       }); 
-      setForm(old => ({ ...old, ...result })); 
-      setMessage('Đã lưu cấu hình CV thành công.'); 
+      setForm(old => ({ ...old, ...result, templateId: validTemplate })); 
+      setMessage('Đã lưu cấu hình CV thành công. CV của bạn đã được cập nhật.'); 
       setError(null); 
     } catch (err) { 
       setError(err); 
@@ -715,15 +739,22 @@ export function Cv({ embedded = false }) {
           </div>
 
           <div className="space-y-4">
-            <Field label="Đường dẫn định danh CV (URL slug)">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400 font-mono">/cv/</span>
-                <input 
-                  className={input} 
-                  placeholder="Để trống để tạo tự động (ví dụ: nguyen-van-a)" 
-                  value={form.slug || ''} 
-                  onChange={e => setForm({ ...form, slug: e.target.value })} 
-                />
+            <Field label="Đường link CV của bạn (URL chia sẻ)">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-500 font-mono bg-slate-100 dark:bg-slate-800 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 select-all shrink-0">
+                    {window.location.origin}/cv/
+                  </span>
+                  <input 
+                    className={input} 
+                    placeholder="nguyen-van-a (để trống sẽ tạo tự động)" 
+                    value={form.slug || ''} 
+                    onChange={e => setForm({ ...form, slug: e.target.value })} 
+                  />
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Đường dẫn này dùng để gửi cho nhà tuyển dụng hoặc dán vào hồ sơ xin học bổng mà không cần đăng nhập.
+                </p>
               </div>
             </Field>
 
@@ -875,14 +906,34 @@ export function Cv({ embedded = false }) {
               </button>
             )}
             {form.isPublic && form.slug && (
-              <a 
-                className="soft-btn-secondary inline-flex items-center gap-1.5 text-xs text-teal-700 dark:text-teal-300" 
-                href={`/cv/${encodeURIComponent(form.slug)}`} 
-                target="_blank" 
-                rel="noreferrer"
-              >
-                <ExternalLink size={14} /> Xem CV công khai
-              </a>
+              <>
+                <button 
+                  type="button" 
+                  onClick={copyCvLink} 
+                  className="soft-btn-secondary inline-flex items-center gap-1.5 text-xs text-teal-700 dark:text-teal-300 font-semibold"
+                  title="Sao chép đường link CV để gửi cho nhà tuyển dụng"
+                >
+                  {copied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                  <span>{copied ? 'Đã sao chép link!' : 'Sao chép link CV'}</span>
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setShowQr(true)} 
+                  className="soft-btn-secondary inline-flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-200"
+                  title="Mở mã QR Code để quét xem trên điện thoại"
+                >
+                  <QrCode size={14} />
+                  <span>Mã QR</span>
+                </button>
+                <a 
+                  className="soft-btn-secondary inline-flex items-center gap-1.5 text-xs text-teal-700 dark:text-teal-300 font-semibold" 
+                  href={`/cv/${encodeURIComponent(form.slug)}`} 
+                  target="_blank" 
+                  rel="noreferrer"
+                >
+                  <ExternalLink size={14} /> Mở CV công khai
+                </a>
+              </>
             )}
           </div>
         </form>
@@ -892,6 +943,33 @@ export function Cv({ embedded = false }) {
           <CvLivePreview form={form} achievements={array(achievements.data)} />
         </div>
       </div>
+
+      {/* Modal Mã QR CV */}
+      <Modal open={showQr} onClose={() => setShowQr(false)} title="Mã QR CV cá nhân">
+        <div className="flex flex-col items-center justify-center p-4 space-y-4 text-center">
+          <div className="p-4 bg-white rounded-2xl shadow-md border border-slate-200">
+            <img 
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(publicCvUrl)}`} 
+              alt="Mã QR CV cá nhân" 
+              className="w-48 h-48 object-contain" 
+            />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Quét để xem CV trên điện thoại</p>
+            <p className="text-xs text-slate-400 font-mono mt-1 break-all max-w-sm px-2 py-1 bg-slate-50 dark:bg-slate-800 rounded-lg">
+              {publicCvUrl}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button type="button" className={secondary} onClick={copyCvLink}>
+              {copied ? 'Đã sao chép' : 'Sao chép link'}
+            </button>
+            <button type="button" className={button} onClick={() => setShowQr(false)}>
+              Đóng
+            </button>
+          </div>
+        </div>
+      </Modal>
     </Wrapper>
   );
 }
@@ -974,24 +1052,55 @@ export function Achievements() {
   const [expanded, setExpanded] = useState(null);
   const [files, setFiles] = useState([]);
   const [attributesJson, setAttributesJson] = useState('{}');
+  const [category, setCategory] = useState('');
+  const [role, setRole] = useState('');
+  const [grade, setGrade] = useState('');
+  const [attachedFile, setAttachedFile] = useState(null);
+  const [extracting, setExtracting] = useState(false);
+  const [previewState, setPreviewState] = useState(null);
+  const [showAdvancedJson, setShowAdvancedJson] = useState(false);
 
   const edit = (key, value) => setForm(old => ({ ...old, [key]: value }));
   function reset() { 
     setEditing(null); 
     setForm({ title: '', achievedAt: '', description: '', issuer: '', achievementTypeId: '', levelCode: '' }); 
     setAttributesJson('{}'); 
+    setCategory('');
+    setRole('');
+    setGrade('');
+    setAttachedFile(null);
+    setExtracting(false);
+    setShowAdvancedJson(false);
   }
 
   async function save(e) { 
     e.preventDefault(); 
     setError(null); 
     try { 
-      const attributes = parseRuleJson(attributesJson); 
-      await api(editing ? `/achievements/${editing}` : '/achievements', editing ? 'PATCH' : 'POST', { 
+      let customAttrs = {};
+      try { customAttrs = JSON.parse(attributesJson || '{}'); } catch { customAttrs = {}; }
+      const attributes = {
+        ...customAttrs,
+        ...(category ? { category } : {}),
+        ...(role ? { role } : {}),
+        ...(grade ? { grade } : {})
+      };
+
+      const result = await api(editing ? `/achievements/${editing}` : '/achievements', editing ? 'PATCH' : 'POST', { 
         ...form, 
         attributes, 
         achievementTypeId: form.achievementTypeId ? Number(form.achievementTypeId) : null 
       }); 
+
+      const targetId = editing || result?.id || result?.data?.id;
+
+      // Gom 1 bước: Tự động đính kèm minh chứng cho thành tích mới nếu có chọn file
+      if (attachedFile && targetId) {
+        const data = new FormData();
+        data.append('file', attachedFile);
+        await api(`/achievements/${targetId}/evidences`, 'POST', data);
+      }
+
       reset(); 
       setShowForm(false); 
       await state.reload(); 
@@ -1035,9 +1144,12 @@ export function Achievements() {
     e.target.value = ''; 
   }
 
-  async function extract(e) { 
+  async function handleFileAttach(e) { 
     const file = e.target.files?.[0]; 
     if (!file) return; 
+    setAttachedFile(file);
+    setExtracting(true);
+    setError(null);
     const data = new FormData(); 
     data.append('file', file); 
     try { 
@@ -1046,16 +1158,28 @@ export function Achievements() {
         setForm(old => ({ 
           ...old, 
           title: result.data.title || old.title, 
-          achievedAt: result.data.issueDate || old.achievedAt, 
+          achievedAt: result.data.issueDate ? String(result.data.issueDate).slice(0, 10) : old.achievedAt, 
           issuer: result.data.issuer || old.issuer 
         })); 
-      } else {
-        setError(new Error(result.message || 'Không thể trích xuất tự động. Hãy nhập thông tin thủ công.')); 
       }
-    } catch (err) { 
-      setError(err); 
-    } 
+    } catch { 
+      // Không bắt buộc OCR thành công, file vẫn được giữ để upload làm minh chứng
+    } finally {
+      setExtracting(false);
+    }
     e.target.value = ''; 
+  }
+
+  async function previewEvidence(file) {
+    try {
+      setError(null);
+      const blob = await api(`/evidence-files/${file.id}/download`, 'GET', undefined, { responseType: 'blob' });
+      const url = URL.createObjectURL(blob);
+      const isPdf = file.originalFileName?.toLowerCase().endsWith('.pdf') || blob.type === 'application/pdf';
+      setPreviewState({ file, url, isPdf });
+    } catch (err) {
+      setError(err);
+    }
   }
 
   async function download(file) { 
@@ -1086,7 +1210,11 @@ export function Achievements() {
     setError(null); 
     if (item) { 
       setEditing(item.id); 
-      setAttributesJson(JSON.stringify(item.attributes || {}, null, 2)); 
+      const attrs = item.attributes || {};
+      setCategory(attrs.category || '');
+      setRole(attrs.role || '');
+      setGrade(attrs.grade || attrs.rank || '');
+      setAttributesJson(JSON.stringify(attrs, null, 2)); 
       setForm({ 
         title: item.title || '', 
         achievedAt: item.achievedAt?.slice(0, 10) || '', 
@@ -1095,6 +1223,7 @@ export function Achievements() {
         achievementTypeId: item.achievementTypeId || '', 
         levelCode: item.levelCode || '' 
       }); 
+      setAttachedFile(null);
     } else {
       reset(); 
     }
@@ -1289,8 +1418,37 @@ export function Achievements() {
         <form onSubmit={save} className="space-y-4">
           <ErrorMessage error={error} />
           
-          {/* Custom Styled Drag & Drop Picker */}
-          <FilePicker label="Trích xuất thông tin tự động từ minh chứng (tùy chọn)" onChange={extract} />
+          {/* Gom 1 bước: Tải lên bằng khen / minh chứng kèm AI trích xuất */}
+          <div className="space-y-2">
+            <FilePicker 
+              label={editing ? "Đổi / tải tệp minh chứng mới (tùy chọn)" : "Đính kèm tệp minh chứng (Ảnh bằng khen hoặc PDF)"} 
+              onChange={handleFileAttach} 
+            />
+            {extracting && (
+              <p className="text-xs text-teal-700 dark:text-teal-300 flex items-center gap-1.5 animate-pulse font-semibold">
+                <Sparkles size={14} /> AI đang tự động nhận diện và trích xuất thông tin bằng khen...
+              </p>
+            )}
+            {attachedFile && (
+              <div className="flex items-center justify-between p-3 rounded-xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-900 text-xs">
+                <div className="flex items-center gap-2 truncate">
+                  <Paperclip size={15} className="shrink-0 text-teal-600 dark:text-teal-400" />
+                  <span className="truncate font-semibold text-slate-800 dark:text-slate-100">{attachedFile.name}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-600 text-white font-bold shrink-0">
+                    Tự động lưu minh chứng
+                  </span>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => setAttachedFile(null)} 
+                  className="text-slate-400 hover:text-rose-600 p-1"
+                  title="Hủy tệp này"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            )}
+          </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Tên thành tích *">
@@ -1312,12 +1470,66 @@ export function Achievements() {
             </Field>
           </div>
 
+          {/* Các thuộc tính trực quan thay cho JSON */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <Field label="Lĩnh vực hoạt động">
+              <select className={input} value={category} onChange={e => setCategory(e.target.value)}>
+                <option value="">-- Chọn lĩnh vực --</option>
+                <option value="Học tập">Học tập & Đào tạo</option>
+                <option value="Nghiên cứu khoa học">Nghiên cứu khoa học</option>
+                <option value="Tình nguyện">Tình nguyện & Xã hội</option>
+                <option value="Kỹ năng & Ngoại ngữ">Kỹ năng & Ngoại ngữ</option>
+                <option value="Văn thể mỹ">Văn hóa - Thể thao</option>
+                <option value="Phong trào">Hoạt động phong trào</option>
+                <option value="Khác">Lĩnh vực khác</option>
+              </select>
+            </Field>
+
+            <Field label="Vai trò tham gia">
+              <select className={input} value={role} onChange={e => setRole(e.target.value)}>
+                <option value="">-- Chọn vai trò --</option>
+                <option value="Cá nhân">Cá nhân</option>
+                <option value="Chủ nhiệm">Chủ nhiệm / Trưởng nhóm</option>
+                <option value="Thành viên">Thành viên tham gia</option>
+                <option value="Tình nguyện viên">Tình nguyện viên</option>
+              </select>
+            </Field>
+
+            <Field label="Xếp loại / Giải thưởng">
+              <select className={input} value={grade} onChange={e => setGrade(e.target.value)}>
+                <option value="">-- Chọn xếp loại --</option>
+                <option value="Giải Nhất">Giải Nhất</option>
+                <option value="Giải Nhì">Giải Nhì</option>
+                <option value="Giải Ba">Giải Ba</option>
+                <option value="Khuyến khích">Khuyến khích</option>
+                <option value="Xuất sắc">Xuất sắc</option>
+                <option value="Giỏi">Giỏi</option>
+                <option value="Khá">Khá</option>
+                <option value="Hoàn thành">Đạt / Hoàn thành</option>
+              </select>
+            </Field>
+          </div>
+
           <Field label="Mô tả chi tiết">
             <textarea className={input} rows={2} value={form.description} onChange={e => edit('description', e.target.value)} placeholder="Tóm tắt nội dung, kết quả hoặc xếp loại..." />
           </Field>
 
-          {/* Thay thế khung JSON bằng Trình nhập thuộc tính trực quan */}
-          <AttributeBuilder jsonString={attributesJson} onChange={setAttributesJson} />
+          {/* Toggle mở rộng tùy chọn kỹ thuật JSON nếu cần */}
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+            <button 
+              type="button" 
+              onClick={() => setShowAdvancedJson(!showAdvancedJson)} 
+              className="text-xs text-slate-500 hover:text-teal-700 flex items-center gap-1 font-semibold"
+            >
+              {showAdvancedJson ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              <span>{showAdvancedJson ? 'Ẩn cấu hình JSON nâng cao' : 'Tùy chọn kỹ thuật nâng cao (JSON)...'}</span>
+            </button>
+            {showAdvancedJson && (
+              <div className="mt-3">
+                <AttributeBuilder jsonString={attributesJson} onChange={setAttributesJson} />
+              </div>
+            )}
+          </div>
 
           <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             <button type="button" className={secondary} onClick={() => { reset(); setShowForm(false); }}>
@@ -1340,31 +1552,102 @@ export function Achievements() {
             <Empty>Chưa có tệp minh chứng nào. Bạn hãy tải lên tệp đầu tiên để làm căn cứ đối chiếu.</Empty>
           ) : (
             files.map(file => (
-              <div key={file.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-white dark:bg-slate-800">
-                <button type="button" className="text-xs font-semibold text-teal-700 hover:underline flex items-center gap-2 truncate" onClick={() => download(file)}>
-                  <Paperclip size={14} className="shrink-0" />
-                  <span className="truncate">{file.originalFileName}</span>
-                </button>
+              <div key={file.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-teal-500/50 transition-colors">
                 <button 
                   type="button" 
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors" 
-                  onClick={async () => { 
-                    try { 
-                      await api(`/evidences/${file.id}`, 'DELETE'); 
-                      await openFiles(expanded); 
-                      await state.reload(); 
-                    } catch(err) { 
-                      setError(err); 
-                    } 
-                  }}
-                  title="Xóa minh chứng này"
+                  className="text-xs font-semibold text-teal-700 dark:text-teal-300 hover:underline flex items-center gap-2 truncate text-left" 
+                  onClick={() => previewEvidence(file)}
+                  title="Bấm để xem trước tệp này"
                 >
-                  <Trash2 size={16} />
+                  <Eye size={15} className="shrink-0 text-teal-600" />
+                  <span className="truncate">{file.originalFileName}</span>
                 </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button 
+                    type="button" 
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-teal-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                    onClick={() => previewEvidence(file)}
+                    title="Xem trước tài liệu trực tiếp"
+                  >
+                    <Eye size={16} />
+                  </button>
+                  <button 
+                    type="button" 
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-teal-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                    onClick={() => download(file)}
+                    title="Tải file về máy"
+                  >
+                    <FileDown size={16} />
+                  </button>
+                  <button 
+                    type="button" 
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950 transition-colors" 
+                    onClick={async () => { 
+                      try { 
+                        await api(`/evidences/${file.id}`, 'DELETE'); 
+                        await openFiles(expanded); 
+                        await state.reload(); 
+                      } catch(err) { 
+                        setError(err); 
+                      } 
+                    }}
+                    title="Xóa minh chứng này"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
             ))
           )}
         </div>
+      </Modal>
+
+      {/* Modal Xem trước trực tiếp Minh chứng (Preview Popup) */}
+      <Modal 
+        open={!!previewState} 
+        onClose={() => { 
+          if (previewState?.url) URL.revokeObjectURL(previewState.url); 
+          setPreviewState(null); 
+        }} 
+        title={`Xem trước: ${previewState?.file?.originalFileName || 'Tệp minh chứng'}`}
+      >
+        {previewState && (
+          <div className="space-y-4">
+            <div className="max-h-[75vh] min-h-[250px] overflow-auto flex items-center justify-center bg-slate-900/5 dark:bg-slate-900/50 rounded-2xl p-2 border border-slate-200 dark:border-slate-700">
+              {previewState.isPdf ? (
+                <iframe 
+                  src={previewState.url} 
+                  className="w-full h-[70vh] rounded-xl border-none shadow-sm" 
+                  title="PDF Preview" 
+                />
+              ) : (
+                <img 
+                  src={previewState.url} 
+                  alt="Minh chứng" 
+                  className="max-h-[70vh] max-w-full object-contain rounded-xl shadow-md" 
+                />
+              )}
+            </div>
+            <div className="flex flex-wrap justify-between items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <span className="text-xs text-slate-500 font-mono truncate max-w-xs">{previewState.file.originalFileName}</span>
+              <div className="flex gap-2">
+                <button type="button" className={secondary} onClick={() => download(previewState.file)}>
+                  <FileDown size={15} /> Tải file về máy
+                </button>
+                <button 
+                  type="button" 
+                  className={button} 
+                  onClick={() => { 
+                    if (previewState?.url) URL.revokeObjectURL(previewState.url); 
+                    setPreviewState(null); 
+                  }}
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </Modal>
     </Page>
   );
@@ -1436,7 +1719,7 @@ export function Discovery() {
   );
 
   return (
-    <Page title="Khám hồ sơ" description="Đối chiếu thành tích với quy chế. Kết quả dựa trên dữ liệu bạn cung cấp." actions={pageActions}>
+    <Page title="Đối chiếu quy chế" description="So khớp thành tích cá nhân với các quy chế và danh hiệu chính thức." actions={pageActions}>
       <ErrorMessage error={error} />
       {message && <p role="status" className="p-3 mb-4 rounded-xl bg-teal-50 text-teal-800 border border-teal-200 text-sm font-semibold">{message}</p>}
       
@@ -1713,9 +1996,39 @@ export function Goals() {
   const [progress, setProgress] = useState('');
   const [task, setTask] = useState('');
 
+  const lecturerPresets = [
+    { label: '📄 01 Bài báo Scopus/WoS', title: 'Xuất bản 01 bài báo quốc tế uy tín (Scopus/WoS Q1-Q4)', target: 1, unit: 'bài báo' },
+    { label: '📚 02 Bài báo Tạp chí HĐGSNN', title: 'Xuất bản 02 bài báo tạp chí chuyên ngành tính điểm', target: 2, unit: 'bài báo' },
+    { label: '🔬 01 Đề tài NCKH cấp Trường', title: 'Chủ nhiệm 01 đề tài NCKH cấp cơ sở nghiệm thu đạt', target: 1, unit: 'đề tài' },
+    { label: '🎓 350 Giờ chuẩn giảng dạy', title: 'Hoàn thành định mức 350 giờ chuẩn giảng dạy trong năm học', target: 350, unit: 'giờ chuẩn' },
+    { label: '👥 Hướng dẫn 02 Khóa luận TN', title: 'Hướng dẫn 02 sinh viên làm khóa luận tốt nghiệp / NCKH', target: 2, unit: 'sinh viên' },
+  ];
+
   const totalPages = state.data?.total != null 
     ? Math.max(1, Math.ceil(state.data.total / (state.data.pageSize || 20))) 
     : 1;
+
+  const goalList = array(state.data);
+  const today = localDay();
+  const dueSoonDays = 30;
+
+  const getDaysLeft = (dueDate) => {
+    if (!dueDate) return null;
+    const diffTime = new Date(dueDate) - new Date(today);
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  const dueSoonCount = goalList.filter(g => {
+    const d = getDaysLeft(g.due_date);
+    return d !== null && d >= 0 && d <= dueSoonDays && !['COMPLETED', 'CANCELLED'].includes(g.status);
+  }).length;
+
+  const overdueCount = goalList.filter(g => {
+    const d = getDaysLeft(g.due_date);
+    return d !== null && d < 0 && !['COMPLETED', 'CANCELLED'].includes(g.status);
+  }).length;
+
+  const completedCount = goalList.filter(g => g.status === 'COMPLETED' || (Number(g.completion_percent) >= 100)).length;
 
   async function open(id) { 
     try { 
@@ -1752,9 +2065,40 @@ export function Goals() {
   );
 
   return (
-    <Page title="Mục tiêu / KPI" description="Theo dõi tiến độ, việc cần làm và thành tích hỗ trợ cho từng mục tiêu." actions={addButton}>
+    <Page title="Mục tiêu / KPI" description="Theo dõi định mức nghiên cứu khoa học, giờ giảng dạy và nhiệm vụ năm học của giảng viên." actions={addButton}>
       <ErrorMessage error={error} />
       
+      {/* Banner Cảnh báo tiến độ & Hạn chót năm học */}
+      <div className="p-4 rounded-2xl bg-gradient-to-r from-teal-900 to-[#182838] text-white shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-300 flex items-center justify-center shrink-0 border border-teal-500/30">
+            <Clock size={20} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-white">Năm học 2025–2026: Theo dõi định mức giảng dạy & NCKH</h3>
+            <p className="text-xs text-slate-300 mt-0.5">Thời hạn đối chiếu số liệu định mức và thi đua năm học của Giảng viên.</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="px-3 py-1 rounded-full bg-white/10 text-white font-medium">
+            Đang thực hiện: <strong>{goalList.length}</strong>
+          </span>
+          {dueSoonCount > 0 && (
+            <span className="px-3 py-1 rounded-full bg-amber-500/30 text-amber-200 border border-amber-500/40 font-bold">
+              Sắp đến hạn: <strong>{dueSoonCount}</strong>
+            </span>
+          )}
+          {overdueCount > 0 && (
+            <span className="px-3 py-1 rounded-full bg-rose-500/30 text-rose-200 border border-rose-500/40 font-bold">
+              Quá hạn: <strong>{overdueCount}</strong>
+            </span>
+          )}
+          <span className="px-3 py-1 rounded-full bg-emerald-500/30 text-emerald-200 border border-emerald-500/40 font-bold">
+            Hoàn thành: <strong>{completedCount}</strong>
+          </span>
+        </div>
+      </div>
+
       <section className={panel}>
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -1766,7 +2110,7 @@ export function Goals() {
         <Load state={state}>
           {!array(state.data).length ? (
             <Empty action={addButton}>
-              Chưa có mục tiêu nào. Hãy tạo mục tiêu đầu tiên hoặc khám hồ sơ để nhận đề xuất từ AI.
+              Chưa có mục tiêu nào. Hãy chọn mục tiêu mẫu bên dưới hoặc khám hồ sơ để tự động lập kế hoạch định mức.
             </Empty>
           ) : (
             <>
@@ -1776,7 +2120,7 @@ export function Goals() {
                   <thead>
                     <tr>
                       <th scope="col" style={{ width: '35%' }}>Tên mục tiêu & Nguồn</th>
-                      <th scope="col">Thời hạn</th>
+                      <th scope="col">Thời hạn hoàn thành</th>
                       <th scope="col">Thực tế / Chỉ tiêu</th>
                       <th scope="col" style={{ width: '22%' }}>Tiến độ (%)</th>
                       <th scope="col">Trạng thái</th>
@@ -1786,37 +2130,50 @@ export function Goals() {
                   <tbody>
                     {array(state.data).map(item => {
                       const percent = Math.min(100, Math.max(0, Number(item.completion_percent) || 0));
-                      const overdue = item.due_date && String(item.due_date).slice(0, 10) < localDay() && !['COMPLETED', 'CANCELLED'].includes(item.status);
+                      const daysLeft = getDaysLeft(item.due_date);
+                      const isOverdue = daysLeft !== null && daysLeft < 0 && !['COMPLETED', 'CANCELLED'].includes(item.status);
+                      const isDueSoon = daysLeft !== null && daysLeft >= 0 && daysLeft <= dueSoonDays && !['COMPLETED', 'CANCELLED'].includes(item.status);
                       
                       return (
                         <tr key={item.id} className="vault-goal-table-row">
                           <td>
                             <button 
                               type="button"
-                              className="font-bold text-slate-800 hover:text-teal-700 text-left transition-colors" 
+                              className="font-bold text-slate-800 dark:text-slate-100 hover:text-teal-700 dark:hover:text-teal-300 text-left transition-colors" 
                               onClick={() => open(item.id)}
                             >
                               {item.title}
                             </button>
                             <span className="block text-[11px] text-slate-400 mt-0.5">
-                              {item.source_result_id ? 'Tạo từ khoảng trống quy chế AI' : 'Mục tiêu tự tạo cá nhân'}
+                              {item.source_result_id ? 'Tạo từ khoảng trống quy chế AI' : 'Mục tiêu định mức cá nhân'}
                             </span>
                           </td>
                           <td className="text-xs">
-                            <span className={overdue ? 'text-rose-600 font-bold' : 'text-slate-600'}>
-                              {overdue ? 'Quá hạn · ' : ''}
-                              {item.due_date ? <DateText value={item.due_date} /> : 'Chưa đặt hạn'}
-                            </span>
+                            {item.due_date ? (
+                              <div className="space-y-0.5">
+                                <span className={isOverdue ? 'text-rose-600 font-bold' : isDueSoon ? 'text-amber-600 font-bold' : 'text-slate-600 dark:text-slate-300'}>
+                                  <DateText value={item.due_date} />
+                                </span>
+                                {isOverdue && (
+                                  <span className="block text-[10px] text-rose-600 font-semibold">Đã quá hạn</span>
+                                )}
+                                {isDueSoon && (
+                                  <span className="block text-[10px] text-amber-600 font-semibold">Còn {daysLeft} ngày</span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-slate-400">Không đặt hạn</span>
+                            )}
                           </td>
-                          <td className="text-xs font-semibold text-slate-700">
+                          <td className="text-xs font-semibold text-slate-700 dark:text-slate-200">
                             <strong>{item.current_value ?? 0}</strong> / {item.target_value} {item.measure_unit}
                           </td>
                           <td>
                             <div className="space-y-1">
-                              <div className="flex justify-between text-xs font-bold text-slate-700">
+                              <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-200">
                                 <span>{percent}%</span>
                               </div>
-                              <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
+                              <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden border border-slate-200 dark:border-slate-700">
                                 <div 
                                   className={`h-full rounded-full transition-all duration-300 ${percent >= 100 ? 'bg-emerald-500' : 'bg-teal-600'}`}
                                   style={{ width: `${percent}%` }}
@@ -1854,27 +2211,52 @@ export function Goals() {
         </Load>
       </section>
 
-      {/* Modal Tạo mục tiêu mới */}
-      <Modal open={showForm} onClose={() => setShowForm(false)} title="Tạo mục tiêu KPI mới">
+      {/* Modal Tạo mục tiêu mới kèm Gợi ý mẫu Giảng viên */}
+      <Modal open={showForm} onClose={() => setShowForm(false)} title="Thiết lập mục tiêu định mức mới">
         <form onSubmit={create} className="space-y-4">
           <ErrorMessage error={error} />
+
+          {/* Gợi ý mục tiêu nhanh chuẩn Giảng viên */}
+          <div className="p-3.5 rounded-2xl bg-teal-50/60 dark:bg-teal-950/30 border border-teal-100 dark:border-teal-900 space-y-2">
+            <span className="text-xs font-bold text-teal-800 dark:text-teal-300 block">
+              Gợi ý định mức chuẩn Giảng viên (Bấm để điền nhanh):
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {lecturerPresets.map(preset => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => setForm({
+                    ...form,
+                    title: preset.title,
+                    target_value: String(preset.target),
+                    measure_unit: preset.unit,
+                  })}
+                  className="px-2.5 py-1 rounded-lg text-xs font-medium bg-white dark:bg-slate-800 border border-teal-200 dark:border-teal-800 hover:border-teal-600 text-teal-900 dark:text-teal-200 hover:bg-teal-50 transition-all shadow-2xs"
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <Field label="Tên mục tiêu *">
-            <input required className={input} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Ví dụ: Xuất bản 02 bài báo quốc tế, Hoàn thành 15 giờ NCKH..." />
+            <input required className={input} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Ví dụ: Xuất bản 01 bài báo quốc tế (Scopus/WoS), 350 giờ chuẩn giảng dạy..." />
           </Field>
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="Chỉ tiêu cần đạt *">
               <input required type="number" min="0.01" step="any" className={input} value={form.target_value} onChange={e => setForm({ ...form, target_value: e.target.value })} />
             </Field>
             <Field label="Đơn vị tính *">
-              <input required className={input} value={form.measure_unit} onChange={e => setForm({ ...form, measure_unit: e.target.value })} placeholder="bài báo, giờ, đề tài..." />
+              <input required className={input} value={form.measure_unit} onChange={e => setForm({ ...form, measure_unit: e.target.value })} placeholder="bài báo, giờ chuẩn, đề tài..." />
             </Field>
             <Field label="Hạn hoàn thành">
               <input type="date" className={input} value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} />
             </Field>
           </div>
-          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             <button type="button" className={secondary} onClick={() => setShowForm(false)}>Hủy</button>
-            <button className={button}>Tạo mục tiêu</button>
+            <button className={button}>Lưu mục tiêu</button>
           </div>
         </form>
       </Modal>
@@ -2434,13 +2816,44 @@ export function Organizations() {
               )}
 
               {permitted(selected, 'MEMBERS_MANAGE') && (
-                <form className="mt-4 p-4 rounded-2xl bg-teal-50/40 dark:bg-teal-950/20 border border-teal-100 dark:border-teal-900/40 flex flex-wrap items-end gap-3" onSubmit={async e => { e.preventDefault(); try { await api(`/organizations/${selected}/invitations`, 'POST', { email }); setEmail(''); await select(selected); setMessage('Đã gửi lời mời thành công!'); } catch(err) { setError(err); } }}>
-                  <div className="flex-1 min-w-[220px]">
-                    <Field label="Mời thành viên mới tham gia (Nhập Email)">
-                      <input type="email" required placeholder="nhanvien@lhu.edu.vn" className={input} value={email} onChange={e => setEmail(e.target.value)} />
-                    </Field>
+                <form 
+                  className="mt-4 p-4 rounded-2xl bg-teal-50/40 dark:bg-teal-950/20 border border-teal-100 dark:border-teal-900/40 space-y-3" 
+                  onSubmit={async e => { 
+                    e.preventDefault(); 
+                    try { 
+                      const raw = email.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean);
+                      if (!raw.length) return;
+                      let count = 0;
+                      for (const em of raw) {
+                        try {
+                          await api(`/organizations/${selected}/invitations`, 'POST', { email: em });
+                          count++;
+                        } catch {}
+                      }
+                      setEmail(''); 
+                      await select(selected); 
+                      setMessage(`Đã gửi lời mời tham gia thành công cho ${count} tài khoản!`); 
+                    } catch(err) { 
+                      setError(err); 
+                    } 
+                  }}
+                >
+                  <Field label="Thêm giảng viên / cán bộ vào đơn vị (Có thể nhập 1 email hoặc dán nhiều email cách nhau bởi dấu phẩy/xuống dòng)">
+                    <textarea 
+                      rows={2}
+                      required 
+                      placeholder="nguyenvana@lhu.edu.vn, tranvanb@lhu.edu.vn..." 
+                      className={input} 
+                      value={email} 
+                      onChange={e => setEmail(e.target.value)} 
+                    />
+                  </Field>
+                  <div className="flex justify-between items-center pt-1">
+                    <span className="text-[11px] text-slate-500">
+                      Tài khoản sẽ nhận được thông báo lời mời và xuất hiện trong danh sách sau khi đồng ý.
+                    </span>
+                    <button className={button}>Gửi lời mời hàng loạt</button>
                   </div>
-                  <button className={button}>Gửi lời mời</button>
                 </form>
               )}
             </div>
@@ -2575,44 +2988,277 @@ export function Organizations() {
 
 function OrganizationTools({ organizationId, organizations, members, permissions }) {
   const docs = useLoad('/regulations/documents'), links = useLoad(`/organizations/${organizationId}/link-requests`);
-  const [version, setVersion] = useState(''), [descendants, setDescendants] = useState(false), [results, setResults] = useState(null), [parent, setParent] = useState(''), [error, setError] = useState(null), [message, setMessage] = useState('');
+  const [version, setVersion] = useState(''), [descendants, setDescendants] = useState(false);
+  const [results, setResults] = useState(null), [parent, setParent] = useState('');
+  const [error, setError] = useState(null), [message, setMessage] = useState('');
+  const [scanFilter, setScanFilter] = useState('all');
+  const [scanning, setScanning] = useState(false);
+
   const versions = array(docs.data).flatMap(doc => (doc.versions || []).filter(v => v.publication_status === 'PUBLISHED').map(v => ({ ...v, name: doc.name })));
   
+  const currentOrg = organizations.find(o => String(o.id) === String(organizationId));
+
+  const totalScanned = results ? results.length : 0;
+  const metCount = results ? results.filter(r => r.conclusion === 'MET').length : 0;
+  const unmetCount = totalScanned - metCount;
+  const averagePct = totalScanned ? Math.round(results.reduce((acc, r) => acc + (Number(r.completion_percent) || 0), 0) / totalScanned) : 0;
+
+  const filteredResults = results ? results.filter(r => {
+    if (scanFilter === 'met') return r.conclusion === 'MET';
+    if (scanFilter === 'unmet') return r.conclusion !== 'MET';
+    return true;
+  }) : [];
+
+  const exportScanCsv = () => {
+    if (!results || !results.length) return;
+    const selectedVersion = versions.find(v => String(v.id) === String(version));
+    const orgName = currentOrg?.name || `DonVi_${organizationId}`;
+    const headers = ['STT', 'Mã tài khoản', 'Họ và tên', 'Email', 'Quy chế đối chiếu', 'Kết quả', 'Tỷ lệ hoàn thành (%)'];
+    const rows = results.map((run, idx) => {
+      const member = members.find(m => String(m.user_id) === String(run.subject_user_id));
+      return [
+        idx + 1,
+        run.subject_user_id,
+        `"${member?.full_name || `Thành viên #${run.subject_user_id}`}"`,
+        `"${member?.email || ''}"`,
+        `"${selectedVersion?.name || ''} - ${selectedVersion?.version_label || ''}"`,
+        `"${run.conclusion === 'MET' ? 'ĐẠT' : 'CHƯA ĐẠT'}"`,
+        run.completion_percent ?? 0
+      ];
+    });
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Bao_cao_dinh_muc_${orgName.replace(/[^a-zA-Z0-9_\u00C0-\u024F\u1EA0-\u1EF9]/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
+  const notifyUnmetGroup = async () => {
+    const unmetUsers = results.filter(r => r.conclusion !== 'MET').map(r => Number(r.subject_user_id));
+    if (!unmetUsers.length) return;
+    try {
+      await api(`/organizations/${organizationId}/notifications`, 'POST', {
+        title: 'Nhắc nhở hoàn thiện định mức NCKH & Nhiệm vụ năm học',
+        body: 'Hồ sơ của bạn hiện chưa đạt đủ 100% định mức theo quy chế. Vui lòng kiểm tra các tiêu chí còn thiếu và cập nhật minh chứng trước thời hạn kết thúc năm học.',
+        userIds: unmetUsers,
+        includeDescendants: descendants
+      });
+      setMessage(`Đã gửi thông báo đôn đốc thành công cho ${unmetUsers.length} giảng viên chưa hoàn thành định mức!`);
+    } catch (err) {
+      setError(err);
+    }
+  };
+
   return (
-    <section className={`${panel} space-y-4 mt-6`}>
-      <h2 className="text-lg font-bold">Công cụ quản lý tổ chức</h2>
+    <section className={`${panel} space-y-5 mt-6`}>
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div>
+          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Bảng theo dõi định mức & Công cụ quản lý</h2>
+          <p className="text-xs text-slate-400">Dành cho Trưởng khoa / Trưởng bộ môn rà soát định mức giảng dạy & NCKH của giảng viên.</p>
+        </div>
+      </div>
       <ErrorMessage error={error} />
       {message && <p role="status" className="p-3 rounded-xl bg-teal-50 text-teal-800 text-xs font-semibold">{message}</p>}
       
       {permissions.scan && (
-        <div className="space-y-3">
-          <Field label="Quy chế để khám thành viên">
-            <select className={input} value={version} onChange={e => setVersion(e.target.value)}>
-              <option value="">Chọn quy chế</option>
-              {versions.map(v => <option key={v.id} value={v.id}>{v.name} · {v.version_label}</option>)}
-            </select>
-          </Field>
-          <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-            <input type="checkbox" checked={descendants} onChange={e => setDescendants(e.target.checked)} className="rounded text-teal-600" />
-            Bao gồm các đơn vị tổ chức con
-          </label>
-          <button className={button} disabled={!version} onClick={async () => { try { setError(null); setResults(array(await api(`/organizations/units/${organizationId}/ai-scan`, 'POST', { regulation_version_id: Number(version), include_descendants: descendants }))); } catch (err) { setError(err); } }}>
-            Khám hồ sơ thành viên
-          </button>
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-12 items-end">
+            <div className="sm:col-span-8">
+              <Field label="Chọn quy chế định mức cần đối chiếu">
+                <select className={input} value={version} onChange={e => setVersion(e.target.value)}>
+                  <option value="">-- Chọn quy chế NCKH / Giảng dạy --</option>
+                  {versions.map(v => <option key={v.id} value={v.id}>{v.name} · {v.version_label}</option>)}
+                </select>
+              </Field>
+            </div>
+            <div className="sm:col-span-4 flex items-center h-10">
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-200 cursor-pointer">
+                <input type="checkbox" checked={descendants} onChange={e => setDescendants(e.target.checked)} className="rounded text-teal-600" />
+                Bao gồm các đơn vị / Bộ môn trực thuộc
+              </label>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <button 
+              className={button} 
+              disabled={!version || scanning} 
+              onClick={async () => { 
+                setScanning(true);
+                try { 
+                  setError(null); 
+                  const data = await api(`/organizations/units/${organizationId}/ai-scan`, 'POST', { 
+                    regulation_version_id: Number(version), 
+                    include_descendants: descendants 
+                  });
+                  setResults(array(data));
+                  setMessage('Đã hoàn thành rà soát định mức thành viên trong đơn vị!');
+                } catch (err) { 
+                  setError(err); 
+                } finally {
+                  setScanning(false);
+                }
+              }}
+            >
+              {scanning ? 'Đang rà soát định mức...' : 'Rà soát định mức toàn đơn vị'}
+            </button>
+          </div>
           
           {results && (
-            !results.length ? <Empty>Không có thành viên trong phạm vi đã chọn.</Empty> : (
-              <div className="space-y-2 mt-2">
-                {results.map(run => (
-                  <Item key={run.id}>
-                    <p className="font-semibold text-xs">
-                      {members.find(m => String(m.user_id) === String(run.subject_user_id))?.full_name || `Thành viên #${run.subject_user_id}`} · {conclusionLabel(run.conclusion)} ({run.completion_percent}% hoàn thành)
-                    </p>
-                    <button className="mt-2 text-xs text-teal-700 underline font-semibold" onClick={async () => { try { await api(`/organizations/${organizationId}/notifications`, 'POST', { title: 'Kết quả khám hồ sơ', body: `Hồ sơ của bạn đã được đối chiếu với quy chế. Kết quả: ${conclusionLabel(run.conclusion)}.`, userIds: [Number(run.subject_user_id)], includeDescendants: descendants }); setMessage('Đã gửi thông báo cho thành viên.'); } catch (err) { setError(err); } }}>
-                      Gửi thông báo kết quả cho thành viên
+            !results.length ? <Empty>Không có giảng viên nào trong phạm vi đơn vị đã chọn.</Empty> : (
+              <div className="space-y-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+                {/* Thẻ tóm tắt kết quả quét */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
+                    <span className="text-slate-400 block">Tổng số rà soát</span>
+                    <strong className="text-lg font-bold text-slate-800 dark:text-slate-100">{totalScanned}</strong> nhân sự
+                  </div>
+                  <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-xs">
+                    <span className="text-emerald-700 dark:text-emerald-300 block font-semibold">Đạt chuẩn định mức</span>
+                    <strong className="text-lg font-bold text-emerald-800 dark:text-emerald-200">{metCount}</strong> người ({totalScanned ? Math.round(metCount/totalScanned*100) : 0}%)
+                  </div>
+                  <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-xs">
+                    <span className="text-amber-700 dark:text-amber-300 block font-semibold">Chưa hoàn thành</span>
+                    <strong className="text-lg font-bold text-amber-800 dark:text-amber-200">{unmetCount}</strong> người
+                  </div>
+                  <div className="p-3 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-900 text-xs">
+                    <span className="text-teal-700 dark:text-teal-300 block font-semibold">Tiến độ trung bình</span>
+                    <strong className="text-lg font-bold text-teal-800 dark:text-teal-200">{averagePct}%</strong> toàn đơn vị
+                  </div>
+                </div>
+
+                {/* Toolbar Lọc & Xuất Excel */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                  <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+                    <button 
+                      type="button" 
+                      onClick={() => setScanFilter('all')} 
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${scanFilter === 'all' ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                    >
+                      Tất cả ({totalScanned})
                     </button>
-                  </Item>
-                ))}
+                    <button 
+                      type="button" 
+                      onClick={() => setScanFilter('met')} 
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${scanFilter === 'met' ? 'bg-white dark:bg-slate-700 text-emerald-700 dark:text-emerald-300 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                    >
+                      Đạt định mức ({metCount})
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setScanFilter('unmet')} 
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${scanFilter === 'unmet' ? 'bg-white dark:bg-slate-700 text-amber-700 dark:text-amber-300 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                    >
+                      Chưa hoàn thành ({unmetCount})
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {unmetCount > 0 && (
+                      <button 
+                        type="button" 
+                        onClick={notifyUnmetGroup} 
+                        className="soft-btn-secondary text-xs py-2 px-3 text-amber-700 dark:text-amber-300 font-bold"
+                        title="Gửi thông báo nhắc nhở đôn đốc NCKH cho tất cả các giảng viên chưa đủ định mức"
+                      >
+                        Đôn đốc nhóm chưa đạt ({unmetCount})
+                      </button>
+                    )}
+                    <button 
+                      type="button" 
+                      onClick={exportScanCsv} 
+                      className="soft-btn-secondary text-xs py-2 px-3 text-teal-700 dark:text-teal-300 font-bold inline-flex items-center gap-1.5"
+                      title="Xuất bảng tổng hợp kết quả định mức ra file Excel/CSV"
+                    >
+                      <FileDown size={14} /> Xuất bảng Excel
+                    </button>
+                  </div>
+                </div>
+
+                {/* Bảng kết quả định mức chi tiết */}
+                <div className="vault-table-wrap">
+                  <table className="vault-table">
+                    <thead>
+                      <tr>
+                        <th scope="col" style={{ width: '40%' }}>Giảng viên / Nhân sự</th>
+                        <th scope="col" style={{ width: '30%' }}>Tiến độ hoàn thành</th>
+                        <th scope="col">Kết luận</th>
+                        <th scope="col" className="text-right">Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredResults.map(run => {
+                        const member = members.find(m => String(m.user_id) === String(run.subject_user_id));
+                        const isMet = run.conclusion === 'MET';
+                        return (
+                          <tr key={run.id} className="hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors">
+                            <td>
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-xs shrink-0">
+                                  {(member?.full_name || 'G').charAt(0).toUpperCase()}
+                                </div>
+                                <div className="min-w-0 truncate">
+                                  <strong className="block text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
+                                    {member?.full_name || `Thành viên #${run.subject_user_id}`}
+                                  </strong>
+                                  <span className="block text-[11px] text-slate-400 truncate">
+                                    {member?.email || 'Chưa cập nhật email'} {member?.title && `· ${member.title}`}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+                            <td>
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-200">
+                                  <span>{run.completion_percent ?? 0}%</span>
+                                </div>
+                                <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                                  <div 
+                                    className={`h-full rounded-full ${isMet ? 'bg-emerald-500' : 'bg-amber-500'}`} 
+                                    style={{ width: `${Math.min(100, Math.max(0, run.completion_percent ?? 0))}%` }} 
+                                  />
+                                </div>
+                              </div>
+                            </td>
+                            <td>
+                              <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                                isMet 
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300' 
+                                  : 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950 dark:text-amber-300'
+                              }`}>
+                                {isMet ? 'Đạt định mức' : 'Chưa hoàn thành'}
+                              </span>
+                            </td>
+                            <td className="text-right">
+                              <button 
+                                type="button"
+                                className="text-xs text-teal-700 dark:text-teal-300 hover:underline font-semibold" 
+                                onClick={async () => { 
+                                  try { 
+                                    await api(`/organizations/${organizationId}/notifications`, 'POST', { 
+                                      title: 'Kết quả rà soát định mức năm học', 
+                                      body: `Hồ sơ của bạn đã được đối chiếu với quy chế. Kết quả: ${isMet ? 'Đạt' : 'Chưa đạt'} (${run.completion_percent}% hoàn thành).`, 
+                                      userIds: [Number(run.subject_user_id)], 
+                                      includeDescendants: descendants 
+                                    }); 
+                                    setMessage(`Đã gửi thông báo riêng cho ${member?.full_name || 'thành viên'}!`); 
+                                  } catch (err) { 
+                                    setError(err); 
+                                  } 
+                                }}
+                              >
+                                Gửi nhắc riêng
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )
           )}
@@ -2734,85 +3380,287 @@ export function PublicCv() {
 
 export function Reports() {
   const state = useCollection('/achievements');
-  const items = array(state.data), years = {}, types = {};
+  const items = array(state.data);
+  const years = {}, types = {};
   for (const item of items) { 
-    const year = String(item.achievedAt).slice(0,4); 
+    const year = String(item.achievedAt).slice(0, 4); 
     years[year] = (years[year] || 0) + 1; 
     const type = item.typeName || 'Chưa phân loại'; 
     types[type] = (types[type] || 0) + 1; 
   }
-  const yearly = Object.entries(years).sort(([a],[b]) => a.localeCompare(b)), categories = Object.entries(types).sort((a,b) => b[1]-a[1]), maximum = Math.max(1,...Object.values(years));
-  const colors = ['#0f766e','#1d4ed8','#b45309','#be185d','#475569','#15803d']; 
+  const yearly = Object.entries(years).sort(([a], [b]) => a.localeCompare(b));
+  const categories = Object.entries(types).sort((a, b) => b[1] - a[1]);
+  const maximum = Math.max(1, ...Object.values(years));
+  const colors = ['#0f766e', '#2563eb', '#d97706', '#db2777', '#7c3aed', '#059669', '#475569']; 
+  
   let offset = 0;
-  const segments = categories.map(([name,count],index) => { 
+  const segments = categories.map(([name, count], index) => { 
     const start = offset; 
-    offset += count / items.length * 100; 
-    return { name, count, color: colors[index % colors.length], start, end: offset }; 
+    const pct = items.length ? (count / items.length) * 100 : 0;
+    offset += pct; 
+    return { name, count, color: colors[index % colors.length], start, end: offset, pct: Math.round(pct) }; 
   });
 
+  const bestYearEntry = yearly.reduce((acc, curr) => (curr[1] > (acc[1] || 0) ? curr : acc), ['', 0]);
+  const avgPerYear = yearly.length ? (items.length / yearly.length).toFixed(1) : 0;
+
   return (
-    <Page title="Thống kê & Báo cáo" description="Phân bố thành tích theo năm và loại, được tổng hợp từ toàn bộ kho của bạn." actions={<Link className={secondary} to="/achievements"><Award size={15} /> Về kho thành tích</Link>}>
+    <Page 
+      title="Thống kê & Báo cáo" 
+      description="Phân tích tổng hợp số liệu thành tích theo chuỗi thời gian và loại hoạt động." 
+      actions={
+        <Link className={secondary} to="/achievements">
+          <Award size={15} /> Về kho thành tích
+        </Link>
+      }
+    >
       <Load state={state}>
         {!items.length ? (
           <section className={panel}>
             <Empty action={<Link className={button} to="/achievements">Thêm thành tích đầu tiên</Link>}>
-              Chưa có dữ liệu để lập báo cáo.
+              Chưa có dữ liệu thành tích để thống kê.
             </Empty>
           </section>
         ) : (
-          <>
-            <p className="vault-report-summary">Đang thống kê <strong>{items.length} thành tích</strong> trong <strong>{yearly.length} năm</strong>, thuộc <strong>{categories.length} loại</strong>.</p>
-            <div className="vault-report-grid">
-              <section className={panel}>
-                <h2 className="text-lg font-bold mb-3">Thành tích theo năm</h2>
-                <div className="vault-bar-chart" role="img" aria-label={yearly.map(([year,count]) => `${year}: ${count} thành tích`).join('; ')}>
-                  {yearly.map(([year,count]) => (
-                    <div className="vault-bar-column" key={year}>
-                      <strong>{count}</strong>
-                      <div className="vault-bar-track"><span style={{height:`${count/maximum*100}%`}} /></div>
-                      <span>{year}</span>
+          <div className="space-y-6">
+            {/* 4 Cards Chỉ số Thống kê Tổng quan */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 flex items-center justify-center shrink-0">
+                  <Award size={24} />
+                </div>
+                <div>
+                  <span className="text-xs text-slate-500 font-medium block">Tổng thành tích</span>
+                  <strong className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">{items.length}</strong>
+                  <span className="text-[11px] text-teal-700 dark:text-teal-400 font-semibold block mt-0.5">Đã ghi nhận</span>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 flex items-center justify-center shrink-0">
+                  <Calendar size={24} />
+                </div>
+                <div>
+                  <span className="text-xs text-slate-500 font-medium block">Số năm hoạt động</span>
+                  <strong className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">{yearly.length}</strong>
+                  <span className="text-[11px] text-slate-400 block mt-0.5">{yearly[0]?.[0]} – {yearly[yearly.length - 1]?.[0]}</span>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0">
+                  <FolderOpen size={24} />
+                </div>
+                <div>
+                  <span className="text-xs text-slate-500 font-medium block">Loại danh mục</span>
+                  <strong className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">{categories.length}</strong>
+                  <span className="text-[11px] text-amber-700 dark:text-amber-400 font-semibold block mt-0.5">Phân loại</span>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 flex items-center justify-center shrink-0">
+                  <Sparkles size={24} />
+                </div>
+                <div>
+                  <span className="text-xs text-slate-500 font-medium block">Năm cao điểm</span>
+                  <strong className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">{bestYearEntry[0] || '—'}</strong>
+                  <span className="text-[11px] text-purple-700 dark:text-purple-400 font-semibold block mt-0.5">{bestYearEntry[1]} thành tích</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 2 Khối Biểu đồ chính: Cột theo năm & Donut theo loại */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+              {/* Biểu đồ cột: Thành tích theo năm */}
+              <section className="lg:col-span-7 p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">
+                      Thành tích theo năm
+                    </h2>
+                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300 border border-teal-200 dark:border-teal-900">
+                      TB: {avgPerYear} mục/năm
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mb-6">Biến động số lượng thành tích được ghi nhận qua các năm.</p>
+                </div>
+
+                {/* Vùng vẽ biểu đồ cột */}
+                <div className="pt-4 pb-2">
+                  <div className="h-52 flex items-end justify-around gap-3 border-b border-slate-200 dark:border-slate-700 px-2 pb-1 relative">
+                    {/* Background grid lines */}
+                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-40">
+                      <div className="border-b border-dashed border-slate-200 dark:border-slate-700 w-full" />
+                      <div className="border-b border-dashed border-slate-200 dark:border-slate-700 w-full" />
+                      <div className="border-b border-dashed border-slate-200 dark:border-slate-700 w-full" />
                     </div>
-                  ))}
+
+                    {yearly.map(([year, count]) => {
+                      const heightPercent = Math.max(15, Math.round((count / maximum) * 100));
+                      const isMax = count === maximum;
+                      return (
+                        <div key={year} className="flex-1 max-w-[64px] flex flex-col items-center h-full justify-end group relative z-10">
+                          {/* Tooltip / Badge số lượng trên đỉnh cột */}
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-md mb-2 transition-transform group-hover:scale-110 shadow-sm ${
+                            isMax 
+                              ? 'bg-teal-600 text-white' 
+                              : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
+                          }`}>
+                            {count}
+                          </span>
+
+                          {/* Cột Bar */}
+                          <div className="w-full bg-slate-100 dark:bg-slate-700/60 rounded-t-xl overflow-hidden flex items-end transition-all h-full max-h-[160px]">
+                            <div 
+                              className={`w-full rounded-t-xl transition-all duration-500 group-hover:brightness-110 ${
+                                isMax
+                                  ? 'bg-gradient-to-t from-teal-700 to-teal-500'
+                                  : 'bg-gradient-to-t from-teal-600/80 to-teal-400/80'
+                              }`}
+                              style={{ height: `${heightPercent}%` }}
+                            />
+                          </div>
+
+                          {/* Nhãn năm */}
+                          <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 mt-2.5">
+                            {year}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </section>
-              <section className={panel}>
-                <h2 className="text-lg font-bold mb-3">Tỷ lệ theo loại thành tích</h2>
-                <div className="vault-donut-layout">
-                  <div className="vault-donut-chart" role="img" aria-label={segments.map(s => `${s.name}: ${s.count}, ${Math.round(s.count/items.length*100)}%`).join('; ')} style={{background:`conic-gradient(${segments.map(s => `${s.color} ${s.start}% ${s.end}%`).join(',')})`}}>
-                    <span>{items.length}<small>thành tích</small></span>
+
+              {/* Biểu đồ Donut: Tỷ lệ theo loại thành tích */}
+              <section className="lg:col-span-5 p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm flex flex-col justify-between">
+                <div>
+                  <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-1">
+                    Tỷ lệ theo loại thành tích
+                  </h2>
+                  <p className="text-xs text-slate-400 mb-4">Cơ cấu danh mục trong toàn bộ hồ sơ.</p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-6 py-2">
+                  {/* Vòng Donut Chart */}
+                  <div className="relative w-40 h-40 shrink-0 flex items-center justify-center">
+                    <div 
+                      className="w-full h-full rounded-full shadow-inner transition-transform hover:scale-105 duration-300" 
+                      style={{ 
+                        background: categories.length > 1
+                          ? `conic-gradient(${segments.map(s => `${s.color} ${s.start}% ${s.end}%`).join(',')})`
+                          : (colors[0])
+                      }}
+                    />
+                    {/* Lỗ rỗng giữa vòng tạo thành Donut */}
+                    <div className="absolute w-24 h-24 rounded-full bg-white dark:bg-slate-800 shadow-md flex flex-col items-center justify-center text-center p-2">
+                      <strong className="text-xl font-extrabold text-slate-800 dark:text-slate-100 leading-tight">
+                        {items.length}
+                      </strong>
+                      <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
+                        Mục
+                      </span>
+                    </div>
                   </div>
-                  <ul className="vault-chart-legend">
+
+                  {/* Chú thích Legend bên cạnh */}
+                  <div className="flex-1 w-full space-y-2.5 max-h-48 overflow-y-auto pr-1">
                     {segments.map(s => (
-                      <li key={s.name}>
-                        <span className="vault-legend-dot" style={{backgroundColor:s.color}} aria-hidden="true" />
-                        <span>{s.name}</span>
-                        <strong>{s.count} · {Math.round(s.count/items.length*100)}%</strong>
-                      </li>
+                      <div key={s.name} className="text-xs space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="inline-flex items-center gap-2 truncate font-medium text-slate-700 dark:text-slate-200">
+                            <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: s.color }} />
+                            <span className="truncate">{s.name}</span>
+                          </span>
+                          <span className="font-bold text-slate-800 dark:text-slate-100 shrink-0">
+                            {s.count} <span className="text-slate-400 font-normal">({s.pct}%)</span>
+                          </span>
+                        </div>
+                        {/* Thanh mini track */}
+                        <div className="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                          <div 
+                            className="h-full rounded-full transition-all duration-500" 
+                            style={{ width: `${s.pct}%`, backgroundColor: s.color }} 
+                          />
+                        </div>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-700/60 text-right">
+                  <span className="text-[11px] text-slate-400">
+                    Tổng cộng {categories.length} nhóm danh mục được phân loại
+                  </span>
                 </div>
               </section>
             </div>
-            <section className={`${panel} mt-6`}>
-              <h2 className="text-lg font-bold mb-4">Dữ liệu tổng hợp theo năm</h2>
+
+            {/* Bảng Dữ liệu tổng hợp theo năm */}
+            <section className="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">Dữ liệu tổng hợp theo năm</h2>
+                  <p className="text-xs text-slate-400">Chi tiết số lượng và tỷ trọng thành tích qua các mốc thời gian.</p>
+                </div>
+              </div>
+
               <div className="vault-table-wrap">
                 <table className="vault-table">
                   <thead>
-                    <tr><th scope="col">Năm</th><th scope="col">Số thành tích</th><th scope="col">Tỷ trọng</th></tr>
+                    <tr>
+                      <th scope="col" style={{ width: '25%' }}>Năm hoạt động</th>
+                      <th scope="col" style={{ width: '25%' }}>Số thành tích</th>
+                      <th scope="col" style={{ width: '30%' }}>Tỷ trọng đóng góp</th>
+                      <th scope="col" className="text-right">Ghi chú</th>
+                    </tr>
                   </thead>
                   <tbody>
-                    {yearly.map(([year,count]) => (
-                      <tr key={year}>
-                        <th scope="row">{year}</th>
-                        <td>{count}</td>
-                        <td>{Math.round(count/items.length*100)}%</td>
-                      </tr>
-                    ))}
+                    {yearly.map(([year, count]) => {
+                      const pct = Math.round((count / items.length) * 100);
+                      const isMax = count === maximum;
+                      return (
+                        <tr key={year} className="hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors">
+                          <td className="font-bold text-slate-800 dark:text-slate-100">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-xs font-semibold">
+                              <Calendar size={13} className="text-slate-500" />
+                              {year}
+                            </span>
+                          </td>
+                          <td className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                            <strong>{count}</strong> mục
+                          </td>
+                          <td>
+                            <div className="space-y-1 max-w-[200px]">
+                              <div className="flex justify-between text-xs font-semibold text-slate-600 dark:text-slate-300">
+                                <span>{pct}%</span>
+                              </div>
+                              <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full ${isMax ? 'bg-teal-600' : 'bg-teal-500/80'}`} 
+                                  style={{ width: `${pct}%` }} 
+                                />
+                              </div>
+                            </div>
+                          </td>
+                          <td className="text-right text-xs">
+                            {isMax ? (
+                              <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-950 dark:text-teal-300">
+                                Năm cao điểm ★
+                              </span>
+                            ) : (
+                              <span className="text-slate-400">Ổn định</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             </section>
-          </>
+          </div>
         )}
       </Load>
     </Page>

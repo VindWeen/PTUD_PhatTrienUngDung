@@ -29,8 +29,8 @@ const shortcuts = [
     tone: 'mint' 
   },
   { 
-    title: 'Khám hồ sơ', 
-    subtitle: 'Đối chiếu với quy chế', 
+    title: 'Đối chiếu quy chế', 
+    subtitle: 'So khớp thành tích với tiêu chuẩn danh hiệu', 
     icon: ClipboardCheck, 
     to: '/me/ai-forecast', 
     tone: 'blue' 
@@ -145,7 +145,7 @@ export default function Dashboard() {
 
               <div className="metric-item">
                 <div className="metric-header">
-                  <span>Lần khám & Đối chiếu quy chế</span>
+                  <span>Lượt đối chiếu quy chế</span>
                   <span className="metric-val">{assessmentCount} lượt</span>
                 </div>
                 <div className="metric-track">
