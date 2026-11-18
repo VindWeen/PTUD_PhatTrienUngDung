@@ -1,5 +1,7 @@
 # Bộ demo quy chế và hành trình hồ sơ V2
 
+> Tài liệu lịch sử. Bộ seed demo V2 và các lệnh dưới đây đã được gỡ khỏi dự án.
+
 Mốc đánh giá demo là **15/11/2026**. Namespace dữ liệu là `DEMO-V2-20261115`; toàn bộ 24 tài khoản, tổ chức và thành tích là giả lập, không phải hồ sơ người thật. File minh chứng và nguồn quy chế tự đặt có dòng **DỮ LIỆU DEMO**. Bốn PDF chính thức giữ nguyên nội dung và cơ quan ban hành, được phân biệt với chủ thể quản lý bản cấu hình trong ứng dụng.
 
 ## Chạy và kiểm tra

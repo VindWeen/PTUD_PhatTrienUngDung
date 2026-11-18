@@ -26,7 +26,7 @@ try {
   await client.query('BEGIN');
   for(const name of (await fs.readdir(new URL('../../supabase/migrations/',import.meta.url))).filter(n=>n.endsWith('.sql')).sort())
    await client.query(rewrite(await fs.readFile(new URL(`../../supabase/migrations/${name}`,import.meta.url),'utf8')));
-  await client.query(rewrite(await fs.readFile(new URL('../../supabase/w5-p1-seed.sql',import.meta.url),'utf8')));
+  await client.query(rewrite(await fs.readFile(new URL('./fixtures/legacy/w5-p1-seed.sql',import.meta.url),'utf8')));
   await client.query('COMMIT');created=true;
  } catch(e) {await client.query('ROLLBACK');throw e;} finally {client.release();}
  const db=(sql,values)=>pool.query(rewrite(sql),values);

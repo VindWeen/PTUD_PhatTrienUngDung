@@ -34,7 +34,7 @@ try {
     await client.query(rewrite(await fs.readFile(new URL(`../../supabase/migrations/${name}`, import.meta.url), 'utf8')));
   }
   // The existing fixture seed is rewritten to the test schema BEFORE executing.
-  await client.query(rewrite(await fs.readFile(new URL('../../supabase/seed.sql', import.meta.url), 'utf8')));
+  await client.query(rewrite(await fs.readFile(new URL('./fixtures/legacy/seed.sql', import.meta.url), 'utf8')));
   await client.query(rewrite("UPDATE app.users SET email='fixture-'||user_id||'@example.invalid', display_name='W2-P4 SYNTHETIC '||user_id"));
   const adapted = async (sql, values) => {
     if (sql === 'BEGIN') {

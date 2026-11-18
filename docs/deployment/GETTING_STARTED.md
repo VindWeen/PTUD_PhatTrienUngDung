@@ -17,7 +17,7 @@ Cập nhật 11/11/2026. React/Vite giao tiếp Express REST; Express dùng driv
 2. Trong backend: npm ci. Chép .env.example thành .env nếu chưa có; điền DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD. SQL Login dùng mật khẩu riêng, không dùng mật khẩu tài khoản Windows. Instance có named port cần điền đúng cổngTCP.
 3. Điền hai JWT secret khác nhau và cấu hình kho tệp private. TLS local theo mẫu; máy chủ bên ngoài dùng cấu hình chứng chỉ tương ứng.
 4. npm run migrate; npm run migrate:status. Runner chỉ đọc database/sqlserver/migrations, kiểm checksum và khóa migration bằng transaction-owned application lock.
-5. DB mới rỗng có thể nạp dữ liệu cơ bản: node ../database/scripts/seed.js --apply. Seed từ chối DB đã có dữ liệu, không TRUNCATE.
+5. Tạo tài khoản quản trị đầu tiên theo hướng dẫn backend rồi nhập dữ liệu qua ứng dụng.
 6. npm start. Terminal khác: cd frontend; npm ci; npm run dev. Mở http://localhost:5173.
 
 ## Kiểm tra

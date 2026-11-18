@@ -35,7 +35,7 @@ try {
   for (const name of (await fs.readdir(new URL('../../supabase/migrations/', import.meta.url))).filter(n => n.endsWith('.sql')).sort()) {
     await client.query(rewrite(await fs.readFile(new URL(`../../supabase/migrations/${name}`, import.meta.url), 'utf8')));
   }
-  await client.query(rewrite(await fs.readFile(new URL('../../supabase/seed.sql', import.meta.url), 'utf8')));
+  await client.query(rewrite(await fs.readFile(new URL('./fixtures/legacy/seed.sql', import.meta.url), 'utf8')));
   await client.query(rewrite("UPDATE app.users SET email='fixture-'||user_id||'@example.invalid', display_name='W2-Q4 SYNTHETIC '||user_id"));
 
   const adapted = async (sql, values) => {

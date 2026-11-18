@@ -4,7 +4,7 @@ Express REST mặc định tại `/api/v1`, kết nối SQL Server. `src/app.js`
 
 ## Thiết lập
 
-Cấu hình `.env` từ `.env.example`, chạy `npm ci`, `npm run migrate:status` và `npm run migrate`, rồi `npm start`. Schema và runner được mô tả ở [SQL Server V2](../database/sqlserver/v2/README.md). Không có seed/import tự động; `npm run seed` chặn dữ liệu legacy. Seed mới: `npm run seed:v2 -- --database=PTUD_LHU --apply`; luôn chỉ định database, xem [hướng dẫn seed V2](../docs/testing/V2_DEMO_SEED.md).
+Cấu hình `.env` từ `.env.example`, chạy `npm ci`, `npm run migrate:status` và `npm run migrate`, rồi `npm start`. Schema và runner được mô tả ở [SQL Server V2](../database/sqlserver/v2/README.md). Dữ liệu nghiệp vụ được nhập qua ứng dụng.
 
 Tài khoản đầu tiên có thể đăng ký qua ứng dụng. Để thiết lập quản trị viên đầu tiên, người vận hành đặt biến môi trường `PTUD_ADMIN_EMAIL`, `PTUD_ADMIN_NAME`, `PTUD_ADMIN_PASSWORD` rồi, từ thư mục `backend/`, chạy `node ../scripts/provision-admin.mjs --apply`. Script chỉ chạy khi gọi rõ ràng, không đổi mật khẩu tài khoản đã tồn tại và không tạo dữ liệu mẫu. Không lưu mật khẩu trong mã nguồn.
 

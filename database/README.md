@@ -12,11 +12,11 @@ Schema mới nằm tại [sqlserver/v2/migrations/](sqlserver/v2/migrations/). R
 - npm run test:db:v2: kiểm ràng buộc trên SQL Server bằng dữ liệu tạm rồi rollback.
 - node ../database/sqlserver/v2/verify.mjs --expect-empty: đối chiếu bảng, constraint, trigger và kiểm dữ liệu rỗng.
 
-Chưa tạo seed/import. Lệnh seed hiện tại bị chặn để không nạp lại mô hình cũ. Không chạy thủ công sqlserver/seed.sql.
+Schema V2 khởi tạo trống.
 
 ## File lịch sử
 
-sqlserver/migrations/, sqlserver/seed.sql, migrations/, seed/ và ../supabase/ thuộc phiên bản trước, không phải schema runtime V2. Chúng còn được giữ do một số công cụ/test cũ tham chiếu. Không áp dụng cùng chuỗi V2.
+sqlserver/migrations/, migrations/, seed/ và ../supabase/ thuộc phiên bản trước, không phải schema runtime V2. Chúng còn được giữ do một số công cụ/test cũ tham chiếu. Không áp dụng cùng chuỗi V2.
 
 Backend runtime và frontend đã chuyển sang V2; migrate thành công riêng lẻ không đồng nghĩa mọi trường hợp nghiệp vụ đã được nghiệm thu. Backup và minh chứng trên đĩa vẫn giữ. Báo cáo kiểm schema local: output/database-v2/schema-verification.json.
 

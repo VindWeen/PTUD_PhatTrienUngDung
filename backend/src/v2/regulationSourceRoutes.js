@@ -12,7 +12,7 @@ import { MAX_SOURCE_BYTES, MAX_TEXT_CHARS, saveSource, discardSource, sourcePath
 const router = Router();
 router.use(authenticate);
 const multipart = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_SOURCE_BYTES, files: 1, fields: 5, fieldSize: 4096 } }).single('file');
-const upload = (req, res, next) => multipart(req, res, error => error ? next(new ValidationError(error.code === 'LIMIT_FILE_SIZE' ? 'Tệp nguồn vượt giới hạn 10 MB.' : 'Chỉ tải một tệp PDF/Word hợp lệ.')) : next());
+const upload = (req, res, next) => multipart(req, res, error => error ? next(new ValidationError(error.code === 'LIMIT_FILE_SIZE' ? 'Tệp nguồn vượt giới hạn 20 MB.' : 'Chỉ tải một tệp PDF/Word hợp lệ.')) : next());
 async function editable(userId, versionId, db) {
   const version = await one('SELECT * FROM app.regulation_versions WITH(UPDLOCK,HOLDLOCK) WHERE id=$1', [versionId], db);
   await authorizeRegulation(userId, version.regulation_id, db);

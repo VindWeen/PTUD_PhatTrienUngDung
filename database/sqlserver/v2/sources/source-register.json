@@ -1,95 +1,44 @@
 {
-  "demoDate": "2026-11-15",
+  "updatedAt": "2026-11-18T01:30:00.000Z",
   "entries": [
     {
-      "id": "moet-08-2021",
-      "file": "08-2021-tt-bgddt.pdf",
-      "url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2021/04/08-bgd.signed.pdf",
-      "landingUrl": "https://vanban.chinhphu.vn/?docid=203159&pageid=27160",
-      "issuer": "Bộ Giáo dục và Đào tạo",
+      "id": "luat-06-2022-qh15",
+      "file": "3240cae7-2022-0006-qh15-luat-tdkt.pdf",
+      "originalFilename": "luat-thi-dua-khen-thuong-06-2022-signed.pdf",
+      "issuer": "Quốc hội nước Cộng hòa xã hội chủ nghĩa Việt Nam",
       "kind": "STATE",
-      "effectiveFrom": "2021-05-03",
-      "status": "HISTORICAL_REPLACED_2026_07_07",
-      "correctionId": "moet-08-2021-correction",
-      "coverage": "Nguồn lịch sử: đã bị Thông tư 56/2026/TT-BGDĐT thay thế từ 07/07/2026 (Điều 2 văn bản mới). Cấu hình demo chỉ tham chiếu lịch sử đến 06/07/2026, không kết luận tốt nghiệp hay tự giải quyết điều khoản chuyển tiếp/khóa tuyển sinh. Giữ nguồn và bản đính chính để tra cứu.",
-      "sha256": "86666e5aad39da111a6de960f4f71ecbd1a42383397db60fca268363c90133ad",
-      "byteSize": 1098257,
-      "collectedAt": "2026-11-15T16:43:31.765Z",
-      "assessmentTo": "2026-07-06",
-      "replacedBy": "moet-56-2026",
-      "replacementEffectiveFrom": "2026-07-07",
-      "verificationUrls": [
-        "https://chinhphu.vn/?classid=1&docid=219044&orggroupid=4&pageid=27160",
-        "https://ttgdtc.vnu.edu.vn/wp-content/uploads/2026/03/56_2026_TT_BGDDT.pdf"
-      ],
-      "verifiedAt": "2026-11-16T01:53:58.699Z"
+      "effectiveFrom": "2024-01-01",
+      "status": "OFFICIAL_ACTIVE",
+      "coverage": "Luật Thi đua, khen thưởng số 06/2022/QH15 quy định tiêu chuẩn danh hiệu Lao động tiên tiến (Điều 24), Chiến sĩ thi đua cơ sở (Điều 23), Chiến sĩ thi đua cấp Bộ/tỉnh (Điều 22) và hình thức khen thưởng Giấy khen (Điều 75), Bằng khen (Điều 74).",
+      "sha256": "3240cae7d8db3487ce238cf96422aa30f232bf54056a79b99b80abbd040e2033",
+      "byteSize": 15072237,
+      "collectedAt": "2026-11-17T21:00:00.000Z"
     },
     {
-      "id": "moet-08-2021-correction",
-      "file": "08-2021-dinh-chinh.pdf",
-      "url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2024/6/dinh-chinh-tt-08-2021-bgddt.pdf",
-      "issuer": "Bộ Giáo dục và Đào tạo",
-      "kind": "STATE_CORRECTION",
-      "status": "REFERENCE_ONLY",
-      "coverage": "Đính chính lỗi kỹ thuật dẫn chiếu tại Điều 2 của Thông tư; lưu kèm danh mục nguồn, không phải quy chế độc lập.",
-      "sha256": "a94a98f93812b4aedb72ff069b9f2861b1208d6bc51c868da2ed3bf765a46f97",
-      "byteSize": 743093,
-      "collectedAt": "2026-11-15T16:43:31.770Z"
+      "id": "luat-06-2026-qh16",
+      "file": "0467172f-2026-0006-qh16-sua-doi-tdkt.pdf",
+      "originalFilename": "06_2026_QH16.pdf",
+      "issuer": "Quốc hội nước Cộng hòa xã hội chủ nghĩa Việt Nam",
+      "kind": "STATE",
+      "effectiveFrom": "2026-07-01",
+      "status": "OFFICIAL_ACTIVE",
+      "coverage": "Luật sửa đổi, bổ sung một số điều của Luật Thi đua, khen thưởng số 06/2026/QH16 cập nhật nguyên tắc khen thưởng theo công trạng, tôn vinh cá nhân đi đầu trong nghiên cứu khoa học, đổi mới sáng tạo và chuyển đổi số.",
+      "sha256": "0467172f0c123eb8b51170ff71f7f6524bb16736ccb8b594fe04fe08adca94eb",
+      "byteSize": 3501458,
+      "collectedAt": "2026-11-17T21:00:00.000Z"
     },
     {
-      "id": "ueh-2025",
-      "file": "ueh-sv5t-2025.pdf",
-      "url": "https://youth.ueh.edu.vn/wp-content/uploads/2025/09/DE-AN-SV5T-UEH-NAM-2025-1.pdf",
-      "issuer": "Ban Thư ký Hội Sinh viên Việt Nam Đại học Kinh tế TP. Hồ Chí Minh",
-      "kind": "UNIVERSITY_ORGANIZATION",
-      "issuedAt": "2025-03-14",
-      "status": "HISTORICAL_2025",
-      "assessmentFrom": "2025-03-14",
-      "assessmentTo": "2025-11-01",
-      "achievementFrom": "2024-11-01",
-      "achievementTo": "2025-11-01",
-      "coverage": "Chỉ một nhánh thay thế I.5.2 (hai khóa kỹ năng), yêu cầu đào tạo trực tuyến Phụ lục IV và nhóm kỹ năng Phụ lục V; không phải kết luận toàn bộ I.5.2 hay danh hiệu SV5T. Ngày kết thúc là giới hạn cấu hình demo lịch sử dựa kỳ hồ sơ IV, không khẳng định ngày hết hiệu lực pháp lý.",
-      "sha256": "71c5265221eebfe920a5deb71c17bcbb1ed571e8865dbe45c88c9ef4fb0502c6",
-      "byteSize": 4806439,
-      "collectedAt": "2026-11-15T16:43:31.786Z"
-    },
-    {
-      "id": "lhu-nien-giam-2025",
-      "file": "lhu-nien-giam-2025.pdf",
-      "url": "https://lhu.edu.vn/Data/News/483/files/_Da_nen_NIEN_GIAM_2025_compressed.pdf",
-      "issuer": "Trường Đại học Lạc Hồng",
-      "kind": "UNIVERSITY",
-      "status": "REFERENCE_ONLY_2025",
-      "coverage": "Niên giám sinh viên 2025. Chỉ tài liệu tham khảo có nguồn cấp Trường; cần xác minh quy định hiện hành, khóa/ngành, văn bản sửa đổi trước khi cấu hình tiêu chí tự động. Chưa tự động hóa toàn văn.",
-      "sha256": "64b8951b7243b5b67068e4ad116b64615958054a806166f559860c3e867c8ad7",
-      "byteSize": 5402286,
-      "collectedAt": "2026-11-15T16:58:25.794Z"
-    },
-    {
-      "id": "moet-56-2026",
-      "file": "56-2026-tt-bgddt-reference.pdf",
-      "url": "https://ttgdtc.vnu.edu.vn/wp-content/uploads/2026/03/56_2026_TT_BGDDT.pdf",
-      "landingUrl": "https://chinhphu.vn/?classid=1&docid=219044&orggroupid=4&pageid=27160",
-      "issuer": "Bộ Giáo dục và Đào tạo",
-      "kind": "STATE_REPLACEMENT",
-      "effectiveFrom": "2026-07-07",
-      "status": "VERIFIED_REFERENCE_NOT_IMPORTED_OVERSIZE",
-      "replaces": [
-        "moet-08-2021"
-      ],
-      "coverage": "Đã đọc trực quan trang 1: Điều 2 thay thế 08/2021 và 28/2023, có hiệu lực 07/07/2026. Bản gốc 11.394.397 byte vượt giới hạn một file nguồn 10 MB đã chốt; giữ nguyên bản trong danh mục nghiên cứu, không nén/sửa bản ký và không nhập lách giới hạn. Chưa cấu hình tiêu chí tự động của văn bản này.",
-      "sha256": "94a4d188e8e519781b4a1b738741547e006cde90cbd1de7cd5038984412d1a79",
-      "byteSize": 11394397,
-      "collectedAt": "2026-11-16T01:53:58.803Z",
-      "importToPrivateStorage": false
-    }
-  ],
-  "unavailable": [
-    {
-      "url": "https://youth.ueh.edu.vn/wp-content/uploads/2022/10/22-QD-Tieu-chuan-SV5T-cap-truong.pdf",
-      "observedAt": "2026-11-15T16:43:31.786Z",
-      "status": 404,
-      "note": "Không dùng nguồn cache web làm bằng chứng file hiện còn tải được."
+      "id": "tt-25-2026-tt-bnv",
+      "file": "fef48e64-2026-0025-ttbnv-huong-dan-tdkt.pdf",
+      "originalFilename": "10-5-2026-8-51-30-am57. 727532.pdf",
+      "issuer": "Bộ Nội vụ",
+      "kind": "MINISTRY",
+      "effectiveFrom": "2026-10-01",
+      "status": "OFFICIAL_ACTIVE",
+      "coverage": "Thông tư số 25/2026/TT-BNV hướng dẫn thi hành Luật Thi đua, khen thưởng, công nhận hiệu quả của sáng kiến kinh nghiệm và phạm vi ảnh hưởng của đề tài khoa học công nghệ.",
+      "sha256": "fef48e64f35ff7ad4259e1490d55ff4a557e9b0f71a74fede089268c5b57c2a5",
+      "byteSize": 554252,
+      "collectedAt": "2026-11-17T21:00:00.000Z"
     }
   ]
 }

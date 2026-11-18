@@ -141,7 +141,7 @@ try {
   assert(migration.includes('ex_lecturer_primary_assignments_no_overlap'), 'W1-P2 chặn lịch sử công tác chính chồng lấn');
   assert(migration.includes('ex_unit_representatives_no_overlap'), 'W1-P2 chặn đại diện đơn vị chồng lấn');
 
-  const seed = fs.readFileSync('supabase/seed.sql', 'utf8');
+  const seed = fs.readFileSync('backend/tests/fixtures/legacy/seed.sql', 'utf8');
   assert(seed.includes('RESEARCH_JOURNAL_Q1') && seed.includes('CSTĐ_CS'), 'Seed W1-P2 dùng mã danh mục đã chốt');
 
   const profileFixtures = JSON.parse(fs.readFileSync('docs/api/fixtures/profile.fixtures.json', 'utf8'));

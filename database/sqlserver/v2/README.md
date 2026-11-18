@@ -18,7 +18,7 @@ node ../database/sqlserver/v2/verify.mjs --expect-empty
 
 Runner chỉ đọc `database/sqlserver/v2/migrations/`, kiểm checksum và dùng transaction cùng application lock. Database chưa có lịch sử V2 mà đã có bảng sẽ bị từ chối. Các file ở `database/sqlserver/migrations/` là lịch sử cũ, không được chạy cùng chuỗi này.
 
-Baseline không tự seed/import. Seed V2 được gọi rõ ràng bằng `node scripts/seed-v2-demo.mjs --database=PTUD_LHU --apply` từ thư mục gốc; có `--validate` rollback, `--verify` kiểm tra độc lập và chạy lặp không nhân đôi. Lệnh seed legacy vẫn bị chặn. Xem [tài khoản và kịch bản demo](../../../docs/testing/V2_DEMO_SEED.md).
+Baseline khởi tạo schema trống. Dữ liệu nghiệp vụ được nhập qua ứng dụng.
 
 ## Quy ước
 

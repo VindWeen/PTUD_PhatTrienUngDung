@@ -14,11 +14,9 @@
     "test:db:runner": "node --test ../database/sqlserver/runner.test.mjs",
     "migrate": "node ../database/scripts/migrate.js up",
     "migrate:status": "node ../database/scripts/migrate.js status",
-    "seed": "node ../database/scripts/seed.js",
     "backup": "node ../scripts/backup.mjs",
     "restore": "node ../scripts/restore.mjs",
-    "test:backup": "node --test ../scripts/storageBackup.test.mjs",
-    "seed:v2": "node ../scripts/seed-v2-demo.mjs"
+    "test:backup": "node --test ../scripts/storageBackup.test.mjs"
   },
   "keywords": [
     "express",

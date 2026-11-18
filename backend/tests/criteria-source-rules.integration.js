@@ -19,7 +19,7 @@ try {
   for (const file of (await fs.readdir(new URL('../../supabase/migrations/', import.meta.url))).filter(f => f.endsWith('.sql')).sort()) {
     await client.query(rewrite(await fs.readFile(new URL(`../../supabase/migrations/${file}`, import.meta.url), 'utf8')));
   }
-  await client.query(rewrite(await fs.readFile(new URL('../../supabase/seed.sql', import.meta.url), 'utf8')));
+  await client.query(rewrite(await fs.readFile(new URL('./fixtures/legacy/seed.sql', import.meta.url), 'utf8')));
   const adapted = {
     async query(sql, values) {
       if (sql === 'BEGIN') return client.query('SAVEPOINT criterion_mutation');

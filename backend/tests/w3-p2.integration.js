@@ -40,7 +40,7 @@ try {
   await client.query(
     rewrite(
       await fs.readFile(
-        new URL("../../supabase/seed.sql", import.meta.url),
+        new URL("./fixtures/legacy/seed.sql", import.meta.url),
         "utf8",
       ),
     ),

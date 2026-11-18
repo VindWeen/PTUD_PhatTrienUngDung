@@ -19,7 +19,7 @@ try {
   await client.query("SET LOCAL statement_timeout='20s'");
   const files = (await fs.readdir(new URL('../../supabase/migrations/',import.meta.url))).filter(v => v.endsWith('.sql')).sort();
   for (const name of files) await client.query(rewrite(await fs.readFile(new URL(`../../supabase/migrations/${name}`,import.meta.url),'utf8')));
-  await client.query(rewrite(await fs.readFile(new URL('../../supabase/seed.sql',import.meta.url),'utf8')));
+  await client.query(rewrite(await fs.readFile(new URL('./fixtures/legacy/seed.sql',import.meta.url),'utf8')));
   const adapted = {
     query: async (sql,values) => {
       if (sql === 'BEGIN') return client.query('SAVEPOINT admin_mutation');

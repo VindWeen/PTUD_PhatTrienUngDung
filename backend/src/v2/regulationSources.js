@@ -11,7 +11,7 @@ import { GroqProvider } from '../modules/ai/providers/groqProvider.js';
 import { OpenRouterProvider } from '../modules/ai/providers/openrouterProvider.js';
 import { PoolProvider } from '../modules/ai/providers/poolProvider.js';
 
-export const MAX_SOURCE_BYTES = 10 * 1024 * 1024;
+export const MAX_SOURCE_BYTES = 20 * 1024 * 1024;
 export const MAX_TEXT_CHARS = 2_000_000;
 export const regulationStorageRoot = path.join(path.dirname(storageRoot), 'regulations');
 export function sourcePath(key) {
@@ -19,7 +19,7 @@ export function sourcePath(key) {
   return path.join(regulationStorageRoot, key);
 }
 export function validateSource(file) {
-  if (!file?.buffer?.length || file.buffer.length > MAX_SOURCE_BYTES) throw new ValidationError('Chọn một tệp PDF/Word không quá 10 MB.');
+  if (!file?.buffer?.length || file.buffer.length > MAX_SOURCE_BYTES) throw new ValidationError('Chọn một tệp PDF/Word không quá 20 MB.');
   const metadata = validateFile({ ...file, originalname: normalizeFileName(file.originalname) });
   if (!['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(metadata.mime)) throw new ValidationError('Nguồn quy chế chỉ nhận PDF hoặc DOCX.');
   return metadata;
@@ -41,7 +41,7 @@ function decodeXml(text) {
   });
 }
 export async function extractSourceText(buffer, mime) {
-  if (!buffer?.length || buffer.length > MAX_SOURCE_BYTES) throw new ValidationError('Tệp nguồn không hợp lệ hoặc vượt 10 MB.');
+  if (!buffer?.length || buffer.length > MAX_SOURCE_BYTES) throw new ValidationError('Tệp nguồn không hợp lệ hoặc vượt 20 MB.');
   let text;
   if (mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
     const zip = new PizZip(buffer), document = zip.file('word/document.xml');
