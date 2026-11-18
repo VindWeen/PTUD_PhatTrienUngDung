@@ -5,7 +5,7 @@ import { query, withTransaction } from '../utils/dbHelper.js';
 import { hashPassword, comparePassword, generateAccessToken } from '../utils/crypto.js';
 import config from '../config/env.js';
 import { AppError, ValidationError, UnauthorizedError, ForbiddenError, NotFoundError, ConflictError } from '../utils/errors.js';
-import { authenticate, authorizeOrg, canAccessOrg, hasGlobalRole, permissions } from './access.js';
+import { authenticate, authorizeOrg, canAccessOrg, canAccessOrgDirectly, hasGlobalRole, permissions } from './access.js';
 
 const router=express.Router();
 const route=fn=>(req,res,next)=>Promise.resolve(fn(req,res)).catch(next);
@@ -95,7 +95,7 @@ router.post('/auth/reset-password',route(async(req,res)=>{
     await audit(db,t.user_id,null,'PASSWORD_RESET','users',t.user_id);
   }); clearCookie(res); ok(res,{changed:true});
 }));
-router.use(['/auth/me','/auth/change-password','/me/profile','/me/invitations','/organizations','/invitations','/organization-link-requests','/admin'],authenticate);
+router.use(['/auth/me','/auth/change-password','/me/profile','/me/invitations','/me/join-requests','/organizations','/invitations','/organization-link-requests','/admin'],authenticate);
 router.get('/auth/me',route(async(req,res)=>ok(res,await getUserProfile(req.user.userId))));
 router.get('/me/profile',route(async(req,res)=>ok(res,await getUserProfile(req.user.userId))));
 router.patch('/me/profile',route(async(req,res)=>{
@@ -117,7 +117,7 @@ router.post('/auth/change-password',route(async(req,res)=>{
 }));
 
 const managerPermission=z.object({permissionCode:z.enum(permissions),includeDescendants:z.boolean().default(false)}).strict();
-const orgFields=z.object({code:text(80),name:text(250),organizationType:z.enum(['UNIVERSITY','FACULTY','DEPARTMENT','CLASS','COMPANY','TEAM','OTHER']),parentId:number.nullable().optional(),managerUserId:number.optional(),managerPermissions:z.array(managerPermission).min(1).max(permissions.length).refine(items=>new Set(items.map(x=>x.permissionCode)).size===items.length,'Quyền không được lặp lại').optional()});
+const orgFields=z.object({code:text(80),name:text(250),organizationType:z.enum(['UNIVERSITY','FACULTY','DEPARTMENT','CLASS','COMPANY','TEAM','OTHER']),parentId:number.nullable().optional(),managerUserId:number.optional(),managerEmail:z.string().trim().email().max(254).optional(),managerPermissions:z.array(managerPermission).min(1).max(permissions.length).refine(items=>new Set(items.map(x=>x.permissionCode)).size===items.length,'Quyền không được lặp lại').optional()});
 export async function initialManagerPermissions(actor,parentId,requested,db=query) {
   let grants=requested;
   if(!grants) {
@@ -140,10 +140,13 @@ router.get('/organizations',route(async(req,res)=>{
 }));
 router.post('/organizations',route(async(req,res)=>{
   const b=input(orgFields,req.body);
+  if(b.managerUserId&&b.managerEmail)throw new ValidationError('Chỉ chọn một cách xác định người quản lý.');
   const org=await withTransaction(async({query:db})=>{
     if(b.parentId) { await activeOrg(db,b.parentId); await authorizeOrg(req.user.userId,b.parentId,'STRUCTURE_MANAGE',db); }
     const initialGrants=await initialManagerPermissions(req.user.userId,b.parentId,b.managerPermissions,db);
-    const manager=b.managerUserId||req.user.userId;
+    const manager=b.managerEmail
+      ? (await one(db,"SELECT id FROM app.users WHERE normalized_email=LOWER($1) AND account_status='ACTIVE'",[b.managerEmail])).id
+      : b.managerUserId||req.user.userId;
     await one(db,`SELECT id FROM app.users WHERE id=$1 AND account_status='ACTIVE'`,[manager]);
     const o=await one(db,`DECLARE @created TABLE(id bigint); INSERT INTO app.organizations(parent_id,code,name,organization_type,created_by_user_id) OUTPUT INSERTED.id INTO @created VALUES($1,$2,$3,$4,$5); SELECT o.* FROM app.organizations o JOIN @created c ON c.id=o.id;`,[b.parentId||null,b.code,b.name,b.organizationType,req.user.userId]);
     for(const grant of initialGrants) await db(`INSERT INTO app.org_access_grants(organization_id,user_id,permission_code,include_descendants,granted_by_user_id) VALUES($1,$2,$3,$4,$5)`,[o.id,manager,grant.permissionCode,grant.includeDescendants,req.user.userId]);
@@ -176,11 +179,57 @@ router.delete('/organizations/:id',route(async(req,res)=>{
 }));
 router.get('/organizations/:id/members',route(async(req,res)=>{
   const org=ident(req.params.id); await authorizeOrg(req.user.userId,org,'MEMBERS_VIEW');
-  const descendants=req.query.includeDescendants==='true'; if(descendants) await authorizeOrg(req.user.userId,org,'MEMBERS_VIEW',query,true);
+  const descendants=req.query.includeDescendants==='true' || (req.query.includeDescendants==='auto' && await canAccessOrg(req.user.userId,org,'MEMBERS_VIEW',query,true)); if(descendants) await authorizeOrg(req.user.userId,org,'MEMBERS_VIEW',query,true);
   ok(res,(await query(`WITH scope AS (SELECT id FROM app.organizations WHERE id=$1 AND status='ACTIVE' UNION ALL SELECT o.id FROM app.organizations o JOIN scope s ON o.parent_id=s.id WHERE $2=1 AND o.status='ACTIVE')
   SELECT m.id,m.user_id,m.organization_id,m.title,m.valid_from,p.full_name,p.person_type,u.email,o.name AS organization_name FROM scope s JOIN app.memberships m ON m.organization_id=s.id JOIN app.person_profiles p ON p.user_id=m.user_id JOIN app.users u ON u.id=m.user_id JOIN app.organizations o ON o.id=s.id WHERE m.valid_from<=SYSUTCDATETIME() AND (m.valid_to IS NULL OR m.valid_to>SYSUTCDATETIME()) AND u.account_status='ACTIVE' OPTION(MAXRECURSION 32767)`,[org,descendants?1:0])).rows);
 }));
 router.get('/me/invitations',route(async(req,res)=>ok(res,(await query(`SELECT i.*,o.name AS organization_name FROM app.membership_invitations i JOIN app.organizations o ON o.id=i.organization_id WHERE i.invitee_user_id=$1 ORDER BY i.created_at DESC`,[req.user.userId])).rows)));
+router.get('/me/join-requests',route(async(req,res)=>{
+  ok(res,(await query(`SELECT r.*,o.name AS organization_name FROM app.membership_join_requests r
+    JOIN app.organizations o ON o.id=r.organization_id WHERE r.user_id=$1 ORDER BY r.id DESC`,[req.user.userId])).rows);
+}));
+router.get('/organizations/:id/join-requests',route(async(req,res)=>{
+  const org=ident(req.params.id);
+  await authorizeOrg(req.user.userId,org,'MEMBERS_MANAGE');
+  ok(res,(await query(`SELECT r.*,u.email FROM app.membership_join_requests r
+    JOIN app.users u ON u.id=r.user_id WHERE r.organization_id=$1 ORDER BY r.id DESC`,[org])).rows);
+}));
+async function hasCurrentMembership(db,org,user) {
+  return (await db(`SELECT id FROM app.memberships WHERE organization_id=$1 AND user_id=$2
+    AND valid_from<=SYSUTCDATETIME() AND (valid_to IS NULL OR valid_to>SYSUTCDATETIME())`,[org,user])).rows.length>0;
+}
+router.post('/organizations/:id/join-requests',route(async(req,res)=>{
+  const org=ident(req.params.id),user=req.user.userId;
+  const b=input(z.object({reason:text(500).optional()}).strict(),req.body);
+  const request=await withTransaction(async({query:db})=>{
+    await activeOrg(db,org,true);
+    if(await hasCurrentMembership(db,org,user)) throw new ConflictError('Bạn đã là thành viên');
+    if((await db("SELECT id FROM app.membership_join_requests WHERE organization_id=$1 AND user_id=$2 AND status='PENDING'",[org,user])).rows.length)
+      throw new ConflictError('Bạn đã có yêu cầu đang chờ');
+    return one(db,`INSERT INTO app.membership_join_requests(organization_id,user_id,reason)
+      OUTPUT INSERTED.* VALUES($1,$2,$3)`,[org,user,b.reason??null]);
+  });
+  ok(res,request,201);
+}));
+router.post('/organizations/:id/join-requests/:requestId/respond',route(async(req,res)=>{
+  const org=ident(req.params.id),key=ident(req.params.requestId),actor=req.user.userId;
+  const {accept}=input(z.object({accept:z.boolean()}).strict(),req.body);
+  await withTransaction(async({query:db})=>{
+    await activeOrg(db,org,true);
+    await authorizeOrg(actor,org,'MEMBERS_MANAGE',db);
+    const r=await one(db,'SELECT * FROM app.membership_join_requests WITH(UPDLOCK,HOLDLOCK) WHERE id=$1 AND organization_id=$2',[key,org]);
+    if(r.status!=='PENDING') throw new ConflictError('Yêu cầu đã được xử lý');
+    if(accept && Number(r.user_id)===Number(actor) && !await canAccessOrgDirectly(actor,org,'MEMBERS_MANAGE',db))
+      throw new ForbiddenError('Yêu cầu của bạn cần quản lý trực tiếp của đơn vị duyệt.');
+    if(accept) await one(db,"SELECT id FROM app.users WHERE id=$1 AND account_status='ACTIVE'",[r.user_id]);
+    await db('UPDATE app.membership_join_requests SET status=$2,responded_at=SYSUTCDATETIME(),responded_by_user_id=$3 WHERE id=$1',[key,accept?'ACCEPTED':'DECLINED',actor]);
+    if(accept && !await hasCurrentMembership(db,org,r.user_id))
+      await db('INSERT INTO app.memberships(organization_id,user_id,join_request_id) VALUES($1,$2,$3)',[org,r.user_id,key]);
+    await notify(db,r.user_id,actor,org,'ORGANIZATION_MESSAGE',accept?'Yêu cầu gia nhập đã được chấp nhận':'Yêu cầu gia nhập đã bị từ chối');
+    await audit(db,actor,org,accept?'JOIN_REQUEST_ACCEPTED':'JOIN_REQUEST_DECLINED','membership_join_requests',key);
+  });
+  ok(res,{accepted:accept});
+}));
 router.get('/organizations/:id/invitations',route(async(req,res)=>{
   const org=ident(req.params.id); await authorizeOrg(req.user.userId,org,'MEMBERS_MANAGE');
   ok(res,(await query(`SELECT i.*,p.full_name,u.email FROM app.membership_invitations i JOIN app.person_profiles p ON p.user_id=i.invitee_user_id JOIN app.users u ON u.id=i.invitee_user_id WHERE i.organization_id=$1 ORDER BY i.created_at DESC`,[org])).rows);
@@ -190,6 +239,8 @@ router.post('/organizations/:id/invitations',route(async(req,res)=>{
   const inv=await withTransaction(async({query:db})=>{
     await activeOrg(db,org,true); await authorizeOrg(req.user.userId,org,'MEMBERS_MANAGE',db);
     const u=await one(db,`SELECT id FROM app.users WHERE normalized_email=LOWER($1) AND account_status='ACTIVE'`,[b.email]);
+    if(Number(u.id)===Number(req.user.userId) && !await canAccessOrgDirectly(req.user.userId,org,'MEMBERS_MANAGE',db))
+      throw new ForbiddenError('Bạn cần được quản lý trực tiếp của đơn vị mời.');
     if((await db(`SELECT id FROM app.memberships WHERE organization_id=$1 AND user_id=$2 AND valid_from<=SYSUTCDATETIME() AND (valid_to IS NULL OR valid_to>SYSUTCDATETIME())`,[org,u.id])).rows.length) throw new ConflictError('Người dùng đã là thành viên');
     await db(`UPDATE app.membership_invitations SET status='EXPIRED',responded_at=SYSUTCDATETIME() WHERE organization_id=$1 AND invitee_user_id=$2 AND status='PENDING' AND expires_at<=SYSUTCDATETIME()`,[org,u.id]);
     const i=await one(db,`INSERT INTO app.membership_invitations(organization_id,invitee_user_id,invited_by_user_id,title,expires_at) OUTPUT INSERTED.* VALUES($1,$2,$3,$4,DATEADD(day,7,SYSUTCDATETIME()))`,[org,u.id,req.user.userId,b.title||null]);
@@ -205,7 +256,8 @@ router.post('/invitations/:id/respond',route(async(req,res)=>{
     if(i.status!=='PENDING'||new Date(i.expires_at)<=new Date()) throw new ConflictError('Lời mời không còn hiệu lực');
     await activeOrg(db,i.organization_id,true);
     await db(`UPDATE app.membership_invitations SET status=$1,responded_at=SYSUTCDATETIME(),responded_by_user_id=$2 WHERE id=$3`,[b.accept?'ACCEPTED':'DECLINED',req.user.userId,id]);
-    if(b.accept) await db(`INSERT INTO app.memberships(organization_id,user_id,invitation_id,title) VALUES($1,$2,$3,$4)`,[i.organization_id,req.user.userId,id,i.title]);
+    if(b.accept && !await hasCurrentMembership(db,i.organization_id,req.user.userId))
+      await db(`INSERT INTO app.memberships(organization_id,user_id,invitation_id,title) VALUES($1,$2,$3,$4)`,[i.organization_id,req.user.userId,id,i.title]);
     await audit(db,req.user.userId,i.organization_id,b.accept?'INVITATION_ACCEPTED':'INVITATION_DECLINED','membership_invitations',id);
   }); ok(res,{accepted:b.accept});
 }));
@@ -222,6 +274,7 @@ router.delete('/organizations/:id/members/:membershipId',route(async(req,res)=>{
   const org=ident(req.params.id),mid=ident(req.params.membershipId);
   await withTransaction(async({query:db})=>{
     const m=await one(db,`SELECT * FROM app.memberships WITH(UPDLOCK,HOLDLOCK) WHERE id=$1 AND organization_id=$2 AND valid_to IS NULL`,[mid,org]);
+    await authorizeManagerChange(db,req.user.userId,org,m.user_id);
     if(Number(m.user_id)!==Number(req.user.userId)) await authorizeOrg(req.user.userId,org,'MEMBERS_MANAGE',db);
     await db(`UPDATE app.memberships SET valid_to=CASE WHEN valid_from>=SYSUTCDATETIME() THEN DATEADD(millisecond,1,valid_from) ELSE SYSUTCDATETIME() END,ended_by_user_id=$1,end_reason=N'Kết thúc quan hệ thành viên' WHERE id=$2`,[req.user.userId,mid]);
     // Organization privileges are independently granted, but must be revoked when removing a member.
@@ -233,25 +286,95 @@ router.get('/organizations/:id/access',route(async(req,res)=>{
   const org=ident(req.params.id); await authorizeOrg(req.user.userId,org,'ACCESS_MANAGE');
   ok(res,(await query(`SELECT g.*,p.full_name,u.email FROM app.org_access_grants g JOIN app.person_profiles p ON p.user_id=g.user_id JOIN app.users u ON u.id=g.user_id WHERE g.organization_id=$1 AND g.valid_from<=SYSUTCDATETIME() AND (g.valid_to IS NULL OR g.valid_to>SYSUTCDATETIME())`,[org])).rows);
 }));
+router.put('/organizations/:id/access/users/:userId',route(async(req,res)=>{
+  const org=ident(req.params.id), userId=ident(req.params.userId), actor=req.user.userId;
+  const body=input(z.object({
+    grantIds:z.array(number),
+    permissions:z.array(managerPermission).max(permissions.length)
+      .refine(items=>new Set(items.map(item=>item.permissionCode)).size===items.length)
+  }).strict(),req.body);
+
+  await withTransaction(async({query:db})=>{
+    await activeOrg(db,org,true);
+    await authorizeManagerChange(db,actor,org,userId);
+    await authorizeOrg(actor,org,'ACCESS_MANAGE',db);
+    const current=(await db(`SELECT * FROM app.org_access_grants WHERE organization_id=$1 AND user_id=$2
+      AND valid_from<=SYSUTCDATETIME() AND (valid_to IS NULL OR valid_to>SYSUTCDATETIME())`,[org,userId])).rows;
+    const snapshot=new Set(body.grantIds);
+    if(current.length!==snapshot.size || current.some(grant=>!snapshot.has(Number(grant.id)))) {
+      throw new ConflictError('Quyền đã thay đổi. Hãy đóng và mở lại hộp thoại để tải quyền mới nhất.');
+    }
+    const existing=new Map();
+    for(const grant of current) {
+      existing.set(grant.permission_code,!!grant.include_descendants || existing.get(grant.permission_code)===true);
+    }
+    const desired=new Map(body.permissions.map(grant=>[grant.permissionCode,grant.includeDescendants]));
+    const removals=current.filter(grant=>desired.get(grant.permission_code)!==existing.get(grant.permission_code));
+    const additions=body.permissions.filter(grant=>existing.get(grant.permissionCode)!==grant.includeDescendants);
+
+    if(additions.length) {
+      if(!current.length && !await hasCurrentMembership(db,org,userId)) throw new NotFoundError();
+      await one(db,`SELECT id FROM app.users WHERE id=$1 AND account_status='ACTIVE'`,[userId]);
+    }
+    // Authorize the full change before writing, including changes to the actor's own grants.
+    for(const grant of removals) {
+      await authorizeOrg(actor,org,'ACCESS_MANAGE',db,!!grant.include_descendants);
+      await authorizeOrg(actor,org,grant.permission_code,db,!!grant.include_descendants);
+    }
+    for(const grant of additions) await authorizeGrant(actor,org,grant,db);
+    for(const grant of removals) await revokeGrant(db,actor,org,grant.id);
+    for(const grant of additions) await insertGrant(db,actor,org,{...grant,userId});
+  });
+  ok(res,{updated:true});
+}));
+
+async function authorizeGrant(actor,org,grant,db) {
+  await authorizeManagerChange(db,actor,org,grant.userId);
+  await authorizeOrg(actor,org,'ACCESS_MANAGE',db,grant.includeDescendants);
+  await authorizeOrg(actor,org,grant.permissionCode,db,grant.includeDescendants);
+  if((grant.permissionCode.startsWith('REGULATIONS_') || ['ACCESS_MANAGE','ASSESSMENTS_RUN','MEMBERS_MANAGE'].includes(grant.permissionCode)) &&
+    !await canAccessOrgDirectly(actor,org,'ACCESS_MANAGE',db)) throw new ForbiddenError();
+}
+
+async function authorizeManagerChange(db,actor,org,userId) {
+  if(!userId) return;
+  const manager=(await db(`SELECT id FROM app.org_access_grants WHERE organization_id=$1 AND user_id=$2 AND permission_code='ACCESS_MANAGE'
+    AND valid_from<=SYSUTCDATETIME() AND (valid_to IS NULL OR valid_to>SYSUTCDATETIME())`,[org,userId])).rows.length;
+  if(!manager || await hasGlobalRole(actor,'SYSTEM_ADMIN',db)) return;
+  const organization=await activeOrg(db,org);
+  if(!organization.parent_id || !await canAccessOrg(actor,organization.parent_id,'ACCESS_MANAGE',db,true)) {
+    throw new ForbiddenError('Cần người quản lý cấp trên để thay đổi người quản lý tổ chức.');
+  }
+}
+
+async function insertGrant(db,actor,org,grant) {
+  const row=await one(db,`INSERT INTO app.org_access_grants(organization_id,user_id,permission_code,include_descendants,granted_by_user_id) OUTPUT INSERTED.* VALUES($1,$2,$3,$4,$5)`,[org,grant.userId,grant.permissionCode,grant.includeDescendants,actor]);
+  await audit(db,actor,org,'ORG_ACCESS_GRANTED','org_access_grants',row.id,grant);
+  return row;
+}
+
+async function revokeGrant(db,actor,org,id) {
+  await db(`UPDATE app.org_access_grants SET valid_to=CASE WHEN valid_from>=SYSUTCDATETIME() THEN DATEADD(millisecond,1,valid_from) ELSE SYSUTCDATETIME() END WHERE id=$1`,[id]);
+  await audit(db,actor,org,'ORG_ACCESS_REVOKED','org_access_grants',id);
+}
+
 router.post('/organizations/:id/access',route(async(req,res)=>{
   const org=ident(req.params.id),b=input(z.object({userId:number,permissionCode:z.enum(permissions),includeDescendants:z.boolean().default(false)}),req.body);
   const grant=await withTransaction(async({query:db})=>{
     await activeOrg(db,org,true);
-    await authorizeOrg(req.user.userId,org,'ACCESS_MANAGE',db,b.includeDescendants);
-    await authorizeOrg(req.user.userId,org,b.permissionCode,db,b.includeDescendants);
+    await authorizeGrant(req.user.userId,org,b,db);
     await one(db,`SELECT id FROM app.users WHERE id=$1 AND account_status='ACTIVE'`,[b.userId]);
-    const g=await one(db,`INSERT INTO app.org_access_grants(organization_id,user_id,permission_code,include_descendants,granted_by_user_id) OUTPUT INSERTED.* VALUES($1,$2,$3,$4,$5)`,[org,b.userId,b.permissionCode,b.includeDescendants,req.user.userId]);
-    await audit(db,req.user.userId,org,'ORG_ACCESS_GRANTED','org_access_grants',g.id,b); return g;
+    return insertGrant(db,req.user.userId,org,b);
   }); ok(res,grant,201);
 }));
 router.delete('/organizations/:id/access/:grantId',route(async(req,res)=>{
   const org=ident(req.params.id),gid=ident(req.params.grantId);
   await withTransaction(async({query:db})=>{
     await activeOrg(db,org,true); const g=await one(db,`SELECT * FROM app.org_access_grants WHERE id=$1 AND organization_id=$2 AND valid_to IS NULL`,[gid,org]);
+    await authorizeManagerChange(db,req.user.userId,org,g.user_id);
     await authorizeOrg(req.user.userId,org,'ACCESS_MANAGE',db,!!g.include_descendants);
     await authorizeOrg(req.user.userId,org,g.permission_code,db,!!g.include_descendants);
-    await db(`UPDATE app.org_access_grants SET valid_to=CASE WHEN valid_from>=SYSUTCDATETIME() THEN DATEADD(millisecond,1,valid_from) ELSE SYSUTCDATETIME() END WHERE id=$1`,[gid]);
-    await audit(db,req.user.userId,org,'ORG_ACCESS_REVOKED','org_access_grants',gid);
+    await revokeGrant(db,req.user.userId,org,gid);
   }); ok(res,{revoked:true});
 }));
 
@@ -280,7 +403,7 @@ router.get('/organizations/:id/link-history',route(async(req,res)=>{
   ok(res,(await query(`SELECT * FROM app.organization_link_history WHERE child_organization_id=$1 OR previous_parent_id=$1 OR new_parent_id=$1 ORDER BY changed_at DESC`,[org])).rows);
 }));
 router.post('/organizations/:id/link-requests',route(async(req,res)=>{
-  const org=ident(req.params.id),b=input(z.object({targetParentId:number.nullable(),reason:text(1000)}),req.body);
+  const org=ident(req.params.id),b=input(z.object({targetParentId:number.nullable(),reason:text(1000).optional()}),req.body);
   const result=await withTransaction(async({query:db})=>{
     await treeLock(db); const child=await activeOrg(db,org,true);
     if(String(child.parent_id??'')===String(b.targetParentId??'')) throw new ConflictError('Liên kết cha không thay đổi');
@@ -291,7 +414,7 @@ router.post('/organizations/:id/link-requests',route(async(req,res)=>{
     const parentYes=await canAccessOrg(req.user.userId,b.targetParentId||child.parent_id,'STRUCTURE_MANAGE',db);
     if(!childYes&&!parentYes) throw new ForbiddenError();
     await db(`UPDATE app.organization_link_requests SET status='EXPIRED',responded_at=SYSUTCDATETIME() WHERE child_organization_id=$1 AND status='PENDING' AND expires_at<=SYSUTCDATETIME()`,[org]);
-    const r=await one(db,`INSERT INTO app.organization_link_requests(child_organization_id,previous_parent_id,target_parent_id,request_type,requested_by_user_id,child_consented_by_user_id,parent_consented_by_user_id,expires_at,reason) OUTPUT INSERTED.* VALUES($1,$2,$3,$4,$5,$6,$7,DATEADD(day,7,SYSUTCDATETIME()),$8)`,[org,child.parent_id,b.targetParentId,type,req.user.userId,childYes?req.user.userId:null,parentYes?req.user.userId:null,b.reason]);
+    const r=await one(db,`INSERT INTO app.organization_link_requests(child_organization_id,previous_parent_id,target_parent_id,request_type,requested_by_user_id,child_consented_by_user_id,parent_consented_by_user_id,expires_at,reason) OUTPUT INSERTED.* VALUES($1,$2,$3,$4,$5,$6,$7,DATEADD(day,7,SYSUTCDATETIME()),$8)`,[org,child.parent_id,b.targetParentId,type,req.user.userId,childYes?req.user.userId:null,parentYes?req.user.userId:null,b.reason??null]);
     if(type==='DETACH'||(childYes&&parentYes)) { await applyLink(db,r,req.user.userId); r.status='ACCEPTED'; }
     await audit(db,req.user.userId,org,'ORGANIZATION_LINK_REQUESTED','organization_link_requests',r.id);
     return r;
@@ -342,7 +465,7 @@ router.patch('/admin/users/:id',route(async(req,res)=>{
 }));
 router.get('/admin/global-roles',route(async(req,res)=>ok(res,(await query(`SELECT g.*,u.email,p.full_name FROM app.global_role_grants g JOIN app.users u ON u.id=g.user_id JOIN app.person_profiles p ON p.user_id=g.user_id WHERE g.valid_from<=SYSUTCDATETIME() AND (g.valid_to IS NULL OR g.valid_to>SYSUTCDATETIME()) ORDER BY g.id DESC`)).rows)));
 router.post('/admin/global-roles',route(async(req,res)=>{
-  const b=input(z.object({userId:number,roleCode:z.enum(['SYSTEM_ADMIN','REGULATION_MANAGER'])}),req.body);
+  const b=input(z.object({userId:number,roleCode:z.literal('SYSTEM_ADMIN')}),req.body);
   const g=await withTransaction(async({query:db})=>{
     await one(db,`SELECT id FROM app.users WHERE id=$1 AND account_status='ACTIVE'`,[b.userId]);
     const result=await one(db,`INSERT INTO app.global_role_grants(user_id,role_code,granted_by_user_id) OUTPUT INSERTED.* VALUES($1,$2,$3)`,[b.userId,b.roleCode,req.user.userId]);

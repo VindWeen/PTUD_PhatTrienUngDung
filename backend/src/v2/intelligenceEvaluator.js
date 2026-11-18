@@ -4,10 +4,10 @@ const field = z.string().regex(/^(title|issuer|level_code|achievement_type_id|ac
 const filter = z.object({ field, operator: z.enum(['eq','ne','in','gte','lte','contains']), value: z.union([z.string(),z.number(),z.boolean(),z.array(z.union([z.string(),z.number(),z.boolean()])).max(100)]) }).strict();
 export const ruleSchema = z.lazy(() => z.union([
   z.object({ operator: z.enum(['AND','OR']), rules: z.array(ruleSchema).min(1).max(30) }).strict(),
-  z.object({ type: z.enum(['count','sum','boolean','distinct_years']), filters: z.array(filter).max(30).default([]), field: field.optional(), target: z.number().finite().nonnegative().max(1e12), comparator: z.enum(['gte','lte','eq']).default('gte'), from: z.string().date().optional(), to: z.string().date().optional(), last_years: z.number().int().min(1).max(100).optional(), measure_unit: z.string().max(80).default('thành tích') }).strict().superRefine((r,c)=>{if(r.type==='sum'&&!r.field)c.addIssue({code:'custom',message:'sum requires field'});if(r.from&&r.to&&r.from>r.to)c.addIssue({code:'custom',message:'Invalid date window'});})
+  z.object({ type: z.enum(['count','sum','boolean','distinct_years']), filters: z.array(filter).max(30).default([]), field: field.optional(), target: z.number().finite().nonnegative().max(1e12), comparator: z.enum(['gte','lte','eq']).default('gte'), from: z.string().date().optional(), to: z.string().date().optional(), consecutive: z.literal(true).optional(), last_years: z.number().int().min(1).max(100).optional(), measure_unit: z.string().max(80).default('thành tích') }).strict().superRefine((r,c)=>{if(r.consecutive&&r.type!=='distinct_years')c.addIssue({code:'custom',message:'consecutive requires distinct_years'});if(r.type==='sum'&&!r.field)c.addIssue({code:'custom',message:'sum requires field'});if(r.from&&r.to&&r.from>r.to)c.addIssue({code:'custom',message:'Invalid date window'});})
 ]));
 export const applicabilitySchema = z.object({ person_types:z.array(z.enum(['STUDENT','LECTURER','STAFF','OTHER'])).min(1).optional() }).strict();
-export const aggregationSchema = z.object({operator:z.enum(['AND','OR']).default('AND')}).strict();
+export const aggregationSchema = z.object({operator:z.enum(['AND','OR']).default('AND'),require_ungrouped:z.boolean().optional()}).strict();
 const get = (a,f) => f.startsWith('attributes.') ? a.attributes?.[f.slice(11)] : a[f];
 export function combine(states, operator='AND') {
   const s=states.filter(x=>x!=='NOT_APPLICABLE');
@@ -34,7 +34,18 @@ export function evaluateRule(raw, achievements, evaluationDate, depth=0) {
   });
   let actual=matches.length;
   if(r.type==='boolean')actual=matches.length?1:0;
-  if(r.type==='distinct_years')actual=new Set(matches.map(x=>String(x.achieved_at).slice(0,4))).size;
+  if(r.type==='distinct_years'){
+    const years=[...new Set(matches.map(x=>Number(String(x.achieved_at).slice(0,4))))].sort((a,b)=>a-b);
+    actual=years.length;
+    if(r.consecutive){
+      let streak=0;
+      actual=0;
+      years.forEach((year,index)=>{
+        streak=year===years[index-1]+1?streak+1:1;
+        actual=Math.max(actual,streak);
+      });
+    }
+  }
   if(r.type==='sum')actual=matches.reduce((n,a)=>{const v=get(a,r.field);if(typeof v!=='number'||!Number.isFinite(v)){unknown=true;return n;}return n+v;},0);
   const met=r.comparator==='lte'?actual<=r.target:r.comparator==='eq'?actual===r.target:actual>=r.target;
   // Unknown attributes can change an equality/upper-bound result, or fill a lower-bound gap.
@@ -54,11 +65,14 @@ export function evaluateVersion(version, groups, criteria, profile, achievements
     return {...value,criterion_id:c.id,criterion:c};
   });
   const required=results.filter(r=>r.criterion.is_required&&!r.criterion.is_exclusion);
-  const states=required.filter(r=>!r.criterion.criterion_group_id).map(r=>r.conclusion);
+  const ungrouped=required.filter(r=>!r.criterion.criterion_group_id).map(r=>r.conclusion);
+  const states=[];
   for(const g of groups){const selected=required.filter(r=>Number(r.criterion.criterion_group_id)===Number(g.id));if(g.is_required&&selected.length)states.push(combine(selected.map(r=>r.conclusion),g.operator));}
   const agg=aggregationSchema.parse(typeof version.aggregation_json==='string'?JSON.parse(version.aggregation_json):version.aggregation_json);
   const exclusions=results.filter(r=>r.criterion.is_exclusion).map(r=>r.conclusion);
-  let conclusion=!applicable?(unknownApplicability?'INSUFFICIENT_DATA':'NOT_APPLICABLE'):combine(states,agg.operator);
+  const grouped=states.length?[combine(states,agg.operator)]:[];
+  const combined=agg.require_ungrouped ? combine([...ungrouped,...grouped]) : combine([...ungrouped,...states],agg.operator);
+  let conclusion=!applicable?(unknownApplicability?'INSUFFICIENT_DATA':'NOT_APPLICABLE'):combined;
   if(applicable){if(exclusions.includes('NOT_MET'))conclusion='NOT_MET';else if(exclusions.includes('INSUFFICIENT_DATA')&&conclusion==='MET')conclusion='INSUFFICIENT_DATA';}
   return {results,conclusion,completion_percent:results.length?Math.round(results.filter(r=>r.conclusion==='MET').length/results.length*10000)/100:0};
 }

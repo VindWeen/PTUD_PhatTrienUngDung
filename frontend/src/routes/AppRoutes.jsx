@@ -32,6 +32,7 @@ export default function AppRoutes() {
       <Route path="reports" element={<Reports />} />
       <Route path="notifications" element={<Navigate to="/me/dashboard" replace />} />
       <Route path="regulations" element={<Regulations />} />
+      <Route path="regulations/:regulationId" element={<Regulations />} />
       <Route path="organizations" element={<Organizations />} />
       <Route path="admin" element={<Admin />} />
     </Route></Route>

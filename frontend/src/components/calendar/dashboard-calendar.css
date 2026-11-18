@@ -462,6 +462,8 @@
   color: #475569;
 }
 .cal-form input, .cal-form textarea, .cal-form select {
+  min-width: 0;
+  min-height: 44px;
   padding: 9px 12px;
   border-radius: 10px;
   border: 1px solid #cbd5e1;
@@ -477,7 +479,7 @@
 }
 .cal-form-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 10px;
 }
 .cal-form-actions {
@@ -485,8 +487,12 @@
   align-items: center;
   gap: 10px;
   margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #cbd5e1;
+  flex-wrap: wrap;
 }
 .cal-save {
+  min-height: 44px;
   padding: 9px 18px;
   border-radius: 10px;
   background: #0f766e;
@@ -497,15 +503,18 @@
 }
 .cal-save:hover { background: #0d5c58; }
 .cal-cancel {
+  min-height: 44px;
   padding: 9px 14px;
   border-radius: 10px;
-  background: #e2e8f0;
-  color: #475569;
+  background: #ffffff;
+  border: 1px solid #94a3b8;
+  color: #334155;
   font-size: 0.85rem;
   font-weight: 600;
   transition: all 0.15s;
 }
 .cal-cancel:hover { background: #cbd5e1; color: #0f172a; }
+.dark .cal-cancel { background: #1e293b; color: #e2e8f0; border-color: #64748b; }
 
 .cal-notice {
   padding: 8px 12px;

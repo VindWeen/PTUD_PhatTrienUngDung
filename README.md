@@ -13,6 +13,21 @@ Runtime backend gắn các route V2 trong `backend/src/v2/`; frontend sử dụn
 
 Không tự động seed hay import dữ liệu. Người dùng có thể đăng ký tài khoản; để thiết lập quản trị viên đầu tiên, xem [hướng dẫn backend](backend/README.md). Quy chế và danh mục cần được tạo hoặc nhập bằng dữ liệu thực tế.
 
+### Dựng dữ liệu demo thi đua trên máy mới
+
+Tạo database SQL Server trống tên `PTUD_LHU` và cấu hình `backend/.env` với thông tin kết nối của máy mới. Tài khoản chạy migration cần quyền tạo schema và bảng trong database đó. Từ thư mục gốc dự án, chạy:
+
+```powershell
+npm --prefix backend ci
+npm --prefix backend run migrate
+node --env-file=backend/.env scripts/seed-lecturer-demo.mjs --apply --database=PTUD_LHU
+```
+
+- Seed in danh sách tài khoản và mật khẩu demo dùng chung, được sinh mới mỗi lần dựng. Đăng nhập `gv-du@tdkt.demo.example.test` để xem kho thành tích, KPI và lịch sử đối chiếu cá nhân. Tài khoản `truong@tdkt.demo.example.test` xem lượt đối chiếu hàng loạt cấp trường.
+- Bộ demo có 20 tài khoản, 4 tổ chức, 44 thành tích với 9 tệp minh chứng, 4 KPI và 22 lượt đối chiếu. Mỗi khoa có thêm 4 thành viên với 2–3 thành tích. Ba KPI của `gv-du` lần lượt ở mức 100%, 50% và 0%.
+- Lịch sử demo được tính bằng engine hiện hành cho ngày 18 và 19/11/2026 và bao gồm lượt quét cấp trường cho hai khoa trực thuộc. Khoa Ngoại ngữ có thành viên riêng và yêu cầu liên kết đang chờ.
+- Seed đầy đủ dừng nếu bộ demo đã tồn tại. Cờ `--awards-only` dành cho cập nhật cấu hình quy chế và thuộc tính công nhận trên bộ demo cũ.
+
 ## Kiểm tra và giới hạn
 
 - Trong `backend/`, `npm test` kiểm tra độc lập; `npm run test:sqlserver` chạy kiểm tra schema, danh tính, đánh giá và API V2 trên SQL Server với dữ liệu kiểm thử rollback.

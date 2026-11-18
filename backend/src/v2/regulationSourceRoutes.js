@@ -54,6 +54,16 @@ router.get(`${base}/download`, route(async (req, res) => {
   const file = await source(key), bytes = await readSource(file);
   res.set('Cache-Control', 'no-store').set('X-Content-Type-Options', 'nosniff').attachment(file.original_filename).type(file.mime_type).send(bytes);
 }));
+router.get(`${base}/preview`, route(async (req, res) => {
+  const key = id(req.params.id);
+  await readable(req.user.userId, key);
+  const file = await source(key);
+  if (file.mime_type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    throw new ValidationError('Chỉ tệp DOCX hỗ trợ xem dưới dạng văn bản.');
+  const text = file.extracted_text || await extractSourceText(await readSource(file), file.mime_type);
+  res.set('Cache-Control', 'no-store');
+  ok(res, { text });
+}));
 router.post(`${base}/extract`, route(async (req, res) => {
   const key = id(req.params.id);
   await withTransaction(async ({ query: db }) => editable(req.user.userId, key, db));

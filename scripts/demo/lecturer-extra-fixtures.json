@@ -1,0 +1,483 @@
+{
+  "batch": [
+    {
+      "key": "batch-a-1",
+      "faculty": "A",
+      "name": "Phạm Gia Huy",
+      "personType": "LECTURER",
+      "achievements": [
+        {
+          "title": "[DEMO] Quyết định công nhận Lao động tiên tiến · Phạm Gia Huy",
+          "description": null,
+          "achieved_at": "2026-10-03",
+          "issuer": "Khoa Công nghệ thông tin",
+          "level_code": null,
+          "kind": "lao-dong-tien-tien",
+          "attributes": {
+            "kind": "lao-dong-tien-tien"
+          }
+        },
+        {
+          "title": "[DEMO] Sáng kiến cải tiến học liệu · Phạm Gia Huy",
+          "description": null,
+          "achieved_at": "2026-10-04",
+          "issuer": "Khoa Công nghệ thông tin",
+          "level_code": null,
+          "kind": "sang-kien",
+          "attributes": {
+            "kind": "sang-kien"
+          }
+        }
+      ]
+    },
+    {
+      "key": "batch-a-2",
+      "faculty": "A",
+      "name": "Võ Thu Hà",
+      "personType": "LECTURER",
+      "achievements": [
+        {
+          "title": "[DEMO] Quyết định công nhận Lao động tiên tiến · Võ Thu Hà",
+          "description": null,
+          "achieved_at": "2026-10-08",
+          "issuer": "Khoa Công nghệ thông tin",
+          "level_code": null,
+          "kind": "lao-dong-tien-tien",
+          "attributes": {
+            "kind": "lao-dong-tien-tien"
+          }
+        },
+        {
+          "title": "[DEMO] Hoàn thành xuất sắc nhiệm vụ · Võ Thu Hà",
+          "description": null,
+          "achieved_at": "2026-10-09",
+          "issuer": "Khoa Công nghệ thông tin",
+          "level_code": null,
+          "kind": "xuat-sac",
+          "attributes": {
+            "kind": "xuat-sac"
+          }
+        },
+        {
+          "title": "[DEMO] Xác nhận áp dụng học liệu tại đơn vị · Võ Thu Hà",
+          "description": null,
+          "achieved_at": "2026-10-10",
+          "issuer": "Khoa Công nghệ thông tin",
+          "level_code": null,
+          "kind": "ap-dung",
+          "attributes": {
+            "kind": "ap-dung"
+          }
+        }
+      ]
+    },
+    {
+      "key": "batch-a-3",
+      "faculty": "A",
+      "name": "Đặng Minh Phúc",
+      "personType": "LECTURER",
+      "achievements": [
+        {
+          "title": "[DEMO] Báo cáo hội thảo chuyên ngành · Đặng Minh Phúc",
+          "description": null,
+          "achieved_at": "2026-10-13",
+          "issuer": "Khoa Công nghệ thông tin",
+          "level_code": null,
+          "kind": "cong-bo",
+          "attributes": {
+            "kind": "cong-bo"
+          }
+        },
+        {
+          "title": "[DEMO] Biên bản nghiệm thu đề tài cấp khoa · Đặng Minh Phúc",
+          "description": null,
+          "achieved_at": "2026-10-14",
+          "issuer": "Khoa Công nghệ thông tin",
+          "level_code": null,
+          "kind": "nghiem-thu",
+          "attributes": {
+            "kind": "nghiem-thu"
+          }
+        }
+      ]
+    },
+    {
+      "key": "batch-a-4",
+      "faculty": "A",
+      "name": "Bùi Ngọc Linh",
+      "personType": "LECTURER",
+      "achievements": [
+        {
+          "title": "[DEMO] Quyết định công nhận Lao động tiên tiến · Bùi Ngọc Linh",
+          "description": null,
+          "achieved_at": "2025-10-06",
+          "issuer": "Khoa Công nghệ thông tin",
+          "level_code": null,
+          "kind": "lao-dong-tien-tien",
+          "attributes": {
+            "kind": "lao-dong-tien-tien"
+          }
+        },
+        {
+          "title": "[DEMO] Bài báo chuyên ngành · Bùi Ngọc Linh",
+          "description": null,
+          "achieved_at": "2026-10-19",
+          "issuer": "Khoa Công nghệ thông tin",
+          "level_code": null,
+          "kind": "cong-bo",
+          "attributes": {
+            "kind": "cong-bo"
+          }
+        },
+        {
+          "title": "[DEMO] Xác nhận triển khai học liệu · Bùi Ngọc Linh",
+          "description": null,
+          "achieved_at": "2026-10-20",
+          "issuer": "Khoa Công nghệ thông tin",
+          "level_code": null,
+          "kind": "ap-dung",
+          "attributes": {
+            "kind": "ap-dung"
+          }
+        }
+      ]
+    },
+    {
+      "key": "batch-b-1",
+      "faculty": "B",
+      "name": "Nguyễn Tuệ Anh",
+      "personType": "LECTURER",
+      "achievements": [
+        {
+          "title": "[DEMO] Quyết định công nhận Lao động tiên tiến · Nguyễn Tuệ Anh",
+          "description": null,
+          "achieved_at": "2026-10-03",
+          "issuer": "Khoa Kinh tế",
+          "level_code": null,
+          "kind": "lao-dong-tien-tien",
+          "attributes": {
+            "kind": "lao-dong-tien-tien"
+          }
+        },
+        {
+          "title": "[DEMO] Sáng kiến cải tiến học liệu · Nguyễn Tuệ Anh",
+          "description": null,
+          "achieved_at": "2026-10-04",
+          "issuer": "Khoa Kinh tế",
+          "level_code": null,
+          "kind": "sang-kien",
+          "attributes": {
+            "kind": "sang-kien"
+          }
+        }
+      ]
+    },
+    {
+      "key": "batch-b-2",
+      "faculty": "B",
+      "name": "Trần Đức Nam",
+      "personType": "LECTURER",
+      "achievements": [
+        {
+          "title": "[DEMO] Quyết định công nhận Lao động tiên tiến · Trần Đức Nam",
+          "description": null,
+          "achieved_at": "2026-10-08",
+          "issuer": "Khoa Kinh tế",
+          "level_code": null,
+          "kind": "lao-dong-tien-tien",
+          "attributes": {
+            "kind": "lao-dong-tien-tien"
+          }
+        },
+        {
+          "title": "[DEMO] Hoàn thành xuất sắc nhiệm vụ · Trần Đức Nam",
+          "description": null,
+          "achieved_at": "2026-10-09",
+          "issuer": "Khoa Kinh tế",
+          "level_code": null,
+          "kind": "xuat-sac",
+          "attributes": {
+            "kind": "xuat-sac"
+          }
+        },
+        {
+          "title": "[DEMO] Xác nhận áp dụng học liệu tại đơn vị · Trần Đức Nam",
+          "description": null,
+          "achieved_at": "2026-10-10",
+          "issuer": "Khoa Kinh tế",
+          "level_code": null,
+          "kind": "ap-dung",
+          "attributes": {
+            "kind": "ap-dung"
+          }
+        }
+      ]
+    },
+    {
+      "key": "batch-b-3",
+      "faculty": "B",
+      "name": "Lê Khánh Vy",
+      "personType": "LECTURER",
+      "achievements": [
+        {
+          "title": "[DEMO] Báo cáo hội thảo chuyên ngành · Lê Khánh Vy",
+          "description": null,
+          "achieved_at": "2026-10-13",
+          "issuer": "Khoa Kinh tế",
+          "level_code": null,
+          "kind": "cong-bo",
+          "attributes": {
+            "kind": "cong-bo"
+          }
+        },
+        {
+          "title": "[DEMO] Biên bản nghiệm thu đề tài cấp khoa · Lê Khánh Vy",
+          "description": null,
+          "achieved_at": "2026-10-14",
+          "issuer": "Khoa Kinh tế",
+          "level_code": null,
+          "kind": "nghiem-thu",
+          "attributes": {
+            "kind": "nghiem-thu"
+          }
+        }
+      ]
+    },
+    {
+      "key": "batch-b-4",
+      "faculty": "B",
+      "name": "Phan Quang Minh",
+      "personType": "LECTURER",
+      "achievements": [
+        {
+          "title": "[DEMO] Quyết định công nhận Lao động tiên tiến · Phan Quang Minh",
+          "description": null,
+          "achieved_at": "2025-10-06",
+          "issuer": "Khoa Kinh tế",
+          "level_code": null,
+          "kind": "lao-dong-tien-tien",
+          "attributes": {
+            "kind": "lao-dong-tien-tien"
+          }
+        },
+        {
+          "title": "[DEMO] Bài báo chuyên ngành · Phan Quang Minh",
+          "description": null,
+          "achieved_at": "2026-10-19",
+          "issuer": "Khoa Kinh tế",
+          "level_code": null,
+          "kind": "cong-bo",
+          "attributes": {
+            "kind": "cong-bo"
+          }
+        },
+        {
+          "title": "[DEMO] Xác nhận triển khai học liệu · Phan Quang Minh",
+          "description": null,
+          "achieved_at": "2026-10-20",
+          "issuer": "Khoa Kinh tế",
+          "level_code": null,
+          "kind": "ap-dung",
+          "attributes": {
+            "kind": "ap-dung"
+          }
+        }
+      ]
+    },
+    {
+      "key": "batch-c-1",
+      "faculty": "C",
+      "name": "Hoàng Thanh Mai",
+      "personType": "LECTURER",
+      "achievements": [
+        {
+          "title": "[DEMO] Quyết định công nhận Lao động tiên tiến · Hoàng Thanh Mai",
+          "description": null,
+          "achieved_at": "2026-10-03",
+          "issuer": "Khoa Ngoại ngữ",
+          "level_code": null,
+          "kind": "lao-dong-tien-tien",
+          "attributes": {
+            "kind": "lao-dong-tien-tien"
+          }
+        },
+        {
+          "title": "[DEMO] Sáng kiến cải tiến học liệu · Hoàng Thanh Mai",
+          "description": null,
+          "achieved_at": "2026-10-04",
+          "issuer": "Khoa Ngoại ngữ",
+          "level_code": null,
+          "kind": "sang-kien",
+          "attributes": {
+            "kind": "sang-kien"
+          }
+        }
+      ]
+    },
+    {
+      "key": "batch-c-2",
+      "faculty": "C",
+      "name": "Vũ Anh Khoa",
+      "personType": "LECTURER",
+      "achievements": [
+        {
+          "title": "[DEMO] Quyết định công nhận Lao động tiên tiến · Vũ Anh Khoa",
+          "description": null,
+          "achieved_at": "2026-10-08",
+          "issuer": "Khoa Ngoại ngữ",
+          "level_code": null,
+          "kind": "lao-dong-tien-tien",
+          "attributes": {
+            "kind": "lao-dong-tien-tien"
+          }
+        },
+        {
+          "title": "[DEMO] Hoàn thành xuất sắc nhiệm vụ · Vũ Anh Khoa",
+          "description": null,
+          "achieved_at": "2026-10-09",
+          "issuer": "Khoa Ngoại ngữ",
+          "level_code": null,
+          "kind": "xuat-sac",
+          "attributes": {
+            "kind": "xuat-sac"
+          }
+        },
+        {
+          "title": "[DEMO] Xác nhận áp dụng học liệu tại đơn vị · Vũ Anh Khoa",
+          "description": null,
+          "achieved_at": "2026-10-10",
+          "issuer": "Khoa Ngoại ngữ",
+          "level_code": null,
+          "kind": "ap-dung",
+          "attributes": {
+            "kind": "ap-dung"
+          }
+        }
+      ]
+    },
+    {
+      "key": "batch-c-3",
+      "faculty": "C",
+      "name": "Đỗ Minh Thư",
+      "personType": "LECTURER",
+      "achievements": [
+        {
+          "title": "[DEMO] Báo cáo hội thảo chuyên ngành · Đỗ Minh Thư",
+          "description": null,
+          "achieved_at": "2026-10-13",
+          "issuer": "Khoa Ngoại ngữ",
+          "level_code": null,
+          "kind": "cong-bo",
+          "attributes": {
+            "kind": "cong-bo"
+          }
+        },
+        {
+          "title": "[DEMO] Biên bản nghiệm thu đề tài cấp khoa · Đỗ Minh Thư",
+          "description": null,
+          "achieved_at": "2026-10-14",
+          "issuer": "Khoa Ngoại ngữ",
+          "level_code": null,
+          "kind": "nghiem-thu",
+          "attributes": {
+            "kind": "nghiem-thu"
+          }
+        }
+      ]
+    },
+    {
+      "key": "batch-c-4",
+      "faculty": "C",
+      "name": "Hồ Quốc Bảo",
+      "personType": "LECTURER",
+      "achievements": [
+        {
+          "title": "[DEMO] Quyết định công nhận Lao động tiên tiến · Hồ Quốc Bảo",
+          "description": null,
+          "achieved_at": "2025-10-06",
+          "issuer": "Khoa Ngoại ngữ",
+          "level_code": null,
+          "kind": "lao-dong-tien-tien",
+          "attributes": {
+            "kind": "lao-dong-tien-tien"
+          }
+        },
+        {
+          "title": "[DEMO] Bài báo chuyên ngành · Hồ Quốc Bảo",
+          "description": null,
+          "achieved_at": "2026-10-19",
+          "issuer": "Khoa Ngoại ngữ",
+          "level_code": null,
+          "kind": "cong-bo",
+          "attributes": {
+            "kind": "cong-bo"
+          }
+        },
+        {
+          "title": "[DEMO] Xác nhận triển khai học liệu · Hồ Quốc Bảo",
+          "description": null,
+          "achieved_at": "2026-10-20",
+          "issuer": "Khoa Ngoại ngữ",
+          "level_code": null,
+          "kind": "ap-dung",
+          "attributes": {
+            "kind": "ap-dung"
+          }
+        }
+      ]
+    }
+  ],
+  "kpis": [
+    {
+      "title": "[DEMO] Hoàn thiện bộ học liệu số",
+      "description": null,
+      "target_value": 8,
+      "measure_unit": "chuyên đề",
+      "progress_source": "MANUAL",
+      "status": "COMPLETED",
+      "start_date": null,
+      "due_date": "2026-11-10",
+      "progress": [
+        {
+          "current_value": 8,
+          "note": "Tiến độ minh họa"
+        }
+      ],
+      "tasks": []
+    },
+    {
+      "title": "[DEMO] Phản biện bài viết của sinh viên",
+      "description": null,
+      "target_value": 6,
+      "measure_unit": "bài viết",
+      "progress_source": "MANUAL",
+      "status": "IN_PROGRESS",
+      "start_date": null,
+      "due_date": "2026-12-10",
+      "progress": [
+        {
+          "current_value": 3,
+          "note": "Tiến độ minh họa"
+        }
+      ],
+      "tasks": []
+    },
+    {
+      "title": "[DEMO] Chuẩn bị đề cương nghiên cứu học kỳ sau",
+      "description": null,
+      "target_value": 4,
+      "measure_unit": "hạng mục",
+      "progress_source": "MANUAL",
+      "status": "PLANNED",
+      "start_date": null,
+      "due_date": "2027-01-15",
+      "progress": [
+        {
+          "current_value": 0,
+          "note": "Tiến độ minh họa"
+        }
+      ],
+      "tasks": []
+    }
+  ]
+}

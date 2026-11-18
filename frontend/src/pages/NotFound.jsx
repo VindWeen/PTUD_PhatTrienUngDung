@@ -1,21 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Home } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function NotFound() {
+  const { signedIn } = useAuth();
   return (
-    <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6">
-      <div className="text-6xl font-bold text-teal-700 mb-4 dark:text-teal-300">404</div>
-      <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-        Không tìm thấy trang yêu cầu
-      </h2>
-      <p className="text-sm leading-6 text-slate-600 dark:text-slate-300 max-w-sm mb-6">
-        Đường dẫn bạn truy cập không tồn tại hoặc đã được thay đổi trong hệ thống.
-      </p>
-      <Link to="/" className="soft-btn-primary text-xs">
-        <Home className="w-4 h-4" />
-        <span>Về Bảng điều khiển</span>
+    <main className="mx-auto flex min-h-[60vh] max-w-md flex-col items-start justify-center gap-4 px-6 text-slate-800 dark:text-slate-100">
+      <h1 className="text-2xl font-bold">Không tìm thấy trang</h1>
+      <p className="text-sm text-slate-600 dark:text-slate-300">Đường dẫn có thể đã thay đổi hoặc hết hiệu lực.</p>
+      <Link to={signedIn ? '/me/dashboard' : '/login'} className="soft-btn-primary">
+        {signedIn ? 'Về không gian làm việc' : 'Về đăng nhập'}
       </Link>
-    </div>
+    </main>
   );
 }

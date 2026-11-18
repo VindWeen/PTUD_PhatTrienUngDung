@@ -6,6 +6,15 @@ export const permissions = ['MEMBERS_VIEW','ASSESSMENTS_VIEW','ASSESSMENTS_RUN',
 export async function hasGlobalRole(userId, roleCode, db = query) {
   return (await db(`SELECT TOP (1) g.id FROM app.global_role_grants g JOIN app.users u ON u.id=g.user_id WHERE u.account_status='ACTIVE' AND g.user_id=$1 AND g.role_code=$2 AND g.valid_from<=SYSUTCDATETIME() AND (g.valid_to IS NULL OR g.valid_to>SYSUTCDATETIME())`, [userId, roleCode])).rows.length > 0;
 }
+export async function canAccessOrgDirectly(userId, orgId, permission, db = query) {
+  if (await hasGlobalRole(userId, 'SYSTEM_ADMIN', db)) return true;
+  return (await db(`SELECT TOP (1) g.id FROM app.org_access_grants g
+    JOIN app.organizations o ON o.id=g.organization_id AND o.status='ACTIVE'
+    JOIN app.users u ON u.id=g.user_id AND u.account_status='ACTIVE'
+    WHERE g.organization_id=$1 AND g.user_id=$2 AND g.permission_code=$3
+    AND g.valid_from<=SYSUTCDATETIME() AND (g.valid_to IS NULL OR g.valid_to>SYSUTCDATETIME())`,
+  [orgId,userId,permission])).rows.length>0;
+}
 export async function canAccessOrg(userId, orgId, permission, db = query, requireDescendants = false) {
   if (await hasGlobalRole(userId, 'SYSTEM_ADMIN', db)) return true;
   const rows = await db(`WITH ancestors AS (

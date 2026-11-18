@@ -116,7 +116,6 @@
 }
 .notification-list article.is-unread { 
   background: #f0fdfa; 
-  border-left: 3px solid #0f766e;
 }
 .notification-list h3 { 
   font-size: 13px; 
@@ -252,3 +251,8 @@
   border-color: #334155;
   color: #94a3b8;
 }
+
+.notification-unread-dot { display: inline-block; width: .5rem; height: .5rem; border-radius: 50%; background: #0f766e; margin-right: .25rem; vertical-align: .1em; }
+.dark .notification-unread-dot { background: #79ded0; }
+
+.notification-list article > p { white-space: pre-wrap; overflow-wrap: anywhere; }

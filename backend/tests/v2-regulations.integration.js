@@ -32,6 +32,10 @@ test('SQL Server HTTP regulations: private source, scoped internal/share/public 
    assert.ok((await call('/regulations/documents')).items.some(d=>Number(d.id)===Number(privateDoc.id)));
    assert.ok(!(await call('/regulations/documents',{session:outside})).items.some(d=>Number(d.id)===Number(privateDoc.id)));
    await call(`/regulations/documents/${privateDoc.id}`,{session:outside,expected:404});await call(`/regulations/versions/${privateV.id}`,{session:outside,expected:404});await call(`/regulations/versions/${privateV.id}/source/download`,{session:outside,expected:403});
+   const preview=await call('/regulations/versions/'+privateV.id+'/source/preview');
+   assert.match(preview.text,/DỮ LIỆU DEMO/);
+   await call('/regulations/versions/'+privateV.id+'/source/preview',{session:outside,expected:403});
+   assert.equal((await call('/regulations/documents/'+privateDoc.id)).versions[0].criterion_count,1);
    const extracted=await call(`/regulations/versions/${privateV.id}/source/extract`,{method:'POST'});assert.match(extracted.extractedText,/DỮ LIỆU DEMO/);
    await call(`/regulations/versions/${privateV.id}/publish`,{method:'POST',expected:400});
    await call(`/regulations/versions/${privateV.id}/source/review`,{method:'POST',data:{confirmed:true}});
@@ -41,6 +45,35 @@ test('SQL Server HTTP regulations: private source, scoped internal/share/public 
    await call(`/regulations/versions/${privateV.id}/source/extract`,{method:'POST',expected:400});
    const downloaded=await call(`/regulations/versions/${privateV.id}/source/download`,{raw:true});assert.equal(new PizZip(Buffer.from(await downloaded.arrayBuffer())).file('word/document.xml')!==null,true);
    await call('/ai/evaluations/structured',{method:'POST',session:outside,data:{regulation_version_id:privateV.id},expected:403});
+   const run=await call('/ai/evaluations/structured',{method:'POST',data:{regulation_version_id:privateV.id},expected:201});
+   const latest=await call('/ai/evaluations/structured/latest');
+   const summary=latest.items.find(item=>Number(item.id)===Number(run.id));
+   assert.equal(summary.history_count,1);
+   assert.equal(summary.criterion_count,1);
+   assert.equal(summary.met_count,0);
+   const history=await call('/ai/evaluations/structured/history?version='+privateV.id);
+   assert.deepEqual(history.items.map(item=>Number(item.id)),[Number(run.id)]);
+   assert.equal((await call('/ai/evaluations/structured/history?version='+privateV.id,{session:outside})).total,0);
+   assert.deepEqual((await call('/ai/evaluations/structured/'+run.id)).results[0].evidence_files,[]);
+
+  });
+  await t.test('create first draft atomically and toggle a published owner version without deleting it', async()=>{
+   const code=randomUUID();
+   const metadata={version_label:'v1.0',effective_from:'2026-01-01',source_title:'DEMO'};
+   await call('/regulations/documents',{method:'POST',data:{code,name:'Bản thử lỗi ngày',first_version:{...metadata,effective_to:'2025-12-31'}},expected:400});
+   assert.equal((await client.query('SELECT id FROM app.regulations WHERE code=$1',[code])).rows.length,0);
+   const created=await call('/regulations/documents',{method:'POST',data:{code,name:'Bản thử tạo liền mạch',first_version:metadata},expected:201});
+   assert.equal(created.versions.length,1);
+   assert.equal(created.versions[0].publication_status,'DRAFT');
+   const path='/regulations/versions/'+privateV.id;
+   const shown=async()=> (await call('/regulations/library')).items.some(c=>Number(c.regulation_version_id)===Number(privateV.id));
+   assert.equal(await shown(),true);
+   await call(path+'/adopt',{method:'DELETE'});
+   assert.equal(await shown(),false);
+   assert.equal((await call(path)).publication_status,'PUBLISHED');
+   await call('/ai/evaluations/structured',{method:'POST',data:{regulation_version_id:privateV.id},expected:403});
+   await call(path+'/adopt',{method:'POST',data:{},expected:201});
+   assert.equal(await shown(),true);
   });
   await t.test('organization must pin internal version; members inherit it and outsiders are denied',async()=>{
    school=await call('/organizations',{method:'POST',data:{code:`S-${tag}`,name:'DEMO trường',organizationType:'UNIVERSITY'},expected:201});recipient=await call('/organizations',{method:'POST',session:b,data:{code:`R-${tag}`,name:'DEMO hội độc lập',organizationType:'TEAM'},expected:201});
@@ -91,18 +124,54 @@ test('SQL Server HTTP regulations: private source, scoped internal/share/public 
    for(const c of contexts){const run=await call('/ai/evaluations/structured',{method:'POST',session:member,data:{regulation_version_id:publicV.id,adoption_id:Number(c.adoption_id)},expected:201});assert.equal(Number(run.context.adoption_id),Number(c.adoption_id));assert.equal(run.context.context_type,c.context_type);}
    const discovered=await call('/ai/auto-discovery',{method:'POST',session:member,data:{}});assert.equal(discovered.items.filter(r=>Number(r.regulation_version_id)===Number(publicV.id)).length,2);assert.ok(discovered.items.every(r=>r.context.adoption_id));
   });
-  await t.test('version notifications reach a parent manager whose update grant includes the adopted child',async()=>{
-   const child=(await client.query("DECLARE @ids TABLE(id bigint);INSERT app.organizations(parent_id,code,name,organization_type,created_by_user_id) OUTPUT INSERTED.id INTO @ids VALUES($1,$2,N'DEMO child','CLASS',$3);SELECT id FROM @ids;",[school.id,'CHILD-'+tag,a.id])).rows[0];
-   const d=await doc(a,{owner_organization_id:Number(child.id)}),old=await version(d);await publish(old);
-   await call(`/regulations/versions/${old.id}/adopt`,{method:'POST',data:{organization_id:Number(child.id)},expected:201});
-   assert.equal((await client.query('SELECT id FROM app.org_access_grants WHERE organization_id=$1',[child.id])).rows.length,0);
-   const newer=await version(d,a,'v2');await publish(newer);
-   const notices=(await client.query('SELECT id FROM app.notifications WHERE recipient_user_id=$1 AND deduplication_key=$2',[a.id,'regulation-version:'+newer.id])).rows;assert.equal(notices.length,1);
+  await t.test('parent cannot discover an internal rule of its child through inherited management grants',async()=>{
+   const child=await call('/organizations',{method:'POST',data:{code:'CHILD-'+tag,name:'Khoa kiểm thử',organizationType:'FACULTY',parentId:school.id,managerEmail:b.email},expected:201});
+   const d=await doc(b,{owner_organization_id:child.id,is_internal:true}),old=await version(d,b);await publish(old,b);
+   await call(`/regulations/versions/${old.id}/adopt`,{method:'POST',session:b,data:{organization_id:child.id},expected:201});
+   await call(`/regulations/documents/${d.id}`,{expected:404});
+   const newer=await version(d,b,'v2');await publish(newer,b);
+   const notices=(await client.query('SELECT recipient_user_id FROM app.notifications WHERE deduplication_key=$1',['regulation-version:'+newer.id])).rows;
+   assert.deepEqual(notices.map(n=>Number(n.recipient_user_id)),[Number(b.id)]);
   });
-  await t.test('global regulation manager creates organization rules without gaining another personal vault',async()=>{
+  await t.test('legacy global regulation manager cannot bypass the organization scope or view a personal vault',async()=>{
    await client.query("INSERT app.global_role_grants(user_id,role_code) VALUES($1,'REGULATION_MANAGER')",[outside.id]);
-   const managed=await doc(outside,{owner_organization_id:school.id,is_internal:true});assert.equal(managed.can_manage,true);assert.equal(Number(managed.owner_organization_id),Number(school.id));
+   await call('/regulations/documents',{method:'POST',session:outside,data:{code:randomUUID(),name:'Out of scope',owner_organization_id:school.id,is_internal:true},expected:403});
    await call(`/regulations/documents/${privateDoc.id}`,{session:outside,expected:404});
+  });
+  await t.test('personal rules support direct offers, organization acceptance and public adoption',async()=>{
+   const share=await call(`/regulations/versions/${privateV.id}/shares`,{method:'POST',data:{recipient_email:outside.email},expected:201});
+   await call(`/regulations/shares/${share.id}/respond`,{method:'POST',session:b,data:{accept:true},expected:403});
+   await call(`/regulations/versions/${privateV.id}`,{session:outside});
+   await call(`/regulations/shares/${share.id}/respond`,{method:'POST',session:outside,data:{accept:true}});
+   await call('/ai/evaluations/structured',{method:'POST',session:outside,data:{regulation_version_id:privateV.id},expected:201});
+   const personal=await doc(member),v=await version(personal,member);
+   await publish(v,member);
+   await call(`/regulations/versions/${v.id}/shares`,{method:'POST',session:member,data:{recipient_organization_id:recipient.id},expected:403});
+   const orgShare=await call(`/regulations/versions/${v.id}/shares`,{method:'POST',session:member,data:{recipient_organization_id:school.id},expected:201});
+   await call(`/regulations/shares/${orgShare.id}/respond`,{method:'POST',data:{accept:true}});
+   await call(`/regulations/documents/${personal.id}/distribution`,{method:'PATCH',session:member,data:{is_public:true}});
+   await call(`/regulations/versions/${v.id}/adopt`,{method:'POST',session:b,data:{},expected:201});
+  });
+  await t.test('applicants track join requests and the manager can approve membership',async()=>{
+   const path=`/organizations/${school.id}/join-requests`;
+   await call('/me/join-requests',{session:{},expected:401});
+   const r=await call(path,{method:'POST',session:outside,data:{reason:'Kiểm thử gia nhập'},expected:201});
+   await call(path,{method:'POST',session:outside,data:{},expected:409});
+   await call(`${path}/${r.id}/respond`,{method:'POST',session:b,data:{accept:true},expected:403});
+   await call(`${path}/${r.id}/respond`,{method:'POST',data:{accept:true}});
+   assert.equal((await call('/me/join-requests',{session:outside}))[0].status,'ACCEPTED');
+   assert.ok((await call('/me/profile',{session:outside})).memberships.some(m=>Number(m.organization_id)===Number(school.id)));
+  });
+  await t.test('parent and existing child can each initiate a link the other must approve',async()=>{
+   for(const parentInitiates of [true,false]){
+    const child=await call('/organizations',{method:'POST',session:b,data:{code:`LINK-${parentInitiates}-${tag}`,name:'Khoa độc lập',organizationType:'FACULTY'},expected:201});
+    const request=await call(`/organizations/${child.id}/link-requests`,{method:'POST',session:parentInitiates?a:b,data:{targetParentId:school.id},expected:201});
+    assert.equal(request.status,'PENDING');
+    assert.equal((await call(`/organizations/${child.id}`)).parent_id,null);
+    const response=await call(`/organization-link-requests/${request.id}/respond`,{method:'POST',session:parentInitiates?b:a,data:{accept:true}});
+    assert.equal(response.status,'ACCEPTED');
+    assert.equal(Number((await call(`/organizations/${child.id}`)).parent_id),Number(school.id));
+   }
   });
  }finally{await new Promise(r=>server.close(r));setPool(native);await client.query('ROLLBACK');await client.release();await native.end();setPool(null);for(const f of files)await discardSource(f);}
 });

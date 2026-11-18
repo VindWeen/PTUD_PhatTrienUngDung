@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { createHash } from 'node:crypto';
-import { authenticate, authorizeOrg, hasGlobalRole } from './access.js';
+import { authenticate, authorizeOrg, canAccessOrgDirectly } from './access.js';
 import { query, withTransaction, body, id, route, ok, parseJson, insertId, one, pageParams } from './shared.js';
 import { ForbiddenError, ValidationError, NotFoundError } from '../utils/errors.js';
-import { canManageRegulation, authorizeRegulation, canReadVersion, canUseVersion, listAccessiblePinnedContexts } from './regulationAccess.js';
+import { canManageRegulation, authorizeRegulation, canReadVersion, canUseVersion, listAccessiblePinnedContexts, isRetiredDemoRegulation } from './regulationAccess.js';
 import { ruleSchema, applicabilitySchema, aggregationSchema, evaluateVersion } from './intelligenceEvaluator.js';
 
 const router=Router();
@@ -31,7 +31,7 @@ async function documentDetail(req,key,db=query){
  const d=await one('SELECT * FROM app.regulations WHERE id=$1',[key],db);
  const manageable=await canManageRegulation(actor(req),key,db);
  d.versions=[];
- for(const v of (await db('SELECT * FROM app.regulation_versions WHERE regulation_id=$1 ORDER BY id DESC',[key])).rows){
+ for(const v of (await db('SELECT v.*,(SELECT COUNT(*) FROM app.criteria c WHERE c.regulation_version_id=v.id) AS criterion_count FROM app.regulation_versions v WHERE v.regulation_id=$1 ORDER BY v.id DESC',[key])).rows){
   if(await canReadVersion(actor(req),v.id,db))d.versions.push({...cleanVersion(v),can_use:await canUseVersion(actor(req),v.id,db)});
  }
  if(!manageable&&!d.versions.length)throw new NotFoundError();
@@ -39,27 +39,46 @@ async function documentDetail(req,key,db=query){
 }
 router.get('/regulations/documents',route(async(req,res)=>{
  const {page,pageSize,offset}=pageParams(req),items=[],read=requestReadCache();
- for(const {id:key} of (await query('SELECT id FROM app.regulations ORDER BY id DESC')).rows){try{items.push(await documentDetail(req,key,read));}catch(e){if(!(e instanceof NotFoundError))throw e;}}
+ for(const {id:key,code} of (await query('SELECT id,code FROM app.regulations ORDER BY id DESC')).rows){if(isRetiredDemoRegulation(code))continue;try{items.push(await documentDetail(req,key,read));}catch(e){if(!(e instanceof NotFoundError))throw e;}}
  ok(res,{items:items.slice(offset,offset+pageSize),total:items.length,page,pageSize});
 }));
-router.post('/regulations/documents',route(async(req,res)=>{
- const b=body(docSchema,req),org=b.owner_organization_id??null;
- if(org){await one("SELECT id FROM app.organizations WHERE id=$1 AND status='ACTIVE'",[org]);const globalManager=await hasGlobalRole(actor(req),'REGULATION_MANAGER');if(!globalManager){await authorizeOrg(actor(req),org,'REGULATIONS_CREATE');if(b.is_public||b.is_internal)await authorizeOrg(actor(req),org,'REGULATIONS_SHARE');}}
- if(!org&&(b.is_public||b.is_internal))throw new ValidationError('Quy chế cá nhân chỉ được lưu riêng tư.');
- const key=await insertId(null,'regulations','code,name,description,created_by_user_id,owner_type,owner_user_id,owner_organization_id,is_public,is_internal','$1,$2,$3,$4,$5,$6,$7,$8,$9',[b.code,b.name,b.description??null,actor(req),org?'ORGANIZATION':'PERSONAL',org?null:actor(req),org,b.is_public,b.is_internal]);
- ok(res,await documentDetail(req,key),201);
+router.post('/regulations/documents', route(async(req,res)=>{
+ const b=body(docSchema.extend({first_version:versionSchema.optional()}),req),org=b.owner_organization_id??null;
+ if(b.first_version)period(b.first_version);
+ const document=await withTransaction(async({query:db,client})=>{
+  if(org){
+   await one("SELECT id FROM app.organizations WHERE id=$1 AND status='ACTIVE'",[org],db);
+   if(!await canAccessOrgDirectly(actor(req),org,'REGULATIONS_CREATE',db))throw new ForbiddenError();
+   if(b.first_version&&!await canAccessOrgDirectly(actor(req),org,'REGULATIONS_MANAGE',db))throw new ForbiddenError();
+   if((b.is_public||b.is_internal)&&!await canAccessOrgDirectly(actor(req),org,'REGULATIONS_SHARE',db))throw new ForbiddenError();
+  }
+  if(!org&&b.is_internal)throw new ValidationError('Quy chế cá nhân không có phạm vi nội bộ.');
+  const key=await insertId(client,'regulations','code,name,description,created_by_user_id,owner_type,owner_user_id,owner_organization_id,is_public,is_internal','$1,$2,$3,$4,$5,$6,$7,$8,$9',[b.code,b.name,b.description??null,actor(req),org?'ORGANIZATION':'PERSONAL',org?null:actor(req),org,b.is_public,b.is_internal]);
+  if(b.first_version)await createDraftVersion(client,key,actor(req),b.first_version);
+  return documentDetail(req,key,db);
+ });
+ ok(res,document,201);
 }));
 router.get('/regulations/documents/:id',route(async(req,res)=>ok(res,await documentDetail(req,id(req.params.id),requestReadCache()))));
 router.patch('/regulations/documents/:id',route(async(req,res)=>{const key=id(req.params.id);await manageDocument(req,key);const b=body(docSchema.pick({code:true,name:true,description:true}).partial(),req);const d=await one('SELECT * FROM app.regulations WHERE id=$1',[key]);await query('UPDATE app.regulations SET code=$2,name=$3,description=$4 WHERE id=$1',[key,b.code??d.code,b.name??d.name,b.description===undefined?d.description:b.description]);ok(res,await one('SELECT * FROM app.regulations WHERE id=$1',[key]));}));
 router.delete('/regulations/documents/:id',route(async(req,res)=>{const key=id(req.params.id);await manageDocument(req,key);await withTransaction(async({query:db})=>{await one('SELECT id FROM app.regulations WITH(UPDLOCK,HOLDLOCK) WHERE id=$1',[key],db);if((await db('SELECT id FROM app.regulation_versions WHERE regulation_id=$1',[key])).rows.length)throw new ValidationError('Xóa các phiên bản nháp trước; quy chế đã công bố phải được giữ để tra cứu.');await db('DELETE app.regulations WHERE id=$1',[key]);});ok(res,{id:key});}));
 const versionSchema=z.object({version_label:z.string().trim().min(1).max(80),effective_from:date,effective_to:date.nullable().optional(),source_title:z.string().trim().min(1).max(500),source_url:z.string().url().max(2000).refine(v=>/^https?:\/\//i.test(v),'HTTP(S) URL required').nullable().optional(),applicability:applicabilitySchema.default({}),aggregation:aggregationSchema.default({operator:'AND'}),source_kind:z.enum(['MANUAL','OFFICIAL','DEMO']).default('MANUAL'),issuing_authority:z.string().trim().min(1).max(500).nullable().optional(),collected_at:z.string().datetime({offset:true}).nullable().optional(),coverage:z.object({automated:z.array(z.string()).default([]),manual:z.array(z.string()).default([]),unsupported:z.array(z.string()).default([])}).default({})}).strict();
 function period(b){if(b.effective_to&&b.effective_from>b.effective_to)throw new ValidationError('Ngày kết thúc trước ngày bắt đầu.');}
-router.post('/regulations/documents/:id/versions',route(async(req,res)=>{await manageDocument(req,id(req.params.id));const b=body(versionSchema,req);period(b);const key=await insertId(null,'regulation_versions','regulation_id,version_label,effective_from,effective_to,source_title,source_url,applicability_json,aggregation_json,created_by_user_id,source_kind,issuing_authority,collected_at,coverage_json','$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13',[id(req.params.id),b.version_label,b.effective_from,b.effective_to??null,b.source_title,b.source_url??null,json(b.applicability),json(b.aggregation),actor(req),b.source_kind,b.issuing_authority??null,b.collected_at??null,json(b.coverage)]);ok(res,await versionDetail(key),201);}));
+function createDraftVersion(client,documentId,userId,b){
+ return insertId(client,'regulation_versions','regulation_id,version_label,effective_from,effective_to,source_title,source_url,applicability_json,aggregation_json,created_by_user_id,source_kind,issuing_authority,collected_at,coverage_json','$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13',[documentId,b.version_label,b.effective_from,b.effective_to??null,b.source_title,b.source_url??null,json(b.applicability),json(b.aggregation),userId,b.source_kind,b.issuing_authority??null,b.collected_at??null,json(b.coverage)]);
+}
+router.post('/regulations/documents/:id/versions',route(async(req,res)=>{
+ const documentId=id(req.params.id);
+ await manageDocument(req,documentId);
+ const b=body(versionSchema,req);
+ period(b);
+ ok(res,await versionDetail(await createDraftVersion(null,documentId,actor(req),b)),201);
+}));
 router.get('/regulations/versions/:id',route(async(req,res)=>ok(res,await readableVersion(req,id(req.params.id)))));
 router.patch('/regulations/versions/:id',route(async(req,res)=>{const key=id(req.params.id);await manageVersion(req,key);const b=body(versionSchema.partial(),req);await withTransaction(async({query:db})=>{const d=await draft(key,db);const v={...d,...b};period(v);await db('UPDATE app.regulation_versions SET version_label=$2,effective_from=$3,effective_to=$4,source_title=$5,source_url=$6,applicability_json=$7,aggregation_json=$8,source_kind=$9,issuing_authority=$10,collected_at=$11,coverage_json=$12 WHERE id=$1',[key,v.version_label,v.effective_from,v.effective_to??null,v.source_title,v.source_url??null,b.applicability?json(b.applicability):d.applicability_json,b.aggregation?json(b.aggregation):d.aggregation_json,v.source_kind,v.issuing_authority??null,v.collected_at??null,b.coverage?json(b.coverage):d.coverage_json]);});ok(res,await versionDetail(key));}));
 router.delete('/regulations/versions/:id',route(async(req,res)=>{const key=id(req.params.id);await manageVersion(req,key);await withTransaction(async({query:db})=>{await draft(key,db);await db('DELETE app.regulation_source_files WHERE regulation_version_id=$1',[key]);await db('DELETE app.criteria WHERE regulation_version_id=$1',[key]);await db('DELETE app.criterion_groups WHERE regulation_version_id=$1',[key]);await db('DELETE app.regulation_versions WHERE id=$1',[key]);});ok(res,{id:key});}));
 const groupSchema=z.object({code:z.string().trim().min(1).max(80),title,operator:z.enum(['AND','OR']).default('AND'),is_required:z.boolean().default(true),sort_order:z.number().int().default(0)}).strict();
-const criterionSchema=z.object({code:z.string().trim().min(1).max(80),title,description:z.string().max(20000).nullable().optional(),criterion_group_id:num.nullable().optional(),rule:ruleSchema,source_reference:z.string().trim().min(1).max(1000),is_required:z.boolean().default(true),is_exclusion:z.boolean().default(false),sort_order:z.number().int().default(0),coverage_status:z.enum(['AUTOMATED','MANUAL','UNSUPPORTED']).default('AUTOMATED'),provenance:z.object({source_quote:z.string().max(5000).optional(),page:z.number().int().positive().optional(),note:z.string().max(5000).optional()}).default({})}).strict();
+const criterionSchema=z.object({code:z.string().trim().min(1).max(80),title,description:z.string().max(20000).nullable().optional(),criterion_group_id:num.nullable().optional(),rule:ruleSchema,source_reference:z.string().trim().min(1).max(1000),is_required:z.boolean().default(true),is_exclusion:z.boolean().default(false),sort_order:z.number().int().default(0),coverage_status:z.enum(['AUTOMATED','MANUAL','UNSUPPORTED']).default('AUTOMATED'),provenance:z.object({source_quote:z.string().max(5000).optional(),page:z.number().int().positive().optional(),note:z.string().max(5000).optional(),citations:z.array(z.object({label:z.string().min(1).max(500),url:z.string().url().refine(value=>/^https?:[/][/]/i.test(value))}).strict()).max(12).optional()}).default({})}).strict();
 for(const kind of ['groups','criteria']){
  const table=kind==='groups'?'criterion_groups':'criteria',schema=kind==='groups'?groupSchema:criterionSchema;
  router.post(`/regulations/versions/:id/${kind}`,route(async(req,res)=>{const versionId=id(req.params.id);await manageVersion(req,versionId);const b=body(schema,req);const key=await withTransaction(async({client,query:db})=>{await draft(versionId,db);if(kind==='groups')return insertId(client,table,'regulation_version_id,code,title,operator,is_required,sort_order','$1,$2,$3,$4,$5,$6',[versionId,b.code,b.title,b.operator,b.is_required,b.sort_order]);return insertId(client,table,'regulation_version_id,criterion_group_id,code,title,description,rule_json,source_reference,is_required,is_exclusion,sort_order,coverage_status,provenance_json','$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12',[versionId,b.criterion_group_id??null,b.code,b.title,b.description??null,json(b.rule),b.source_reference,b.is_required,b.is_exclusion,b.sort_order,b.coverage_status,json(b.provenance)]);});ok(res,await one(`SELECT * FROM app.${table} WHERE id=$1`,[key]),201);}));
@@ -67,12 +86,11 @@ for(const kind of ['groups','criteria']){
  router.delete(`/regulations/${kind}/:id`,route(async(req,res)=>{const key=id(req.params.id);await manageChild(req,table,key);await withTransaction(async({query:db})=>{const d=await one(`SELECT * FROM app.${table} WHERE id=$1`,[key],db);await draft(d.regulation_version_id,db);await db(`DELETE app.${table} WHERE id=$1`,[key]);});ok(res,{id:key});}));
 }
 router.post('/regulations/versions/:id/publish',route(async(req,res)=>{const key=id(req.params.id);await manageVersion(req,key,query,'REGULATIONS_PUBLISH');await withTransaction(async({query:db})=>{await draft(key,db,false);const v=await versionDetail(key,db);if((await db('SELECT id FROM app.regulation_source_files WHERE regulation_version_id=$1',[key])).rows.length&&!v.ai_reviewed_at)throw new ValidationError('Cần kiểm tra nguồn và xác nhận bộ tiêu chí trước khi công bố.');applicabilitySchema.parse(v.applicability);aggregationSchema.parse(v.aggregation);if(!v.criteria.length)throw new ValidationError('Cần ít nhất một tiêu chí.');for(const c of v.criteria){ruleSchema.parse(c.rule);evaluateVersion(v,v.groups,[c],{person_type:'OTHER'},[],today());}for(const g of v.groups)if(g.is_required&&!v.criteria.some(c=>Number(c.criterion_group_id)===Number(g.id)))throw new ValidationError('Nhóm bắt buộc phải có tiêu chí.');await db("UPDATE app.regulation_versions SET publication_status='PUBLISHED',published_at=SYSUTCDATETIME(),published_by_user_id=$2 WHERE id=$1",[key,actor(req)]);
- await db(`WITH adoption_ancestors AS (
- SELECT a.organization_id AS adopted_organization_id,o.id,o.parent_id FROM app.regulation_adoptions a JOIN app.organizations o ON o.id=a.organization_id WHERE a.regulation_id=$4 AND a.regulation_version_id<>$1
- UNION ALL SELECT a.adopted_organization_id,o.id,o.parent_id FROM app.organizations o JOIN adoption_ancestors a ON a.parent_id=o.id WHERE o.status='ACTIVE'
- ),recipients AS (
+ await db(`WITH recipients AS (
  SELECT a.user_id FROM app.regulation_adoptions a WHERE a.regulation_id=$4 AND a.user_id IS NOT NULL AND a.regulation_version_id<>$1
- UNION SELECT g.user_id FROM adoption_ancestors a JOIN app.org_access_grants g ON g.organization_id=a.id WHERE (a.id=a.adopted_organization_id OR g.include_descendants=1) AND g.permission_code IN ('REGULATIONS_ADOPT','REGULATIONS_UPDATE') AND g.valid_from<=SYSUTCDATETIME() AND (g.valid_to IS NULL OR g.valid_to>SYSUTCDATETIME())
+ UNION SELECT g.user_id FROM app.regulation_adoptions a JOIN app.org_access_grants g ON g.organization_id=a.organization_id
+ WHERE a.regulation_id=$4 AND a.regulation_version_id<>$1 AND g.permission_code IN ('REGULATIONS_ADOPT','REGULATIONS_UPDATE')
+ AND g.valid_from<=SYSUTCDATETIME() AND (g.valid_to IS NULL OR g.valid_to>SYSUTCDATETIME())
  UNION SELECT a.adopted_by_user_id FROM app.regulation_adoptions a JOIN app.global_role_grants g ON g.user_id=a.adopted_by_user_id WHERE a.regulation_id=$4 AND a.regulation_version_id<>$1 AND g.role_code='SYSTEM_ADMIN' AND g.valid_from<=SYSUTCDATETIME() AND (g.valid_to IS NULL OR g.valid_to>SYSUTCDATETIME())
  ) INSERT app.notifications(recipient_user_id,sender_user_id,notification_type,title,body,payload_json,deduplication_key)
  SELECT DISTINCT r.user_id,$2,'REGULATION_UPDATED',N'Quy chế có phiên bản mới',N'Phiên bản đang dùng được giữ nguyên. Kiểm tra trước khi cập nhật.',$3,CONCAT('regulation-version:',CONVERT(varchar(30),$1)) FROM recipients r JOIN app.users u ON u.id=r.user_id WHERE u.account_status='ACTIVE'
@@ -81,30 +99,150 @@ router.post('/regulations/versions/:id/publish',route(async(req,res)=>{const key
 
 async function inputSnapshot(subject,db=query){const profile=(await db('SELECT user_id,person_type,attributes_json FROM app.person_profiles WHERE user_id=$1',[subject])).rows[0]??null;const achievements=(await db('SELECT id,achievement_type_id,title,description,achieved_at,period_start,period_end,issuer,level_code,attributes_json,updated_at FROM app.achievements WHERE owner_user_id=$1 AND deleted_at IS NULL ORDER BY id',[subject])).rows.map(a=>({...a,attributes:parseJson(a.attributes_json)}));return {profile,achievements};}
 async function assertSubject(req,subject,orgId,permission,db=query){if(subject===actor(req))return;if(!orgId)throw new ForbiddenError();await authorizeOrg(actor(req),orgId,permission,db);const membership=(await db('SELECT TOP(1) id FROM app.memberships WHERE user_id=$1 AND organization_id=$2 AND valid_from<=SYSUTCDATETIME() AND (valid_to IS NULL OR valid_to>SYSUTCDATETIME())',[subject,orgId])).rows[0];if(!membership)throw new ForbiddenError();}
-async function runAssessment(req,subject,versionId,evaluationDate,batchId,orgId,db,client,selectedContext=null){
+export async function runAssessment(req,subject,versionId,evaluationDate,batchId,orgId,db,client,selectedContext=null){
  if(subject===actor(req)&&orgId==null&&!selectedContext){const contexts=(await listAccessiblePinnedContexts(subject,db)).filter(c=>Number(c.regulation_version_id)===Number(versionId));const choices=[...new Map(contexts.map(c=>[c.adoption_id==null?'OWNER':String(c.adoption_id),c])).values()];selectedContext=choices.find(c=>c.context_type==='OWNER')??(choices.length===1?choices[0]:null);if(choices.length>1&&!selectedContext)throw new ValidationError('Chọn bối cảnh cá nhân hoặc tổ chức trước khi khám.');}
  if(selectedContext)orgId=selectedContext.member_organization_id??selectedContext.organization_id??null;
  if(!selectedContext&&orgId!=null){const pin=(await db(`WITH ancestors AS(SELECT id,parent_id FROM app.organizations WHERE id=$1 UNION ALL SELECT o.id,o.parent_id FROM app.organizations o JOIN ancestors a ON a.parent_id=o.id) SELECT TOP(1) a.id AS adoption_id,a.organization_id FROM app.regulation_adoptions a JOIN ancestors o ON o.id=a.organization_id WHERE a.regulation_version_id=$2 OPTION(MAXRECURSION 32767)`,[orgId,versionId])).rows[0];selectedContext={...pin,context_type:'ORGANIZATION',member_organization_id:orgId};}
- await assertSubject(req,subject,orgId,'ASSESSMENTS_RUN',db);if(!await canUseVersion(subject,versionId,db,orgId))throw new ForbiddenError('Phiên bản chưa được tiếp nhận trong phạm vi khám.');const v=await versionDetail(versionId,db);if(v.publication_status!=='PUBLISHED')throw new ValidationError('Chỉ khám theo phiên bản đã công bố.');if(evaluationDate<String(v.effective_from).slice(0,10)||(v.effective_to&&evaluationDate>String(v.effective_to).slice(0,10)))throw new ValidationError('Quy chế không có hiệu lực tại ngày đánh giá.');const input=await inputSnapshot(subject,db),result=evaluateVersion(v,v.groups,v.criteria,input.profile,input.achievements,evaluationDate);const snapshot={...input,context:{adoption_id:selectedContext?.adoption_id??null,context_type:selectedContext?.context_type??'PERSONAL',organization_id:selectedContext?.organization_id??null,member_organization_id:selectedContext?.member_organization_id??null},input_hash:hash(input),regulation_version:v};const key=await insertId(client,'assessment_runs','batch_id,subject_user_id,initiated_by_user_id,regulation_version_id,evaluation_date,evaluator_version,input_snapshot_json','$1,$2,$3,$4,$5,$6,$7',[batchId??null,subject,actor(req),versionId,evaluationDate,'personal-vault-rules/1',json(snapshot)]);
+ await assertSubject(req,subject,orgId,'ASSESSMENTS_RUN',db);if(!await canUseVersion(subject,versionId,db,orgId))throw new ForbiddenError('Phiên bản chưa được tiếp nhận trong phạm vi khám.');const v=await versionDetail(versionId,db);if(v.publication_status!=='PUBLISHED')throw new ValidationError('Chỉ khám theo phiên bản đã công bố.');if(evaluationDate<String(v.effective_from).slice(0,10)||(v.effective_to&&evaluationDate>String(v.effective_to).slice(0,10)))throw new ValidationError('Quy chế không có hiệu lực tại ngày đánh giá.');const input=await inputSnapshot(subject,db),result=evaluateVersion(v,v.groups,v.criteria,input.profile,input.achievements,evaluationDate);const snapshot={...input,context:{adoption_id:selectedContext?.adoption_id??null,context_type:selectedContext?.context_type??'PERSONAL',organization_id:selectedContext?.organization_id??null,member_organization_id:selectedContext?.member_organization_id??null},input_hash:hash(input),regulation_version:v};const key=await insertId(client,'assessment_runs','batch_id,subject_user_id,initiated_by_user_id,regulation_version_id,evaluation_date,evaluator_version,input_snapshot_json','$1,$2,$3,$4,$5,$6,$7',[batchId??null,subject,actor(req),versionId,evaluationDate,'personal-vault-rules/2',json(snapshot)]);
  for(const r of result.results){const resultId=await insertId(client,'criterion_results','run_id,subject_user_id,regulation_version_id,criterion_id,conclusion,actual_value,target_value,measure_unit,missing_details_json,criterion_snapshot_json,explanation','$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11',[key,subject,versionId,r.criterion_id,r.conclusion,r.actual_value,r.target_value,r.measure_unit,json(r.missing),json(r.criterion),r.conclusion==='INSUFFICIENT_DATA'?'Chưa đủ dữ liệu để kết luận.':'Đối chiếu dữ liệu tự khai theo quy tắc và nguồn quy chế.']);for(const achievementId of r.matches){const a=input.achievements.find(a=>Number(a.id)===Number(achievementId));await insertId(client,'result_evidence','criterion_result_id,subject_user_id,achievement_id,achievement_snapshot_json','$1,$2,$3,$4',[resultId,subject,achievementId,json(a)]);}}
  await db("UPDATE app.assessment_runs SET status='COMPLETED',conclusion=$2,completion_percent=$3,explanation=$4,completed_at=SYSUTCDATETIME() WHERE id=$1",[key,result.conclusion,result.completion_percent,'Kết quả theo hồ sơ tự khai, không phải quyết định công nhận danh hiệu.']);return key;}
-async function runDetail(req,key,db=query){const run=await one('SELECT r.*,b.organization_id,b.include_descendants FROM app.assessment_runs r LEFT JOIN app.assessment_batches b ON b.id=r.batch_id WHERE r.id=$1',[key],db);if(Number(run.subject_user_id)!==actor(req)){if(!run.organization_id)throw new ForbiddenError();await authorizeOrg(actor(req),run.organization_id,'ASSESSMENTS_VIEW',db,Boolean(run.include_descendants));const membership=(await db(`WITH scope AS(SELECT id FROM app.organizations WHERE id=$2 AND status='ACTIVE' UNION ALL SELECT o.id FROM app.organizations o JOIN scope s ON o.parent_id=s.id WHERE $3=1 AND o.status='ACTIVE') SELECT TOP(1) m.id FROM app.memberships m JOIN scope s ON s.id=m.organization_id WHERE m.user_id=$1 AND m.valid_from<=SYSUTCDATETIME() AND (m.valid_to IS NULL OR m.valid_to>SYSUTCDATETIME()) OPTION(MAXRECURSION 32767)`,[run.subject_user_id,run.organization_id,run.include_descendants?1:0])).rows;if(!membership.length)throw new ForbiddenError();}
+async function runDetail(req,key,db=query){const run=await one('SELECT r.*,d.name AS regulation_name,b.organization_id,b.include_descendants FROM app.assessment_runs r JOIN app.regulation_versions v ON v.id=r.regulation_version_id JOIN app.regulations d ON d.id=v.regulation_id LEFT JOIN app.assessment_batches b ON b.id=r.batch_id WHERE r.id=$1',[key],db);if(Number(run.subject_user_id)!==actor(req)){if(!run.organization_id||!await canReadVersion(actor(req),run.regulation_version_id,db))throw new ForbiddenError();await authorizeOrg(actor(req),run.organization_id,'ASSESSMENTS_VIEW',db,Boolean(run.include_descendants));const membership=(await db(`WITH scope AS(SELECT id FROM app.organizations WHERE id=$2 AND status='ACTIVE' UNION ALL SELECT o.id FROM app.organizations o JOIN scope s ON o.parent_id=s.id WHERE $3=1 AND o.status='ACTIVE') SELECT TOP(1) m.id FROM app.memberships m JOIN scope s ON s.id=m.organization_id WHERE m.user_id=$1 AND m.valid_from<=SYSUTCDATETIME() AND (m.valid_to IS NULL OR m.valid_to>SYSUTCDATETIME()) OPTION(MAXRECURSION 32767)`,[run.subject_user_id,run.organization_id,run.include_descendants?1:0])).rows;if(!membership.length)throw new ForbiddenError();}
  const snap=parseJson(run.input_snapshot_json);const current=await inputSnapshot(run.subject_user_id,db);const {input_snapshot_json,...safe}=run;const results=(await db('SELECT * FROM app.criterion_results WHERE run_id=$1 ORDER BY id',[key])).rows.map(r=>{const {criterion_snapshot_json,missing_details_json,...rest}=r;return {...rest,criterion:parseJson(criterion_snapshot_json),missing_details:parseJson(missing_details_json)};});return {...safe,context:snap.context??null,results,stale:snap.input_hash!==hash(current)};}
 const assessmentSchema=z.object({regulation_version_id:num,evaluation_date:date.optional(),adoption_id:num.optional()}).strict();
 router.post('/ai/evaluations/structured',route(async(req,res)=>{const b=body(assessmentSchema,req);const key=await withTransaction(async({query:db,client})=>{let org=null,selected=null;if(b.adoption_id){const contexts=await listAccessiblePinnedContexts(actor(req),db);const context=contexts.find(c=>Number(c.adoption_id)===b.adoption_id&&Number(c.regulation_version_id)===b.regulation_version_id);if(!context)throw new ForbiddenError();org=context.member_organization_id??context.organization_id??null;selected=context;}return runAssessment(req,actor(req),b.regulation_version_id,b.evaluation_date??today(),null,org,db,client,selected);});ok(res,await runDetail(req,key),201);}));
 router.get('/ai/evaluations/structured',route(async(req,res)=>{const {page,pageSize,offset}=pageParams(req);const keys=(await query('SELECT id FROM app.assessment_runs WHERE subject_user_id=$1 ORDER BY id DESC OFFSET $2 ROWS FETCH NEXT $3 ROWS ONLY',[actor(req),offset,pageSize])).rows;const items=[];for(const r of keys)items.push(await runDetail(req,r.id));ok(res,{items,page,pageSize});}));
-router.get('/ai/evaluations/structured/:id',route(async(req,res)=>ok(res,await runDetail(req,id(req.params.id)))));
+router.get('/ai/evaluations/structured/latest',route(async(req,res)=>{
+  const {rows}=await query(`
+    WITH runs AS (
+      SELECT id,regulation_version_id,evaluation_date,completed_at,conclusion,completion_percent,
+        TRY_CONVERT(bigint,JSON_VALUE(input_snapshot_json,'$.context.adoption_id')) AS adoption_id
+      FROM app.assessment_runs WHERE subject_user_id=$1 AND status='COMPLETED'
+    ), ranked AS (
+      SELECT *,ROW_NUMBER() OVER(PARTITION BY regulation_version_id,adoption_id ORDER BY id DESC) AS row_number,
+        COUNT(*) OVER(PARTITION BY regulation_version_id,adoption_id) AS history_count FROM runs
+    )
+    SELECT ranked.*,summary.criterion_count,summary.met_count FROM ranked
+    OUTER APPLY (
+      SELECT COUNT(*) AS criterion_count,COUNT(CASE WHEN conclusion='MET' THEN 1 END) AS met_count
+      FROM app.criterion_results WHERE run_id=ranked.id
+    ) summary WHERE row_number=1`,[actor(req)]);
+  ok(res,{items:rows});
+}));
+router.get('/ai/evaluations/structured/history',route(async(req,res)=>{
+  const version=id(req.query.version),adoption=req.query.adoption ? id(req.query.adoption) : null;
+  const {page,pageSize,offset}=pageParams(req);
+  const {rows}=await query(`
+    SELECT id,evaluation_date,completed_at,conclusion,completion_percent,COUNT(*) OVER() AS total
+    FROM app.assessment_runs
+    WHERE subject_user_id=$1 AND regulation_version_id=$2 AND status='COMPLETED'
+      AND COALESCE(TRY_CONVERT(bigint,JSON_VALUE(input_snapshot_json,'$.context.adoption_id')),0)=$3
+    ORDER BY id DESC OFFSET $4 ROWS FETCH NEXT $5 ROWS ONLY`,[actor(req),version,adoption??0,offset,pageSize]);
+  ok(res,{items:rows,page,pageSize,total:rows[0]?.total??0});
+}));
+router.get('/ai/evaluations/structured/:id',route(async(req,res)=>{
+  const detail=await runDetail(req,id(req.params.id));
+  if(Number(detail.subject_user_id)===actor(req)){
+    const {rows}=await query(`
+      SELECT DISTINCT e.criterion_result_id,f.id,f.original_filename
+      FROM app.result_evidence e
+      JOIN app.criterion_results r ON r.id=e.criterion_result_id
+      JOIN app.achievements a ON a.id=e.achievement_id
+      JOIN app.evidence_files f ON f.achievement_id=a.id
+      WHERE r.run_id=$1 AND e.subject_user_id=$2 AND a.owner_user_id=$2 AND f.owner_user_id=$2
+        AND a.deleted_at IS NULL AND f.deleted_at IS NULL ORDER BY f.id`,[detail.id,actor(req)]);
+    const filesByCriterion=new Map();
+    for(const file of rows){
+      const key=String(file.criterion_result_id);
+      if(!filesByCriterion.has(key))filesByCriterion.set(key,[]);
+      filesByCriterion.get(key).push(file);
+    }
+    for(const result of detail.results) result.evidence_files=filesByCriterion.get(String(result.id))??[];
+  }
+  ok(res,detail);
+}));
 router.post('/ai/auto-discovery',route(async(req,res)=>{
  const b=body(z.object({evaluation_date:date.optional()}).strict(),req),day=b.evaluation_date??today();
  const result=await withTransaction(async({query:db,client})=>{
-  const available=[...new Map((await listAccessiblePinnedContexts(actor(req),db)).filter(c=>day>=String(c.effective_from).slice(0,10)&&(!c.effective_to||day<=String(c.effective_to).slice(0,10))).map(c=>[c.adoption_id==null?'OWNER:'+c.regulation_version_id:String(c.adoption_id),c])).values()];
+  const available=[...new Map((await listAccessiblePinnedContexts(actor(req),db)).filter(c=>!isRetiredDemoRegulation(c.code)&&day>=String(c.effective_from).slice(0,10)&&(!c.effective_to||day<=String(c.effective_to).slice(0,10))).map(c=>[c.adoption_id==null?'OWNER:'+c.regulation_version_id:String(c.adoption_id),c])).values()];
   if(available.length>100)throw new ValidationError('Quá nhiều bối cảnh; chọn từng quy chế để khám.');
   const batch=await insertId(client,'assessment_batches','initiated_by_user_id,batch_type,status,request_snapshot_json',"$1,'DISCOVERY','RUNNING',$2",[actor(req),json({evaluation_date:day})]),keys=[];
   for(const c of available)keys.push(await runAssessment(req,actor(req),c.regulation_version_id,day,batch,null,db,client,c));
   await db("UPDATE app.assessment_batches SET status='COMPLETED',completed_at=SYSUTCDATETIME() WHERE id=$1",[batch]);return {batch,keys};
  });const items=[];for(const key of result.keys)items.push(await runDetail(req,key));ok(res,{batch_id:result.batch,items});
 }));
-router.post('/organizations/units/:id/ai-scan',route(async(req,res)=>{const org=id(req.params.id),b=body(assessmentSchema.omit({adoption_id:true}).extend({include_descendants:z.boolean().default(false)}),req);await authorizeOrg(actor(req),org,'ASSESSMENTS_RUN',query,b.include_descendants);await authorizeOrg(actor(req),org,'ASSESSMENTS_VIEW',query,b.include_descendants);const result=await withTransaction(async({query:db,client})=>{await authorizeOrg(actor(req),org,'ASSESSMENTS_RUN',db,b.include_descendants);if(!await canUseVersion(actor(req),b.regulation_version_id,db,org))throw new ForbiddenError('Tổ chức chưa tiếp nhận phiên bản này.');const scopeVersion=await versionDetail(b.regulation_version_id,db),scopeDate=b.evaluation_date??today();if(scopeDate<String(scopeVersion.effective_from).slice(0,10)||(scopeVersion.effective_to&&scopeDate>String(scopeVersion.effective_to).slice(0,10)))throw new ValidationError('Quy chế không có hiệu lực tại ngày đánh giá.');const members=(await db(`WITH scope AS(SELECT id FROM app.organizations WHERE id=$1 AND status='ACTIVE' UNION ALL SELECT o.id FROM app.organizations o JOIN scope s ON o.parent_id=s.id WHERE $2=1 AND o.status='ACTIVE') SELECT DISTINCT m.user_id,m.organization_id FROM app.memberships m JOIN scope s ON s.id=m.organization_id JOIN app.users u ON u.id=m.user_id WHERE m.valid_from<=SYSUTCDATETIME() AND (m.valid_to IS NULL OR m.valid_to>SYSUTCDATETIME()) AND u.account_status='ACTIVE' OPTION(MAXRECURSION 32767)`,[org,b.include_descendants?1:0])).rows;if(members.length>500)throw new ValidationError('Phạm vi quá lớn; chọn đơn vị nhỏ hơn (tối đa 500 thành viên).');const batch=await insertId(client,'assessment_batches','initiated_by_user_id,organization_id,include_descendants,batch_type,status,request_snapshot_json',"$1,$2,$3,'ORGANIZATION','RUNNING',$4",[actor(req),org,b.include_descendants,json(b)]);const seen=new Set(),keys=[];for(const m of members)if(!seen.has(Number(m.user_id))){seen.add(Number(m.user_id));keys.push(await runAssessment(req,Number(m.user_id),b.regulation_version_id,b.evaluation_date??today(),batch,m.organization_id,db,client));}await db("UPDATE app.assessment_batches SET status='COMPLETED',completed_at=SYSUTCDATETIME() WHERE id=$1",[batch]);return {batch,keys};});const items=[];for(const key of result.keys)items.push(await runDetail(req,key));ok(res,{batch_id:result.batch,items});}));
+router.post('/organizations/units/:id/ai-scan',route(async(req,res)=>{const org=id(req.params.id),b=body(assessmentSchema.omit({adoption_id:true}).extend({include_descendants:z.boolean().default(false),user_ids:z.array(num).min(1).max(500).optional()}),req);await authorizeOrg(actor(req),org,'ASSESSMENTS_RUN',query,b.include_descendants);await authorizeOrg(actor(req),org,'ASSESSMENTS_VIEW',query,b.include_descendants);const result=await withTransaction(async({query:db,client})=>{await authorizeOrg(actor(req),org,'ASSESSMENTS_RUN',db,b.include_descendants);if(!await canUseVersion(actor(req),b.regulation_version_id,db,org))throw new ForbiddenError('Tổ chức chưa tiếp nhận phiên bản này.');const scopeVersion=await versionDetail(b.regulation_version_id,db),scopeDate=b.evaluation_date??today();if(scopeDate<String(scopeVersion.effective_from).slice(0,10)||(scopeVersion.effective_to&&scopeDate>String(scopeVersion.effective_to).slice(0,10)))throw new ValidationError('Quy chế không có hiệu lực tại ngày đánh giá.');const members=(await db(`WITH scope AS(SELECT id FROM app.organizations WHERE id=$1 AND status='ACTIVE' UNION ALL SELECT o.id FROM app.organizations o JOIN scope s ON o.parent_id=s.id WHERE $2=1 AND o.status='ACTIVE') SELECT DISTINCT m.user_id,m.organization_id FROM app.memberships m JOIN scope s ON s.id=m.organization_id JOIN app.users u ON u.id=m.user_id WHERE m.valid_from<=SYSUTCDATETIME() AND (m.valid_to IS NULL OR m.valid_to>SYSUTCDATETIME()) AND u.account_status='ACTIVE' OPTION(MAXRECURSION 32767)`,[org,b.include_descendants?1:0])).rows;if(new Set(members.filter(member=>!b.user_ids || b.user_ids.includes(Number(member.user_id))).map(member=>String(member.user_id))).size>500)throw new ValidationError('Phạm vi quá lớn; chọn đơn vị nhỏ hơn (tối đa 500 thành viên).');const batch=await insertId(client,'assessment_batches','initiated_by_user_id,organization_id,include_descendants,batch_type,status,request_snapshot_json',"$1,$2,$3,'ORGANIZATION','RUNNING',$4",[actor(req),org,b.include_descendants,json(b)]);if(b.user_ids?.some(user=>!members.some(m=>Number(m.user_id)===user)))throw new ForbiddenError('Thành viên nằm ngoài phạm vi tổ chức.');const seen=new Set(),keys=[];for(const m of members)if((!b.user_ids || b.user_ids.includes(Number(m.user_id))) && !seen.has(Number(m.user_id))){seen.add(Number(m.user_id));keys.push(await runAssessment(req,Number(m.user_id),b.regulation_version_id,b.evaluation_date??today(),batch,m.organization_id,db,client));}await db("UPDATE app.assessment_batches SET status='COMPLETED',completed_at=SYSUTCDATETIME() WHERE id=$1",[batch]);return {batch,keys};});const items=[];for(const key of result.keys)items.push(await runDetail(req,key));ok(res,{batch_id:result.batch,items});}));
+
+
+router.get('/organizations/units/:id/assessment-options',route(async(req,res)=>{
+ const org=id(req.params.id);
+ await authorizeOrg(actor(req),org,'ASSESSMENTS_VIEW');
+ await authorizeOrg(actor(req),org,'ASSESSMENTS_RUN');
+ const versions=[];
+ for(const row of (await query("SELECT v.id,r.name,r.code,v.version_label,v.effective_from,v.effective_to FROM app.regulation_versions v JOIN app.regulations r ON r.id=v.regulation_id WHERE v.publication_status='PUBLISHED' ORDER BY r.name,v.id DESC")).rows){
+  if(!isRetiredDemoRegulation(row.code)&&await canUseVersion(actor(req),row.id,query,org))versions.push({...row,publication_status:'PUBLISHED'});
+ }
+ ok(res,versions);
+}));
+const summaryNotificationSchema=z.object({
+ runIds:z.array(num).min(1).max(100),
+ note:z.string().trim().max(2000).default(''),
+ deadline:date.optional(),
+ resendKey:z.string().uuid().optional(),
+}).strict();
+
+router.post('/organizations/units/:id/assessment-notifications',route(async(req,res)=>{
+ const organizationId=id(req.params.id);
+ const {runIds,note,deadline,resendKey}=body(summaryNotificationSchema,req);
+ const ids=[...new Set(runIds)].sort((a,b)=>a-b);
+ const value=await withTransaction(async({query:db})=>{
+  const runs=[];
+  for(const runId of ids){
+   const run=await runDetail(req,runId,db);
+   if(Number(run.organization_id)!==organizationId || run.status!=='COMPLETED')throw new ForbiddenError();
+   await authorizeOrg(actor(req),organizationId,'MEMBERS_NOTIFY',db,Boolean(run.include_descendants));
+   runs.push(run);
+  }
+  const first=runs[0];
+  const day=String(first.evaluation_date).slice(0,10);
+  if(runs.some(run=>Number(run.subject_user_id)!==Number(first.subject_user_id)||String(run.evaluation_date).slice(0,10)!==day)
+    ||new Set(runs.map(run=>String(run.regulation_version_id))).size!==runs.length){
+   throw new ValidationError('Chọn kết quả của cùng một thành viên, cùng ngày và một lượt cho mỗi quy chế.');
+  }
+  const deduplicationKey='assessment-summary:'+createHash('sha256').update(json([ids,resendKey??null])).digest('hex');
+  const prior=(await db('SELECT id,created_at FROM app.notifications WITH(UPDLOCK,HOLDLOCK) WHERE recipient_user_id=$1 AND deduplication_key=$2',[first.subject_user_id,deduplicationKey])).rows[0];
+  if(prior)return {id:prior.id,sentAt:prior.created_at,alreadySent:true};
+  if(runs.some(run=>run.stale))throw new ValidationError('Hồ sơ đã thay đổi. Hãy đối chiếu lại trước khi gửi thông báo.');
+  const organization=await one('SELECT name FROM app.organizations WHERE id=$1',[organizationId],db);
+  const formatDay=value=>value.split('-').reverse().join('/');
+  const lines=runs.map(run=>{
+   const label={MET:'Đạt theo hồ sơ',NOT_MET:'Chưa đạt',INSUFFICIENT_DATA:'Chưa đủ dữ liệu',NOT_APPLICABLE:'Không áp dụng'}[run.conclusion];
+   const missing=run.results.filter(result=>['NOT_MET','INSUFFICIENT_DATA'].includes(result.conclusion)).length;
+   return '• '+run.regulation_name+' — '+label+(missing ? ' ('+missing+' tiêu chí cần xem)' : '');
+  });
+  const text=[organization.name+' thông báo kết quả đối chiếu ngày '+formatDay(day)+'.',...lines,
+   deadline && 'Hạn bổ sung hồ sơ: '+formatDay(deadline)+'.',note].filter(Boolean).join('\n');
+  const inserted=(await db(
+   "INSERT app.notifications(recipient_user_id,sender_user_id,organization_id,notification_type,title,body,payload_json,deduplication_key) OUTPUT INSERTED.id,INSERTED.created_at VALUES($1,$2,$3,'ASSESSMENT_RESULT',$4,$5,$6,$7)",
+   [first.subject_user_id,actor(req),organizationId,'Kết quả đối chiếu quy chế',text,json({runIds:ids,deadline}),deduplicationKey]
+  )).rows[0];
+  return {id:inserted.id,sentAt:inserted.created_at,alreadySent:false};
+ });
+ ok(res,value);
+}));
+
+router.post('/ai/evaluations/structured/:id/notify',route(async(req,res)=>{
+ const run=await runDetail(req,id(req.params.id));
+ if(!run.organization_id)throw new ForbiddenError();
+ await authorizeOrg(actor(req),run.organization_id,'MEMBERS_NOTIFY',query,Boolean(run.include_descendants));
+ if(run.stale)throw new ValidationError('Thành tích đã thay đổi. Hãy kiểm tra lại trước khi thông báo.');
+ const missing=run.results.filter(result=>result.conclusion!=='MET').map(result=>result.criterion.title).join('; ');
+ const regulation=await one('SELECT r.name FROM app.regulation_versions v JOIN app.regulations r ON r.id=v.regulation_id WHERE v.id=$1',[run.regulation_version_id]);
+ const text=run.conclusion==='MET'
+  ? 'Bạn đã đạt các tiêu chí kiểm tra của '+regulation.name+'. Hãy xuất và chuẩn bị minh chứng để nộp.'
+  : 'Kết quả kiểm tra '+regulation.name+': '+run.completion_percent+'%. Tiêu chí cần bổ sung: '+missing+'. Bạn có thể kiểm tra hồ sơ và lập KPI.';
+ await query("INSERT INTO app.notifications(recipient_user_id,sender_user_id,organization_id,notification_type,title,body) VALUES($1,$2,$3,'ASSESSMENT_RESULT',$4,$5)",[run.subject_user_id,actor(req),run.organization_id,'Kết quả kiểm tra quy chế',text]);
+ ok(res,{sent:true});
+}));
 
 const goalSchema=z.object({title,description:z.string().max(20000).nullable().optional(),target_value:z.number().positive().max(1e12).default(1),measure_unit:z.string().trim().min(1).max(80),progress_source:z.enum(['MANUAL','ACHIEVEMENTS']).default('MANUAL'),start_date:date.nullable().optional(),due_date:date.nullable().optional()}).strict();
 function goalDates(b){if(b.start_date&&b.due_date&&b.start_date>b.due_date)throw new ValidationError('Hạn hoàn thành trước ngày bắt đầu.');}
@@ -115,7 +253,15 @@ router.get('/kpi/goals',route(async(req,res)=>{const {page,pageSize,offset}=page
 router.post('/kpi/goals',route(async(req,res)=>{const b=body(goalSchema,req);const key=await createGoal(req,b,null,query,null);ok(res,await goalDetail(req,key),201);}));
 router.get('/kpi/goals/:id',route(async(req,res)=>ok(res,await goalDetail(req,id(req.params.id)))));
 router.patch('/kpi/goals/:id',route(async(req,res)=>{const key=id(req.params.id),b=body(goalSchema.partial().extend({status:z.enum(['PLANNED','IN_PROGRESS','COMPLETED','CANCELLED']).optional()}),req);await withTransaction(async({query:db})=>{const g=await ownedGoal(req,key,db),v={...g,...b};goalDates(v);await db('UPDATE app.kpi_goals SET title=$3,description=$4,target_value=$5,measure_unit=$6,progress_source=$7,status=$8,start_date=$9,due_date=$10,updated_at=SYSUTCDATETIME() WHERE id=$1 AND owner_user_id=$2 AND deleted_at IS NULL',[key,actor(req),v.title,v.description??null,v.target_value,v.measure_unit,v.progress_source,v.status,v.start_date??null,v.due_date??null]);});ok(res,await goalDetail(req,key));}));
-router.delete('/kpi/goals/:id',route(async(req,res)=>{const key=id(req.params.id);await ownedGoal(req,key);await query('UPDATE app.kpi_goals SET deleted_at=SYSUTCDATETIME(),updated_at=SYSUTCDATETIME() WHERE id=$1 AND owner_user_id=$2',[key,actor(req)]);ok(res,{id:key});}));
+router.delete('/kpi/goals/:id', route(async (req, res) => {
+  const key = id(req.params.id);
+  const owner = actor(req);
+  await withTransaction(async ({ query: db }) => {
+    await one("UPDATE app.kpi_goals SET deleted_at=SYSUTCDATETIME(),updated_at=SYSUTCDATETIME() OUTPUT INSERTED.id WHERE id=$1 AND owner_user_id=$2 AND deleted_at IS NULL", [key, owner], db);
+    await db('UPDATE app.calendar_events SET goal_id=NULL WHERE goal_id=$1 AND owner_user_id=$2', [key, owner]);
+  });
+  ok(res, { id: key });
+}));
 router.post('/kpi/from-ai-gap',route(async(req,res)=>{const b=body(z.object({source_result_id:num,title:title.optional(),description:z.string().max(20000).optional(),start_date:date.optional(),due_date:date.optional()}).strict(),req);const key=await withTransaction(async({query:db,client})=>{const result=await one("SELECT cr.*,r.status AS run_status FROM app.criterion_results cr JOIN app.assessment_runs r ON r.id=cr.run_id WHERE cr.id=$1 AND cr.subject_user_id=$2",[b.source_result_id,actor(req)],db);if(result.conclusion!=='NOT_MET'||result.run_status!=='COMPLETED')throw new ValidationError('Chỉ tạo KPI từ tiêu chí còn thiếu của kết quả đã hoàn thành.');const detail=await runDetail(req,result.run_id,db);if(detail.stale)throw new ValidationError('Hồ sơ đã thay đổi; khám lại trước khi tạo KPI.');const missing=parseJson(result.missing_details_json),criterion=parseJson(result.criterion_snapshot_json);if(criterion.is_exclusion||missing.comparator!=='gte'||!Number.isFinite(missing.remaining)||missing.remaining<=0)throw new ValidationError('Tiêu chí này không có số lượng tích lũy còn thiếu; hãy tạo mục tiêu thủ công.');return createGoal(req,{title:b.title??criterion.title,description:b.description??criterion.description??null,target_value:missing.remaining,measure_unit:result.measure_unit??'thành tích',progress_source:'MANUAL',start_date:b.start_date,due_date:b.due_date},result.id,db,client);});ok(res,await goalDetail(req,key),201);}));
 router.post('/kpi/goals/:id/progress',route(async(req,res)=>{const key=id(req.params.id),b=body(z.object({current_value:z.number().nonnegative().max(1e12),note:z.string().max(20000).optional()}).strict(),req);await withTransaction(async({query:db,client})=>{const g=await ownedGoal(req,key,db);if(g.progress_source!=='MANUAL')throw new ValidationError('Tiến độ được tính từ thành tích liên kết.');await insertId(client,'kpi_progress','goal_id,owner_user_id,current_value,note','$1,$2,$3,$4',[key,actor(req),b.current_value,b.note??null]);await db('UPDATE app.kpi_goals SET updated_at=SYSUTCDATETIME() WHERE id=$1',[key]);});ok(res,await goalDetail(req,key));}));
 const taskSchema=z.object({title,description:z.string().max(20000).nullable().optional(),due_date:date.nullable().optional(),sort_order:z.number().int().default(0)}).strict();

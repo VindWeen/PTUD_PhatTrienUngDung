@@ -54,12 +54,12 @@ router.get('/public/cv/:slug', route(async(req,res)=>{
 router.use(authenticate);
 
 router.post('/achievements/ai-extract', upload, route(async(req,res)=>{
-  validateFile(req.file);
-  const result=await extractCertificateInfo(req.file);
+  const file=validateFile(req.file);
+  const result=await extractCertificateInfo({...req.file,mimetype:file.mime,originalname:file.name});
   return ok(res,result);
 }));
 
-router.get('/achievements/catalogs', route(async(req,res)=>ok(res,{ achievementTypes: (await query('SELECT id,code,name FROM app.achievement_types WHERE is_active=1 ORDER BY name')).rows })));
+router.get('/achievements/catalogs', route(async(req,res)=>ok(res,{ achievementTypes: (await query('SELECT id,code,name,attribute_schema_json FROM app.achievement_types WHERE is_active=1 ORDER BY name')).rows.map(({attribute_schema_json,...type})=>({...type,attributeSchema:JSON.parse(attribute_schema_json)})) })));
 router.post('/achievements/catalogs', route(async(req,res)=>{
   if (!await hasGlobalRole(req.user.userId,'SYSTEM_ADMIN')) throw new ForbiddenError();
   const data=body(z.object({code:z.string().trim().min(1).max(80),name:z.string().trim().min(1).max(200)}).strict(),req);

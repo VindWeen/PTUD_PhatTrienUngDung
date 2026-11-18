@@ -46,6 +46,8 @@ export default function Sidebar() {
   const visibleItems = navItems.filter((item) => item.roles.some((role) => allUserRoles.includes(role)));
   const primaryItems = visibleItems.filter(item => ['/me/dashboard', '/achievements', '/kpi', '/me/ai-forecast'].includes(item.to)).slice(0, 4);
   
+  const moreActive = visibleItems.some(item => item.to === pathname) && !primaryItems.some(item => item.to === pathname);
+
   const desktopRowInsetClass = 'px-3 transition-all duration-200';
   const desktopLabelClass = 'min-w-0 flex-1 whitespace-nowrap text-left text-[0.84rem] font-semibold tracking-tight';
   
@@ -53,7 +55,7 @@ export default function Sidebar() {
     <NavLink key={to} to={to} title={label} aria-label={accessibleLabel(to, label)}
       className={({isActive}) => `min-w-0 min-h-14 flex-1 rounded-2xl flex flex-col items-center justify-center transition-colors ${isActive ? 'bg-white/20 text-white' : 'text-slate-200 hover:text-white hover:bg-white/10'}`}>
       <span className="relative"><Icon className="w-5 h-5" /></span>
-      <span className="max-w-full truncate px-1 text-[11px] mt-1 font-medium">{to === '/kpi' ? 'KPI' : label}</span>
+      <span className="max-w-full truncate px-1 text-[11px] mt-1 font-medium">{to === '/kpi' ? 'KPI' : to === '/me/ai-forecast' ? 'Đối chiếu' : label}</span>
     </NavLink>
   );
 
@@ -61,7 +63,7 @@ export default function Sidebar() {
     {/* Desktop Floating Capsule Dock Sidebar */}
     <aside 
       aria-label="Điều hướng desktop" 
-      className="hidden lg:flex fixed top-4 bottom-4 left-4 w-[242px] overflow-hidden bg-[#182838] dark:bg-[#0f172a] rounded-[28px] shadow-[0_16px_40px_rgba(15,23,42,0.18)] flex-col items-start p-3.5 z-30 text-white border border-white/5"
+      className="hidden lg:flex fixed top-4 bottom-4 left-4 w-[242px] overflow-hidden bg-[#182838] dark:bg-[#0f172a] rounded-2xl shadow-md flex-col items-start p-3.5 z-30 text-white border border-white/5"
     >
       {/* Brand Header */}
       <Link to="/" aria-label="Trang chủ LHU" className={`flex h-12 w-full shrink-0 items-center gap-3 rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-300 ${desktopRowInsetClass} mb-2`}>
@@ -119,7 +121,7 @@ export default function Sidebar() {
         aria-expanded={moreOpen} 
         aria-controls="mobile-navigation" 
         aria-haspopup="dialog" 
-        className="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-2xl text-white hover:bg-white/10"
+        className={'flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-2xl text-white hover:bg-white/10 ' + (moreActive ? 'bg-white/20' : '')}
       >
         <Menu className="h-5 w-5" />
         <span className="text-[11px] font-medium">Thêm</span>
