@@ -16,7 +16,7 @@ npm run test:db:v2
 node ../database/sqlserver/v2/verify.mjs --expect-empty
 ```
 
-Runner chỉ đọc `database/sqlserver/v2/migrations/`, kiểm checksum và dùng transaction cùng application lock. Database chưa có lịch sử V2 mà đã có bảng sẽ bị từ chối. Các file ở `database/sqlserver/migrations/` là lịch sử cũ, không được chạy cùng chuỗi này.
+Runner chỉ đọc `database/sqlserver/v2/migrations/`, kiểm checksum và dùng transaction cùng application lock. Database chưa có lịch sử V2 mà đã có bảng sẽ bị từ chối.
 
 Baseline khởi tạo schema trống. Dữ liệu nghiệp vụ được nhập qua ứng dụng.
 

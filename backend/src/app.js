@@ -13,7 +13,7 @@ import config from './config/env.js';
 import correlationId from './middlewares/correlationId.js';
 import errorHandler from './middlewares/errorHandler.js';
 import notFoundHandler from './middlewares/notFoundHandler.js';
-import healthRoutes from './modules/health/healthRoutes.js';
+import healthRoutes from './health/healthRoutes.js';
 
 const app = express();
 

@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "node --test ../database/sqlserver/runner.test.mjs src/v2/intelligence.test.js tests/v2-identity-grants.test.js tests/fileName.test.js tests/regulationSources.test.js",
+    "test": "node --test ../database/sqlserver/runner.test.mjs src/v2/intelligence.test.js tests/v2-identity-grants.test.js tests/fileName.test.js tests/regulationSources.test.js tests/ai-pool.test.js",
     "test:sqlserver": "node --test --test-concurrency=1 ../database/sqlserver/v2/schema.integration.test.mjs tests/v2-identity.test.js src/v2/intelligence.integration.js tests/v2-api.integration.js tests/v2-journey.integration.js src/v2/regulationAccess.integration.js tests/v2-regulations.integration.js tests/sourceTranscription.integration.js",
     "test:api": "node --test --test-concurrency=1 tests/v2-api.integration.js",
     "test:db:v2": "node --test --test-concurrency=1 ../database/sqlserver/v2/schema.integration.test.mjs",
@@ -32,7 +32,6 @@
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "docxtemplater": "^3.71.1",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "helmet": "^8.0.0",
@@ -45,7 +44,6 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.9",
-    "pg": "^8.23.1"
+    "nodemon": "^3.1.9"
   }
 }

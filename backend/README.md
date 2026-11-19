@@ -1,6 +1,6 @@
 # Backend V2
 
-Express REST mặc định tại `/api/v1`, kết nối SQL Server. `src/app.js` gắn identity, vault, intelligence và support từ `src/v2/`, cùng health routes. Các module nghiệp vụ cũ còn trên đĩa nhưng không được gắn vào runtime.
+Express REST mặc định tại `/api/v1`, kết nối SQL Server. `src/app.js` gắn các router nghiệp vụ từ `src/v2/` cùng router `src/health/`. Adapter AI nằm trong `src/integrations/ai/`.
 
 ## Thiết lập
 
@@ -18,6 +18,6 @@ Khôi phục mật khẩu qua email cần `APP_PUBLIC_URL`, `RESET_EMAIL_API_KEY
 
 Lần kiểm tra chuyển V2 ghi nhận 15 kiểm tra độc lập, 13 kiểm tra ràng buộc schema và các bộ identity/intelligence/API tích hợp. Xem [chỉ mục API](../docs/api/V2.md). Kết quả kiểm thử không thay thế rà soát quy chế thực tế hoặc nghiệm thu toàn bộ tình huống.
 
-Đã bỏ module duyệt thành tích/khen thưởng và 15 test/script chuyên biệt của quy trình cũ, cùng endpoint kiểm thử duyệt trong auth legacy. File legacy trộn chức năng còn cần cho V2 được giữ để đối chiếu; không sử dụng chúng làm hợp đồng runtime V2. Danh sách xóa hẹp và checksum nằm ở `../output/approval-only-cleanup.json`.
+Các hợp đồng và module đời trước có thể tra cứu trong lịch sử Git.
 
 Quy chế V2 có sở hữu và phân phối theo cây tổ chức, pin phiên bản, nguồn riêng tư và bước kiểm tra trước công bố. Chạy thêm `npm run test:backup` để kiểm tra archive hai kho tệp. PDF/DOCX trích xuất cục bộ; AI đề xuất cần provider cấu hình hợp lệ và luôn qua người kiểm tra. Phương thức nhập bản chép thủ công dành cho PDF scan không có lớp văn bản.

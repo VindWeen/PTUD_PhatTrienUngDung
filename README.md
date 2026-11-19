@@ -35,6 +35,6 @@ node --env-file=backend/.env scripts/seed-lecturer-demo.mjs --apply --database=P
 - Lần kiểm tra chuyển V2 ghi nhận 15 kiểm tra backend độc lập, 13 ràng buộc schema và 7 kiểm tra frontend; các bộ tích hợp identity/intelligence/API cũng chạy với dữ liệu tạm rollback. Đây không phải xác nhận mọi trường hợp nghiệp vụ đã hoàn tất.
 - OCR cần cấu hình dịch vụ; khôi phục mật khẩu qua email cần cấu hình gửi thư. Quy chế cần được xây dựng và xác minh trước khi kết quả khám có ý nghĩa.
 
-Đã gỡ module duyệt thành tích/khen thưởng cùng 15 test và script chuyên biệt cho quy trình nộp, thẩm định, hội đồng và quyết định khen thưởng. Các endpoint kiểm thử duyệt trong auth legacy cũng đã bỏ. Phần legacy có chức năng còn liên quan như KPI, CV, lịch, minh chứng và các file trộn nhiều chức năng được giữ để đối chiếu V2; chúng không được gắn vào runtime. Không chạy seed hoặc migration cũ lên DB V2.
+Backend, frontend và migration trong nhánh này dùng kiến trúc V2. Lịch sử triển khai trước V2 có thể tra cứu trong Git.
 
 Xem [database](database/README.md), [chỉ mục API](docs/api/V2.md) và [mục lục tài liệu](docs/README.md).

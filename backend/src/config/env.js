@@ -37,8 +37,6 @@ const envSchema = z.object({
   // JWT
   JWT_ACCESS_SECRET: z.string().min(16).default('ptud_lhu_super_secret_access_key_2026_dev_only'),
   JWT_ACCESS_EXPIRES_IN: z.string().default('2h'),
-  JWT_REFRESH_SECRET: z.string().min(16).default('ptud_lhu_super_secret_refresh_key_2026_dev_only'),
-  JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
 
   // Cấu hình Cookie & CORS cho triển khai Web/Demo
   COOKIE_SECURE: z.preprocess((val) => val === 'true' || val === true || val === '1', z.boolean()).optional(),
@@ -51,7 +49,6 @@ const envSchema = z.object({
 
   // Storage
   STORAGE_DIR: z.string().optional(),
-  UPLOAD_DIR: z.string().default('../storage/evidences'),
   MAX_FILE_SIZE_BYTES: z.coerce.number().int().default(10485760),
 
   // AI Provider Adapter (W3-Q3)
@@ -64,7 +61,7 @@ const envSchema = z.object({
   }, 'AI_POOL_URL phải là URL HTTPS, không chứa credentials/query/fragment'),
   AI_POOL_TOKEN: z.string().trim().default(''),
   AI_POOL_MODE: z.enum(['auto', 'groq', 'openrouter']).default('auto'),
-  AI_PROVIDER: z.enum(['groq', 'openrouter', 'mock']).default('groq'),
+  AI_PROVIDER: z.enum(['groq', 'openrouter']).default('groq'),
   GROQ_API_KEY: z.string().optional(),
   GROQ_MODEL: z.string().default('llama-3.1-8b-instant'),
   GROQ_VISION_MODEL: z.string().default('llama-3.2-11b-vision-preview'),
@@ -73,8 +70,6 @@ const envSchema = z.object({
   OPENROUTER_API_KEY: z.string().optional(),
   OPENROUTER_MODEL: z.string().default('meta-llama/llama-3.2-3b-instruct:free'),
   AI_TIMEOUT_MS: z.coerce.number().int().min(1000).default(15000),
-  AI_MAX_RETRIES: z.coerce.number().int().min(0).max(5).default(2),
-  AI_CACHE_ENABLED: z.preprocess((val) => val === 'true' || val === true || val === '1', z.boolean()).default(true),
 });
 
 let parsedConfig;

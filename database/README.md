@@ -16,7 +16,7 @@ Schema V2 khởi tạo trống.
 
 ## File lịch sử
 
-sqlserver/migrations/, migrations/, seed/ và ../supabase/ thuộc phiên bản trước, không phải schema runtime V2. Chúng còn được giữ do một số công cụ/test cũ tham chiếu. Không áp dụng cùng chuỗi V2.
+Các chuỗi migration đời trước có thể tra cứu trong lịch sử Git. Runner chỉ áp dụng chuỗi SQL Server V2.
 
 Backend runtime và frontend đã chuyển sang V2; migrate thành công riêng lẻ không đồng nghĩa mọi trường hợp nghiệp vụ đã được nghiệm thu. Backup và minh chứng trên đĩa vẫn giữ. Báo cáo kiểm schema local: output/database-v2/schema-verification.json.
 

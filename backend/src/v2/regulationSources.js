@@ -7,9 +7,9 @@ import { ruleSchema, applicabilitySchema } from './intelligenceEvaluator.js';
 import { ValidationError, AppError } from '../utils/errors.js';
 import { normalizeFileName } from '../utils/fileName.js';
 import config from '../config/env.js';
-import { GroqProvider } from '../modules/ai/providers/groqProvider.js';
-import { OpenRouterProvider } from '../modules/ai/providers/openrouterProvider.js';
-import { PoolProvider } from '../modules/ai/providers/poolProvider.js';
+import { GroqProvider } from '../integrations/ai/providers/groqProvider.js';
+import { OpenRouterProvider } from '../integrations/ai/providers/openrouterProvider.js';
+import { PoolProvider } from '../integrations/ai/providers/poolProvider.js';
 
 export const MAX_SOURCE_BYTES = 20 * 1024 * 1024;
 export const MAX_TEXT_CHARS = 2_000_000;

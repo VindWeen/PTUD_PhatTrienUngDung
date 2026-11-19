@@ -9,4 +9,4 @@ Cập nhật 15/11/2026. [Kho thành tích cá nhân V2](requirements/PERSONAL_V
 | Schema và migration | [Database](../database/README.md), [SQL Server V2](../database/sqlserver/v2/README.md) |
 | Thiết kế nghiệp vụ | [Use case và ERD](requirements/PERSONAL_VAULT_V2.md) |
 
-Các tài liệu triển khai, từ điển dữ liệu, hợp đồng JSON/YAML, fixture và báo cáo cũ còn trong kho có thể mô tả phiên bản trước; đối chiếu source runtime trước khi dùng. Module duyệt thành tích/khen thưởng và 15 test/script chuyên biệt đã bỏ. File legacy trộn chức năng còn liên quan được giữ để đối chiếu V2. Không dùng các tài sản cũ làm chỉ dẫn migration hoặc seed cho V2.
+Một số từ điển dữ liệu và báo cáo lưu trữ mô tả phiên bản trước. Đối chiếu [API V2](api/V2.md) và mã runtime khi sử dụng.

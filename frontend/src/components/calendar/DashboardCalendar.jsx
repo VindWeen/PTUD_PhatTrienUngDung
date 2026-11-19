@@ -433,7 +433,7 @@ export default function DashboardCalendar() {
                   <div className="cal-editor-empty">
                     <CalendarDays size={32} className="text-slate-300 mb-2" />
                     <p className="font-semibold text-slate-700">Chọn một sự kiện từ danh sách để chỉnh sửa</p>
-                    <p className="text-xs text-slate-500 mt-1">Hoặc bấm nút "Thêm sự kiện" để tạo lịch mới cho ngày này.</p>
+                    <p className="text-xs text-slate-500 mt-1">Hoặc bấm nút &quot;Thêm sự kiện&quot; để tạo lịch mới cho ngày này.</p>
                   </div>
                 )}
               </div>

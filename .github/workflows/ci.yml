@@ -26,7 +26,6 @@ jobs:
     env:
       NODE_ENV: test
       JWT_ACCESS_SECRET: ci_access_secret_for_v2_unit_tests_only
-      JWT_REFRESH_SECRET: ci_refresh_secret_for_v2_unit_tests_only
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
