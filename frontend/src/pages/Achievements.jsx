@@ -323,16 +323,16 @@ export function Achievements() {
   const customKeys = Object.keys(attributes).filter(key => !basicDetailKeys.includes(key) && !dynamicFields.includes(key));
 
   const pageActions = (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <Link
         to="/reports"
-        className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border border-teal-600/40 text-teal-800 dark:text-teal-200 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/60 hover:border-teal-600 shadow-sm transition-all"
+        className="inline-flex min-h-11 items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border border-teal-600/40 text-teal-800 dark:text-teal-200 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/60 hover:border-teal-600 shadow-sm transition-all"
         title="Xem thống kê phân bố thành tích theo năm và loại"
       >
         <BarChart3 size={16} className="text-teal-600 dark:text-teal-400" />
         <span>Thống kê & Báo cáo</span>
       </Link>
-      <button type="button" className={button} onClick={() => begin()}>
+      <button type="button" className={button + ' min-h-11'} onClick={() => begin()}>
         <Plus size={16} aria-hidden="true" />
         <span>Thêm thành tích</span>
       </button>

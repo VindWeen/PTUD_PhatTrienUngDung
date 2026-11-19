@@ -180,7 +180,7 @@ export function Organizations() {
       title="Tổ chức"
       description="Không gian của các tổ chức bạn tham gia và những đơn vị bạn được giao quản lý."
       actions={
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button className={secondary} onClick={() => setShowApplications(true)}>Xin gia nhập</button>
           <button className={secondary} onClick={() => setShowInvites(true)}>
             Lời mời đến ({array(invites.data).filter(i => i.status === 'PENDING').length})
