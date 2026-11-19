@@ -10,10 +10,12 @@ import { permissions } from '../backend/src/modules/access.js';
 import { canReadVersion, canUseVersion, listAccessiblePinnedContexts } from '../backend/src/modules/regulationAccess.js';
 import { recognitionAttributes, seedAwardRegulations } from './seed-regulation-awards.mjs';
 import { filePath, storageRoot, validateFile } from '../backend/src/modules/files.js';
+import { saveSource, sourcePath } from '../backend/src/modules/regulationSources.js';
 import { evaluateVersion } from '../backend/src/modules/intelligenceEvaluator.js';
 import { runAssessment } from '../backend/src/modules/intelligenceRoutes.js';
 
 const { batch, kpis } = JSON.parse(await fs.readFile(new URL('./demo/lecturer-extra-fixtures.json', import.meta.url), 'utf8'));
+const regulationFixtures = new URL('./demo/regulations/', import.meta.url);
 
 const args = process.argv.slice(2).join(' ');
 const request = /^--apply --database=(PTUD_LHU(?:_SeedTest_[0-9]+)?)( --awards-only)?$/.exec(args);
@@ -150,6 +152,23 @@ try {
       {title:'Có quyết định công nhận sáng kiến',ref:'Checklist tự đặt của giảng viên',rule:count('sang-kien')},
     ]});
 
+    const sourceRegulations = JSON.parse(await fs.readFile(new URL('fixtures.json', regulationFixtures), 'utf8'));
+    for (const { regulation, version, source, criteria } of sourceRegulations) {
+      const regulation_id = await row('regulations', { ...regulation, owner_type: 'ORGANIZATION',
+        owner_organization_id: school, created_by_user_id: manager });
+      const regulation_version_id = await row('regulation_versions', { ...version, regulation_id, created_by_user_id: manager });
+      const buffer = await fs.readFile(new URL(encodeURIComponent(source.original_filename), regulationFixtures));
+      const saved = await saveSource({ buffer, originalname: source.original_filename });
+      written.push(sourcePath(saved.key));
+      await row('regulation_source_files', { ...source, regulation_version_id, owner_user_id: manager,
+        storage_key: saved.key, mime_type: saved.mime, byte_size: saved.size, sha256: saved.hash });
+      for (const criterion of criteria) await row('criteria', { ...criterion, regulation_version_id });
+      await query("UPDATE app.regulation_versions SET publication_status='PUBLISHED',published_at=SYSUTCDATETIME(),published_by_user_id=$2 WHERE id=$1",
+        [regulation_version_id, manager]);
+      await row('regulation_adoptions', { regulation_id, regulation_version_id, organization_id: school,
+        source_type: 'OWNED', adopted_by_user_id: manager });
+    }
+
     const catalog = {};
     for (const [kind, name] of [['lao-dong-tien-tien','Lao động tiên tiến'],['xuat-sac','Đánh giá nhiệm vụ'],['sang-kien','Sáng kiến'],['nghiem-thu','Đề tài KH&CN'],['ap-dung','Xác nhận áp dụng'],['cstd','Chiến sĩ thi đua'],['cong-bo','Công bố khoa học']])
       catalog[kind] = await row('achievement_types', {code:tag+'-'+kind,name:'[DEMO] '+name, attribute_schema_json: json(['sang-kien','nghiem-thu'].includes(kind) ? { type:'object', properties:recognitionAttributes } : {})});
@@ -248,7 +267,9 @@ try {
     }
     await query("UPDATE app.assessment_batches SET status='COMPLETED',completed_at=SYSUTCDATETIME() WHERE id=$1",[scanBatch]);
     return { accounts: accounts.map(([key, role]) => ({role,email:`${key}@tdkt.demo.example.test`})), cv:'/cv/demo-tdkt-giang-vien',
-      organizations:4, regulations:5, achievements:entries.length + batch.reduce((total, member) => total + member.achievements.length, 0), evidence:evidenceCount, kpis: kpis.length + 1, historyRuns };
+      organizations:4, regulations:Object.keys(awardVersions).length + 2 + sourceRegulations.length,
+      regulationSources:sourceRegulations.length, achievements:entries.length + batch.reduce((total, member) => total + member.achievements.length, 0),
+      evidence:evidenceCount, kpis:kpis.length + 1, historyRuns };
   });
   console.log(json(awardsOnly ? result : {...result,password},null,2));
 } catch (error) {

@@ -1,0 +1,146 @@
+[
+  {
+    "regulation": {
+      "code": "DEMO-TDKT-LUAT-2022",
+      "name": "[DEMO] Luật Thi đua, khen thưởng 06/2022/QH15",
+      "description": "Dữ liệu trình diễn. Tiêu chí mẫu phục vụ đối chiếu, không xác nhận đủ điều kiện công nhận danh hiệu.",
+      "is_public": true,
+      "is_internal": true
+    },
+    "version": {
+      "version_label": "Demo 2026",
+      "effective_from": "2024-01-01",
+      "effective_to": null,
+      "source_title": "Luật Thi đua, khen thưởng 06/2022/QH15",
+      "source_url": null,
+      "source_kind": "OFFICIAL",
+      "issuing_authority": "Quốc hội nước Cộng hòa xã hội chủ nghĩa Việt Nam",
+      "applicability_json": "{\"person_types\":[\"LECTURER\"]}",
+      "aggregation_json": "{\"operator\":\"AND\"}",
+      "coverage_json": "{}"
+    },
+    "source": {
+      "original_filename": "luat-thi-dua-khen-thuong-06-2022-signed.pdf",
+      "source_url": null,
+      "issuing_authority": null,
+      "is_demo": false,
+      "extracted_text": "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n----------------------------\nQUỐC HỘI\nLuật số: 06/2022/QH15\n\nLUẬT THI ĐUA, KHEN THƯỞNG\n\nChương I: NHỮNG QUY ĐỊNH CHUNG\nĐiều 1. Phạm vi điều chỉnh\nLuật này quy định về đối tượng, phạm vi, nguyên tắc, hình thức, tiêu chuẩn, thẩm quyền, trình tự và thủ tục thi đua, khen thưởng.\n\nĐiều 2. Đối tượng áp dụng\nLuật này áp dụng đối với cá nhân, tập thể, hộ gia đình người Việt Nam; cá nhân, tập thể người Việt Nam định cư ở nước ngoài; cá nhân, tập thể người nước ngoài.\n\nĐiều 5. Nguyên tắc thi đua, khen thưởng\n1. Việc thi đua được thực hiện theo các nguyên tắc: Tự nguyện, tự giác, công khai, minh bạch; Đoàn kết, hợp tác và cùng phát triển.\n2. Việc khen thưởng được thực hiện theo các nguyên tắc: Chính xác, công khai, minh bạch, công bằng, kịp thời; Bảo đảm thống nhất giữa hình thức, đối tượng khen thưởng và công trạng, thành tích đạt được; Một hình thức khen thưởng có thể tặng nhiều lần cho một đối tượng; không khen thưởng nhiều lần, nhiều hình thức cho một thành tích đạt được; thành tích đến đâu khen thưởng đến đó.\n\nChương II: DANH HIỆU THI ĐUA\nMục 1: DANH HIỆU THI ĐUA ĐỐI VỚI CÁ NHÂN\nĐiều 19. Danh hiệu thi đua đối với cá nhân\n1. \"Chiến sĩ thi đua toàn quốc\".\n2. \"Chiến sĩ thi đua cấp Bộ, ban, ngành, tỉnh\".\n3. \"Chiến sĩ thi đua cơ sở\".\n4. \"Lao động tiên tiến\", \"Chiến sĩ tiên tiến\".\n\nĐiều 22. Danh hiệu \"Chiến sĩ thi đua cấp Bộ, ban, ngành, tỉnh\"\n1. Danh hiệu \"Chiến sĩ thi đua cấp Bộ, ban, ngành, tỉnh\" để tặng cho cá nhân đạt các tiêu chuẩn sau đây:\na) Có thành tích xuất sắc tiêu biểu được lựa chọn trong số những cá nhân có 03 lần liên tục đạt danh hiệu \"Chiến sĩ thi đua cơ sở\";\nb) Có sáng kiến đã được áp dụng hiệu quả và có khả năng nhân rộng trong Bộ, ban, ngành, tỉnh hoặc có đề tài khoa học, đề án khoa học, công trình khoa học và công nghệ đã được nghiệm thu và áp dụng hiệu quả, có phạm vi ảnh hưởng trong Bộ, ban, ngành, tỉnh.\n\nĐiều 23. Danh hiệu \"Chiến sĩ thi đua cơ sở\"\nDanh hiệu \"Chiến sĩ thi đua cơ sở\" để tặng cho cá nhân đạt các tiêu chuẩn sau đây:\n1. Đạt tiêu chuẩn danh hiệu \"Lao động tiên tiến\" hoặc \"Chiến sĩ tiên tiến\";\n2. Hoàn thành xuất sắc nhiệm vụ hoặc có sáng kiến được cơ sở công nhận hoặc có đề tài khoa học, đề án khoa học, công trình khoa học và công nghệ đã được nghiệm thu hoặc mưu trí, sáng tạo trong chiến đấu, phục vụ chiến đấu được đơn vị công nhận.\n\nĐiều 24. Danh hiệu \"Lao động tiên tiến\", \"Chiến sĩ tiên tiến\"\n1. Danh hiệu \"Lao động tiên tiến\" để tặng cho cán bộ, công chức, viên chức, người lao động đạt các tiêu chuẩn sau đây:\na) Hoàn thành tốt nhiệm vụ trở lên;\nb) Có tinh thần tự lực, tự cường, đoàn kết, tương trợ, tích cực tham gia phong trào thi đua.\n\nChương III: HÌNH THỨC, ĐỐI TƯỢNG, TIÊU CHUẨN KHEN THƯỞNG\nMục 5: BẰNG KHEN, GIẤY KHEN\nĐiều 74. Bằng khen của Bộ, ban, ngành, tỉnh\n1. \"Bằng khen của Bộ, ban, ngành, tỉnh\" để tặng hoặc truy tặng cho cá nhân gương mẫu chấp hành tốt chủ trương của Đảng, chính sách, pháp luật của Nhà nước và đạt một trong các tiêu chuẩn sau đây:\na) Có thành tích xuất sắc tiêu biểu, được bình xét trong các phong trào thi đua;\nb) Có nhiều công lao, đóng góp gắn liền với sự phát triển của Bộ, ban, ngành, địa phương;\nc) Có 02 năm liên tục được đánh giá hoàn thành xuất sắc nhiệm vụ, trong thời gian đó có 02 sáng kiến được công nhận việc áp dụng hiệu quả hoặc có 02 đề tài khoa học, đề án khoa học, công trình khoa học và công nghệ đã được nghiệm thu và áp dụng hiệu quả;\n\nĐiều 75. Giấy khen\n1. Giấy khen để tặng cho cá nhân gương mẫu chấp hành tốt chủ trương của Đảng, chính sách, pháp luật của Nhà nước và đạt một trong các tiêu chuẩn sau đây:\na) Có thành tích được bình xét trong phong trào thi đua;\nb) Lập được thành tích đột xuất;\nc) Hoàn thành tốt nhiệm vụ, nghĩa vụ công dân; có phẩm chất đạo đức tốt, gương mẫu chấp hành chủ trương, chính sách;\n2. Giấy khen gồm:\na) Giấy khen của Thủ trưởng cơ quan, đơn vị trực thuộc Bộ, ban, ngành;\nb) Giấy khen của Chủ tịch Ủy ban nhân dân cấp huyện;\nc) Giấy khen của Thủ trưởng cơ quan, tổ chức, Hiệu trưởng các cơ sở giáo dục đại học.\n",
+      "extraction_status": "EXTRACTED",
+      "extraction_method": "MANUAL"
+    },
+    "criteria": [
+      {
+        "code": "C1",
+        "title": "Chiến sĩ thi đua cơ sở · Có quyết định Lao động tiên tiến năm 2026",
+        "description": null,
+        "rule_json": "{\"type\":\"count\",\"target\":1,\"from\":\"2026-01-01\",\"to\":\"2026-12-31\",\"filters\":[{\"field\":\"attributes.kind\",\"operator\":\"eq\",\"value\":\"lao-dong-tien-tien\"}]}",
+        "source_reference": "Điều 23 khoản 1",
+        "is_required": true,
+        "is_exclusion": false,
+        "sort_order": 0,
+        "coverage_status": "AUTOMATED",
+        "provenance_json": "{\"note\":\"Tiêu chí minh họa dựa trên dữ liệu tự khai.\"}"
+      },
+      {
+        "code": "C2",
+        "title": "Chiến sĩ thi đua cơ sở · Hoàn thành xuất sắc nhiệm vụ, sáng kiến được công nhận hoặc đề tài đã nghiệm thu",
+        "description": null,
+        "rule_json": "{\"operator\":\"OR\",\"rules\":[{\"type\":\"count\",\"target\":1,\"from\":\"2026-01-01\",\"to\":\"2026-12-31\",\"filters\":[{\"field\":\"attributes.kind\",\"operator\":\"eq\",\"value\":\"xuat-sac\"}]},{\"type\":\"count\",\"target\":1,\"from\":\"2026-01-01\",\"to\":\"2026-12-31\",\"filters\":[{\"field\":\"attributes.kind\",\"operator\":\"eq\",\"value\":\"sang-kien\"}]},{\"type\":\"count\",\"target\":1,\"from\":\"2026-01-01\",\"to\":\"2026-12-31\",\"filters\":[{\"field\":\"attributes.kind\",\"operator\":\"eq\",\"value\":\"nghiem-thu\"}]}]}",
+        "source_reference": "Điều 23 khoản 2 (nhánh minh họa cho giảng viên)",
+        "is_required": true,
+        "is_exclusion": false,
+        "sort_order": 0,
+        "coverage_status": "AUTOMATED",
+        "provenance_json": "{\"note\":\"Tiêu chí minh họa dựa trên dữ liệu tự khai.\"}"
+      }
+    ]
+  },
+  {
+    "regulation": {
+      "code": "DEMO-TDKT-LUAT-2026",
+      "name": "[DEMO] Luật sửa đổi 06/2026/QH16",
+      "description": "Dữ liệu trình diễn. Tiêu chí mẫu phục vụ đối chiếu, không xác nhận đủ điều kiện công nhận danh hiệu.",
+      "is_public": true,
+      "is_internal": true
+    },
+    "version": {
+      "version_label": "Demo 2026",
+      "effective_from": "2026-07-01",
+      "effective_to": null,
+      "source_title": "Luật sửa đổi 06/2026/QH16",
+      "source_url": null,
+      "source_kind": "OFFICIAL",
+      "issuing_authority": "Quốc hội nước Cộng hòa xã hội chủ nghĩa Việt Nam",
+      "applicability_json": "{\"person_types\":[\"LECTURER\"]}",
+      "aggregation_json": "{\"operator\":\"AND\"}",
+      "coverage_json": "{}"
+    },
+    "source": {
+      "original_filename": "06_2026_QH16.pdf",
+      "source_url": null,
+      "issuing_authority": null,
+      "is_demo": false,
+      "extracted_text": "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n----------------------------\nQUỐC HỘI\nLuật số: 06/2026/QH16\n\nLUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT THI ĐUA, KHEN THƯỞNG\n\nĐiều 1. Sửa đổi, bổ sung một số điều của Luật Thi đua, khen thưởng\n1. Sửa đổi, bổ sung điểm c và điểm d khoản 2 Điều 5 như sau:\n\"c) Một hình thức khen thưởng có thể tặng nhiều lần cho một đối tượng; thành tích đến đâu khen thưởng đến đó. Không khen thưởng nhiều lần, nhiều hình thức cho một thành tích đạt được, trừ khen thưởng công trạng;\nd) Chú trọng khen thưởng cá nhân, tập thể trực tiếp lao động, sản xuất, giảng dạy, nghiên cứu; cá nhân, tập thể có thành tích tiêu biểu mang lại hiệu quả thiết thực vì lợi ích chung, đi đầu trong ứng dụng khoa học, công nghệ, đổi mới sáng tạo, chuyển đổi số.\"\n\n2. Sửa đổi, bổ sung quy định về hồ sơ, thủ tục và công nhận thành tích qua môi trường điện tử:\nĐẩy mạnh việc nộp hồ sơ, đối chiếu dữ liệu thành tích và minh chứng trên cổng dịch vụ công và cơ sở dữ liệu số về thi đua khen thưởng.\n",
+      "extraction_status": "EXTRACTED",
+      "extraction_method": "MANUAL"
+    },
+    "criteria": [
+      {
+        "code": "C1",
+        "title": "Rà soát tính tiêu biểu và hiệu quả thực tế của thành tích giảng dạy, nghiên cứu",
+        "description": null,
+        "rule_json": "{\"type\":\"count\",\"target\":1}",
+        "source_reference": "Điều 1 · nguyên tắc khen thưởng",
+        "is_required": true,
+        "is_exclusion": false,
+        "sort_order": 0,
+        "coverage_status": "MANUAL",
+        "provenance_json": "{\"note\":\"Cần chuyên viên rà soát minh chứng.\"}"
+      }
+    ]
+  },
+  {
+    "regulation": {
+      "code": "DEMO-TDKT-TT-2026",
+      "name": "[DEMO] Thông tư 25/2026/TT-BNV",
+      "description": "Dữ liệu trình diễn. Tiêu chí mẫu phục vụ đối chiếu, không xác nhận đủ điều kiện công nhận danh hiệu.",
+      "is_public": true,
+      "is_internal": true
+    },
+    "version": {
+      "version_label": "Demo 2026",
+      "effective_from": "2026-10-01",
+      "effective_to": null,
+      "source_title": "Thông tư 25/2026/TT-BNV",
+      "source_url": null,
+      "source_kind": "OFFICIAL",
+      "issuing_authority": "Bộ Nội vụ",
+      "applicability_json": "{\"person_types\":[\"LECTURER\"]}",
+      "aggregation_json": "{\"operator\":\"AND\"}",
+      "coverage_json": "{}"
+    },
+    "source": {
+      "original_filename": "10-5-2026-8-51-30-am57. 727532.pdf",
+      "source_url": null,
+      "issuing_authority": null,
+      "is_demo": false,
+      "extracted_text": "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n----------------------------\nBỘ NỘI VỤ\nSố: 25/2026/TT-BNV\n\nTHÔNG TƯ\nQuy định biện pháp để tổ chức, hướng dẫn thi hành Luật Thi đua, khen thưởng và Nghị định số 368/2026/NĐ-CP của Chính phủ\n\nĐiều 1. Phạm vi điều chỉnh\nThông tư này quy định biện pháp để tổ chức, hướng dẫn thi hành một số điều của Luật Thi đua, khen thưởng về:\n1. Tiêu chuẩn và quy trình xét công nhận sáng kiến, phạm vi ảnh hưởng của nhiệm vụ khoa học và công nghệ;\n2. Tuyến trình khen thưởng và thẩm định hồ sơ minh chứng;\n3. Số hóa quy trình xét tặng, tích hợp dữ liệu thành tích cá nhân và tổ chức.\n\nĐiều 3. Đánh giá hiệu quả áp dụng của sáng kiến, đề tài khoa học công nghệ\n1. Sáng kiến, đề tài khoa học công nghệ làm căn cứ xét tặng danh hiệu \"Chiến sĩ thi đua cơ sở\" phải được Hội đồng sáng kiến hoặc Hội đồng khoa học cấp cơ sở nghiệm thu đạt từ mức Đạt trở lên.\n2. Hồ sơ minh chứng gồm: Quyết định công nhận sáng kiến hoặc Biên bản nghiệm thu đề tài NCKH kèm Giấy chứng nhận/Quyết định công nhận kết quả nghiên cứu.\n",
+      "extraction_status": "EXTRACTED",
+      "extraction_method": "MANUAL"
+    },
+    "criteria": [
+      {
+        "code": "C1",
+        "title": "Rà soát hồ sơ xác nhận hiệu quả và phạm vi áp dụng sáng kiến, đề tài",
+        "description": null,
+        "rule_json": "{\"type\":\"count\",\"target\":1}",
+        "source_reference": "Điều 3 · bản chép tham khảo",
+        "is_required": true,
+        "is_exclusion": false,
+        "sort_order": 0,
+        "coverage_status": "MANUAL",
+        "provenance_json": "{\"note\":\"Cần chuyên viên rà soát minh chứng.\"}"
+      }
+    ]
+  }
+]

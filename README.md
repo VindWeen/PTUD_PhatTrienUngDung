@@ -24,6 +24,7 @@ node --env-file=backend/.env scripts/seed-lecturer-demo.mjs --apply --database=P
 ```
 
 - Seed in danh sách tài khoản và mật khẩu demo dùng chung, được sinh mới mỗi lần dựng. Đăng nhập `gv-du@tdkt.demo.example.test` để xem kho thành tích, KPI và lịch sử đối chiếu cá nhân. Tài khoản `truong@tdkt.demo.example.test` xem lượt đối chiếu hàng loạt cấp trường.
+- Seed tạo 8 quy chế, trong đó 3 văn bản pháp luật có PDF đính kèm từ `scripts/demo/regulations/`. Các PDF được chép vào kho tệp riêng của ứng dụng khi chạy seed.
 - Ảnh chụp bộ demo ngày 19/11/2026 ghi nhận 20 tài khoản, 4 tổ chức, 44 thành tích với 9 tệp minh chứng, 4 KPI và 22 lượt đối chiếu. Mỗi khoa có thêm 4 thành viên với 2–3 thành tích. Ba KPI của `gv-du` lần lượt ở mức 100%, 50% và 0%.
 - Lịch sử demo được tính bằng engine hiện hành cho ngày 18 và 19/11/2026 và bao gồm lượt quét cấp trường cho hai khoa trực thuộc. Khoa Ngoại ngữ có thành viên riêng và yêu cầu liên kết đang chờ.
 - Seed đầy đủ dừng nếu bộ demo đã tồn tại. Cờ `--awards-only` dành cho cập nhật cấu hình quy chế và thuộc tính công nhận trên bộ demo cũ.
