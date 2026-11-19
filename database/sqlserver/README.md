@@ -13,10 +13,12 @@ npm run migrate
 npm run migrate:status
 npm run test:db:runner
 npm run test:db
-node ../database/sqlserver/verify.mjs --expect-empty
+node ../database/sqlserver/verify.mjs
 ```
 
 Runner chỉ đọc `database/sqlserver/migrations/`, kiểm checksum và dùng transaction cùng application lock. Database chưa có lịch sử V2 mà đã có bảng sẽ bị từ chối.
+
+Chỉ thêm `--expect-empty` khi database đích dự kiến không có dữ liệu nghiệp vụ. Chuỗi hiện hành có 8 migration và 38 khai báo bảng nghiệp vụ.
 
 Baseline khởi tạo schema trống. Dữ liệu nghiệp vụ được nhập qua ứng dụng.
 
@@ -40,4 +42,4 @@ Không sửa file migration sau khi đã áp dụng. Thay đổi tiếp theo th�
 
 ## Mở rộng quy chế ngày 15/11/2026
 
-Migration 003–005 bổ sung sở hữu cá nhân/tổ chức, chia sẻ, ghim phiên bản, nguồn PDF/DOCX và phương thức trích xuất AUTO/MANUAL. Các checksum đã áp dụng giữ nguyên. Dùng `verify.mjs` để đọc số bảng/ràng buộc hiện tại; số liệu 33 bảng/2 migration ở phần baseline là mốc lịch sử. Xem [quyết định chính sách](../../docs/testing/V2_REGULATION_DECISIONS.md) và [danh mục nguồn](sources/source-register.json).
+Migration 003–005 bổ sung sở hữu cá nhân/tổ chức, chia sẻ, ghim phiên bản, nguồn PDF/DOCX và phương thức trích xuất AUTO/MANUAL. Migration 006 nâng giới hạn nguồn lên 20 MiB. Migration 007 bổ sung chia sẻ đích danh và đơn gia nhập. Migration 008 bổ sung loại trừ quy chế cá nhân. Cả tám checksum giữ nguyên khi chuyển thư mục. Dùng `verify.mjs` để đọc số bảng/ràng buộc hiện tại; số liệu 33 bảng/2 migration ở phần baseline là mốc lịch sử. Xem [quyết định chính sách](../../docs/testing/V2_REGULATION_DECISIONS.md) và [danh mục nguồn](sources/source-register.json).

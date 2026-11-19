@@ -8,8 +8,8 @@ Thông báo nằm trong dropdown của nút chuông trên topbar, có số chưa
 
 Các trang nghiệp vụ dùng tiêu đề, mô tả ngắn, liên kết tác vụ liên quan; biểu mẫu và danh sách được nhóm trong các vùng riêng. Kích thước vùng bấm tối thiểu 44px, nhãn trường luôn hiện, có focus nhìn thấy, hỗ trợ mobile và chế độ giảm chuyển động. Giao diện tối dùng bề mặt và đường phân cách riêng.
 
-Điều hướng chính thống nhất: Trang chủ, Hồ sơ & CV, Kho thành tích, Khám hồ sơ, Mục tiêu / KPI, Kho quy chế, Tổ chức. Tìm kiếm toàn hệ thống đặt trên topbar; báo cáo truy cập từ Trang chủ hoặc Kho thành tích.
+Điều hướng chính thống nhất: Trang chủ, Hồ sơ & CV, Kho thành tích, Khám hồ sơ, Mục tiêu / KPI, Kho quy chế, Tổ chức. Tìm kiếm toàn hệ thống đặt trên topbar; Thống kê & Báo cáo có route `/reports` và được tìm qua tìm kiếm toàn hệ thống.
 
-Trang chủ dùng bốn lối tắt và hàng dưới chia lịch/mục tiêu khoảng 65/35 trên desktop. Các trang nghiệp vụ ưu tiên danh sách toàn chiều rộng; thêm/sửa thành tích, tạo mục tiêu, chi tiết mục tiêu và tạo tổ chức dùng dialog gốc của trình duyệt. Hồ sơ chia tab thông tin, CV và bảo mật. Danh sách thành tích có bảng, bộ lọc và tab thùng rác; quy chế dùng thẻ phiên bản và bộ lọc; báo cáo tổng hợp toàn bộ thành tích theo năm/loại. Màu hành động chính là #0F766E.
+Trang chủ dùng bốn lối tắt và hàng dưới chia lịch/mục tiêu khoảng 65/35 trên desktop. Các trang nghiệp vụ ưu tiên danh sách toàn chiều rộng; thêm/sửa thành tích, tạo mục tiêu, chi tiết mục tiêu và tạo tổ chức dùng dialog gốc của trình duyệt. Hồ sơ chia tab thông tin, CV và bảo mật. Danh sách thành tích có bảng, bộ lọc và tab thùng rác; quy chế dùng thẻ phiên bản và bộ lọc; báo cáo tổng hợp toàn bộ thành tích theo năm/loại. Màu hành động chính là #0F766E. Xem [chín module trang](../TECHNICAL_DEEP_DIVE.md#31-module-trang-và-component-đi-kèm) và [UI dùng chung](src/components/common).
 
-Giới hạn hợp đồng API hiện tại: tham gia tổ chức qua lời mời email; chưa có mã tham gia hoặc danh sách phiên đăng nhập. Quy chế lọc theo nguồn ban hành hiện có, chưa có trường cấp ban hành riêng.
+Giới hạn hợp đồng API hiện tại: tham gia tổ chức qua lời mời email hoặc gửi đơn gia nhập để người có quyền xử lý. Quy chế lọc theo nguồn ban hành hiện có, chưa có trường cấp ban hành riêng.

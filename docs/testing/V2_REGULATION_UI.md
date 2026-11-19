@@ -13,6 +13,8 @@ Ngày 16/11/2026, kiểm thử bằng Edge headless, Vite `localhost:5188`, back
 
 ## Kiểm tra mã và giới hạn
 
+Các ảnh và lỗi sandbox ở đây thuộc lần kiểm UI ngày 16/11. Tại `91e9968`, frontend lint, build và 18/18 test đạt sau tái cấu trúc. Mốc này chưa có lần nghiệm thu trình duyệt mới.
+
 - `npm run build` trong `frontend` đạt; `npm test` đạt 11/11; `npm run lint` đạt sau sửa dependency hook. Các lệnh này cần chạy ngoài sandbox trên máy này vì Vite gặp `EPERM` khi gọi `realpath` trong sandbox.
 - Sau tối ưu đọc của backend, log `GET /regulations/documents?pageSize=100` có lần 655 ms và các lần khác khoảng 1,6–7,8 giây dưới tải khác nhau; trước đó có lần 5,5–12,9 giây và một lần 44,9 giây. Đây là quan sát thô, không phải benchmark kiểm soát.
 - Giao diện khóa điều khiển trong lúc action và tải lại đang chạy. Đã trì hoãn yêu cầu thêm công khai v2 vào kho cá nhân ba giây bằng Playwright: nút bị vô hiệu và có `Đang xử lý…`, sau đó thấy thông báo thành công. Các endpoint vẫn là nơi thực thi quyền chính xác. Với người quản lý không phải thành viên, danh sách cá nhân không đủ để biết tổ chức đã có pin hay chưa, nên danh sách tổ chức hiển thị nếu có quyền tiếp nhận hoặc cập nhật, còn backend kiểm tra quyền tương ứng khi gửi.

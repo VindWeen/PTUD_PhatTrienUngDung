@@ -1,6 +1,6 @@
 # Phân tích kỹ thuật hệ thống quản lý thành tích
 
-Tài liệu bổ sung cho [SYSTEM_OVERVIEW.md](SYSTEM_OVERVIEW.md). Schema được đọc theo thứ tự migration 001–008 trong [SQL Server V2](database/sqlserver/migrations). Phần backend dựa trên [các handler V2](backend/src/modules). Phần frontend mô tả cấu trúc đã tách theo trách nhiệm.
+Tài liệu bổ sung cho [SYSTEM_OVERVIEW.md](SYSTEM_OVERVIEW.md). Schema được đọc theo thứ tự migration 001–008 trong [SQL Server V2](database/sqlserver/migrations). Phần backend dựa trên [các handler V2](backend/src/modules). Phần frontend mô tả cấu trúc tại commit `91e9968`. Kiểm tra sau khi tách xác nhận định nghĩa route giữ nguyên, import tương đối hợp lệ và 8 migration giữ nguyên từng byte.
 
 ## 1. Schema và dữ liệu động
 
@@ -167,7 +167,7 @@ MANUAL và UNSUPPORTED là `coverage_status`, đều lưu kết luận INSUFFICI
 
 Nguồn mã [intelligenceEvaluator.js](backend/src/modules/intelligenceEvaluator.js), [intelligenceRoutes.js](backend/src/modules/intelligenceRoutes.js#L100), [supportRoutes.js](backend/src/modules/supportRoutes.js).
 
-## 3. Bản đồ và phương án tách frontend
+## 3. Cấu trúc frontend hiện hành
 
 ### 3.1. Module trang và component đi kèm
 

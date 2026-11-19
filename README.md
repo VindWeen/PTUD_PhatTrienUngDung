@@ -24,7 +24,7 @@ node --env-file=backend/.env scripts/seed-lecturer-demo.mjs --apply --database=P
 ```
 
 - Seed in danh sách tài khoản và mật khẩu demo dùng chung, được sinh mới mỗi lần dựng. Đăng nhập `gv-du@tdkt.demo.example.test` để xem kho thành tích, KPI và lịch sử đối chiếu cá nhân. Tài khoản `truong@tdkt.demo.example.test` xem lượt đối chiếu hàng loạt cấp trường.
-- Bộ demo có 20 tài khoản, 4 tổ chức, 44 thành tích với 9 tệp minh chứng, 4 KPI và 22 lượt đối chiếu. Mỗi khoa có thêm 4 thành viên với 2–3 thành tích. Ba KPI của `gv-du` lần lượt ở mức 100%, 50% và 0%.
+- Ảnh chụp bộ demo ngày 19/11/2026 ghi nhận 20 tài khoản, 4 tổ chức, 44 thành tích với 9 tệp minh chứng, 4 KPI và 22 lượt đối chiếu. Mỗi khoa có thêm 4 thành viên với 2–3 thành tích. Ba KPI của `gv-du` lần lượt ở mức 100%, 50% và 0%.
 - Lịch sử demo được tính bằng engine hiện hành cho ngày 18 và 19/11/2026 và bao gồm lượt quét cấp trường cho hai khoa trực thuộc. Khoa Ngoại ngữ có thành viên riêng và yêu cầu liên kết đang chờ.
 - Seed đầy đủ dừng nếu bộ demo đã tồn tại. Cờ `--awards-only` dành cho cập nhật cấu hình quy chế và thuộc tính công nhận trên bộ demo cũ.
 
@@ -32,7 +32,7 @@ node --env-file=backend/.env scripts/seed-lecturer-demo.mjs --apply --database=P
 
 - Trong `backend/`, `npm test` kiểm tra độc lập; `npm run test:sqlserver` chạy kiểm tra schema, danh tính, đánh giá và API V2 trên SQL Server với dữ liệu kiểm thử rollback.
 - Trong `frontend/`, chạy `npm run lint`, `npm test` và `npm run build`.
-- Lần kiểm tra chuyển V2 ghi nhận 15 kiểm tra backend độc lập, 13 ràng buộc schema và 7 kiểm tra frontend; các bộ tích hợp identity/intelligence/API cũng chạy với dữ liệu tạm rollback. Đây không phải xác nhận mọi trường hợp nghiệp vụ đã hoàn tất.
+- Tại commit `91e9968`, frontend lint và build đạt, 18/18 test frontend đạt, 27/27 test backend độc lập và 51/51 test tích hợp SQL Server đạt. `migrate:status` xác nhận cả 8 migration đã áp dụng.
 - OCR cần cấu hình dịch vụ; khôi phục mật khẩu qua email cần cấu hình gửi thư. Quy chế cần được xây dựng và xác minh trước khi kết quả khám có ý nghĩa.
 
 Backend, frontend và migration trong nhánh này dùng kiến trúc V2. Lịch sử triển khai trước V2 có thể tra cứu trong Git.

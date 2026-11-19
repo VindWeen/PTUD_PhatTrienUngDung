@@ -1,4 +1,0 @@
-﻿code,title,measureUnit,periodStart,periodEnd,target,plan,sourceNote,actual,evidenceNote
-VID-01-CSV-01,VID-01 | Mục tiêu bài báo MÔ PHỎNG,bài,2026-01-01,2026-12-31,2,"Chuẩn bị bản thảo, thu thập minh chứng",MÔ PHỎNG - người dùng tự nhập,,
-VID-01-CSV-02,VID-01 | Mục tiêu nghiên cứu MÔ PHỎNG,hồ sơ,2026-01-01,2026-12-31,2,Chuẩn bị hồ sơ nghiên cứu,MÔ PHỎNG - người dùng tự nhập,1,"MÔ PHỎNG - kết quả tự kê khai, chưa được xác nhận"
-VID-01-CSV-BAD01,VID-01 | Lỗi kỳ MÔ PHỎNG,bài,2026-12-31,2026-01-01,2,Kiểm tra dữ liệu,MÔ PHỎNG,,

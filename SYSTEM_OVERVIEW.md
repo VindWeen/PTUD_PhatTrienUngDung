@@ -2,7 +2,7 @@
 
 ## Phạm vi và cách đọc
 
-Tài liệu phản ánh mã nguồn trong workspace tại thời điểm rà soát. Việc kiểm tra dựa trên đăng ký route, component, lời gọi HTTP, handler, truy vấn SQL và migration. Các tích hợp bên ngoài và dữ liệu trên môi trường triển khai chưa được kiểm thử trong lần rà soát này.
+Tài liệu phản ánh mã nguồn trong workspace tại thời điểm rà soát. Việc kiểm tra dựa trên đăng ký route, component, lời gọi HTTP, handler, truy vấn SQL và migration. Đối chiếu tại commit `91e9968`. Kiểm tra sau tái cấu trúc đạt 18 test frontend, 27 test backend độc lập và 51 test tích hợp SQL Server với fixture rollback. Trạng thái UI và handler trong bảng dựa trên mã nguồn. Dịch vụ bên ngoài chưa được kiểm trong suite này.
 
 - **Frontend** dùng React Router. Nguồn đăng ký URL là [AppRoutes.jsx](frontend/src/routes/AppRoutes.jsx). Các trang nghiệp vụ nằm trong `frontend/src/pages/` và dùng chung [vaultApi.js](frontend/src/services/vaultApi.js) cùng các hook tải dữ liệu.
 - **Backend** dùng Express. [app.js](backend/src/app.js) mount sáu router nghiệp vụ trong `backend/src/modules` và router health. Tiền tố mặc định là `/api/v1`, có thể cấu hình qua `API_PREFIX` và `VITE_API_URL`. Các endpoint bên dưới viết tương đối với tiền tố đó, trừ khi được ghi rõ.

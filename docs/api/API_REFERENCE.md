@@ -14,7 +14,7 @@ Tiền tố mặc định `/api/v1`. Đây là chỉ mục các nhóm API hiện
 
 Thành tích thuộc người tạo; việc xem kết quả khám tổ chức không mặc nhiên cho phép đọc minh chứng riêng. KPI từ tiêu chí thiếu dựa trên kết quả đã lưu, còn hiệu lực và thỏa điều kiện backend. CV công khai chỉ hiển thị dữ liệu chủ sở hữu đã chọn. Quy chế và tiêu chí cần được nhập, kiểm chứng và công bố trước khi sử dụng để khám.
 
-API xét duyệt thành tích, hồ sơ đề nghị và khen thưởng của phiên bản cũ không được gắn vào runtime V2. Các file module/schema/test cũ vẫn còn trong kho và chưa phải hợp đồng API hiện hành.
+API xét duyệt và khen thưởng đời trước có thể tra cứu trong lịch sử Git.
 
 ## Liên kết và gia nhập tổ chức
 
@@ -31,6 +31,13 @@ API xét duyệt thành tích, hồ sơ đề nghị và khen thưởng của ph
 - Phiên bản hỗ trợ `source_kind` (MANUAL/OFFICIAL/DEMO), `issuing_authority,collected_at,coverage` (các mảng automated/manual/unsupported). Tiêu chí hỗ trợ `coverage_status` và `provenance:{source_quote,page,note}`. Loại MANUAL/UNSUPPORTED không tự kết luận đạt.
 - Khám cá nhân POST `/ai/evaluations/structured` hỗ trợ `adoption_id`. Nếu chỉ có một bối cảnh thì backend suy ra; nhiều bối cảnh phải chọn rõ. Kết quả lưu bối cảnh và ảnh chụp đầu vào, không thay pin tự động. Tự khám tất cả giữ từng bối cảnh; khám tổ chức bắt buộc phiên bản đã được tổ chức/cấp trên chọn.
 
+## Lịch sử đánh giá và thông báo
+
+- `GET /ai/evaluations/structured/latest` trả lần đánh giá mới nhất theo phiên bản và bối cảnh. `GET /ai/evaluations/structured/history` trả lịch sử phân trang. `GET /ai/evaluations/structured/:id` trả chi tiết.
+- `POST /organizations/units/:id/assessment-notifications` gửi kết quả cho thành viên trong phạm vi quyền. `PATCH /notifications/:id/read` và `POST /notifications/read-all` đánh dấu đã đọc.
+- `DELETE /regulations/versions/:id/adopt` bỏ áp dụng cho cá nhân.
+- API lịch cá nhân dùng `GET/POST /me/calendar/events` và `PATCH/DELETE /me/calendar/events/:id`. Xem [payload và cách kiểm tra](../PERSONAL_CALENDAR.md).
+
 ## File nguồn quy chế
 
-Tiền tố `/regulations/versions/:id/source`: POST multipart với một trường `file` PDF/DOCX <=10 MB; các trường tùy chọn `sourceUrl,collectedAt,issuingAuthority,isDemo` (chuỗi true/false). GET metadata/văn bản; GET `/download` kiểm quyền và SHA256; POST `/extract` trích xuất; PATCH `/text` với `{text,confirmed:true}` nhập bản chép đã kiểm tra; POST `/ai-propose` chỉ trả đề xuất có căn cứ, không ghi tiêu chí; POST `/review` với `{confirmed:true}` xác nhận nguồn/bộ tiêu chí. Chỉnh sửa nội dung sau đó làm mất xác nhận. Công bố nguồn-backed cần xác nhận; bản công bố không sửa nguồn/nội dung. Không trả storage key hay URL static.
+Tiền tố `/regulations/versions/:id/source`: POST multipart với một trường `file` PDF/DOCX tối đa 20 MiB; các trường tùy chọn `sourceUrl,collectedAt,issuingAuthority,isDemo` (chuỗi true/false). GET metadata/văn bản; GET `/preview` lấy bản xem trước; GET `/download` kiểm quyền và SHA256; POST `/extract` trích xuất; PATCH `/text` với `{text,confirmed:true}` nhập bản chép đã kiểm tra; POST `/ai-propose` chỉ trả đề xuất có căn cứ, không ghi tiêu chí; POST `/review` với `{confirmed:true}` xác nhận nguồn/bộ tiêu chí. Chỉnh sửa nội dung sau đó làm mất xác nhận. Công bố nguồn-backed cần xác nhận; bản công bố không sửa nguồn/nội dung. Không trả storage key hay URL static.

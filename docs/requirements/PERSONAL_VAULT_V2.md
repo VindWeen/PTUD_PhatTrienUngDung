@@ -2,7 +2,7 @@
 
 Ngày: 15/11/2026. Trạng thái: schema, API runtime và giao diện đã chuyển sang nền V2. Các sơ đồ và use case mô tả cả mục tiêu nghiệp vụ; không mặc định mọi chi tiết đều đã hoàn thiện hoặc nghiệm thu.
 
-Schema: [migration V2](../../database/sqlserver/migrations/001_v2_schema.sql), [ràng buộc liên dòng](../../database/sqlserver/migrations/002_v2_integrity.sql). Đã áp dụng 2 migration: 33 bảng nghiệp vụ, 71 FK, 80 CHECK, 11 trigger. Baseline được tạo rỗng, không có seed/import tự động. Đã kiểm tra 13 ràng buộc schema và các luồng identity/intelligence/API trên SQL Server với dữ liệu kiểm thử rollback; tình trạng dữ liệu hiện tại cần kiểm tra trực tiếp.
+Schema: [migration V2](../../database/sqlserver/migrations/001_v2_schema.sql), [ràng buộc liên dòng](../../database/sqlserver/migrations/002_v2_integrity.sql). Tại mốc baseline, 2 migration đầu tạo 33 bảng nghiệp vụ, 71 FK, 80 CHECK, 11 trigger. Baseline được tạo rỗng, không có seed/import tự động. Đã kiểm tra 13 ràng buộc schema và các luồng identity/intelligence/API trên SQL Server với dữ liệu kiểm thử rollback; tình trạng dữ liệu hiện tại cần kiểm tra trực tiếp.
 
 Tài liệu này mô tả hướng mới theo trao đổi với người dùng: tự lưu thành tích, khám hồ sơ theo quy chế, lập KPI từ phần còn thiếu, tạo CV và hỗ trợ thành viên trong cây tổ chức. Tài liệu Markdown xét duyệt cũ đã được dọn; các tài sản lịch sử còn giữ không thay thế phạm vi V2.
 
@@ -371,7 +371,9 @@ erDiagram
 7. Chống chu trình tổ chức, thành viên trùng trong cùng khoảng hiệu lực, slug trùng và tham chiếu CV đến thành tích không thuộc người sở hữu.
 8. Lưu nhật ký thay đổi quyền, quy chế, chia sẻ và thao tác dữ liệu quan trọng. Không xóa dây chuyền lịch sử đánh giá.
 
-## 7. Database cũ: bỏ phần nào, giữ phần nào?
+## 7. Quyết định lưu trữ database đời trước
+
+Bảng dưới ghi lại phương án tại thời điểm thiết kế. Mã, migration và tooling legacy đã được dọn khỏi cây runtime. Chuỗi hiện hành có 8 migration trong [database/sqlserver/migrations](../../database/sqlserver/migrations). Xem [mở rộng quy chế và seed](GOAL_REGULATIONS_AND_SEED_V2.md) cùng [API gia nhập](../api/API_REFERENCE.md#liên-kết-và-gia-nhập-tổ-chức).
 
 ### 7.1. Phân biệt các bộ file hiện có
 
@@ -410,7 +412,7 @@ Không thể xóa migration SQL Server cũ để “làm sạch” ngay: runner 
 5. Chuyển API và giao diện, khóa endpoint cũ, cập nhật seed/test/tài liệu.
 6. Lưu trữ mã và schema cũ; chỉ loại bỏ bảng/database sau khi đã chốt đích và xác minh chuyển đổi.
 
-Đợt thiết kế/dọn tài liệu ban đầu không thay đổi database. Theo yêu cầu reset ngày 15/11/2026, đã xóa 7 database dự án cũ và tạo lại duy nhất `PTUD_LHU`. Sau đó đã áp dụng baseline V2 và ràng buộc V2, tạo 33 bảng nghiệp vụ rỗng; chỉ bảng kỹ thuật lưu 2 migration. Chưa seed/import. Các database không thuộc dự án giữ nguyên; file minh chứng và backup trên đĩa không bị xóa. Runner mặc định đã chuyển sang `database/sqlserver/migrations/`; schema/tooling cũ còn giữ để xử lý phụ thuộc nhưng không được runner chạy. API runtime và giao diện hiện dùng V2. Dữ liệu quy chế và danh mục cần tạo hoặc import riêng; các tài sản legacy chưa gắn runtime vẫn còn chờ dọn.
+Đợt thiết kế/dọn tài liệu ban đầu không thay đổi database. Theo yêu cầu reset ngày 15/11/2026, đã xóa 7 database dự án cũ và tạo lại duy nhất `PTUD_LHU`. Sau đó đã áp dụng baseline V2 và ràng buộc V2, tạo 33 bảng nghiệp vụ rỗng; chỉ bảng kỹ thuật lưu 2 migration. Chưa seed/import. Các database không thuộc dự án giữ nguyên; file minh chứng và backup trên đĩa không bị xóa. Runner mặc định đã chuyển sang `database/sqlserver/migrations/`; schema và tooling đời trước có thể tra cứu trong lịch sử Git. API runtime và giao diện hiện dùng V2. Dữ liệu quy chế và danh mục cần tạo hoặc import riêng; các tài sản phục vụ báo cáo có thể được lưu riêng theo mốc.
 
 ## 8. Các lựa chọn cần thống nhất trước schema vật lý
 

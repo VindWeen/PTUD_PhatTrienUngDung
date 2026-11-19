@@ -2,7 +2,7 @@
 
 > Xem [hướng dẫn SQL Server V2](../../database/sqlserver/README.md) cho schema và migration hiện hành.
 
-Cập nhật 11/11/2026. React/Vite giao tiếp Express REST; Express dùng driver mssql và T-SQL trên SQL Server. Không cần tài khoản Supabase để chạy phiên bản hiện tại.
+Đối chiếu tại commit `91e9968`. CI sử dụng Node.js 24. React/Vite giao tiếp Express REST; Express dùng driver mssql và T-SQL trên SQL Server. Không cần tài khoản Supabase để chạy phiên bản hiện tại.
 
 ## Cài ở máy khác
 
@@ -10,7 +10,7 @@ Cập nhật 11/11/2026. React/Vite giao tiếp Express REST; Express dùng driv
 2. Trong backend: npm ci. Chép .env.example thành .env nếu chưa có; điền DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD. SQL Login dùng mật khẩu riêng, không dùng mật khẩu tài khoản Windows. Instance có named port cần điền đúng cổngTCP.
 3. Điền JWT_ACCESS_SECRET và cấu hình kho tệp private. TLS local theo mẫu; máy chủ bên ngoài dùng cấu hình chứng chỉ tương ứng.
 4. npm run migrate; npm run migrate:status. Runner chỉ đọc database/sqlserver/migrations, kiểm checksum và khóa migration bằng transaction-owned application lock.
-5. Tạo tài khoản quản trị đầu tiên theo hướng dẫn backend rồi nhập dữ liệu qua ứng dụng.
+5. Tạo tài khoản quản trị đầu tiên theo [hướng dẫn backend](../../backend/README.md) với `node ../scripts/provision-admin.mjs --apply` từ `backend/`.
 6. npm start. Terminal khác: cd frontend; npm ci; npm run dev. Mở http://localhost:5173.
 
 ## Kiểm tra

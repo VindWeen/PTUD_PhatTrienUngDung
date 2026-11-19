@@ -27,4 +27,4 @@ Nguồn ưu tiên: hướng dẫn mới của người dùng; source hiện tạ
 - Lớp: 23CT112.
 - Tạ Trần Vinh Quang — MSSV 123000033.
 - Võ Nhạc Phước — MSSV 123000034.
-- Báo cáo hiện tại: `bao-cao/BaoCaoHocPhan_LHU_3Chuong_SQLServer.docx`. Báo cáo phải bám kết quả SQL Server thực tế, không lặp lại mô tả PostgreSQL là hiện trạng.
+- Bản ba chương SQL Server lưu theo mốc khảo sát: `bao-cao/BaoCaoHocPhan_LHU_3Chuong_SQLServer.docx`. Bản nộp lưu trữ là `bao-cao/BaoCaoHocPhan_LHU_BanNop_20261112.docx`. Khi cần hiện trạng kỹ thuật, xem [tổng quan](../SYSTEM_OVERVIEW.md) và [phân tích kỹ thuật](../TECHNICAL_DEEP_DIVE.md). Báo cáo phải bám kết quả SQL Server thực tế, không lặp lại mô tả PostgreSQL là hiện trạng.

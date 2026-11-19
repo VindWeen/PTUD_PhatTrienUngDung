@@ -12,11 +12,11 @@ Khôi phục mật khẩu qua email cần `APP_PUBLIC_URL`, `RESET_EMAIL_API_KEY
 
 ## Kiểm tra
 
-- `npm test`: kiểm thử độc lập cho runner, đánh giá và quyền.
+- `npm test`: kiểm thử độc lập cho runner, đánh giá, quyền và adapter AI Pool.
 - `npm run test:sqlserver`: schema và tích hợp V2 trên SQL Server, sử dụng dữ liệu tạm rollback.
 - `npm run test:db` hoặc `npm run test:api`: chạy riêng kiểm tra schema hoặc API.
 
-Lần kiểm tra chuyển V2 ghi nhận 15 kiểm tra độc lập, 13 kiểm tra ràng buộc schema và các bộ identity/intelligence/API tích hợp. Xem [chỉ mục API](../docs/api/API_REFERENCE.md). Kết quả kiểm thử không thay thế rà soát quy chế thực tế hoặc nghiệm thu toàn bộ tình huống.
+Tại commit `91e9968`, 27/27 test độc lập và 51/51 test tích hợp SQL Server đạt. Xem [chỉ mục API](../docs/api/API_REFERENCE.md). Kết quả kiểm thử không thay thế rà soát quy chế thực tế hoặc nghiệm thu toàn bộ tình huống.
 
 Các hợp đồng và module đời trước có thể tra cứu trong lịch sử Git.
 

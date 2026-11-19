@@ -1,8 +1,10 @@
 # Database — SQL Server V2
 
-Ngày 15/11/2026: đã reset database dự án và áp dụng 2 migration V2 vào PTUD_LHU. Hiện có **33 bảng nghiệp vụ**, 71 foreign key, 80 check constraint và 11 trigger. Baseline ban đầu không có dữ liệu nghiệp vụ; bảng kỹ thuật app._schema_migrations lưu lịch sử áp dụng. Trạng thái hiện tại cần kiểm tra trực tiếp trước khi dùng tùy chọn `--expect-empty`.
+Ngày 15/11/2026: đã reset database dự án và áp dụng 2 migration V2 vào PTUD_LHU. Baseline tại mốc đó có **33 bảng nghiệp vụ**, 71 foreign key, 80 check constraint và 11 trigger. Baseline ban đầu không có dữ liệu nghiệp vụ; bảng kỹ thuật app._schema_migrations lưu lịch sử áp dụng. Trạng thái hiện tại cần kiểm tra trực tiếp trước khi dùng tùy chọn `--expect-empty`.
 
 Schema mới nằm tại [sqlserver/migrations/](sqlserver/migrations/). Runner database/scripts/migrate.js chỉ đọc chuỗi V2; không chạy migration cũ. Xem [hướng dẫn V2](sqlserver/README.md) và [thiết kế nghiệp vụ](../docs/requirements/PERSONAL_VAULT_V2.md).
+
+Chuỗi hiện hành gồm 8 migration và 38 khai báo bảng nghiệp vụ. Tại `91e9968`, `migrate:status` xác nhận đủ 8 migration đã áp dụng trên SQL Server local. Dùng verifier để lấy số ràng buộc và trạng thái schema trên DB đích.
 
 ## Lệnh từ thư mục backend
 
