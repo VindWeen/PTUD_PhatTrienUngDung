@@ -5,7 +5,7 @@ import { once } from 'node:events';
 import { randomUUID } from 'node:crypto';
 import app from '../src/app.js';
 import { Pool, getDbPoolConfig, setPool } from '../src/config/database.js';
-import { discardSource } from '../src/v2/regulationSources.js';
+import { discardSource } from '../src/modules/regulationSources.js';
 
 function scannedPdf() {
   // Valid blank page represents a source without a machine-readable text layer.

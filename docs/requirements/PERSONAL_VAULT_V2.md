@@ -2,7 +2,7 @@
 
 Ngày: 15/11/2026. Trạng thái: schema, API runtime và giao diện đã chuyển sang nền V2. Các sơ đồ và use case mô tả cả mục tiêu nghiệp vụ; không mặc định mọi chi tiết đều đã hoàn thiện hoặc nghiệm thu.
 
-Schema: [migration V2](../../database/sqlserver/v2/migrations/001_v2_schema.sql), [ràng buộc liên dòng](../../database/sqlserver/v2/migrations/002_v2_integrity.sql). Đã áp dụng 2 migration: 33 bảng nghiệp vụ, 71 FK, 80 CHECK, 11 trigger. Baseline được tạo rỗng, không có seed/import tự động. Đã kiểm tra 13 ràng buộc schema và các luồng identity/intelligence/API trên SQL Server với dữ liệu kiểm thử rollback; tình trạng dữ liệu hiện tại cần kiểm tra trực tiếp.
+Schema: [migration V2](../../database/sqlserver/migrations/001_v2_schema.sql), [ràng buộc liên dòng](../../database/sqlserver/migrations/002_v2_integrity.sql). Đã áp dụng 2 migration: 33 bảng nghiệp vụ, 71 FK, 80 CHECK, 11 trigger. Baseline được tạo rỗng, không có seed/import tự động. Đã kiểm tra 13 ràng buộc schema và các luồng identity/intelligence/API trên SQL Server với dữ liệu kiểm thử rollback; tình trạng dữ liệu hiện tại cần kiểm tra trực tiếp.
 
 Tài liệu này mô tả hướng mới theo trao đổi với người dùng: tự lưu thành tích, khám hồ sơ theo quy chế, lập KPI từ phần còn thiếu, tạo CV và hỗ trợ thành viên trong cây tổ chức. Tài liệu Markdown xét duyệt cũ đã được dọn; các tài sản lịch sử còn giữ không thay thế phạm vi V2.
 
@@ -380,7 +380,7 @@ erDiagram
 | `supabase/migrations/`, seed và cấu hình Supabase | Nguồn PostgreSQL lịch sử; runner hiện không dùng. | Đưa vào lưu trữ lịch sử sau khi rà toàn bộ script/test còn tham chiếu. |
 | `database/migrations/`, `database/seed/` | Bộ schema/seed legacy, không phải thư mục migration mà runner hiện đọc. | Rà phụ thuộc rồi lưu trữ cùng tài liệu cũ. |
 | `database/sqlserver/migrations/001..005` | Chuỗi SQL Server lịch sử của mô hình cũ; runner hiện không đọc. | Giữ để xử lý phụ thuộc công cụ/test cũ; không áp dụng lên DB V2. |
-| `database/sqlserver/v2/migrations/` | Chuỗi V2 mà `database/scripts/migrate.js` hiện đọc và kiểm checksum. | Đã áp dụng baseline và integrity; thay đổi tiếp theo thêm migration mới. |
+| `database/sqlserver/migrations/` | Chuỗi V2 mà `database/scripts/migrate.js` hiện đọc và kiểm checksum. | Đã áp dụng baseline và integrity; thay đổi tiếp theo thêm migration mới. |
 | `database/sqlserver/seed.sql`, script demo và scenario | Dữ liệu theo mô hình cũ hoặc pha trộn. | Viết bộ seed V2 sau khi chốt mô hình, tách khỏi dữ liệu thật. |
 | DB local và các DB demo/backup | Đã reset các DB dự án theo yêu cầu ngày 15/11/2026; backup trên đĩa được giữ. | Kiểm tra trạng thái hiện tại và sao lưu trước thao tác tiếp theo. |
 
@@ -410,7 +410,7 @@ Không thể xóa migration SQL Server cũ để “làm sạch” ngay: runner 
 5. Chuyển API và giao diện, khóa endpoint cũ, cập nhật seed/test/tài liệu.
 6. Lưu trữ mã và schema cũ; chỉ loại bỏ bảng/database sau khi đã chốt đích và xác minh chuyển đổi.
 
-Đợt thiết kế/dọn tài liệu ban đầu không thay đổi database. Theo yêu cầu reset ngày 15/11/2026, đã xóa 7 database dự án cũ và tạo lại duy nhất `PTUD_LHU`. Sau đó đã áp dụng baseline V2 và ràng buộc V2, tạo 33 bảng nghiệp vụ rỗng; chỉ bảng kỹ thuật lưu 2 migration. Chưa seed/import. Các database không thuộc dự án giữ nguyên; file minh chứng và backup trên đĩa không bị xóa. Runner mặc định đã chuyển sang `database/sqlserver/v2/migrations/`; schema/tooling cũ còn giữ để xử lý phụ thuộc nhưng không được runner chạy. API runtime và giao diện hiện dùng V2. Dữ liệu quy chế và danh mục cần tạo hoặc import riêng; các tài sản legacy chưa gắn runtime vẫn còn chờ dọn.
+Đợt thiết kế/dọn tài liệu ban đầu không thay đổi database. Theo yêu cầu reset ngày 15/11/2026, đã xóa 7 database dự án cũ và tạo lại duy nhất `PTUD_LHU`. Sau đó đã áp dụng baseline V2 và ràng buộc V2, tạo 33 bảng nghiệp vụ rỗng; chỉ bảng kỹ thuật lưu 2 migration. Chưa seed/import. Các database không thuộc dự án giữ nguyên; file minh chứng và backup trên đĩa không bị xóa. Runner mặc định đã chuyển sang `database/sqlserver/migrations/`; schema/tooling cũ còn giữ để xử lý phụ thuộc nhưng không được runner chạy. API runtime và giao diện hiện dùng V2. Dữ liệu quy chế và danh mục cần tạo hoặc import riêng; các tài sản legacy chưa gắn runtime vẫn còn chờ dọn.
 
 ## 8. Các lựa chọn cần thống nhất trước schema vật lý
 

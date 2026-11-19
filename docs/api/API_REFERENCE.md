@@ -1,6 +1,6 @@
 # API runtime V2
 
-Tiền tố mặc định `/api/v1`. Đây là chỉ mục các nhóm API hiện được gắn trong `backend/src/app.js`, không phải đặc tả đầy đủ về body hay quyền: xem schema validation và kiểm quyền trong `backend/src/v2/` khi tích hợp. JSON thành công thường có dạng `{ success: true, data: ... }`; tải tệp trả nội dung nhị phân. Các endpoint riêng tư yêu cầu bearer token; refresh dùng cookie.
+Tiền tố mặc định `/api/v1`. Đây là chỉ mục các nhóm API hiện được gắn trong `backend/src/app.js`, không phải đặc tả đầy đủ về body hay quyền: xem schema validation và kiểm quyền trong `backend/src/modules/` khi tích hợp. JSON thành công thường có dạng `{ success: true, data: ... }`; tải tệp trả nội dung nhị phân. Các endpoint riêng tư yêu cầu bearer token; refresh dùng cookie.
 
 | Nhóm | Các đường dẫn chính |
 | --- | --- |

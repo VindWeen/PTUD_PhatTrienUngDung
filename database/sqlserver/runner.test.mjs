@@ -19,7 +19,7 @@ test('migration parser handles GO and checksum normalizes CRLF',()=>{
   assert.equal(splitBatches('SELECT 1;\nGO\nSELECT 2;\ngo -- test\nSELECT 3;').length,3);
   assert.equal(calculateChecksum('SELECT 1;\r\n'),calculateChecksum('SELECT 1;\n'));
   assert.ok(migrationsDir.includes('sqlserver'));
-  assert.ok(migrationsDir.replaceAll('\\','/').includes('/v2/migrations/'));
+  assert.ok(migrationsDir.replaceAll('\\','/').endsWith('/sqlserver/migrations/'));
 });
 test('already applied files are validated and not executed again',async()=>{
   const applied=getMigrationFiles().map(name=>({name,checksum:calculateChecksum(fs.readFileSync(path.join(migrationsDir,name),'utf8'))}));

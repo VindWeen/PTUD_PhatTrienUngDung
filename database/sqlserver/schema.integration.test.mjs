@@ -1,7 +1,7 @@
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { Pool, getDbPoolConfig } from '../../../backend/src/config/database.js';
+import { Pool, getDbPoolConfig } from '../../backend/src/config/database.js';
 
 const pool = new Pool(getDbPoolConfig());
 before(async () => {

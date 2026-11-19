@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Pool, getDbPoolConfig } from '../../../backend/src/config/database.js';
-import { getMigrationFiles, migrationsDir, migrateStatus } from '../../scripts/migrate.js';
+import { Pool, getDbPoolConfig } from '../../backend/src/config/database.js';
+import { getMigrationFiles, migrationsDir, migrateStatus } from '../scripts/migrate.js';
 
 export async function verifyV2({ expectEmpty = false } = {}) {
   const pool = new Pool(getDbPoolConfig());
@@ -41,7 +41,7 @@ export async function verifyV2({ expectEmpty = false } = {}) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   verifyV2({ expectEmpty: process.argv.includes('--expect-empty') }).then(report => {
-    const directory = fileURLToPath(new URL('../../../output/database-v2/', import.meta.url));
+    const directory = fileURLToPath(new URL('../../output/database-v2/', import.meta.url));
     fs.mkdirSync(directory, { recursive: true });
     fs.writeFileSync(path.join(directory, 'schema-verification.json'), JSON.stringify(report, null, 2) + '\n');
     console.log(JSON.stringify(report, null, 2));

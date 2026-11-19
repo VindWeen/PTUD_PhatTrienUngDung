@@ -1,6 +1,6 @@
 # Phân tích kỹ thuật hệ thống quản lý thành tích
 
-Tài liệu bổ sung cho [SYSTEM_OVERVIEW.md](SYSTEM_OVERVIEW.md). Schema được đọc theo thứ tự migration 001–008 trong [SQL Server V2](database/sqlserver/v2/migrations). Phần backend dựa trên [các handler V2](backend/src/v2). Phương án tách frontend là đề xuất, chưa áp dụng vào mã nguồn.
+Tài liệu bổ sung cho [SYSTEM_OVERVIEW.md](SYSTEM_OVERVIEW.md). Schema được đọc theo thứ tự migration 001–008 trong [SQL Server V2](database/sqlserver/migrations). Phần backend dựa trên [các handler V2](backend/src/modules). Phần frontend mô tả cấu trúc đã tách theo trách nhiệm.
 
 ## 1. Schema và dữ liệu động
 
@@ -80,7 +80,7 @@ SQL Server lưu các cột JSON dưới dạng `nvarchar(max)`, thường có `C
 | `result_evidence.achievement_snapshot_json`, `evidence_snapshot_json` | Handler đánh giá ghi snapshot thành tích đủ trường đã nạp. Cột snapshot file có trong schema để dùng cùng FK file khi có |
 | Các JSON tiện ích | CV hiện ghi `content_json={headline}` và `public_contact_settings_json={email,phone}` với giá trị boolean. `template_config_json` và `cv_templates.config_schema_json` mặc định `{}`. `notifications.payload_json` và `audit_events.details_json` phụ thuộc sự kiện, ví dụ thông báo quy chế mới có `regulation_id,regulation_version_id` |
 
-Hai ví dụ dưới đây lấy từ test evaluator hiện có. Ví dụ thứ nhất là nội dung `rule_json`, ví dụ thứ hai là phần thuộc tính của thành tích cùng test. Test lần lượt bỏ trống, đặt `false`, rồi đặt `true` cho cờ văn bản công nhận để kiểm tra ba kết luận. [intelligence.test.js](backend/src/v2/intelligence.test.js)
+Hai ví dụ dưới đây lấy từ test evaluator hiện có. Ví dụ thứ nhất là nội dung `rule_json`, ví dụ thứ hai là phần thuộc tính của thành tích cùng test. Test lần lượt bỏ trống, đặt `false`, rồi đặt `true` cho cờ văn bản công nhận để kiểm tra ba kết luận. [intelligence.test.js](backend/src/modules/intelligence.test.js)
 
 ```json
 {
@@ -114,7 +114,7 @@ Hai ví dụ dưới đây lấy từ test evaluator hiện có. Ví dụ thứ 
 | KPI và liên kết | Mục tiêu dương, tiến độ không âm, đóng góp dương, ngày đến hạn hợp lệ, DONE đi cùng `completed_at`; FK ghép kết quả nguồn, thành tích và owner | Kiểm sở hữu, mục tiêu/thành tích chưa xóa, phân nhánh tiến độ MANUAL/ACHIEVEMENTS. Tạo từ gap yêu cầu run hoàn tất, chưa stale và kết quả thiếu với `gte` cùng remaining dương hữu hạn |
 | CV, lịch, thông báo | Slug unique đúng ký tự; CV công khai buộc có mẫu và thời điểm công bố. FK ghép ngăn gắn thành tích/KPI người khác. Lịch kiểm thứ tự start/end/reminder. Unique chống gửi trùng theo người nhận và dedup key có giá trị | Slug kiểm thêm danh sách từ dành riêng. CV lọc thành tích còn hiệu lực và cờ hiển thị liên hệ. Lịch validate ISO datetime, chuẩn hóa UTC, xác nhận chủ sở hữu KPI. Đánh dấu đọc giới hạn theo người nhận |
 
-Nguồn schema và trigger [001](database/sqlserver/v2/migrations/001_v2_schema.sql), [002](database/sqlserver/v2/migrations/002_v2_integrity.sql), [003](database/sqlserver/v2/migrations/003_regulation_distribution.sql), [004](database/sqlserver/v2/migrations/004_distribution_integrity.sql), [005](database/sqlserver/v2/migrations/005_source_transcription.sql), [006](database/sqlserver/v2/migrations/006_allow_20mb_sources.sql), [007](database/sqlserver/v2/migrations/007_regulation_sharing_and_join_requests.sql), [008](database/sqlserver/v2/migrations/008_personal_regulation_exclusions.sql). Nguồn validate [shared.js](backend/src/v2/shared.js), [identityRoutes.js](backend/src/v2/identityRoutes.js), [vaultRoutes.js](backend/src/v2/vaultRoutes.js), [supportRoutes.js](backend/src/v2/supportRoutes.js), [regulationSourceRoutes.js](backend/src/v2/regulationSourceRoutes.js).
+Nguồn schema và trigger [001](database/sqlserver/migrations/001_v2_schema.sql), [002](database/sqlserver/migrations/002_v2_integrity.sql), [003](database/sqlserver/migrations/003_regulation_distribution.sql), [004](database/sqlserver/migrations/004_distribution_integrity.sql), [005](database/sqlserver/migrations/005_source_transcription.sql), [006](database/sqlserver/migrations/006_allow_20mb_sources.sql), [007](database/sqlserver/migrations/007_regulation_sharing_and_join_requests.sql), [008](database/sqlserver/migrations/008_personal_regulation_exclusions.sql). Nguồn validate [shared.js](backend/src/modules/shared.js), [identityRoutes.js](backend/src/modules/identityRoutes.js), [vaultRoutes.js](backend/src/modules/vaultRoutes.js), [supportRoutes.js](backend/src/modules/supportRoutes.js), [regulationSourceRoutes.js](backend/src/modules/regulationSourceRoutes.js).
 
 ## 2. Bộ máy đối chiếu quy chế
 
@@ -127,7 +127,7 @@ Nguồn schema và trigger [001](database/sqlserver/v2/migrations/001_v2_schema.
 5. Mỗi rule lá lọc theo `achieved_at`, với cận trên là ngày nhỏ hơn giữa `to` và ngày đánh giá (hoặc ngày đánh giá nếu thiếu `to`). Cận dưới là `from` nếu có, kết hợp `last_years` bằng ngày muộn hơn giữa `from` và ngày đánh giá lùi số năm trong UTC. Cả hai cận inclusive. Loại thành tích chỉ lọc khi rule đặt filter trên `achievement_type_id`. Giá trị `period_start/end` có trong snapshot nhưng không tham gia cửa sổ rule.
 6. Handler lưu snapshot và hash, tạo run RUNNING với `evaluator_version = personal-vault-rules/2`, ghi từng kết quả/quan hệ chứng cứ, cập nhật COMPLETED và trả chi tiết HTTP 201. Nếu xảy ra lỗi trong transaction, các ghi của lần chạy được rollback. Bộ máy xét rule xử lý đồng bộ trong request và không gọi LLM.
 
-Nguồn mã [intelligenceRoutes.js](backend/src/v2/intelligenceRoutes.js#L100), [regulationAccess.js](backend/src/v2/regulationAccess.js), [intelligenceEvaluator.js](backend/src/v2/intelligenceEvaluator.js).
+Nguồn mã [intelligenceRoutes.js](backend/src/modules/intelligenceRoutes.js#L100), [regulationAccess.js](backend/src/modules/regulationAccess.js), [intelligenceEvaluator.js](backend/src/modules/intelligenceEvaluator.js).
 
 ### 2.2. Điều kiện, số tích lũy và điểm hoàn thành
 
@@ -165,41 +165,24 @@ MANUAL và UNSUPPORTED là `coverage_status`, đều lưu kết luận INSUFFICI
 
 **Phát hiện thay đổi.** Khi ghi run, backend tính SHA-256 trên JSON serialize của đúng object `{profile,achievements}` từ `inputSnapshot`, lưu tại `input_snapshot_json.input_hash`. `runDetail` nạp lại cùng truy vấn, cùng thứ tự thành tích theo id, băm và trả `stale = hash_cũ !== hash_mới`. Đây là cờ tính khi đọc, không có cột stale. Thêm/xóa mềm/khôi phục thành tích, cập nhật bất kỳ trường snapshot hoặc `updated_at`, đổi `person_type` hoặc JSON hồ sơ đều có thể làm stale. Vì hash bao phủ cả kho hoạt động, một record ngoài cửa sổ ngày hoặc ngoài loại của rule cũng có thể kích hoạt cờ. Các dữ liệu ngoài snapshot như tên hồ sơ, việc xóa tệp qua API, tên trong catalog, context/adoption và phiên bản mới không trực tiếp đổi hash. Upload minh chứng qua handler hiện hành cập nhật cả `achievements.updated_at` nên có thể làm stale gián tiếp. Xóa tệp chỉ cập nhật `evidence_files.deleted_at`. Quyền đọc và khả năng dùng phiên bản được kiểm tra riêng. Endpoint `latest` và `history` lấy chỉ mục tóm tắt SQL, không chạy `runDetail`; cờ hiện trên response chi tiết và các luồng gọi helper đó. Tạo KPI từ gap kiểm cờ trước khi ghi.
 
-Nguồn mã [intelligenceEvaluator.js](backend/src/v2/intelligenceEvaluator.js), [intelligenceRoutes.js](backend/src/v2/intelligenceRoutes.js#L100), [supportRoutes.js](backend/src/v2/supportRoutes.js).
+Nguồn mã [intelligenceEvaluator.js](backend/src/modules/intelligenceEvaluator.js), [intelligenceRoutes.js](backend/src/modules/intelligenceRoutes.js#L100), [supportRoutes.js](backend/src/modules/supportRoutes.js).
 
 ## 3. Bản đồ và phương án tách frontend
 
-### 3.1. Thành phần trong V2.jsx
+### 3.1. Module trang và component đi kèm
 
-Khoảng dòng tính theo bản [V2.jsx](frontend/src/pages/V2.jsx) đã rà soát. Các dòng trống giữa block được lược khỏi bảng.
-
-| Dòng | Thành phần | Trách nhiệm |
-| --- | --- | --- |
-| 1–18 | Imports | React hooks, router, auth, request, modal/tab/phân trang, helper và icon |
-| 20–81 | `api`, `array`, lớp style, `saveBlob`, `pageLinks`, `Page` | HTTP, chuẩn hóa danh sách, tải blob, khung trang và lối tắt theo tiêu đề |
-| 83–234 | `useCollection`, `useLoad`, `ErrorMessage`, `Field`, `Empty`, `Load`, `Item`, `DateText`, nhãn trạng thái và `missingText` | Tải dữ liệu, hiển thị trạng thái và helper trình bày |
-| 236–375 | `Profile` | Hồ sơ, chỉnh sửa, điều phối tab gồm CV và đổi mật khẩu |
-| 377–409 | `PasswordForm` | Kiểm form mật khẩu và gọi AuthContext |
-| 411–791 | `Cv` | Đọc và chỉnh cấu hình CV, chọn mẫu/thành tích, chia sẻ link, xuất tài liệu |
-| 793–844 | `CvLivePreview` | Render preview CV theo form và danh sách thành tích trong editor |
-| 849–862 | `AchievementDrop` | Chọn/kéo thả file cho form thành tích |
-| 864–1456 | `Achievements` | Kho, bộ lọc/phân trang, form thuộc tính, extract AI, chi tiết/preview/upload, thùng rác |
-| 1458–1529 | `canAssessOrganization`, `AssessmentPicker`, `matchesAssessmentSearch`, helper đếm tiêu chí cần xem | Phạm vi quyền frontend, chọn nhiều mục, lọc tìm kiếm và bộ đếm |
-| 1531–1775 | `OrganizationAssessment` | Chọn đơn vị/thành viên/quy chế, chạy theo lượt và gửi tóm tắt |
-| 1777–2038 | `Discovery` | Đối chiếu cá nhân, chọn ngữ cảnh, lịch sử/chi tiết, chứng cứ, ZIP, tạo KPI, chứa chế độ tổ chức |
-| 2040–2044 | `AssessmentBadge` | Hiển thị kết luận và phần trăm đối chiếu |
-| 2046–2488 | `Goals` | Danh sách/chi tiết KPI, trạng thái, tiến độ và checklist |
-| 2490–2581 | `GoalCompletion` | Điều phối hành động hoàn thành và gắn thành tích trong chi tiết KPI |
-| 2583–2588 | `localDay`, re-export `Regulations` | Helper ngày cục bộ. UI kho quy chế nằm trong file riêng |
-| 2593–2654 | `OrgHierarchyTree` | Hiển thị quan hệ cấp trên/đơn vị hiện hành/cấp dưới |
-| 2659–3032 | `Organizations` | Cây và chi tiết đơn vị, lời mời/đơn cá nhân, state chọn đơn vị và quyền |
-| 3034–3159 | `OrganizationTools` | Duyệt đơn và xử lý yêu cầu liên kết tổ chức |
-| 3161–3328 | `organizationPermissionGroups`, `OrganizationMembers` | Nhóm mã quyền, danh sách thành viên, tra grant và điều phối modal |
-| 3330–3421 | `OrganizationPermissionDialog` | Soạn quyền và phạm vi cấp dưới, gửi snapshot grant khi lưu |
-| 3426–3464 | `PublicCv` | Đọc CV công khai qua slug, render markup riêng theo template và cờ liên hệ |
-| 3466–3517 | `Reports` | Tổng hợp dữ liệu kho theo năm và loại |
-| 3519–3640 | `Admin` | Tài khoản, role toàn hệ thống, xác nhận thao tác và tab danh mục |
-| 3642–3668 | `AchievementCatalog` | Danh sách và form thêm loại thành tích |
+| File | Trách nhiệm |
+| --- | --- |
+| [Profile.jsx](frontend/src/pages/Profile.jsx) | Hồ sơ, tab CV và `PasswordForm` |
+| [Cv.jsx](frontend/src/pages/Cv.jsx) | Form, lưu/xuất CV và `CvLivePreview` |
+| [PublicCv.jsx](frontend/src/pages/PublicCv.jsx) | Render CV công khai theo slug |
+| [Achievements.jsx](frontend/src/pages/Achievements.jsx) | Kho thành tích, thùng rác, minh chứng, trích xuất AI và `AchievementDrop` |
+| [Discovery.jsx](frontend/src/pages/Discovery.jsx) | Đối chiếu cá nhân, lịch sử, `OrganizationAssessment`, `AssessmentPicker` và `AssessmentBadge` |
+| [Goals.jsx](frontend/src/pages/Goals.jsx) | KPI cá nhân và `GoalCompletion` |
+| [Organizations.jsx](frontend/src/pages/Organizations.jsx) | Cây tổ chức, yêu cầu, thành viên và dialog phân quyền qua `OrgHierarchyTree`, `OrganizationTools`, `OrganizationMembers`, `OrganizationPermissionDialog` |
+| [Reports.jsx](frontend/src/pages/Reports.jsx) | Thống kê thành tích theo năm và loại |
+| [Admin.jsx](frontend/src/pages/Admin.jsx) | Tài khoản, quyền toàn hệ thống và `AchievementCatalog` |
+| [RegulationLibrary.jsx](frontend/src/pages/RegulationLibrary.jsx) | Kho quy chế, tải và quản lý phiên bản |
 
 ### 3.2. Điểm dùng chung và quyền sở hữu state
 
@@ -210,15 +193,13 @@ Khoảng dòng tính theo bản [V2.jsx](frontend/src/pages/V2.jsx) đã rà so�
 | `useCollection(url)` | Hợp đồng state giống `useLoad`, tự gom trang `pageSize=100`; dừng khi trang ngắn hoặc đủ total. Dùng cho thành tích, thùng rác, chọn thành tích cho CV/KPI và báo cáo. Hook có state riêng mỗi lần gọi |
 | UI dùng chung | `Page` và bảng lối tắt, `Field`, `Load`, thông báo lỗi/rỗng, `Item`, `DateText`, `StatusBadge`, hằng class style; `VaultDialog`, `VaultTabs`, `NumberedPagination` đã nằm trong `components/common`. `missingText` và `AssessmentBadge` nghiêng về nghiệp vụ đối chiếu |
 | Helpers đã tách | `achievementFields.js` xử lý field động và ánh xạ gợi ý. `assessmentSelection.js` lọc context/hiệu lực. `regulationRule.js` và `RegulationRuleDescription.jsx` trình bày rule. `RegulationLibrary.jsx` sở hữu state thư viện và hợp đồng tải riêng |
-| State xuyên màn hình | `AuthContext` là nguồn dùng chung cho phiên, user và role. URL mang lựa chọn như `?tab=cv`, `?goal=…`, query điều hướng từ kết quả sang kho, và slug CV. Dữ liệu bền dùng API/DB. V2.jsx không khai báo store React chung cho tất cả các trang |
+| State xuyên màn hình | `AuthContext` là nguồn dùng chung cho phiên, user và role. URL mang lựa chọn như `?tab=cv`, `?goal=…`, query điều hướng từ kết quả sang kho, và slug CV. Dữ liệu bền dùng API/DB. Các trang sở hữu state cục bộ và dùng chung phiên đăng nhập |
 | State nghiệp vụ giữ cục bộ | Profile giữ tab và form, Cv giữ form và bản đã lưu; Achievements giữ draft/file/extraction/preview; Discovery giữ context và run, OrganizationAssessment giữ lựa chọn/batch/thông báo; Goals giữ list/detail và truyền reload vào GoalCompletion; Organizations giữ đơn vị/tab/member, truyền props và callback xuống dialog; Admin giữ thao tác chờ xác nhận |
 
 Nguồn mã [request.js](frontend/src/services/request.js), [readCachePolicy.js](frontend/src/services/readCachePolicy.js), [AuthContext.jsx](frontend/src/context/AuthContext.jsx), [assessmentSelection.js](frontend/src/pages/assessmentSelection.js), [achievementFields.js](frontend/src/pages/achievementFields.js).
 
-### 3.3. Phương án tách với ít thay đổi hành vi
+### 3.3. Ranh giới dùng chung sau khi tách
 
-1. Chuyển nguyên hợp đồng wrapper V2 sang `services/vaultApi.js`, các hook sang `hooks/useLoad.js` và `hooks/useCollection.js`. Giữ giá trị mặc định của `fresh`, options, multipart, pagination, generation và shape kết quả. Có thể để `Page` cùng các primitive tải/lỗi trong `components/common`, với lối tắt vẫn giữ như cũ. Chỉ chuyển helper thực sự dùng chung; formatter riêng ở cạnh trang.
-2. Tách từng nhóm route theo miền nghiệp vụ. Dùng `pages/Profile.jsx` cho Profile/PasswordForm, `pages/Cv.jsx` cho editor, `pages/PublicCv.jsx` cho CV công khai, và `components/cv/CvLivePreview.jsx` cho preview của editor, hoặc để preview cạnh Cv nếu chưa có caller thứ hai. Giữ renderer công khai riêng như hiện tại, state editor ở Cv và tab ở Profile.
-3. Tách `pages/Achievements.jsx`, `pages/Discovery.jsx`, `pages/Goals.jsx`, `pages/Organizations.jsx`, `pages/Reports.jsx`, `pages/Admin.jsx`. Trước hết chuyển cùng các component phụ của từng nhóm. Có thể tạo `components/assessment/`, `components/organizations/` khi các cụm đó đã có props rõ ràng. Giữ `RegulationLibrary.jsx` độc lập. Giữ draft, dialog, selection và request state tại component đang sở hữu, truyền callback `reload/onSaved/refresh` như hiện tại.
-4. Trong quá trình di chuyển, cho `V2.jsx` re-export module mới theo từng nhóm để `AppRoutes` và các import hiện tại vẫn chạy. Khi đã chuyển hết, đổi AppRoutes sang import thẳng và kiểm tra tham chiếu còn lại trước khi bỏ file chuyển tiếp. Bảo toàn URL, route guard, vị trí provider, key/mount boundary và query params. Chưa nên chuyển sang lazy load hoặc đổi framework quản lý state trong cùng đợt.
-5. Kiểm sau từng nhóm bằng build/lint và test frontend sẵn có. Với smoke qua UI, ưu tiên khôi phục phiên, đổi tab CV và mở public slug, upload thành tích rồi reload, chạy đối chiếu và mở KPI qua query, đổi đơn vị và lưu quyền, cũng như vào admin theo hai role. Khi đổi route hoặc lựa chọn nhanh, xác nhận response cũ không ghi đè state mới. Các bước này là tiêu chí xác minh cho đợt refactor, chưa thực hiện thay đổi source trong tài liệu này.
+- [vaultApi.js](frontend/src/services/vaultApi.js) đóng gói HTTP, chuẩn hóa danh sách và tải blob. [useLoad.js](frontend/src/hooks/useLoad.js) và [useCollection.js](frontend/src/hooks/useCollection.js) giữ hợp đồng tải, phân trang và generation.
+- [VaultPage.jsx](frontend/src/components/common/VaultPage.jsx) giữ layout trang và lối tắt. [VaultPrimitives.jsx](frontend/src/components/common/VaultPrimitives.jsx) chứa field, trạng thái tải/lỗi/rỗng, ngày và nhãn trạng thái. [vaultStyles.js](frontend/src/components/common/vaultStyles.js) chứa các class dùng chung.
+- [AppRoutes.jsx](frontend/src/routes/AppRoutes.jsx) import trực tiếp từ từng trang. URL, query params, guard, vị trí provider và quyền sở hữu state được giữ nguyên. Preview CV nằm cạnh editor. Renderer công khai nằm ở trang riêng.

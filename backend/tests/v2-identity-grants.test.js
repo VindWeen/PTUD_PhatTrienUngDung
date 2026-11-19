@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { initialManagerPermissions } from '../src/v2/identityRoutes.js';
-import { permissions } from '../src/v2/access.js';
+import { initialManagerPermissions } from '../src/modules/identityRoutes.js';
+import { permissions } from '../src/modules/access.js';
 
 function scopeDb(descendantPermissions=[]) {
   return async(sql,args=[])=>{

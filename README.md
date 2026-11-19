@@ -2,7 +2,7 @@
 
 Dự án lưu thành tích và minh chứng cá nhân, đối chiếu hồ sơ với quy chế, theo dõi mục tiêu và tạo CV công khai. Tổ chức nhiều cấp hỗ trợ thành viên theo quyền được giao. Xem [use case và ERD V2](docs/requirements/PERSONAL_VAULT_V2.md).
 
-Runtime backend gắn các route V2 trong `backend/src/v2/`; frontend sử dụng các API V2. Cá nhân không cần thuộc tổ chức để sử dụng kho. Kết quả khám đối chiếu dữ liệu đã khai, không phải quyết định công nhận danh hiệu.
+Backend gắn router nghiệp vụ từ `backend/src/modules/`. Frontend đăng ký các trang trong [AppRoutes.jsx](frontend/src/routes/AppRoutes.jsx). Migration hiện hành nằm trong [database/sqlserver/migrations](database/sqlserver/migrations). Cá nhân không cần thuộc tổ chức để sử dụng kho. Kết quả khám đối chiếu dữ liệu đã khai, không phải quyết định công nhận danh hiệu.
 
 ## Chạy local
 
@@ -37,4 +37,4 @@ node --env-file=backend/.env scripts/seed-lecturer-demo.mjs --apply --database=P
 
 Backend, frontend và migration trong nhánh này dùng kiến trúc V2. Lịch sử triển khai trước V2 có thể tra cứu trong Git.
 
-Xem [database](database/README.md), [chỉ mục API](docs/api/V2.md) và [mục lục tài liệu](docs/README.md).
+Xem [database](database/README.md), [chỉ mục API](docs/api/API_REFERENCE.md) và [mục lục tài liệu](docs/README.md).

@@ -4,7 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { Pool, getDbPoolConfig } from '../backend/src/config/database.js';
-import { storageRoot } from '../backend/src/v2/files.js';
+import { storageRoot } from '../backend/src/modules/files.js';
 
 export function parseArgs(args=process.argv.slice(2)) {
   const options={};

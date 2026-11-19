@@ -20,7 +20,7 @@ Giữ nguyên `STORAGE_DIR` hiện hữu là thư mục minh chứng. File ngu�
 
 Mốc nghiệp vụ demo: 15/11/2026; các ca lịch sử dùng ngày đánh giá ghi riêng, không kéo dài hiệu lực bằng ngày tiếp nhận. Bộ dữ liệu giả lập phải có nhãn DỮ LIỆU DEMO. Cơ quan ban hành tài liệu và tổ chức quản lý cấu hình trong ứng dụng là hai thông tin khác nhau.
 
-Danh mục nguồn thật: [source-register.json](../../database/sqlserver/v2/sources/source-register.json). Thông tư 08/2021 có file đính chính riêng và đã được 56/2026 thay thế từ 07/07/2026; phiên bản demo lịch sử mới giới hạn đến 06/07/2026, không sửa phiên bản/lịch sử đã công bố. Bản 56/2026 được giữ trong danh mục nghiên cứu vì nguyên gốc vượt 10 MB, không nhập lách giới hạn file. Quyết định UEH năm 2025 là nguồn lịch sử, chỉ cấu hình một nhánh thay thế kỹ năng; không nhận là quy chế hiện hành năm 2026 hoặc toàn bộ danh hiệu.
+Danh mục nguồn thật: [source-register.json](../../database/sqlserver/sources/source-register.json). Thông tư 08/2021 có file đính chính riêng và đã được 56/2026 thay thế từ 07/07/2026; phiên bản demo lịch sử mới giới hạn đến 06/07/2026, không sửa phiên bản/lịch sử đã công bố. Bản 56/2026 được giữ trong danh mục nghiên cứu vì nguyên gốc vượt 10 MB, không nhập lách giới hạn file. Quyết định UEH năm 2025 là nguồn lịch sử, chỉ cấu hình một nhánh thay thế kỹ năng; không nhận là quy chế hiện hành năm 2026 hoặc toàn bộ danh hiệu.
 
 ## Bằng chứng đang tích lũy
 

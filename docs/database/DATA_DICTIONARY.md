@@ -1,6 +1,6 @@
 # Từ điển dữ liệu V2
 
-Schema vật lý: [001_v2_schema.sql](../../database/sqlserver/v2/migrations/001_v2_schema.sql). Ràng buộc liên dòng: [002_v2_integrity.sql](../../database/sqlserver/v2/migrations/002_v2_integrity.sql). Bảng dưới là bản đồ 33 bảng; kiểu/cột/default/FK chi tiết lấy trực tiếp từ migration đã áp dụng.
+Schema vật lý: [001_v2_schema.sql](../../database/sqlserver/migrations/001_v2_schema.sql). Ràng buộc liên dòng: [002_v2_integrity.sql](../../database/sqlserver/migrations/002_v2_integrity.sql). Bảng dưới là bản đồ 33 bảng; kiểu/cột/default/FK chi tiết lấy trực tiếp từ migration đã áp dụng.
 
 | Nhóm | Bảng | Ý nghĩa |
 | --- | --- | --- |

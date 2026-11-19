@@ -9,3 +9,8 @@ export const intersectsDay = (event, date) => {
   const start = startOfDay(date), end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1);
   return new Date(event.startsAt) < end && new Date(event.endsAt) > start;
 };
+
+export const localDay = () => {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+};

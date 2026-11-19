@@ -5,13 +5,13 @@ import { createRequire } from 'node:module';
 import { closeDB } from '../backend/src/config/database.js';
 import { withTransaction } from '../backend/src/utils/dbHelper.js';
 import { hashPassword } from '../backend/src/utils/crypto.js';
-import { insertId } from '../backend/src/v2/shared.js';
-import { permissions } from '../backend/src/v2/access.js';
-import { canReadVersion, canUseVersion, listAccessiblePinnedContexts } from '../backend/src/v2/regulationAccess.js';
+import { insertId } from '../backend/src/modules/shared.js';
+import { permissions } from '../backend/src/modules/access.js';
+import { canReadVersion, canUseVersion, listAccessiblePinnedContexts } from '../backend/src/modules/regulationAccess.js';
 import { recognitionAttributes, seedAwardRegulations } from './seed-regulation-awards.mjs';
-import { filePath, storageRoot, validateFile } from '../backend/src/v2/files.js';
-import { evaluateVersion } from '../backend/src/v2/intelligenceEvaluator.js';
-import { runAssessment } from '../backend/src/v2/intelligenceRoutes.js';
+import { filePath, storageRoot, validateFile } from '../backend/src/modules/files.js';
+import { evaluateVersion } from '../backend/src/modules/intelligenceEvaluator.js';
+import { runAssessment } from '../backend/src/modules/intelligenceRoutes.js';
 
 const { batch, kpis } = JSON.parse(await fs.readFile(new URL('./demo/lecturer-extra-fixtures.json', import.meta.url), 'utf8'));
 

@@ -3,7 +3,7 @@ import http from 'node:http';
 import app from '../backend/src/app.js';
 import { Pool,getDbPoolConfig,setPool } from '../backend/src/config/database.js';
 import { hashPassword } from '../backend/src/utils/crypto.js';
-import { insertId } from '../backend/src/v2/shared.js';
+import { insertId } from '../backend/src/modules/shared.js';
 const pool=new Pool(getDbPoolConfig()),client=await pool.connect();
 await client.query('BEGIN');
 const q=(sql,params)=>/^(BEGIN|COMMIT|ROLLBACK)$/.test(sql)?Promise.resolve({rows:[],rowCount:0}):client.query(sql,params);

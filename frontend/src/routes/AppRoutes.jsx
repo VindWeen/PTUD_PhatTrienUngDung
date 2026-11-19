@@ -6,7 +6,15 @@ import AuthPage from '../pages/AuthPage';
 import ResetPassword from '../pages/ResetPassword';
 import NotFound from '../pages/NotFound';
 import Dashboard from '../pages/Dashboard';
-import { Profile, Achievements, Discovery, Goals, Regulations, Organizations, PublicCv, Reports, Admin } from '../pages/V2';
+import { Profile } from '../pages/Profile';
+import { Achievements } from '../pages/Achievements';
+import { Discovery } from '../pages/Discovery';
+import { Goals } from '../pages/Goals';
+import { Organizations } from '../pages/Organizations';
+import { PublicCv } from '../pages/PublicCv';
+import { Reports } from '../pages/Reports';
+import { Admin } from '../pages/Admin';
+import Regulations from '../pages/RegulationLibrary';
 
 function RequireAuth() {
   const { signedIn, loading } = useAuth();

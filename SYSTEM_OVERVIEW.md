@@ -4,9 +4,9 @@
 
 Tài liệu phản ánh mã nguồn trong workspace tại thời điểm rà soát. Việc kiểm tra dựa trên đăng ký route, component, lời gọi HTTP, handler, truy vấn SQL và migration. Các tích hợp bên ngoài và dữ liệu trên môi trường triển khai chưa được kiểm thử trong lần rà soát này.
 
-- **Frontend** dùng React Router. Nguồn đăng ký URL là [AppRoutes.jsx](frontend/src/routes/AppRoutes.jsx). Các trang lớn trong [V2.jsx](frontend/src/pages/V2.jsx) dùng chung hàm gọi API và các hook tải dữ liệu.
-- **Backend** dùng Express. [app.js](backend/src/app.js) mount sáu router nghiệp vụ trong `backend/src/v2` và router health. Tiền tố mặc định là `/api/v1`, có thể cấu hình qua `API_PREFIX` và `VITE_API_URL`. Các endpoint bên dưới viết tương đối với tiền tố đó, trừ khi được ghi rõ.
-- **Dữ liệu** dùng SQL Server qua [database.js](backend/src/config/database.js). Các tên bảng trong tài liệu thuộc schema `app`. DDL hiện hành nằm trong [migrations SQL Server V2](database/sqlserver/v2/migrations). Tệp minh chứng và tệp nguồn quy chế có metadata trong DB và nội dung tệp trong kho filesystem.
+- **Frontend** dùng React Router. Nguồn đăng ký URL là [AppRoutes.jsx](frontend/src/routes/AppRoutes.jsx). Các trang nghiệp vụ nằm trong `frontend/src/pages/` và dùng chung [vaultApi.js](frontend/src/services/vaultApi.js) cùng các hook tải dữ liệu.
+- **Backend** dùng Express. [app.js](backend/src/app.js) mount sáu router nghiệp vụ trong `backend/src/modules` và router health. Tiền tố mặc định là `/api/v1`, có thể cấu hình qua `API_PREFIX` và `VITE_API_URL`. Các endpoint bên dưới viết tương đối với tiền tố đó, trừ khi được ghi rõ.
+- **Dữ liệu** dùng SQL Server qua [database.js](backend/src/config/database.js). Các tên bảng trong tài liệu thuộc schema `app`. DDL hiện hành nằm trong [migrations SQL Server V2](database/sqlserver/migrations). Tệp minh chứng và tệp nguồn quy chế có metadata trong DB và nội dung tệp trong kho filesystem.
 - **Trạng thái** “nối API” nghĩa là có đường đi từ UI tới handler đang mount. Bộ lọc phía trình duyệt, bản xem trước cục bộ hoặc dữ liệu trình bày cố định được ghi riêng. Test fixtures, seed demo, ảnh thiết kế, router cũ và OpenAPI lịch sử nằm ngoài luồng chạy của trang hiện tại.
 
 ## Bảng điều hướng và phân quyền
@@ -15,23 +15,23 @@ Tài liệu phản ánh mã nguồn trong workspace tại thời điểm rà so�
 | --- | --- | --- | --- |
 | `/login` | [AuthPage](frontend/src/pages/AuthPage.jsx) | Đăng nhập, chuyển sang đăng ký hoặc quên mật khẩu | Public. Phiên hợp lệ chuyển về dashboard |
 | `/reset-password` | [ResetPassword](frontend/src/pages/ResetPassword.jsx) | Nhập và xác nhận mật khẩu mới | Public. API yêu cầu token khôi phục hợp lệ |
-| `/cv/:slug` | [V2.jsx → PublicCv](frontend/src/pages/V2.jsx#L3426) | Xem CV được công bố | Public. Slug phải thuộc CV công khai |
+| `/cv/:slug` | [PublicCv.jsx](frontend/src/pages/PublicCv.jsx) | Xem CV được công bố | Public. Slug phải thuộc CV công khai |
 | `/` | `Navigate` trong AppRoutes | Chuyển sang `/me/dashboard` | Đăng nhập |
 | `/me/dashboard` | [Dashboard](frontend/src/pages/Dashboard.jsx) | Tổng quan, KPI gần đây, lối tắt nghiệp vụ, lịch cá nhân | Đăng nhập |
-| `/me/profile` | [V2.jsx → Profile, Cv](frontend/src/pages/V2.jsx#L236) | Xem/sửa hồ sơ, đổi mật khẩu, thiết kế và xuất CV ở tab `?tab=cv` | Đăng nhập, dữ liệu cá nhân |
+| `/me/profile` | [Profile.jsx](frontend/src/pages/Profile.jsx), [Cv.jsx](frontend/src/pages/Cv.jsx) | Xem/sửa hồ sơ, đổi mật khẩu, thiết kế và xuất CV ở tab `?tab=cv` | Đăng nhập, dữ liệu cá nhân |
 | `/me/cv` | `Navigate` trong AppRoutes | Chuyển sang `/me/profile?tab=cv` | Đăng nhập |
-| `/achievements` | [V2.jsx → Achievements](frontend/src/pages/V2.jsx#L864) | Danh sách, tìm/lọc, tạo/sửa, thùng rác, khôi phục, đính kèm và trích xuất AI | Đăng nhập, thành tích của chính mình |
-| `/kpi` | [V2.jsx → Goals](frontend/src/pages/V2.jsx#L2046) | Mục tiêu, tiến độ, checklist, liên kết thành tích, xóa mục tiêu | Đăng nhập, KPI của chính mình |
-| `/me/ai-forecast` | [V2.jsx → Discovery](frontend/src/pages/V2.jsx#L1777) | Đối chiếu quy chế cá nhân, xem lịch sử, tạo KPI từ tiêu chí thiếu, xuất ZIP, đối chiếu theo tổ chức khi có quyền | Đăng nhập. Khám tổ chức cần quyền theo phạm vi |
+| `/achievements` | [Achievements.jsx](frontend/src/pages/Achievements.jsx) | Danh sách, tìm/lọc, tạo/sửa, thùng rác, khôi phục, đính kèm và trích xuất AI | Đăng nhập, thành tích của chính mình |
+| `/kpi` | [Goals.jsx](frontend/src/pages/Goals.jsx) | Mục tiêu, tiến độ, checklist, liên kết thành tích, xóa mục tiêu | Đăng nhập, KPI của chính mình |
+| `/me/ai-forecast` | [Discovery.jsx](frontend/src/pages/Discovery.jsx) | Đối chiếu quy chế cá nhân, xem lịch sử, tạo KPI từ tiêu chí thiếu, xuất ZIP, đối chiếu theo tổ chức khi có quyền | Đăng nhập. Khám tổ chức cần quyền theo phạm vi |
 | `/regulations` | [RegulationLibrary](frontend/src/pages/RegulationLibrary.jsx) | Duyệt kho, áp dụng, chia sẻ, quản lý tài liệu và phiên bản | Đăng nhập. Phạm vi đọc và thao tác tùy chủ sở hữu, chia sẻ và quyền tổ chức |
 | `/regulations/:regulationId` | [RegulationLibrary](frontend/src/pages/RegulationLibrary.jsx) | Mở trực tiếp tài liệu, đọc phiên bản, tiêu chí và tệp nguồn | Như kho quy chế |
-| `/organizations` | [V2.jsx → Organizations](frontend/src/pages/V2.jsx#L2659) | Cây tổ chức, thành viên, lời mời, đơn gia nhập, liên kết cấp trên/cấp dưới, cấp quyền | Đăng nhập. Các thao tác quản lý kiểm tra quyền trên tổ chức |
-| `/reports` | [V2.jsx → Reports](frontend/src/pages/V2.jsx#L3466) | Tổng hợp số lượng và tỷ trọng thành tích theo năm và loại | Đăng nhập, dữ liệu cá nhân |
-| `/admin` | [V2.jsx → Admin](frontend/src/pages/V2.jsx#L3519) | Tài khoản, quyền toàn hệ thống, danh mục loại thành tích | Route frontend yêu cầu đăng nhập. Menu và API quản trị yêu cầu `SYSTEM_ADMIN` |
+| `/organizations` | [Organizations.jsx](frontend/src/pages/Organizations.jsx) | Cây tổ chức, thành viên, lời mời, đơn gia nhập, liên kết cấp trên/cấp dưới, cấp quyền | Đăng nhập. Các thao tác quản lý kiểm tra quyền trên tổ chức |
+| `/reports` | [Reports.jsx](frontend/src/pages/Reports.jsx) | Tổng hợp số lượng và tỷ trọng thành tích theo năm và loại | Đăng nhập, dữ liệu cá nhân |
+| `/admin` | [Admin.jsx](frontend/src/pages/Admin.jsx) | Tài khoản, quyền toàn hệ thống, danh mục loại thành tích | Route frontend yêu cầu đăng nhập. Menu và API quản trị yêu cầu `SYSTEM_ADMIN` |
 | `/me/calendar`, `/calendar`, `/notifications` | `Navigate` trong AppRoutes | Chuyển về dashboard. Lịch nằm trong dashboard, thông báo nằm ở thanh ứng dụng | Đăng nhập |
 | `*` | [NotFound](frontend/src/pages/NotFound.jsx) | Màn 404 cho URL không khớp route | Public |
 
-`RequireAuth` chờ khôi phục phiên rồi hiển thị layout hoặc chuyển sang `/login`. Backend kiểm tra phiên và trạng thái tài khoản trong [access.js](backend/src/v2/access.js). Quyền tổ chức lấy từ `org_access_grants` đang hiệu lực và có thể bao gồm đơn vị cấp dưới. `SYSTEM_ADMIN` được đi qua kiểm tra quyền tổ chức trong các helper tương ứng. Quy chế “công khai” vẫn nằm sau đăng nhập của kho quy chế. CV công khai có route và API public riêng.
+`RequireAuth` chờ khôi phục phiên rồi hiển thị layout hoặc chuyển sang `/login`. Backend kiểm tra phiên và trạng thái tài khoản trong [access.js](backend/src/modules/access.js). Quyền tổ chức lấy từ `org_access_grants` đang hiệu lực và có thể bao gồm đơn vị cấp dưới. `SYSTEM_ADMIN` được đi qua kiểm tra quyền tổ chức trong các helper tương ứng. Quy chế “công khai” vẫn nằm sau đăng nhập của kho quy chế. CV công khai có route và API public riêng.
 
 ## Luồng hoạt động theo trang và module
 
@@ -47,7 +47,7 @@ Tài liệu phản ánh mã nguồn trong workspace tại thời điểm rà so�
 | Quên mật khẩu | `POST /auth/forgot-password` với `{email}` | Với tài khoản ACTIVE, tạo hash token hết hạn sau 30 phút trong `auth_tokens` và gọi Resend gửi link có token trong URL fragment. Phản hồi dùng thông điệp chung |
 | Đặt lại mật khẩu | `POST /auth/reset-password` với `{token,password}` | Kiểm tra token chưa dùng và còn hạn, cập nhật `users`, tiêu thụ token, thu hồi `auth_sessions` và ghi `audit_events` |
 
-**Tình trạng.** Nối API. Gửi email phụ thuộc cấu hình URL ứng dụng, key và địa chỉ gửi. Thiếu cấu hình trả 503. Lỗi gửi từ provider được ghi log và UI vẫn nhận thông điệp chung, nên phản hồi thành công chưa xác nhận thư đã đến. Nguồn mã [authApi.js](frontend/src/services/authApi.js), [AuthContext.jsx](frontend/src/context/AuthContext.jsx), [identityRoutes.js](backend/src/v2/identityRoutes.js).
+**Tình trạng.** Nối API. Gửi email phụ thuộc cấu hình URL ứng dụng, key và địa chỉ gửi. Thiếu cấu hình trả 503. Lỗi gửi từ provider được ghi log và UI vẫn nhận thông điệp chung, nên phản hồi thành công chưa xác nhận thư đã đến. Nguồn mã [authApi.js](frontend/src/services/authApi.js), [AuthContext.jsx](frontend/src/context/AuthContext.jsx), [identityRoutes.js](backend/src/modules/identityRoutes.js).
 
 ### 2. Dashboard, lịch và thanh ứng dụng
 
@@ -60,7 +60,7 @@ Tài liệu phản ánh mã nguồn trong workspace tại thời điểm rà so�
 | Thông báo | `GET /notifications?page=1&pageSize=10` và trang tiếp theo, `PATCH /notifications/:id/read`, `POST /notifications/read-all` | Trả item, tổng và số chưa đọc. Cập nhật `read_at` trong `notifications` theo người nhận |
 | Tìm kiếm chung | `GET /achievements?search=…`, `GET /kpi/goals`, `GET /regulations/documents`, `GET /organizations` | Dùng các API nghiệp vụ và phạm vi tương ứng. Thành tích tìm trên server. KPI/quy chế lọc cục bộ trên tối đa trang đầu 100 kết quả. Link trang được tra từ danh mục điều hướng tĩnh |
 
-**Tình trạng.** Các số đếm, sự kiện và thông báo lấy từ API. Hình minh họa, lối tắt và tên trang tìm kiếm là nội dung tĩnh. Lịch lưu `remindAt` thực tế. Router hiện hành chỉ lưu/đọc mốc thời gian, chưa có luồng phát nhắc lịch được nối từ lịch dashboard. Nguồn mã [DashboardCalendar.jsx](frontend/src/components/calendar/DashboardCalendar.jsx), [GlobalSearch.jsx](frontend/src/components/common/GlobalSearch.jsx), [NotificationDropdown.jsx](frontend/src/components/common/NotificationDropdown.jsx), [supportRoutes.js](backend/src/v2/supportRoutes.js).
+**Tình trạng.** Các số đếm, sự kiện và thông báo lấy từ API. Hình minh họa, lối tắt và tên trang tìm kiếm là nội dung tĩnh. Lịch lưu `remindAt` thực tế. Router hiện hành chỉ lưu/đọc mốc thời gian, chưa có luồng phát nhắc lịch được nối từ lịch dashboard. Nguồn mã [DashboardCalendar.jsx](frontend/src/components/calendar/DashboardCalendar.jsx), [GlobalSearch.jsx](frontend/src/components/common/GlobalSearch.jsx), [NotificationDropdown.jsx](frontend/src/components/common/NotificationDropdown.jsx), [supportRoutes.js](backend/src/modules/supportRoutes.js).
 
 ### 3. Hồ sơ cá nhân và CV
 
@@ -74,7 +74,7 @@ Tài liệu phản ánh mã nguồn trong workspace tại thời điểm rà so�
 | Xem link công khai | `GET /public/cv/:slug` | Chỉ lấy CV có trạng thái PUBLIC. Kết hợp hồ sơ và thành tích được chọn còn hoạt động. Chỉ trả email/điện thoại khi cài đặt cho phép |
 | Xuất Word | `GET /me/cv/export-docx` | Đọc `cvs`, `person_profiles`, `cv_achievements`, `achievements`, dựng DOCX từ tên, headline, giới thiệu và danh sách thành tích |
 
-**Tình trạng.** Lưu và xuất nối API. Mẫu chọn và preview được render ngay trên frontend. API xuất Word có bộ dựng văn bản riêng, gồm các đoạn nội dung nói trên. `GET /cv/templates` có handler trả danh sách mẫu cố định, còn tab CV khai báo lựa chọn mẫu trong component. Nguồn mã [vaultRoutes.js](backend/src/v2/vaultRoutes.js), [supportRoutes.js](backend/src/v2/supportRoutes.js).
+**Tình trạng.** Lưu và xuất nối API. Mẫu chọn và preview được render ngay trên frontend. API xuất Word có bộ dựng văn bản riêng, gồm các đoạn nội dung nói trên. `GET /cv/templates` có handler trả danh sách mẫu cố định, còn tab CV khai báo lựa chọn mẫu trong component. Nguồn mã [vaultRoutes.js](backend/src/modules/vaultRoutes.js), [supportRoutes.js](backend/src/modules/supportRoutes.js).
 
 ### 4. Kho thành tích và minh chứng
 
@@ -88,7 +88,7 @@ Tài liệu phản ánh mã nguồn trong workspace tại thời điểm rà so�
 | Tệp | `GET/POST /achievements/:id/evidences` với multipart `file` khi tạo, `DELETE /evidences/:id`, `GET /evidence-files/:id/download` | Kiểm tra thành tích và tệp theo phạm vi đọc, lưu bytes trong filesystem, ghi `evidence_files` với tên, MIME, kích thước, hash và storage key. Tải file trả nội dung nhị phân |
 | Trích xuất AI | `POST /achievements/ai-extract` với multipart `file` | Handler kiểm tra tệp, gọi luồng trích xuất theo định dạng trong `vision.js` và trả gợi ý. Thành tích chỉ được ghi qua thao tác lưu riêng |
 
-**Tình trạng.** Danh sách và CRUD nối API. Lọc danh sách kho và thao tác chọn gợi ý xử lý ở frontend. Preview tệp dùng blob từ API hoặc tệp người dùng vừa chọn. Trích xuất AI phụ thuộc provider/cấu hình và có đường lỗi. Upload thất bại sau khi lưu có thể để lại thành tích đã lưu và cho thử upload lại. Backend có API cấp/thu hồi chia sẻ minh chứng `POST /evidence-files/:id/shares` và `DELETE /evidence-shares/:id` trên `evidence_shares`. UI kho hiện nối luồng quản lý và tải tệp. Nguồn mã [vaultRoutes.js](backend/src/v2/vaultRoutes.js), [vision.js](backend/src/v2/vision.js).
+**Tình trạng.** Danh sách và CRUD nối API. Lọc danh sách kho và thao tác chọn gợi ý xử lý ở frontend. Preview tệp dùng blob từ API hoặc tệp người dùng vừa chọn. Trích xuất AI phụ thuộc provider/cấu hình và có đường lỗi. Upload thất bại sau khi lưu có thể để lại thành tích đã lưu và cho thử upload lại. Backend có API cấp/thu hồi chia sẻ minh chứng `POST /evidence-files/:id/shares` và `DELETE /evidence-shares/:id` trên `evidence_shares`. UI kho hiện nối luồng quản lý và tải tệp. Nguồn mã [vaultRoutes.js](backend/src/modules/vaultRoutes.js), [vision.js](backend/src/modules/vision.js).
 
 ### 5. Đối chiếu quy chế cá nhân và tổ chức
 
@@ -103,7 +103,7 @@ Tài liệu phản ánh mã nguồn trong workspace tại thời điểm rà so�
 | Khám tổ chức | `GET /organizations/:id/members?includeDescendants=…`, `GET /organizations/units/:id/assessment-options`, `POST /organizations/units/:id/ai-scan` với `{regulation_version_id,evaluation_date,include_descendants,user_ids}` | Kiểm tra quyền `ASSESSMENTS_RUN` và `ASSESSMENTS_VIEW`, phiên bản đủ điều kiện và thành viên đang hiệu lực/ACTIVE trong phạm vi. Ghi batch vào `assessment_batches` và chạy đánh giá cho thành viên được chọn |
 | Gửi tóm tắt kết quả | `POST /organizations/units/:id/assessment-notifications` với `{runIds,note,deadline?,resendKey?}` | Kiểm tra quyền và phạm vi run/người nhận, ghi thông báo trong `notifications`. UI gửi theo từng người nhận và theo dõi lỗi từng lượt |
 
-**Tình trạng.** Luồng đối chiếu chính nối API và dùng bộ đánh giá quy tắc có kết quả lưu SQL. Phần đối chiếu không cần LLM. Tiêu chí thủ công hoặc chưa hỗ trợ có trạng thái riêng trong bộ đánh giá. `POST /ai/auto-discovery` và `POST /ai/evaluations/structured/:id/notify` có handler, còn UI trên gọi các endpoint đối chiếu có cấu trúc và thông báo tóm tắt như bảng. Nguồn mã [intelligenceRoutes.js](backend/src/v2/intelligenceRoutes.js), [intelligenceEvaluator.js](backend/src/v2/intelligenceEvaluator.js).
+**Tình trạng.** Luồng đối chiếu chính nối API và dùng bộ đánh giá quy tắc có kết quả lưu SQL. Phần đối chiếu không cần LLM. Tiêu chí thủ công hoặc chưa hỗ trợ có trạng thái riêng trong bộ đánh giá. `POST /ai/auto-discovery` và `POST /ai/evaluations/structured/:id/notify` có handler, còn UI trên gọi các endpoint đối chiếu có cấu trúc và thông báo tóm tắt như bảng. Nguồn mã [intelligenceRoutes.js](backend/src/modules/intelligenceRoutes.js), [intelligenceEvaluator.js](backend/src/modules/intelligenceEvaluator.js).
 
 ### 6. Mục tiêu / KPI
 
@@ -117,7 +117,7 @@ Tài liệu phản ánh mã nguồn trong workspace tại thời điểm rà so�
 | Checklist | `POST /kpi/goals/:id/tasks` với `{title}`, `PATCH /kpi/goals/:id/tasks/:taskId` với `{status}` | Kiểm tra sở hữu mục tiêu, ghi `kpi_tasks` và thời điểm hoàn thành khi DONE |
 | Liên kết thành tích | `GET /achievements` để chọn, `POST /kpi/goals/:id/achievements` với `{achievement_id,contribution_value}` | Xác minh thành tích hoạt động cùng chủ sở hữu, ghi `kpi_achievements` |
 
-**Tình trạng.** Nối API. API V2 có thêm xóa checklist và gỡ liên kết thành tích. Màn hiện tại nối thêm mục checklist, đổi trạng thái và thêm liên kết. Import CSV và đồng bộ KPI ngoài hiện diện trong router cũ, ngoài luồng router hiện tại. Nguồn mã [intelligenceRoutes.js](backend/src/v2/intelligenceRoutes.js).
+**Tình trạng.** Nối API. API V2 có thêm xóa checklist và gỡ liên kết thành tích. Màn hiện tại nối thêm mục checklist, đổi trạng thái và thêm liên kết. Import CSV và đồng bộ KPI ngoài thuộc lịch sử triển khai. Nguồn mã [intelligenceRoutes.js](backend/src/modules/intelligenceRoutes.js).
 
 ### 7. Kho quy chế
 
@@ -133,7 +133,7 @@ Tài liệu phản ánh mã nguồn trong workspace tại thời điểm rà so�
 | Chia sẻ | `POST /regulations/versions/:id/shares` với đích chia sẻ người dùng hoặc tổ chức, `POST /regulations/shares/:id/respond` với `{accept}`, `POST /regulations/shares/:id/revoke` | Kiểm tra quyền chia sẻ hoặc quyền nhận, lưu/chuyển trạng thái `regulation_shares` và cập nhật ngữ cảnh truy cập |
 | Xem/tải tệp nguồn | `GET /regulations/versions/:id/source`, `GET …/source/download`, `GET …/source/preview` | Đọc `regulation_source_files` và filesystem theo phạm vi đọc phiên bản. PDF được mở từ blob, DOCX xem dưới dạng text |
 
-**Tình trạng.** Nguồn dữ liệu thư viện và thao tác trên nối API. Quyền viết theo sở hữu cá nhân hoặc quyền tổ chức tương ứng, gồm `REGULATIONS_CREATE`, `REGULATIONS_MANAGE`, `REGULATIONS_PUBLISH`, `REGULATIONS_SHARE`, `REGULATIONS_ADOPT` và `REGULATIONS_UPDATE` theo hành động. Bộ mã nguồn có API upload/trích xuất/sửa văn bản/đề xuất AI/review tệp nguồn. Màn thư viện hiện nối đọc metadata, preview và tải tệp, còn các API ghi tệp nguồn chưa có lời gọi từ màn này. Đề xuất nguồn ở backend dùng AI Pool, Groq hoặc OpenRouter theo cấu hình. Nhãn “Tiêu chí mẫu” có thể đến từ dữ liệu demo đã lưu. Nguồn mã [intelligenceRoutes.js](backend/src/v2/intelligenceRoutes.js), [regulationDistributionRoutes.js](backend/src/v2/regulationDistributionRoutes.js), [regulationSourceRoutes.js](backend/src/v2/regulationSourceRoutes.js), [regulationAccess.js](backend/src/v2/regulationAccess.js).
+**Tình trạng.** Nguồn dữ liệu thư viện và thao tác trên nối API. Quyền viết theo sở hữu cá nhân hoặc quyền tổ chức tương ứng, gồm `REGULATIONS_CREATE`, `REGULATIONS_MANAGE`, `REGULATIONS_PUBLISH`, `REGULATIONS_SHARE`, `REGULATIONS_ADOPT` và `REGULATIONS_UPDATE` theo hành động. Bộ mã nguồn có API upload/trích xuất/sửa văn bản/đề xuất AI/review tệp nguồn. Màn thư viện hiện nối đọc metadata, preview và tải tệp, còn các API ghi tệp nguồn chưa có lời gọi từ màn này. Đề xuất nguồn ở backend dùng AI Pool, Groq hoặc OpenRouter theo cấu hình. Nhãn “Tiêu chí mẫu” có thể đến từ dữ liệu demo đã lưu. Nguồn mã [intelligenceRoutes.js](backend/src/modules/intelligenceRoutes.js), [regulationDistributionRoutes.js](backend/src/modules/regulationDistributionRoutes.js), [regulationSourceRoutes.js](backend/src/modules/regulationSourceRoutes.js), [regulationAccess.js](backend/src/modules/regulationAccess.js).
 
 ### 8. Tổ chức
 
@@ -149,7 +149,7 @@ Tài liệu phản ánh mã nguồn trong workspace tại thời điểm rà so�
 | Liên kết đơn vị | `GET /organizations/:id/link-requests`, `POST /organizations/:id/link-requests` với `{targetParentId}`, `POST /organization-link-requests/:id/respond` với `{accept}` | Kiểm tra quyền cấu trúc và quan hệ hợp lệ. Ghi `organization_link_requests`, cập nhật quan hệ trong `organizations` và ghi `organization_link_history` khi áp dụng |
 | Quản lý quyền | `GET /organizations/:id/access`, `PUT /organizations/:id/access/users/:userId` với `{grantIds,permissions:[{permissionCode,includeDescendants}]}` | Kiểm tra `ACCESS_MANAGE`, membership và phạm vi được cấp. Đối chiếu snapshot grant, thêm/kết thúc quyền trong `org_access_grants` và ghi `audit_events` |
 
-**Tình trạng.** Các luồng trên nối API và dùng SQL. Cây và bộ lọc trình bày xử lý từ dữ liệu trả về. Mời người dùng là lời mời trong hệ thống đến tài khoản được tra theo email. Backend còn khai báo endpoint chi tiết/xóa tổ chức, danh sách/thu hồi lời mời đơn vị, lịch sử liên kết, cấp/thu hồi grant đơn và gửi thông báo trực tiếp cho tổ chức. Danh mục API bên dưới ghi chúng theo handler. Nguồn mã [identityRoutes.js](backend/src/v2/identityRoutes.js), [access.js](backend/src/v2/access.js).
+**Tình trạng.** Các luồng trên nối API và dùng SQL. Cây và bộ lọc trình bày xử lý từ dữ liệu trả về. Mời người dùng là lời mời trong hệ thống đến tài khoản được tra theo email. Backend còn khai báo endpoint chi tiết/xóa tổ chức, danh sách/thu hồi lời mời đơn vị, lịch sử liên kết, cấp/thu hồi grant đơn và gửi thông báo trực tiếp cho tổ chức. Danh mục API bên dưới ghi chúng theo handler. Nguồn mã [identityRoutes.js](backend/src/modules/identityRoutes.js), [access.js](backend/src/modules/access.js).
 
 ### 9. Thống kê & Báo cáo
 
@@ -157,7 +157,7 @@ Tài liệu phản ánh mã nguồn trong workspace tại thời điểm rà so�
 
 **Data Flow.** `Reports` gọi `GET /achievements` qua các trang và lấy thành tích hoạt động của chính người dùng từ `achievements` và `achievement_types`. Frontend nhóm theo năm của `achievedAt` và `typeName`, rồi tính số lượng và phần trăm. Handler `GET /reports` thuộc luồng tổng quan dashboard.
 
-**Tình trạng.** Dữ liệu thật qua API, công thức và thanh tỷ trọng chạy ở frontend. Trang chưa có nút xuất báo cáo. Router CSV cũ không được mount. Nguồn mã [Reports](frontend/src/pages/V2.jsx#L3466), [vaultRoutes.js](backend/src/v2/vaultRoutes.js), [supportRoutes.js](backend/src/v2/supportRoutes.js).
+**Tình trạng.** Dữ liệu thật qua API, công thức và thanh tỷ trọng chạy ở frontend. Trang chưa có nút xuất báo cáo. Nguồn mã [Reports](frontend/src/pages/Reports.jsx), [vaultRoutes.js](backend/src/modules/vaultRoutes.js), [supportRoutes.js](backend/src/modules/supportRoutes.js).
 
 ### 10. Quản trị hệ thống
 
@@ -169,7 +169,7 @@ Tài liệu phản ánh mã nguồn trong workspace tại thời điểm rà so�
 | Vai trò toàn hệ thống | `GET /admin/global-roles`, `POST /admin/global-roles` với `{userId,roleCode:'SYSTEM_ADMIN'}`, `DELETE /admin/global-roles/:id` | Đọc grant hiệu lực, tạo hoặc kết thúc quyền trong `global_role_grants`, ghi audit và kiểm tra ràng buộc quản trị |
 | Danh mục loại thành tích | `GET /achievements/catalogs`, `POST /achievements/catalogs` với `{code,name}` | Đọc loại đang hoạt động. Thêm loại vào `achievement_types` yêu cầu `SYSTEM_ADMIN` |
 
-**Tình trạng.** Nối API. Ô lọc tài khoản xử lý cục bộ. Menu ẩn với người thiếu role, còn URL trực tiếp vẫn qua guard đăng nhập và các API quản trị trả lỗi phân quyền. Danh mục này có UI thêm loại, hiện chưa có action sửa/xóa loại. Nguồn mã [identityRoutes.js](backend/src/v2/identityRoutes.js), [vaultRoutes.js](backend/src/v2/vaultRoutes.js).
+**Tình trạng.** Nối API. Ô lọc tài khoản xử lý cục bộ. Menu ẩn với người thiếu role, còn URL trực tiếp vẫn qua guard đăng nhập và các API quản trị trả lỗi phân quyền. Danh mục này có UI thêm loại, hiện chưa có action sửa/xóa loại. Nguồn mã [identityRoutes.js](backend/src/modules/identityRoutes.js), [vaultRoutes.js](backend/src/modules/vaultRoutes.js).
 
 ## Danh mục endpoint đang được đăng ký
 
@@ -177,25 +177,24 @@ Các phương thức liệt kê trên cùng dòng dùng chung đường dẫn ho
 
 | Router | Method và đường dẫn |
 | --- | --- |
-| [app.js](backend/src/app.js), [health](backend/src/modules/health/healthRoutes.js) | `GET /` ở gốc server. Theo tiền tố API có `GET /health`, `GET /health/readiness` |
-| [Identity](backend/src/v2/identityRoutes.js) · tài khoản | `POST /auth/{register,login,refresh,logout,forgot-password,reset-password,change-password}`; `GET /auth/me`; `GET/PATCH /me/profile` |
+| [app.js](backend/src/app.js), [health](backend/src/health/healthRoutes.js) | `GET /` ở gốc server. Theo tiền tố API có `GET /health`, `GET /health/readiness` |
+| [Identity](backend/src/modules/identityRoutes.js) · tài khoản | `POST /auth/{register,login,refresh,logout,forgot-password,reset-password,change-password}`; `GET /auth/me`; `GET/PATCH /me/profile` |
 | Identity · tổ chức | `GET/POST /organizations`; `GET/PATCH/DELETE /organizations/:id`; `GET /organizations/:id/members`; `DELETE /organizations/:id/members/:membershipId` |
 | Identity · gia nhập và lời mời | `GET /me/invitations`, `GET /me/join-requests`; `GET/POST /organizations/:id/{join-requests,invitations}`; `POST /organizations/:id/join-requests/:requestId/respond`; `POST /invitations/:id/respond`; `DELETE /invitations/:id` |
 | Identity · quyền, cấu trúc, thông báo | `GET/POST /organizations/:id/access`; `PUT /organizations/:id/access/users/:userId`; `DELETE /organizations/:id/access/:grantId`; `GET/POST /organizations/:id/link-requests`; `GET /organizations/:id/link-history`; `POST /organization-link-requests/:id/respond`; `POST /organizations/:id/notifications` |
 | Identity · admin | `GET /admin/users`; `PATCH /admin/users/:id`; `GET/POST /admin/global-roles`; `DELETE /admin/global-roles/:id` |
-| [Vault](backend/src/v2/vaultRoutes.js) · kho | `GET/POST /achievements`; `GET/PATCH/DELETE /achievements/:id`; `GET/POST /achievements/catalogs`; `POST /achievements/ai-extract`; `POST /achievements/:id/restore` |
+| [Vault](backend/src/modules/vaultRoutes.js) · kho | `GET/POST /achievements`; `GET/PATCH/DELETE /achievements/:id`; `GET/POST /achievements/catalogs`; `POST /achievements/ai-extract`; `POST /achievements/:id/restore` |
 | Vault · minh chứng và CV | `GET/POST /achievements/:id/evidences`; `DELETE /evidences/:id`; `GET /evidence-files/:id/download`; `POST /evidence-files/:id/shares`; `DELETE /evidence-shares/:id`; `GET /cv/templates`; `GET/PUT /me/cv`; `GET /public/cv/:slug` |
-| [Intelligence](backend/src/v2/intelligenceRoutes.js) · quy chế | `GET/POST /regulations/documents`; `GET/PATCH/DELETE /regulations/documents/:id`; `POST /regulations/documents/:id/versions`; `GET/PATCH/DELETE /regulations/versions/:id`; `POST /regulations/versions/:id/{publish,groups,criteria}`; `PATCH/DELETE /regulations/{groups,criteria}/:id` |
-| [Distribution](backend/src/v2/regulationDistributionRoutes.js) | `GET /regulations/library`; `PATCH /regulations/documents/:id/distribution`; `POST/DELETE /regulations/versions/:id/adopt`; `POST /regulations/versions/:id/shares`; `GET /regulations/shares`; `POST /regulations/shares/:id/{respond,revoke}` |
-| [Source](backend/src/v2/regulationSourceRoutes.js) | `GET/POST /regulations/versions/:id/source`; `GET …/source/{download,preview}`; `POST …/source/{extract,ai-propose,review}`; `PATCH …/source/text` |
+| [Intelligence](backend/src/modules/intelligenceRoutes.js) · quy chế | `GET/POST /regulations/documents`; `GET/PATCH/DELETE /regulations/documents/:id`; `POST /regulations/documents/:id/versions`; `GET/PATCH/DELETE /regulations/versions/:id`; `POST /regulations/versions/:id/{publish,groups,criteria}`; `PATCH/DELETE /regulations/{groups,criteria}/:id` |
+| [Distribution](backend/src/modules/regulationDistributionRoutes.js) | `GET /regulations/library`; `PATCH /regulations/documents/:id/distribution`; `POST/DELETE /regulations/versions/:id/adopt`; `POST /regulations/versions/:id/shares`; `GET /regulations/shares`; `POST /regulations/shares/:id/{respond,revoke}` |
+| [Source](backend/src/modules/regulationSourceRoutes.js) | `GET/POST /regulations/versions/:id/source`; `GET …/source/{download,preview}`; `POST …/source/{extract,ai-propose,review}`; `PATCH …/source/text` |
 | Intelligence · đánh giá | `GET/POST /ai/evaluations/structured`; `GET /ai/evaluations/structured/{latest,history,:id}`; `POST /ai/evaluations/structured/:id/notify`; `POST /ai/auto-discovery`; `GET /organizations/units/:id/assessment-options`; `POST /organizations/units/:id/{ai-scan,assessment-notifications}` |
 | Intelligence · KPI | `GET/POST /kpi/goals`; `GET/PATCH/DELETE /kpi/goals/:id`; `POST /kpi/from-ai-gap`; `POST /kpi/goals/:id/{progress,tasks,achievements}`; `PATCH/DELETE /kpi/goals/:id/tasks/:taskId`; `DELETE /kpi/goals/:id/achievements/:achievementId` |
-| [Support](backend/src/v2/supportRoutes.js) · lịch | `GET/POST /me/calendar/events` và alias `/me/calendar`; `PATCH/DELETE /me/calendar/events/:id`; alias `DELETE /me/calendar/:id` |
+| [Support](backend/src/modules/supportRoutes.js) · lịch | `GET/POST /me/calendar/events` và alias `/me/calendar`; `PATCH/DELETE /me/calendar/events/:id`; alias `DELETE /me/calendar/:id` |
 | Support · tổng quan, thông báo, xuất tệp | `GET /reports` cùng alias `/reports/dashboard`, `/dashboard`; `GET /selections`; `GET /notifications`; `PATCH /notifications/:id/read`; `POST /notifications/read-all`; `POST /ai/export-dossier-zip`; `GET /me/cv/export-docx` |
 
-## Thành phần ngoài luồng trang hiện hành
+## Thành phần hỗ trợ
 
-- `backend/src/modules` còn các router đời trước cho báo cáo CSV, tích hợp KPI ngoài, AI/RAG, lựa chọn hồ sơ giải thưởng và các nghiệp vụ khác. Entry point hiện tại chỉ mount health từ nhóm router này. Một số tiện ích/provider được V2 import trực tiếp. Việc có file hoặc test cho router cũ không tạo endpoint ở app hiện tại.
-- `backend/src/mock/kpiServer.js`, mock provider cũ, `frontend/.env.fixture`, fixtures trong tests và kịch bản seed/demo phục vụ các chế độ kiểm thử hoặc trình diễn. Các màn chính gọi REST theo code hiện hành. Dữ liệu demo đã seed vào SQL vẫn đi qua API và quyền như dữ liệu lưu trữ.
-- `database/migrations`, `supabase/migrations` và nhánh migration SQL Server cũ phản ánh các thế hệ schema khác. Ranh giới đọc/ghi ở trên lấy từ handler V2 và SQL hiện hành.
-- `cloudflare/ai-pool` là worker/provider pool riêng, có code dashboard vận hành riêng. React Router của ứng dụng thành tích không đăng ký các trang vận hành đó.
+- Script seed demo và fixture trình duyệt phục vụ kiểm thử hoặc trình diễn. Dữ liệu demo trong SQL đi qua API và kiểm quyền như dữ liệu nhập từ ứng dụng.
+- [Cloudflare AI Pool](cloudflare/ai-pool/README.md) có worker và dashboard vận hành riêng.
+- Các module, migration và hợp đồng legacy có thể tra cứu trong lịch sử Git. Hợp đồng đang chạy được ghi tại [API Reference](docs/api/API_REFERENCE.md).

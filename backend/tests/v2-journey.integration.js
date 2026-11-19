@@ -5,10 +5,10 @@ import { once } from 'node:events';
 import http from 'node:http';
 import fs from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { discardSource } from '../src/v2/regulationSources.js';
+import { discardSource } from '../src/modules/regulationSources.js';
 import app from '../src/app.js';
 import { Pool, getDbPoolConfig, setPool } from '../src/config/database.js';
-import { discardFile } from '../src/v2/files.js';
+import { discardFile } from '../src/modules/files.js';
 
 // Historical, deliberately partial pathway; see docs/testing/V2_JOURNEY.md.
 const SOURCE = 'https://youth.ueh.edu.vn/wp-content/uploads/2025/09/DE-AN-SV5T-UEH-NAM-2025-1.pdf';
@@ -62,7 +62,7 @@ test('V2 journey: sourced UEH 2025 skills pathway → missing → KPI → comple
       const doc = await call('/regulations/documents', { method: 'POST', data: { code: `UEH25-SKILL-${tag}`, name: 'Kiểm thử nhánh 5.2 kỹ năng UEH 2025 — không phải toàn bộ SV5T', description: 'Một nhánh độc lập phục vụ kiểm thử, chỉ đối chiếu dữ liệu tự khai.' }, expected: 201 });
       version = await call(`/regulations/documents/${doc.id}/versions`, { method: 'POST', data: { version_label: '2025-subcriterion-test', effective_from: '2025-03-14', effective_to: '2025-11-01', source_title: 'Quyết định 25/QĐ-ĐHKT-HSV ngày 14/03/2025 — nhánh I.5.2 và Phụ lục IV/V', source_url: SOURCE, applicability: { person_types: ['STUDENT'] } }, expected: 201 });
       await call(`/regulations/versions/${version.id}/criteria`, { method: 'POST', data: { code: 'I-5-2-SKILLS-PATH', title: 'Nhánh hoàn thành hai khóa kỹ năng thực hành xã hội', source_reference: 'I.5.2 (trang 5), Phụ lục IV (trang 10), V (trang 11), kỳ hồ sơ IV (trang 7)', rule }, expected: 201 });
-      const originalSource=await fs.readFile(new URL('../../database/sqlserver/v2/sources/ueh-sv5t-2025.pdf',import.meta.url));
+      const originalSource=await fs.readFile(new URL('../../database/sqlserver/sources/ueh-sv5t-2025.pdf',import.meta.url));
       const sourceForm=new FormData();sourceForm.append('file',new Blob([originalSource],{type:'application/pdf'}),'ueh-sv5t-2025.pdf');sourceForm.append('sourceUrl',SOURCE);sourceForm.append('issuingAuthority','Ban Thư ký Hội Sinh viên Việt Nam UEH');
       const sourceFile=await call(`/regulations/versions/${version.id}/source`,{method:'POST',form:sourceForm,expected:201});
       sourceFiles.push((await client.query('SELECT storage_key FROM app.regulation_source_files WHERE id=$1',[sourceFile.id])).rows[0].storage_key);

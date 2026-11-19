@@ -101,7 +101,7 @@ Danh sách ID cụ thể, phiên bản, file, KPI và kết quả nằm trong ma
 
 ## Nguồn chính thức và giới hạn tự động hóa
 
-Danh mục gốc: `database/sqlserver/v2/sources/source-register.json`. Registry ghi URL gốc, thời điểm thu thập, SHA256, dung lượng, cơ quan ban hành, tình trạng nguồn và phần đã cấu hình. Seed xác nhận hash trước khi sao chép file vào kho riêng tư.
+Danh mục gốc: `database/sqlserver/sources/source-register.json`. Registry ghi URL gốc, thời điểm thu thập, SHA256, dung lượng, cơ quan ban hành, tình trạng nguồn và phần đã cấu hình. Seed xác nhận hash trước khi sao chép file vào kho riêng tư.
 
 | Nguồn | Cấu hình và giới hạn |
 |---|---|

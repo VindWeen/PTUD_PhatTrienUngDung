@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import PizZip from 'pizzip';
 import app from '../src/app.js';
 import { Pool,getDbPoolConfig,setPool } from '../src/config/database.js';
-import { discardSource } from '../src/v2/regulationSources.js';
+import { discardSource } from '../src/modules/regulationSources.js';
 
 test('SQL Server HTTP regulations: private source, scoped internal/share/public pins, review and immutable updates',async t=>{
  const native=new Pool(getDbPoolConfig()),client=await native.connect();await client.query('BEGIN');

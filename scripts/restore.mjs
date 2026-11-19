@@ -4,7 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { Pool,getDbPoolConfig } from '../backend/src/config/database.js';
-import { storageRoot } from '../backend/src/v2/files.js';
+import { storageRoot } from '../backend/src/modules/files.js';
 import {parseArgs,quoteIdentifier,sqlString,serverJoin,within,safeFile,sha256,walkFiles,privateReferences,tableCounts,checkReferences,privateStorageRoots} from './backup.mjs';
 
 export function validateTargetName(target,protectedNames=[]){

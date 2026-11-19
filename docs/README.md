@@ -5,8 +5,8 @@ Cập nhật 15/11/2026. [Kho thành tích cá nhân V2](requirements/PERSONAL_V
 | Nhu cầu | Tài liệu |
 | --- | --- |
 | Cách chạy và trạng thái | [README dự án](../README.md), [backend](../backend/README.md) |
-| API đang gắn | [Chỉ mục API V2](api/V2.md) |
-| Schema và migration | [Database](../database/README.md), [SQL Server V2](../database/sqlserver/v2/README.md) |
+| API đang gắn | [Chỉ mục API V2](api/API_REFERENCE.md) |
+| Schema và migration | [Database](../database/README.md), [SQL Server V2](../database/sqlserver/README.md) |
 | Thiết kế nghiệp vụ | [Use case và ERD](requirements/PERSONAL_VAULT_V2.md) |
 
-Một số từ điển dữ liệu và báo cáo lưu trữ mô tả phiên bản trước. Đối chiếu [API V2](api/V2.md) và mã runtime khi sử dụng.
+Một số từ điển dữ liệu và báo cáo lưu trữ mô tả phiên bản trước. Đối chiếu [API V2](api/API_REFERENCE.md) và mã runtime khi sử dụng.

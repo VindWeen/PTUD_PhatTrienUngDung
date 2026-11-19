@@ -6,7 +6,7 @@ import http from 'node:http';
 import PizZip from 'pizzip';
 import app from '../src/app.js';
 import { Pool, getDbPoolConfig, setPool } from '../src/config/database.js';
-import { discardFile } from '../src/v2/files.js';
+import { discardFile } from '../src/modules/files.js';
 
 test('V2 HTTP: personal vault, files, private/public CV, organization consent, calendar and revoked sessions',async(t)=>{
   const native=new Pool(getDbPoolConfig()),client=await native.connect();

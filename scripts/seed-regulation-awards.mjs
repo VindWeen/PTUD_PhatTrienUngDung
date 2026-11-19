@@ -1,4 +1,4 @@
-import { ruleSchema } from '../backend/src/v2/intelligenceEvaluator.js';
+import { ruleSchema } from '../backend/src/modules/intelligenceEvaluator.js';
 
 const citations = [
   { label: 'Luật Thi đua, khen thưởng 06/2022/QH15', url: 'https://vanban.chinhphu.vn/?docid=206170&pageid=27160' },

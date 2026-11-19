@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { proposeSourceCriteria } from '../backend/src/v2/regulationSources.js';
+import { proposeSourceCriteria } from '../backend/src/modules/regulationSources.js';
 if(!process.argv.includes('--run')){console.log('Usage: node scripts/test-regulation-ai-live.mjs --run (uses configured AI provider with fictional text only)');process.exit(0);}
 const text='QUY CHẾ TỰ ĐẶT — DỮ LIỆU DEMO. Áp dụng cho sinh viên. Điều 1: Sinh viên hoàn thành ít nhất 2 hoạt động tình nguyện trong năm 2026. Mỗi hoạt động lưu loại VOLUNTEER trong thuộc tính category và ngày hoàn thành. Điều 2: Đây là đối chiếu hồ sơ tự khai, không công nhận danh hiệu.';
 const result=await proposeSourceCriteria(text);

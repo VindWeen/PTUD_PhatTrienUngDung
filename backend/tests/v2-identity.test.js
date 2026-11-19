@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { withTransaction } from '../src/utils/dbHelper.js';
 import { closeDB } from '../src/config/database.js';
-import { canAccessOrg, authorizeOrg, hasGlobalRole, orgScopeIds } from '../src/v2/access.js';
+import { canAccessOrg, authorizeOrg, hasGlobalRole, orgScopeIds } from '../src/modules/access.js';
 
 test('V2 permissions follow live grants, descendants, and current tree without granting member rights',async()=>{
   const rollback=new Error('fixture rollback');

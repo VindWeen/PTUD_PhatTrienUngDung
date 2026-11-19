@@ -2,15 +2,15 @@
 
 Ngày 15/11/2026: đã reset database dự án và áp dụng 2 migration V2 vào PTUD_LHU. Hiện có **33 bảng nghiệp vụ**, 71 foreign key, 80 check constraint và 11 trigger. Baseline ban đầu không có dữ liệu nghiệp vụ; bảng kỹ thuật app._schema_migrations lưu lịch sử áp dụng. Trạng thái hiện tại cần kiểm tra trực tiếp trước khi dùng tùy chọn `--expect-empty`.
 
-Schema mới nằm tại [sqlserver/v2/migrations/](sqlserver/v2/migrations/). Runner database/scripts/migrate.js chỉ đọc chuỗi V2; không chạy migration cũ. Xem [hướng dẫn V2](sqlserver/v2/README.md) và [thiết kế nghiệp vụ](../docs/requirements/PERSONAL_VAULT_V2.md).
+Schema mới nằm tại [sqlserver/migrations/](sqlserver/migrations/). Runner database/scripts/migrate.js chỉ đọc chuỗi V2; không chạy migration cũ. Xem [hướng dẫn V2](sqlserver/README.md) và [thiết kế nghiệp vụ](../docs/requirements/PERSONAL_VAULT_V2.md).
 
 ## Lệnh từ thư mục backend
 
 - npm run migrate:status: kiểm lịch sử và checksum.
 - npm run migrate: áp dụng migration V2 còn thiếu; database chưa có lịch sử V2 phải rỗng.
 - npm run test:db:runner: kiểm cơ chế migration độc lập.
-- npm run test:db:v2: kiểm ràng buộc trên SQL Server bằng dữ liệu tạm rồi rollback.
-- node ../database/sqlserver/v2/verify.mjs --expect-empty: đối chiếu bảng, constraint, trigger và kiểm dữ liệu rỗng.
+- npm run test:db: kiểm ràng buộc trên SQL Server bằng dữ liệu tạm rồi rollback.
+- node ../database/sqlserver/verify.mjs --expect-empty: đối chiếu bảng, constraint, trigger và kiểm dữ liệu rỗng.
 
 Schema V2 khởi tạo trống.
 

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { Pool, getDbPoolConfig } from '../../backend/src/config/database.js';
 
 // V2 is a fresh baseline. Never mix the historical workflow migrations into this chain.
-export const migrationsDir = fileURLToPath(new URL('../sqlserver/v2/migrations/', import.meta.url));
+export const migrationsDir = fileURLToPath(new URL('../sqlserver/migrations/', import.meta.url));
 export function getMigrationFiles() {
   if (!fs.existsSync(migrationsDir)) throw new Error(`SQL Server migrations not found: ${migrationsDir}`);
   const files = fs.readdirSync(migrationsDir).filter(file => /^\d+_[\w-]+\.sql$/.test(file)).sort();

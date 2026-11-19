@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import PizZip from 'pizzip';
-import { extractSourceText, validateSource, sourcePath, regulationStorageRoot, validateSuggestions, MAX_SOURCE_BYTES, splitSourceForAI, proposeSourceCriteria } from '../src/v2/regulationSources.js';
+import { extractSourceText, validateSource, sourcePath, regulationStorageRoot, validateSuggestions, MAX_SOURCE_BYTES, splitSourceForAI, proposeSourceCriteria } from '../src/modules/regulationSources.js';
 const docxMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 function word(xml) {
   const zip = new PizZip();
